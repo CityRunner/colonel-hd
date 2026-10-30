@@ -2820,6 +2820,23 @@ the old numbers to the new ones, so older references stay unambiguous:
     with the original pixels of the same commands (the owner and pair maps
     of path 1 say which pixels those are). **Assumed.**
 
+## Milestone 10 starts before milestone 9 is approved (2026-10-30)
+
+- **The customer's instruction** (2026-10-30): "Tag it and then move to
+  the next milestone". Milestone 10 starts while the milestone 9 pull
+  request stays open for the customer's manual playthrough in HD mode and
+  spot checks in original mode, its remaining exit criterion. Milestone 9
+  is merged only on the customer's approval. **Decided (customer).**
+- **The branch:** `milestone-10` starts from `milestone-9`, so its pull
+  request shows only milestone 10's changes once milestone 9 is merged.
+  Any fix to milestone 9 from the customer's playthrough goes on
+  `milestone-9` and is merged into `milestone-10`. **Decided.**
+- **The release candidate `v0.9.0-rc.1`:** this session may not create
+  tags (GitHub refuses the tag push and the API call), so the customer
+  pushes the tag on commit `4483735`. The release workflow then publishes
+  the pre-release. No tag or release exists yet, `v0.1.0` included.
+  **Decided.**
+
 ## Spec items carried forward
 
 - Edge coverage is blended in the same sRGB-encoded space as the pairs, with
