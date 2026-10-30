@@ -341,7 +341,7 @@ public:
                 if (text[i] < '0' || text[i] > '9') {
                     return -1;
                 }
-                number = number * 10 + (text[i] - '0');
+                number = (number * 10) + (text[i] - '0');
             }
             return number;
         };
@@ -511,8 +511,10 @@ Point1x read_point(Reader& in, const JsonValue& value, const std::string& where)
     if (xy.size() != 2) {
         return {};
     }
-    return {.x = static_cast<int>(in.integer(xy[0], where, 0, picture_width - 1)),
-            .y = static_cast<int>(in.integer(xy[1], where, 0, picture_height - 1))};
+    return {
+        .x = static_cast<int>(in.integer(xy[0], where, 0, picture_width - 1)),
+        .y = static_cast<int>(in.integer(xy[1], where, 0, picture_height - 1)),
+    };
 }
 
 // The number of points each kind needs.
@@ -563,7 +565,8 @@ PrimitiveHint read_primitive(Reader& in, const JsonValue& value, const std::stri
         corner.point = static_cast<std::size_t>(in.integer(*item.member("point"), where + ".corners", 0,
                                                            static_cast<std::int64_t>(primitive.points.size()) - 1));
         corner.kind = in.choice(*item.member("kind"), where + ".corners", corner_names);
-        if (in.ok() && std::ranges::any_of(primitive.corners, [&](const CornerHint& c) { return c.point == corner.point; })) {
+        if (in.ok() &&
+            std::ranges::any_of(primitive.corners, [&](const CornerHint& c) { return c.point == corner.point; })) {
             in.fail(where + ".corners", "a point has two corners");
         }
         primitive.corners.push_back(corner);
@@ -581,7 +584,8 @@ PartHint read_part(Reader& in, const JsonValue& value, const std::string& where,
     part.label = in.text(value.member("label"), where + ".label");
     const JsonArray& primitives = in.array(value.member("primitives"), where + ".primitives", 1, max_list);
     for (std::size_t i = 0; i < primitives.size() && in.ok(); ++i) {
-        part.primitives.push_back(read_primitive(in, primitives[i], std::format("{}.primitives[{}]", where, i), organic));
+        part.primitives.push_back(
+            read_primitive(in, primitives[i], std::format("{}.primitives[{}]", where, i), organic));
     }
     return part;
 }
@@ -604,28 +608,25 @@ GeometricRelation read_geometric(Reader& in, const JsonValue& value, const std::
         return relation;
     }
     relation.kind = in.choice(*value.member("kind"), where + ".kind", geometric_names);
-    std::size_t primitives = 0;
-    std::size_t arcs = 0;
-    std::size_t lines = 0;
+    // The kinds of the items that are primitives.
+    std::vector<PrimitiveKind> primitives;
     for (const JsonValue& item : in.array(value.member("items"), where + ".items", 2, max_list)) {
         std::string id = in.identifier(item, where + ".items");
         if (!in.ok()) {
             break;
         }
         const PrimitiveHint* primitive = find_primitive(hypothesis, id);
-        const bool part = std::ranges::any_of(hypothesis.parts, [&](const PartHint& p) { return p.id == id; });
-        if (primitive == nullptr && !part) {
-            in.fail(where + ".items", std::format("no part or primitive \"{}\" in this hypothesis", id));
-        } else if (std::ranges::find(relation.items, id) != relation.items.end()) {
-            in.fail(where + ".items", "an item is listed twice");
-        }
         if (primitive != nullptr) {
-            ++primitives;
-            arcs += primitive->kind == PrimitiveKind::Arc ? 1 : 0;
-            lines += primitive->kind == PrimitiveKind::Line ? 1 : 0;
+            primitives.push_back(primitive->kind);
+        } else if (std::ranges::none_of(hypothesis.parts, [&](const PartHint& p) { return p.id == id; })) {
+            in.fail(where + ".items", std::format("no part or primitive \"{}\" in this hypothesis", id));
+        }
+        if (in.ok() && std::ranges::find(relation.items, id) != relation.items.end()) {
+            in.fail(where + ".items", "an item is listed twice");
         }
         relation.items.push_back(std::move(id));
     }
+    const auto count = [&](PrimitiveKind kind) { return std::ranges::count(primitives, kind); };
     if (const JsonValue* axis = value.member("axis"); axis != nullptr) {
         relation.axis = in.choice(*axis, where + ".axis", axis_names);
     }
@@ -639,7 +640,8 @@ GeometricRelation read_geometric(Reader& in, const JsonValue& value, const std::
         in.fail(where + ".items", "two items expected");
     } else if (relation.kind == GeometricKind::EqualSpacing && relation.items.size() < 3) {
         in.fail(where + ".items", "three or more items expected");
-    } else if (relation.kind == GeometricKind::Tangent && (primitives != 2 || arcs != 1 || lines != 1)) {
+    } else if (relation.kind == GeometricKind::Tangent &&
+               (primitives.size() != 2 || count(PrimitiveKind::Arc) != 1 || count(PrimitiveKind::Line) != 1)) {
         in.fail(where + ".items", "a tangent joins an arc and a line primitive");
     }
     relation.note = in.text(value.member("note"), where + ".note");
@@ -680,7 +682,8 @@ ObjectHint read_object(Reader& in, const JsonValue& value, const std::string& wh
     object.id = object.main.id;
     object.cell = in.cell(*value.member("cell"), where + ".cell");
     object.label = in.text(value.member("label"), where + ".label");
-    const JsonArray& alternatives = in.array(value.member("alternatives"), where + ".alternatives", 0, max_alternatives);
+    const JsonArray& alternatives =
+        in.array(value.member("alternatives"), where + ".alternatives", 0, max_alternatives);
     for (std::size_t i = 0; i < alternatives.size() && in.ok(); ++i) {
         const std::string at = std::format("{}.alternatives[{}]", where, i);
         if (!in.members(alternatives[i], at, {"id", "type", "confidence", "parts"}, {"note", "relations"})) {
@@ -719,6 +722,37 @@ std::vector<const Hypothesis*> hypotheses_of(const ObjectHint& object) {
     return all;
 }
 
+// A repetition's item: an object's type or a part's role, and whether it
+// is organic.
+struct RepeatedItem {
+    bool object = false;
+    int kind = 0;
+    bool organic = false;
+};
+
+std::optional<RepeatedItem> find_repeated(const std::vector<ObjectHint>& objects, const std::string& id) {
+    for (const ObjectHint& object : objects) {
+        if (object.id == id) {
+            return RepeatedItem{
+                .object = true,
+                .kind = static_cast<int>(object.main.type),
+                .organic = is_organic(object.main.type),
+            };
+        }
+        for (const Hypothesis* hypothesis : hypotheses_of(object)) {
+            const auto part = std::ranges::find(hypothesis->parts, id, &PartHint::id);
+            if (part != hypothesis->parts.end()) {
+                return RepeatedItem{
+                    .object = false,
+                    .kind = static_cast<int>(part->role),
+                    .organic = is_organic(hypothesis->type),
+                };
+            }
+        }
+    }
+    return std::nullopt;
+}
+
 RepetitionHint read_repetition(Reader& in, const JsonValue& value, const std::string& where,
                                const std::vector<ObjectHint>& objects) {
     RepetitionHint repetition;
@@ -726,43 +760,31 @@ RepetitionHint read_repetition(Reader& in, const JsonValue& value, const std::st
         return repetition;
     }
     repetition.id = in.identifier(*value.member("id"), where + ".id");
-    // Each item's type (objects) or role (parts), and whether it is organic.
-    std::vector<std::pair<int, bool>> objects_found;
-    std::vector<std::pair<int, bool>> parts_found;
+    std::vector<RepeatedItem> found;
     for (const JsonValue& item : in.array(value.member("items"), where + ".items", 2, max_list)) {
         std::string id = in.identifier(item, where + ".items");
         if (!in.ok()) {
             break;
         }
-        const auto before = objects_found.size() + parts_found.size();
-        for (const ObjectHint& object : objects) {
-            if (object.id == id) {
-                objects_found.emplace_back(static_cast<int>(object.main.type), is_organic(object.main.type));
-            }
-            for (const Hypothesis* hypothesis : hypotheses_of(object)) {
-                for (const PartHint& part : hypothesis->parts) {
-                    if (part.id == id) {
-                        parts_found.emplace_back(static_cast<int>(part.role), is_organic(hypothesis->type));
-                    }
-                }
-            }
-        }
-        if (objects_found.size() + parts_found.size() == before) {
+        if (const auto repeated = find_repeated(objects, id)) {
+            found.push_back(*repeated);
+        } else {
             in.fail(where + ".items", std::format("no object or part \"{}\"", id));
-        } else if (std::ranges::find(repetition.items, id) != repetition.items.end()) {
+        }
+        if (in.ok() && std::ranges::find(repetition.items, id) != repetition.items.end()) {
             in.fail(where + ".items", "an item is listed twice");
         }
         repetition.items.push_back(std::move(id));
     }
-    const auto& found = objects_found.empty() ? parts_found : objects_found;
-    const auto other_kind = [&](const auto& f) { return f.first != found.front().first; };
+    const auto differs = [&](const RepeatedItem& f) { return f.object != found.front().object; };
+    const auto other_kind = [&](const RepeatedItem& f) { return f.kind != found.front().kind; };
     if (!in.ok() || found.empty()) {
         // Reported above.
-    } else if (!objects_found.empty() && !parts_found.empty()) {
+    } else if (std::ranges::any_of(found, differs)) {
         in.fail(where + ".items", "objects or parts expected, not both");
     } else if (std::ranges::any_of(found, other_kind)) {
         in.fail(where + ".items", "the items are of one type or of one role");
-    } else if (std::ranges::any_of(found, [](const auto& f) { return f.second; })) {
+    } else if (std::ranges::any_of(found, &RepeatedItem::organic)) {
         in.fail(where + ".items", "organic shapes are not repeated identically (A4 A.4)");
     }
     repetition.note = in.text(value.member("note"), where + ".note");
@@ -793,18 +815,18 @@ void check_unique(Reader& in, const PictureHints& hints) {
             }
         }
     }
-    std::vector<std::string> repeated;
+    std::vector<std::string> in_repetitions;
     for (const auto& repetition : hints.repetitions) {
         ids.push_back(repetition.id);
-        repeated.insert(repeated.end(), repetition.items.begin(), repetition.items.end());
-    }
-    std::ranges::stable_sort(repeated);
-    if (const auto twice = std::ranges::adjacent_find(repeated); twice != repeated.end()) {
-        in.fail("repetitions", std::format("\"{}\" is in two repetitions", *twice));
+        in_repetitions.insert(in_repetitions.end(), repetition.items.begin(), repetition.items.end());
     }
     std::ranges::stable_sort(ids);
     if (const auto repeated = std::ranges::adjacent_find(ids); repeated != ids.end()) {
         in.fail("ids", std::format("\"{}\" is used twice", *repeated));
+    }
+    std::ranges::stable_sort(in_repetitions);
+    if (const auto twice = std::ranges::adjacent_find(in_repetitions); twice != in_repetitions.end()) {
+        in.fail("repetitions", std::format("\"{}\" is in two repetitions", *twice));
     }
     std::vector<LineRef> chained;
     for (const auto& chain : hints.chains) {
@@ -842,7 +864,8 @@ core::Result<PictureHints> parse_hints(std::string_view text) {
         }
         hints.version =
             static_cast<int>(in.integer(*file.member("version"), "version", hints_oldest_version, hints_version));
-        if (in.ok() && hints.version < 2 && (file.member("objects") != nullptr || file.member("repetitions") != nullptr)) {
+        if (in.ok() && hints.version < 2 &&
+            (file.member("objects") != nullptr || file.member("repetitions") != nullptr)) {
             in.fail("version", "objects and repetitions need version 2");
         }
         hints.picture = static_cast<int>(in.integer(*file.member("picture"), "picture", 0, max_picture));
@@ -876,12 +899,14 @@ core::Result<PictureHints> parse_hints(std::string_view text) {
 }
 
 bool is_organic(ObjectType type) noexcept {
-    constexpr std::array organic{ObjectType::Foliage, ObjectType::Tree,    ObjectType::Rock,  ObjectType::Cloud,
-                                 ObjectType::Water,   ObjectType::Terrain, ObjectType::Figure};
+    constexpr std::array organic{
+        ObjectType::Foliage, ObjectType::Tree,    ObjectType::Rock,   ObjectType::Cloud,
+        ObjectType::Water,   ObjectType::Terrain, ObjectType::Figure,
+    };
     return std::ranges::find(organic, type) != organic.end();
 }
 
-bool hints_match(const PictureHints& hints,std::span<const std::uint8_t> pic_data) {
+bool hints_match(const PictureHints& hints, std::span<const std::uint8_t> pic_data) {
     return core::sha256(pic_data) == hints.pic_sha256;
 }
 

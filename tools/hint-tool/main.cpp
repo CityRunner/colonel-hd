@@ -323,6 +323,45 @@ int candidates(const sci::resource::ResourceManager& manager, std::uint16_t numb
     return 0;
 }
 
+// The primitives of the scene model (format version 2) name commands that
+// draw lines.
+bool check_scene_commands(const sci::vector::PictureHints& hints, const sci::pic::DrawTrace& trace) {
+    bool ok = true;
+    std::vector<std::uint32_t> line_commands;
+    for (const auto& primitive : trace.primitives) {
+        if (std::holds_alternative<sci::pic::Line>(primitive.shape)) {
+            line_commands.push_back(primitive.command);
+        }
+    }
+    std::ranges::stable_sort(line_commands);
+    std::vector<const sci::vector::PrimitiveHint*> primitives;
+    for (const auto& object : hints.objects) {
+        std::vector<const sci::vector::Hypothesis*> hypotheses{&object.main};
+        for (const auto& alternative : object.alternatives) {
+            hypotheses.push_back(&alternative);
+        }
+        for (const auto* hypothesis : hypotheses) {
+            for (const auto& part : hypothesis->parts) {
+                for (const auto& primitive : part.primitives) {
+                    primitives.push_back(&primitive);
+                }
+            }
+        }
+    }
+    for (const auto* primitive : primitives) {
+        for (const std::uint32_t command : primitive->commands) {
+            if (!std::ranges::binary_search(line_commands, command)) {
+                std::println("  scene, {}: command {} draws no line", primitive->id, command);
+                ok = false;
+            }
+        }
+    }
+    if (!hints.objects.empty()) {
+        std::println("  scene: {} objects, {} primitives", hints.objects.size(), primitives.size());
+    }
+    return ok;
+}
+
 // Checks one hint file against the game and prints what the vector path
 // does with it.
 bool check_file(const sci::resource::ResourceManager& manager, const fs::path& path) {
@@ -365,38 +404,7 @@ bool check_file(const sci::resource::ResourceManager& manager, const fs::path& p
             ok = ok && !rejected.detail.ends_with("draws no line");
         }
     }
-    // The primitives of the scene model (format version 2) name commands
-    // that draw lines.
-    std::vector<std::uint32_t> line_commands;
-    for (const auto& primitive : drawn->trace.primitives) {
-        if (std::holds_alternative<sci::pic::Line>(primitive.shape)) {
-            line_commands.push_back(primitive.command);
-        }
-    }
-    std::ranges::stable_sort(line_commands);
-    std::size_t primitives = 0;
-    for (const auto& object : hints->objects) {
-        std::vector<const sci::vector::Hypothesis*> hypotheses{&object.main};
-        for (const auto& alternative : object.alternatives) {
-            hypotheses.push_back(&alternative);
-        }
-        for (const auto* hypothesis : hypotheses) {
-            for (const auto& part : hypothesis->parts) {
-                for (const auto& primitive : part.primitives) {
-                    ++primitives;
-                    for (const std::uint32_t command : primitive.commands) {
-                        if (!std::ranges::binary_search(line_commands, command)) {
-                            std::println("  scene, {}: command {} draws no line", primitive.id, command);
-                            ok = false;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if (!hints->objects.empty()) {
-        std::println("  scene: {} objects, {} primitives", hints->objects.size(), primitives);
-    }
+    ok = check_scene_commands(*hints, drawn->trace) && ok;
     return ok;
 }
 

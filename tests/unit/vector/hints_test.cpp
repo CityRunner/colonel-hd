@@ -11,6 +11,7 @@
 #include <ios>
 #include <iterator>
 #include <string>
+#include <tuple>
 
 using sci::vector::HintPrimitive;
 using sci::vector::LineEnd;
@@ -79,7 +80,7 @@ SCI_TEST(hints_arrays_are_optional) {
 SCI_TEST(hints_reject_invalid_files) {
     const std::array<std::pair<const char*, const char*>, 22> breakages{
         {
-            {R"("version": 1)", R"("version": 2)"},
+            {R"("version": 1)", R"("version": 3)"},
             {R"("sierra-hd-hints")", R"("other")"},
             {R"("picture": 44)", R"("picture": 1000)"},
             {"0123456789abcdef\",", "0123456789abcdeF\","},
@@ -206,71 +207,73 @@ SCI_TEST(hints_migrate_version_1) {
     SCI_CHECK(old->relations.size() == migrated->relations.size());
     const std::string scene = scene_example();
     SCI_CHECK(rejection(replaced(scene, R"("version": 2)", R"("version": 1)")).contains("need version 2"));
-    SCI_CHECK(rejection(replaced(valid, R"("version": 1)", R"("version": 1, "repetitions": [])"))
-                  .contains("need version 2"));
+    SCI_CHECK(
+        rejection(replaced(valid, R"("version": 1)", R"("version": 1, "repetitions": [])")).contains("need version 2"));
     SCI_CHECK(!rejection(replaced(scene, R"("version": 2)", R"("version": 3)")).empty());
 }
 
 SCI_TEST(hints_reject_invalid_scene_models) {
-    struct Breakage {
-        const char* from;
-        const char* to;
-        const char* error; // Part of the message.
+    // From, to, and part of the error message.
+    using Breakage = std::tuple<const char*, const char*, const char*>;
+    const std::array<Breakage, 44> breakages{
+        {
+            // Vocabulary and values.
+            {R"("type": "tree")", R"("type": "bush")", "one of"},
+            {R"("role": "sill")", R"("role": "ledge")", "one of"},
+            {R"("kind": "step")", R"("kind": "jagged")", "one of"},
+            {R"("kind": "perpendicular")", R"("kind": "orthogonal")", "one of"},
+            {R"("axis": "vertical")", R"("axis": "diagonal")", "one of"},
+            {R"("confidence": 900)", R"("confidence": 1001)", "not in 0..1000"},
+            {R"("confidence": 900)", R"("confidence": -1)", "not in 0..1000"},
+            {R"("cell": "B2.1")", R"("cell": "D2.1")", "review grid"},
+            {R"("cell": "B2.1")", R"("cell": "B2.5")", "review grid"},
+            {R"("cell": "B2.1")", R"("cell": "b2.1")", "review grid"},
+            {R"("cell": "A1-B1")", R"("cell": "A1-")", "review grid"},
+            {R"("cell": "A1-B1")", R"("cell": "A1 - B1")", "review grid"},
+            {R"("corners": [{"point": 0)", R"("corner": [{"point": 0)", "unknown member"},
+            {R"("note": "a pointed arch)", R"("label": "a pointed arch)", "unknown member"},
+            // Anchors.
+            {"[10, 11, 12, 13]", "[10, 11, 11, 13]", "listed twice"},
+            {R"("commands": [53])", R"("commands": [1000001])", "not in 0..1000000"},
+            {R"("commands": [53])", R"("commands": [])", "items expected"},
+            {"[[70, 85], [90, 85]]", "[[70, 85], [320, 85]]", "not in 0..319"},
+            {"[[70, 85], [90, 85]]", "[[70, 85], [90, 190]]", "not in 0..189"},
+            {"[[80, 70], [80, 100]]", "[[80, 70], [80, 85], [80, 100]]", "points expected"},
+            {R"("kind": "arc")", R"("kind": "line")", "points expected"},
+            {R"({"point": 3, "kind": "sharp"})", R"({"point": 5, "kind": "sharp"})", "not in 0..4"},
+            {R"({"point": 2, "kind": "sharp"})", R"({"point": 1, "kind": "sharp"})", "two corners"},
+            // Ids and references.
+            {R"("id": "oak-bark-step")", R"("id": "door-arch-chain")", "used twice"},
+            {R"("id": "door-pointed")", R"("id": "window-left")", "used twice"},
+            {R"("id": "wr-frame")", R"("id": "wl-frame")", "used twice"},
+            {R"("id": "windows-row")", R"("id": "oak")", "used twice"},
+            {R"(["wl-bar-v", "wl-bar-h"])", R"(["wl-bar-v", "nothing"])", "no part or primitive"},
+            {R"(["wl-bar-h", "wl-sill-top"])", R"(["wl-bar-h", "door-jamb-left"])", "no part or primitive"},
+            {R"(["wl-bar-h", "wl-sill-top"])", R"(["wl-bar-h", "wl-bar-h"])", "listed twice"},
+            {R"(["wl-bar-v", "wl-bar-h"])", R"(["wl-bar-v", "wl-bar-h", "wl-sill-top"])", "two items"},
+            {R"("kind": "parallel")", R"("kind": "equal-spacing")", "three or more"},
+            {R"(, "axis": "vertical")", "", "an axis"},
+            {R"(["wl-bar-h", "wl-sill-top"]})", R"(["wl-bar-h", "wl-sill-top"], "axis": "vertical"})", "an axis"},
+            {R"(["door-arch-curve", "door-jamb-left"])", R"(["door-jamb-right", "door-jamb-left"])", "arc and a line"},
+            {R"(["door-arch-curve", "door-jamb-left"])", R"(["door-arch-curve", "door-jambs"])", "arc and a line"},
+            {R"("hypothesis": "door")", R"("hypothesis": "window-left")", "no hypothesis"},
+            {R"("by": "customer")", R"("by": "agent")", "customer"},
+            {R"("date": "2026-10-30")", R"("date": "2026-02-29")", "date"},
+            {R"("date": "2026-10-30")", R"("date": "26-10-30")", "date"},
+            {R"(["window-left", "window-right"])", R"(["window-left", "nothing"])", "no object or part"},
+            {R"(["window-left", "window-right"])", R"(["window-left", "door"])", "one type"},
+            {R"(["window-left", "window-right"])", R"(["window-left", "wl-frame"])", "not both"},
+            {
+                R"("note": "same window twice"})",
+                R"("note": "same window twice"}, {"id": "again", "items": ["window-right", "window-left"]})",
+                "two repetitions",
+            },
+        },
     };
-    const std::array<Breakage, 44> breakages{{
-        // Vocabulary and values.
-        {R"("type": "tree")", R"("type": "bush")", "one of"},
-        {R"("role": "sill")", R"("role": "ledge")", "one of"},
-        {R"("kind": "step")", R"("kind": "jagged")", "one of"},
-        {R"("kind": "perpendicular")", R"("kind": "orthogonal")", "one of"},
-        {R"("axis": "vertical")", R"("axis": "diagonal")", "one of"},
-        {R"("confidence": 900)", R"("confidence": 1001)", "not in 0..1000"},
-        {R"("confidence": 900)", R"("confidence": -1)", "not in 0..1000"},
-        {R"("cell": "B2.1")", R"("cell": "D2.1")", "review grid"},
-        {R"("cell": "B2.1")", R"("cell": "B2.5")", "review grid"},
-        {R"("cell": "B2.1")", R"("cell": "b2.1")", "review grid"},
-        {R"("cell": "A1-B1")", R"("cell": "A1-")", "review grid"},
-        {R"("cell": "A1-B1")", R"("cell": "A1 - B1")", "review grid"},
-        {R"("corners": [{"point": 0)", R"("corner": [{"point": 0)", "unknown member"},
-        {R"("note": "a pointed arch)", R"("label": "a pointed arch)", "unknown member"},
-        // Anchors.
-        {"[10, 11, 12, 13]", "[10, 11, 11, 13]", "listed twice"},
-        {R"("commands": [53])", R"("commands": [1000001])", "not in 0..1000000"},
-        {R"("commands": [53])", R"("commands": [])", "items expected"},
-        {"[[70, 85], [90, 85]]", "[[70, 85], [320, 85]]", "not in 0..319"},
-        {"[[70, 85], [90, 85]]", "[[70, 85], [90, 190]]", "not in 0..189"},
-        {"[[80, 70], [80, 100]]", "[[80, 70], [80, 85], [80, 100]]", "points expected"},
-        {R"("kind": "arc")", R"("kind": "line")", "points expected"},
-        {R"({"point": 3, "kind": "sharp"})", R"({"point": 5, "kind": "sharp"})", "not in 0..4"},
-        {R"({"point": 2, "kind": "sharp"})", R"({"point": 1, "kind": "sharp"})", "two corners"},
-        // Ids and references.
-        {R"("id": "oak-bark-step")", R"("id": "door-arch-chain")", "used twice"},
-        {R"("id": "door-pointed")", R"("id": "window-left")", "used twice"},
-        {R"("id": "wl-sill")", R"("id": "wl-bars")", "used twice"},
-        {R"("id": "windows-row")", R"("id": "oak")", "used twice"},
-        {R"(["wl-bar-v", "wl-bar-h"])", R"(["wl-bar-v", "nothing"])", "no part or primitive"},
-        {R"(["wl-bar-h", "wl-sill-top"])", R"(["wl-bar-h", "door-jamb-left"])", "no part or primitive"},
-        {R"(["wl-bar-h", "wl-sill-top"])", R"(["wl-bar-h", "wl-bar-h"])", "listed twice"},
-        {R"(["wl-bar-v", "wl-bar-h"])", R"(["wl-bar-v", "wl-bar-h", "wl-sill-top"])", "two items"},
-        {R"("kind": "parallel")", R"("kind": "equal-spacing")", "three or more"},
-        {R"(, "axis": "vertical")", "", "an axis"},
-        {R"(["wl-bar-h", "wl-sill-top"]})", R"(["wl-bar-h", "wl-sill-top"], "axis": "vertical"})", "an axis"},
-        {R"(["door-arch-curve", "door-jamb-left"])", R"(["door-jamb-right", "door-jamb-left"])", "arc and a line"},
-        {R"(["door-arch-curve", "door-jamb-left"])", R"(["door-arch-curve", "door-jambs"])", "arc and a line"},
-        {R"("hypothesis": "door")", R"("hypothesis": "window-left")", "no hypothesis"},
-        {R"("by": "customer")", R"("by": "agent")", "customer"},
-        {R"("date": "2026-10-30")", R"("date": "2026-02-29")", "date"},
-        {R"("date": "2026-10-30")", R"("date": "26-10-30")", "date"},
-        {R"(["window-left", "window-right"])", R"(["window-left", "nothing"])", "no object or part"},
-        {R"(["window-left", "window-right"])", R"(["window-left", "door"])", "one type"},
-        {R"(["window-left", "window-right"])", R"(["window-left", "wl-frame"])", "not both"},
-        {R"("note": "same window twice"})",
-         R"("note": "same window twice"}, {"id": "again", "items": ["window-right", "window-left"]})",
-         "two repetitions"},
-    }};
     const std::string scene = scene_example();
     for (const auto& [from, to, error] : breakages) {
-        SCI_CHECK(rejection(replaced(scene, from, to)).contains(error));
+        const std::string message = rejection(replaced(scene, from, to));
+        SCI_CHECK(message.contains(error));
     }
     // A.4: organic objects get no idealisation.
     SCI_CHECK(rejection(replaced(scene, R"("kind": "spline")", R"("kind": "ellipse")")).contains("organic"));
