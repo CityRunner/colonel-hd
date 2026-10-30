@@ -31,7 +31,6 @@
 #include "interface_check.hpp"
 #include "picture.hpp"
 #include "png.hpp"
-#include "stack_screen.hpp"
 #include "sci/core/log.hpp"
 #include "sci/platform/analysis_cache.hpp"
 #include "sci/platform/config.hpp"
@@ -42,6 +41,7 @@
 #include "sci/vm/files.hpp"
 #include "sci/vm/game.hpp"
 #include "sci/vm/local_time.hpp"
+#include "stack_screen.hpp"
 
 #include <algorithm>
 #include <cctype>

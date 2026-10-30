@@ -226,24 +226,26 @@ struct Glyph {
     std::array<std::uint8_t, 5> rows;
 };
 
-constexpr std::array<Glyph, 48> font{{
-    {.c = '0', .rows = {7, 5, 5, 5, 7}}, {.c = '1', .rows = {2, 6, 2, 2, 7}}, {.c = '2', .rows = {7, 1, 7, 4, 7}},
-    {.c = '3', .rows = {7, 1, 7, 1, 7}}, {.c = '4', .rows = {5, 5, 7, 1, 1}}, {.c = '5', .rows = {7, 4, 7, 1, 7}},
-    {.c = '6', .rows = {7, 4, 7, 5, 7}}, {.c = '7', .rows = {7, 1, 1, 1, 1}}, {.c = '8', .rows = {7, 5, 7, 5, 7}},
-    {.c = '9', .rows = {7, 5, 7, 1, 7}}, {.c = 'A', .rows = {2, 5, 7, 5, 5}}, {.c = 'B', .rows = {6, 5, 6, 5, 6}},
-    {.c = 'C', .rows = {3, 4, 4, 4, 3}}, {.c = 'D', .rows = {6, 5, 5, 5, 6}}, {.c = 'E', .rows = {7, 4, 6, 4, 7}},
-    {.c = 'F', .rows = {7, 4, 6, 4, 4}}, {.c = 'G', .rows = {3, 4, 5, 5, 3}}, {.c = 'H', .rows = {5, 5, 7, 5, 5}},
-    {.c = 'I', .rows = {7, 2, 2, 2, 7}}, {.c = 'J', .rows = {1, 1, 1, 5, 2}}, {.c = 'K', .rows = {5, 5, 6, 5, 5}},
-    {.c = 'L', .rows = {4, 4, 4, 4, 7}}, {.c = 'M', .rows = {5, 7, 7, 5, 5}}, {.c = 'N', .rows = {6, 5, 5, 5, 5}},
-    {.c = 'O', .rows = {2, 5, 5, 5, 2}}, {.c = 'P', .rows = {6, 5, 6, 4, 4}}, {.c = 'Q', .rows = {2, 5, 5, 7, 3}},
-    {.c = 'R', .rows = {6, 5, 6, 5, 5}}, {.c = 'S', .rows = {3, 4, 2, 1, 6}}, {.c = 'T', .rows = {7, 2, 2, 2, 2}},
-    {.c = 'U', .rows = {5, 5, 5, 5, 7}}, {.c = 'V', .rows = {5, 5, 5, 5, 2}}, {.c = 'W', .rows = {5, 5, 5, 7, 5}},
-    {.c = 'X', .rows = {5, 5, 2, 5, 5}}, {.c = 'Y', .rows = {5, 5, 2, 2, 2}}, {.c = 'Z', .rows = {7, 1, 2, 4, 7}},
-    {.c = ' ', .rows = {0, 0, 0, 0, 0}}, {.c = '-', .rows = {0, 0, 7, 0, 0}}, {.c = '.', .rows = {0, 0, 0, 0, 2}},
-    {.c = '+', .rows = {0, 2, 7, 2, 0}}, {.c = ':', .rows = {0, 2, 0, 2, 0}}, {.c = '/', .rows = {1, 1, 2, 4, 4}},
-    {.c = '=', .rows = {0, 7, 0, 7, 0}}, {.c = ',', .rows = {0, 0, 0, 2, 4}}, {.c = '(', .rows = {1, 2, 2, 2, 1}},
-    {.c = ')', .rows = {4, 2, 2, 2, 4}}, {.c = '?', .rows = {7, 1, 2, 0, 2}}, {.c = '_', .rows = {0, 0, 0, 0, 7}},
-}};
+constexpr std::array<Glyph, 48> font{
+    {
+        {.c = '0', .rows = {7, 5, 5, 5, 7}}, {.c = '1', .rows = {2, 6, 2, 2, 7}}, {.c = '2', .rows = {7, 1, 7, 4, 7}},
+        {.c = '3', .rows = {7, 1, 7, 1, 7}}, {.c = '4', .rows = {5, 5, 7, 1, 1}}, {.c = '5', .rows = {7, 4, 7, 1, 7}},
+        {.c = '6', .rows = {7, 4, 7, 5, 7}}, {.c = '7', .rows = {7, 1, 1, 1, 1}}, {.c = '8', .rows = {7, 5, 7, 5, 7}},
+        {.c = '9', .rows = {7, 5, 7, 1, 7}}, {.c = 'A', .rows = {2, 5, 7, 5, 5}}, {.c = 'B', .rows = {6, 5, 6, 5, 6}},
+        {.c = 'C', .rows = {3, 4, 4, 4, 3}}, {.c = 'D', .rows = {6, 5, 5, 5, 6}}, {.c = 'E', .rows = {7, 4, 6, 4, 7}},
+        {.c = 'F', .rows = {7, 4, 6, 4, 4}}, {.c = 'G', .rows = {3, 4, 5, 5, 3}}, {.c = 'H', .rows = {5, 5, 7, 5, 5}},
+        {.c = 'I', .rows = {7, 2, 2, 2, 7}}, {.c = 'J', .rows = {1, 1, 1, 5, 2}}, {.c = 'K', .rows = {5, 5, 6, 5, 5}},
+        {.c = 'L', .rows = {4, 4, 4, 4, 7}}, {.c = 'M', .rows = {5, 7, 7, 5, 5}}, {.c = 'N', .rows = {6, 5, 5, 5, 5}},
+        {.c = 'O', .rows = {2, 5, 5, 5, 2}}, {.c = 'P', .rows = {6, 5, 6, 4, 4}}, {.c = 'Q', .rows = {2, 5, 5, 7, 3}},
+        {.c = 'R', .rows = {6, 5, 6, 5, 5}}, {.c = 'S', .rows = {3, 4, 2, 1, 6}}, {.c = 'T', .rows = {7, 2, 2, 2, 2}},
+        {.c = 'U', .rows = {5, 5, 5, 5, 7}}, {.c = 'V', .rows = {5, 5, 5, 5, 2}}, {.c = 'W', .rows = {5, 5, 5, 7, 5}},
+        {.c = 'X', .rows = {5, 5, 2, 5, 5}}, {.c = 'Y', .rows = {5, 5, 2, 2, 2}}, {.c = 'Z', .rows = {7, 1, 2, 4, 7}},
+        {.c = ' ', .rows = {0, 0, 0, 0, 0}}, {.c = '-', .rows = {0, 0, 7, 0, 0}}, {.c = '.', .rows = {0, 0, 0, 0, 2}},
+        {.c = '+', .rows = {0, 2, 7, 2, 0}}, {.c = ':', .rows = {0, 2, 0, 2, 0}}, {.c = '/', .rows = {1, 1, 2, 4, 4}},
+        {.c = '=', .rows = {0, 7, 0, 7, 0}}, {.c = ',', .rows = {0, 0, 0, 2, 4}}, {.c = '(', .rows = {1, 2, 2, 2, 1}},
+        {.c = ')', .rows = {4, 2, 2, 2, 4}}, {.c = '?', .rows = {7, 1, 2, 0, 2}}, {.c = '_', .rows = {0, 0, 0, 0, 7}},
+    },
+};
 
 const Glyph& glyph_of(char c) {
     if (c >= 'a' && c <= 'z') {
@@ -254,7 +256,9 @@ const Glyph& glyph_of(char c) {
 }
 
 // Text at scale s: 4s per character (one column of space), 5s high.
-int text_width(std::string_view text, int s) { return text.empty() ? 0 : (static_cast<int>(text.size()) * 4 * s) - s; }
+int text_width(std::string_view text, int s) {
+    return text.empty() ? 0 : (static_cast<int>(text.size()) * 4 * s) - s;
+}
 
 void fill(Image& image, int left, int top, int width, int height, Rgb color) {
     for (int y = top; y < top + height; ++y) {
@@ -307,36 +311,118 @@ void copy_frame(Image& image, const std::vector<std::uint8_t>& frame, int scale,
     }
 }
 
-// The grid of B.1 over a panel showing `view` of the picture area at N, its
-// top left corner at (left, top). Every pixel is blended once, with the
-// topmost of: cell line core, cell line outline, quarter line core,
-// quarter line outline.
-void draw_grid(Image& image, const review::Rect& view, int scale, int left, int top) {
+// The lines of the grid over a panel, before they are blended: per panel
+// pixel the topmost of cell line core, cell line outline, quarter line
+// core and quarter line outline, so that every pixel is blended once.
+class GridMask {
+public:
     enum class Layer : std::uint8_t { None, QuarterOutline, QuarterCore, CellOutline, CellCore };
-    const int width = view.width() * scale;
-    const int height = view.height() * scale;
-    std::vector<Layer> mask(static_cast<std::size_t>(width) * static_cast<std::size_t>(height), Layer::None);
-    const auto mark = [&](int x, int y, Layer layer) {
-        if (x >= 0 && y >= 0 && x < width && y < height) {
-            auto& at = mask[(static_cast<std::size_t>(y) * static_cast<std::size_t>(width)) + static_cast<std::size_t>(x)];
+
+    GridMask(const review::Rect& view, int scale)
+        : view_(view), scale_(scale), width_(view.width() * scale), height_(view.height() * scale),
+          mask_(static_cast<std::size_t>(width_) * static_cast<std::size_t>(height_), Layer::None) {}
+
+    // Cell lines N/2 wide (at least 2), quarter lines N/4 (at least 1) and
+    // dashed, each centred on its boundary with a one-pixel outline.
+    void draw() {
+        const int cell_half = cell_line_half(scale_);
+        const int quarter = std::max(1, scale_ / 4);
+        const Line quarter_line{
+            .from = -(quarter / 2),
+            .to = quarter - (quarter / 2),
+            .outline = Layer::QuarterOutline,
+            .core = Layer::QuarterCore,
+            .dashed = true,
+        };
+        const Line cell_line{
+            .from = -cell_half,
+            .to = cell_half,
+            .outline = Layer::CellOutline,
+            .core = Layer::CellCore,
+            .dashed = false,
+        };
+        for (int column = 0; column < review::columns; ++column) {
+            const int x = review::quarter_column_line(column);
+            if (x > view_.left && x < view_.right) {
+                line(x, true, quarter_line);
+            }
+        }
+        for (int row = 0; row < review::rows; ++row) {
+            const int y = review::quarter_row_line(row);
+            if (y > view_.top && y < view_.bottom) {
+                line(y, false, quarter_line);
+            }
+        }
+        for (const int x : review::column_edges) {
+            if (x >= view_.left && x <= view_.right) {
+                line(x, true, cell_line);
+            }
+        }
+        for (const int y : review::row_edges) {
+            if (y >= view_.top && y <= view_.bottom) {
+                line(y, false, cell_line);
+            }
+        }
+    }
+
+    // Blends the lines into the panel at (left, top).
+    void blend_into(Image& image, int left, int top) const {
+        for (int y = 0; y < height_; ++y) {
+            for (int x = 0; x < width_; ++x) {
+                switch (mask_[index(x, y)]) {
+                case Layer::QuarterOutline:
+                    blend(image, left + x, top + y, black, 110);
+                    break;
+                case Layer::QuarterCore:
+                    blend(image, left + x, top + y, white, 150);
+                    break;
+                case Layer::CellOutline:
+                    blend(image, left + x, top + y, black, 170);
+                    break;
+                case Layer::CellCore:
+                    blend(image, left + x, top + y, white, 170);
+                    break;
+                case Layer::None:
+                    break;
+                }
+            }
+        }
+    }
+
+    [[nodiscard]] static int cell_line_half(int scale) { return std::max(1, scale / 4); }
+
+private:
+    // The core from `from` to `to` across the boundary, in panel pixels.
+    struct Line {
+        int from;
+        int to;
+        Layer outline;
+        Layer core;
+        bool dashed;
+    };
+
+    [[nodiscard]] std::size_t index(int x, int y) const {
+        return (static_cast<std::size_t>(y) * static_cast<std::size_t>(width_)) + static_cast<std::size_t>(x);
+    }
+
+    void mark(int x, int y, Layer layer) {
+        if (x >= 0 && y >= 0 && x < width_ && y < height_) {
+            Layer& at = mask_[index(x, y)];
             at = std::max(at, layer);
         }
-    };
-    const int cell_half = std::max(1, scale / 4); // Core 2 * cell_half wide.
-    const int quarter_core = std::max(1, scale / 4);
-    const int dash = 2 * scale;
-    // A line at original coordinate `at` across the panel: vertical when
-    // `vertical`, its core from `from` to `to` (panel pixels on its axis)
-    // with an outline of one pixel on both sides.
-    const auto line = [&](int at, bool vertical, int from, int to, Layer outline, Layer core, bool dashed) {
-        const int position = (at - (vertical ? view.left : view.top)) * scale;
-        const int length = vertical ? height : width;
+    }
+
+    // A line at original coordinate `at` across the panel.
+    void line(int at, bool vertical, const Line& style) {
+        const int position = (at - (vertical ? view_.left : view_.top)) * scale_;
+        const int length = vertical ? height_ : width_;
+        const int dash = 2 * scale_;
         for (int t = 0; t < length; ++t) {
-            if (dashed && (t / dash) % 2 != 0) {
+            if (style.dashed && (t / dash) % 2 != 0) {
                 continue;
             }
-            for (int d = from - 1; d < to + 1; ++d) {
-                const Layer layer = (d < from || d >= to) ? outline : core;
+            for (int d = style.from - 1; d < style.to + 1; ++d) {
+                const Layer layer = (d < style.from || d >= style.to) ? style.outline : style.core;
                 if (vertical) {
                     mark(position + d, t, layer);
                 } else {
@@ -344,53 +430,20 @@ void draw_grid(Image& image, const review::Rect& view, int scale, int left, int 
                 }
             }
         }
-    };
-    for (int column = 0; column < review::columns; ++column) {
-        const int x = review::quarter_column_line(column);
-        if (x > view.left && x < view.right) {
-            line(x, true, -(quarter_core / 2), quarter_core - (quarter_core / 2), Layer::QuarterOutline, Layer::QuarterCore, true);
-        }
     }
-    for (int row = 0; row < review::rows; ++row) {
-        const int y = review::quarter_row_line(row);
-        if (y > view.top && y < view.bottom) {
-            line(y, false, -(quarter_core / 2), quarter_core - (quarter_core / 2), Layer::QuarterOutline, Layer::QuarterCore, true);
-        }
-    }
-    for (const int x : review::column_edges) {
-        if (x >= view.left && x <= view.right) {
-            line(x, true, -cell_half, cell_half, Layer::CellOutline, Layer::CellCore, false);
-        }
-    }
-    for (const int y : review::row_edges) {
-        if (y >= view.top && y <= view.bottom) {
-            line(y, false, -cell_half, cell_half, Layer::CellOutline, Layer::CellCore, false);
-        }
-    }
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            switch (mask[(static_cast<std::size_t>(y) * static_cast<std::size_t>(width)) + static_cast<std::size_t>(x)]) {
-            case Layer::QuarterOutline:
-                blend(image, left + x, top + y, black, 110);
-                break;
-            case Layer::QuarterCore:
-                blend(image, left + x, top + y, white, 150);
-                break;
-            case Layer::CellOutline:
-                blend(image, left + x, top + y, black, 170);
-                break;
-            case Layer::CellCore:
-                blend(image, left + x, top + y, white, 170);
-                break;
-            default:
-                break;
-            }
-        }
-    }
-    // The cell labels, small, on a backing in the top left corner of every
-    // cell (of its part in view).
+
+    review::Rect view_;
+    int scale_;
+    int width_;
+    int height_;
+    std::vector<Layer> mask_;
+};
+
+// The cell labels, small, on a backing in the top left corner of every cell
+// (of its part in view).
+void draw_labels(Image& image, const review::Rect& view, int scale, int left, int top) {
     const int s = std::max(1, scale / 2);
-    const int inset = cell_half + 2;
+    const int inset = GridMask::cell_line_half(scale) + 2;
     for (int row = 0; row < review::rows; ++row) {
         for (int column = 0; column < review::columns; ++column) {
             const review::CellRef ref{.row = row, .column = column};
@@ -412,6 +465,15 @@ void draw_grid(Image& image, const review::Rect& view, int scale, int left, int 
             draw_text(image, x + s, y + s, label, s, white);
         }
     }
+}
+
+// The grid of B.1 over a panel showing `view` of the picture area at N, its
+// top left corner at (left, top).
+void draw_grid(Image& image, const review::Rect& view, int scale, int left, int top) {
+    GridMask mask(view, scale);
+    mask.draw();
+    mask.blend_into(image, left, top);
+    draw_labels(image, view, scale, left, top);
 }
 
 // The frames of the stack in both modes at N, as the program composes them.
@@ -526,8 +588,8 @@ bool write_crops(const Options& options, const Frames& frames) {
         const std::vector<std::string> header{
             title(options),
             std::format("{}   PICTURE X {}-{}, Y {}-{}   N = {}   {}", name, crop.left, crop.right - 1, crop.top,
-                        crop.bottom - 1, scale, options.crop_stacked ? "TOP: HD   BOTTOM: ORIGINAL"
-                                                                     : "LEFT: HD   RIGHT: ORIGINAL"),
+                        crop.bottom - 1, scale,
+                        options.crop_stacked ? "TOP: HD   BOTTOM: ORIGINAL" : "LEFT: HD   RIGHT: ORIGINAL"),
         };
         const int panels_width = options.crop_stacked ? width : (2 * width) + panel_gap;
         const int panels_height = options.crop_stacked ? (2 * height) + panel_gap : height;

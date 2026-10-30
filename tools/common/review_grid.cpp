@@ -12,7 +12,9 @@ namespace sci::tools::review {
 
 namespace {
 
-constexpr int midpoint_half_up(int a, int b) noexcept { return (a + b + 1) / 2; }
+constexpr int midpoint_half_up(int a, int b) noexcept {
+    return (a + b + 1) / 2;
+}
 
 core::Result<CellRef> invalid(std::string_view text) {
     return core::make_error(core::ErrorCode::InvalidData,

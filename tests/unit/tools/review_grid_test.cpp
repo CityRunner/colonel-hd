@@ -75,8 +75,10 @@ SCI_TEST(parses_cells_and_quarters) {
 }
 
 SCI_TEST(rejects_what_is_not_a_cell) {
-    for (const std::string_view text : {"", "B", "3B", "D1", "B0", "B6", "B3.", "B3.0", "B3.5", "B3,2", "B32", " B3",
-                                        "B3 ", "B3.2.1", "A2-", "-A4", "A2-A4-B1", "A2--A4", "A2-D4"}) {
+    for (const std::string_view text : {
+             "",    "B",   "3B",  "D1",     "B0",  "B6",  "B3.",      "B3.0",   "B3.5",  "B3,2",
+             "B32", " B3", "B3 ", "B3.2.1", "A2-", "-A4", "A2-A4-B1", "A2--A4", "A2-D4",
+         }) {
         SCI_CHECK(!parse_area(text).has_value());
     }
     SCI_CHECK(parse_area("Z9").error().code == sci::core::ErrorCode::InvalidData);
