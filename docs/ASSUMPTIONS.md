@@ -2924,3 +2924,16 @@ The review sheets of A4 part B are written by `sci-review-sheet`
 - **Text** is a 3 x 5 bitmap font built into the tool (capitals, digits,
   a few signs), as `sci-hint-tool` draws its digits: no new dependency and
   no game or system font. **Decided.**
+
+## Milestone 10: the round-trip check (2026-10-30)
+
+The round-trip check of A4 A.6, applied to the current reconstruction
+(milestone 3b) as a baseline. It changes no rendering and no golden hash.
+
+- **What is checked.** The fitted chains of the visual scene: every chain
+  of the planar graph replaced by a fitted curve (line, arc, spline,
+  ellipse), automatic or from a chain hint. The chain's reconstruction is
+  the fitted strokes of the PIC lines whose edges it replaces, before the
+  stroke integrity pass (whose cuts and removed runs are A1's, not a
+  hypothesis about the shape). Its original pixels are the pixels those
+  lines drew by path 1's line rule. **Assumed** (work in progress).
