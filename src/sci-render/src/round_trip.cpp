@@ -89,7 +89,7 @@ Deviation deviation(const std::vector<std::uint32_t>& from, const std::vector<st
 
 // Sorted, without duplicates.
 void normalise(std::vector<std::uint32_t>& pixels) {
-    std::ranges::sort(pixels);
+    std::ranges::stable_sort(pixels);
     const auto [first, last] = std::ranges::unique(pixels);
     pixels.erase(first, last);
 }
@@ -148,6 +148,96 @@ std::vector<std::uint32_t> rasterize_1x(std::span<const Vec2> points) {
     return pixels;
 }
 
+namespace {
+
+// Pixels with the line they belong to: per pixel, the first of the chain's
+// lines that drew it (original) or whose stroke covers it (reconstruction).
+struct TaggedPixels {
+    std::vector<std::pair<std::uint32_t, std::int32_t>> tagged;
+
+    // Sorts the tags by pixel (stable: the first line stays first) and
+    // returns the pixels, sorted and without duplicates.
+    std::vector<std::uint32_t> pixels() {
+        std::ranges::stable_sort(tagged, {}, &std::pair<std::uint32_t, std::int32_t>::first);
+        std::vector<std::uint32_t> pixels;
+        pixels.reserve(tagged.size());
+        for (const auto& [p, line] : tagged) {
+            pixels.push_back(p);
+        }
+        normalise(pixels);
+        return pixels;
+    }
+
+    // After pixels(): the line of a pixel.
+    [[nodiscard]] std::int32_t line_at(std::uint32_t p) const {
+        const auto it = std::ranges::lower_bound(tagged, p, {}, &std::pair<std::uint32_t, std::int32_t>::first);
+        return it == tagged.end() ? std::int32_t{-1} : it->second;
+    }
+};
+
+// Missed pixels that one of the chain's lines owns at 1x.
+int missed_seen(const pic::DrawTrace& trace, const vector::FittedChain& chain,
+                const std::vector<std::uint32_t>& original, const std::vector<std::uint32_t>& reconstructed) {
+    int seen = 0;
+    for (const std::uint32_t p : original) {
+        if (std::ranges::binary_search(reconstructed, p)) {
+            continue;
+        }
+        const Pixel px = pixel_of(p);
+        const std::int32_t owner = trace.visual_owner[pic::PictureMaps::index(px.x, px.y + pic::picture_top)];
+        if (std::ranges::binary_search(chain.lines, owner)) {
+            ++seen;
+        }
+    }
+    return seen;
+}
+
+RoundTripChain check_chain(const pic::DrawTrace& trace, const vector::FittedChain& chain,
+                           const std::map<std::int32_t, const vector::FittedLine*>& fitted) {
+    RoundTripChain check;
+    check.kind = chain.kind;
+    check.hinted = !chain.hint.empty();
+    check.first_line = chain.lines.empty() ? -1 : chain.lines.front();
+    TaggedPixels original_of;
+    TaggedPixels reconstructed_of;
+    for (const std::int32_t primitive : chain.lines) {
+        const auto& traced = trace.primitives[static_cast<std::size_t>(primitive)];
+        if (const auto* line = std::get_if<pic::Line>(&traced.shape)) {
+            for (const std::uint32_t p : line_pixels(*line)) {
+                original_of.tagged.emplace_back(p, primitive);
+            }
+        }
+        if (const auto found = fitted.find(primitive); found != fitted.end()) {
+            for (const std::uint32_t p : rasterize_1x(found->second->points)) {
+                reconstructed_of.tagged.emplace_back(p, primitive);
+            }
+        }
+    }
+    const std::vector<std::uint32_t> original = original_of.pixels();
+    const std::vector<std::uint32_t> reconstructed = reconstructed_of.pixels();
+    const Deviation added = deviation(reconstructed, original);
+    const Deviation missed = deviation(original, reconstructed);
+    check.original_pixels = static_cast<int>(original.size());
+    check.reconstructed_pixels = static_cast<int>(reconstructed.size());
+    check.added = added.count;
+    check.missed = missed.count;
+    check.missed_seen = missed_seen(trace, chain, original, reconstructed);
+    check.max_distance = std::max(added.max, missed.max);
+    check.distance_sum = added.sum + missed.sum;
+    if (check.max_distance > 0) {
+        // The first pixel in raster order with the largest distance.
+        const bool from_added =
+            added.max == check.max_distance && (missed.max < added.max || added.worst <= missed.worst);
+        const std::uint32_t worst = from_added ? added.worst : missed.worst;
+        check.worst_x = pixel_of(worst).x;
+        check.worst_y = pixel_of(worst).y;
+        check.worst_line = from_added ? reconstructed_of.line_at(worst) : original_of.line_at(worst);
+    }
+    return check;
+}
+
+} // namespace
+
 RoundTrip check_round_trip(const pic::DrawTrace& trace, const vector::SceneStats& stats) {
     std::map<std::int32_t, const vector::FittedLine*> fitted;
     for (const vector::FittedLine& line : stats.fitted_strokes) {
@@ -155,73 +245,8 @@ RoundTrip check_round_trip(const pic::DrawTrace& trace, const vector::SceneStats
     }
     RoundTrip result;
     for (std::size_t c = 0; c < stats.fitted_chains.size(); ++c) {
-        const vector::FittedChain& chain = stats.fitted_chains[c];
-        RoundTripChain check;
+        RoundTripChain check = check_chain(trace, stats.fitted_chains[c], fitted);
         check.chain = c;
-        check.kind = chain.kind;
-        check.hinted = !chain.hint.empty();
-        check.first_line = chain.lines.empty() ? -1 : chain.lines.front();
-        // Per pixel, the first of the chain's lines that drew it (original)
-        // or whose stroke covers it (reconstruction).
-        std::vector<std::pair<std::uint32_t, std::int32_t>> original_of;
-        std::vector<std::pair<std::uint32_t, std::int32_t>> reconstructed_of;
-        for (const std::int32_t primitive : chain.lines) {
-            const auto& traced = trace.primitives[static_cast<std::size_t>(primitive)];
-            if (const auto* line = std::get_if<pic::Line>(&traced.shape)) {
-                for (const std::uint32_t p : line_pixels(*line)) {
-                    original_of.emplace_back(p, primitive);
-                }
-            }
-            if (const auto found = fitted.find(primitive); found != fitted.end()) {
-                for (const std::uint32_t p : rasterize_1x(found->second->points)) {
-                    reconstructed_of.emplace_back(p, primitive);
-                }
-            }
-        }
-        const auto pixels_of = [](std::vector<std::pair<std::uint32_t, std::int32_t>>& tagged) {
-            std::ranges::stable_sort(tagged, {}, &std::pair<std::uint32_t, std::int32_t>::first);
-            std::vector<std::uint32_t> pixels;
-            pixels.reserve(tagged.size());
-            for (const auto& [p, line] : tagged) {
-                pixels.push_back(p);
-            }
-            normalise(pixels);
-            return pixels;
-        };
-        const auto line_at = [](const std::vector<std::pair<std::uint32_t, std::int32_t>>& tagged, std::uint32_t p) {
-            const auto it = std::ranges::lower_bound(tagged, p, {}, &std::pair<std::uint32_t, std::int32_t>::first);
-            return it == tagged.end() ? std::int32_t{-1} : it->second;
-        };
-        const std::vector<std::uint32_t> original = pixels_of(original_of);
-        const std::vector<std::uint32_t> reconstructed = pixels_of(reconstructed_of);
-        const Deviation added = deviation(reconstructed, original);
-        const Deviation missed = deviation(original, reconstructed);
-        check.original_pixels = static_cast<int>(original.size());
-        check.reconstructed_pixels = static_cast<int>(reconstructed.size());
-        check.added = added.count;
-        check.missed = missed.count;
-        check.max_distance = std::max(added.max, missed.max);
-        check.distance_sum = added.sum + missed.sum;
-        for (const std::uint32_t p : original) {
-            if (std::ranges::binary_search(reconstructed, p)) {
-                continue;
-            }
-            const Pixel px = pixel_of(p);
-            const std::int32_t owner =
-                trace.visual_owner[pic::PictureMaps::index(px.x, px.y + pic::picture_top)];
-            if (std::ranges::binary_search(chain.lines, owner)) {
-                ++check.missed_seen;
-            }
-        }
-        if (check.max_distance > 0) {
-            // The first pixel in raster order with the largest distance.
-            const bool from_added =
-                added.max == check.max_distance && (missed.max < added.max || added.worst <= missed.worst);
-            const std::uint32_t worst = from_added ? added.worst : missed.worst;
-            check.worst_x = pixel_of(worst).x;
-            check.worst_y = pixel_of(worst).y;
-            check.worst_line = from_added ? line_at(reconstructed_of, worst) : line_at(original_of, worst);
-        }
         if (check.passes()) {
             ++result.passing;
         } else {

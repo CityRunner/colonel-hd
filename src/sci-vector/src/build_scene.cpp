@@ -1231,7 +1231,7 @@ void record_fits(const detail::Arrangement& arrangement, const Curves& curves, c
                 record.lines.push_back(static_cast<std::int32_t>(lines[static_cast<std::size_t>(source)].primitive));
             }
         }
-        std::ranges::sort(record.lines);
+        std::ranges::stable_sort(record.lines);
         const auto [first, last] = std::ranges::unique(record.lines);
         record.lines.erase(first, last);
         stats.fitted_chains.push_back(std::move(record));

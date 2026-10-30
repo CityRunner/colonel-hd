@@ -198,8 +198,8 @@ std::string milli(std::int64_t value) {
 // Every chain of the round-trip check: its kind, its lines' commands, the
 // deviation, and where it is largest (command, 1x picture coordinates and
 // the review grid's quarter).
-std::vector<RoundTripLine> describe_round_trip(const sci::render::RoundTrip& round_trip,
-                                               const SceneStats& stats, const sci::pic::DrawTrace& trace) {
+std::vector<RoundTripLine> describe_round_trip(const sci::render::RoundTrip& round_trip, const SceneStats& stats,
+                                               const sci::pic::DrawTrace& trace) {
     const auto command = [&](std::int32_t p) {
         return p < 0 ? std::string("-") : std::format("{}", trace.primitives[static_cast<std::size_t>(p)].command);
     };
@@ -213,9 +213,9 @@ std::vector<RoundTripLine> describe_round_trip(const sci::render::RoundTrip& rou
         std::string text = std::format(
             "{}{}, commands {}: max {} px, mean {} px, {} original / {} reconstructed pixels, {} added, {} missed "
             "({} seen)",
-            fitted_name(c.kind), chain.hint.empty() ? std::string() : std::format(" (hint `{}`)", chain.hint),
-            commands, c.max_distance, milli(c.mean_milli()), c.original_pixels, c.reconstructed_pixels, c.added,
-            c.missed, c.missed_seen);
+            fitted_name(c.kind), chain.hint.empty() ? std::string() : std::format(" (hint `{}`)", chain.hint), commands,
+            c.max_distance, milli(c.mean_milli()), c.original_pixels, c.reconstructed_pixels, c.added, c.missed,
+            c.missed_seen);
         std::string where;
         if (c.max_distance > 0) {
             where = std::format("({}, {}) {}, command {}", c.worst_x, c.worst_y,
@@ -249,8 +249,7 @@ std::string round_trip_report(const std::vector<Row>& rows) {
     std::vector<std::pair<const RoundTripLine*, std::uint16_t>> all;
     for (const Row& row : rows) {
         const auto& r = row.round_trip;
-        text += std::format("pic {}: {} checked, {} pass, {} fail", row.number, r.chains.size(), r.passing,
-                            r.failing);
+        text += std::format("pic {}: {} checked, {} pass, {} fail", row.number, r.chains.size(), r.passing, r.failing);
         const RoundTripLine* worst = nullptr;
         for (const auto& line : row.round_trip_lines) {
             all.emplace_back(&line, row.number);
@@ -261,14 +260,15 @@ std::string round_trip_report(const std::vector<Row>& rows) {
         if (worst != nullptr && worst->check.max_distance > 0) {
             text += std::format("; worst {} px at {}", worst->check.max_distance, worst->where);
         }
-        text += "\n";
+        text += '\n';
         for (const auto& line : row.round_trip_lines) {
             if (!line.check.passes()) {
                 text += std::format("  fail: {}\n", line.text);
             }
         }
     }
-    std::ranges::stable_sort(all, [](const auto& a, const auto& b) { return worse(*a.first, a.second, *b.first, b.second); });
+    std::ranges::stable_sort(
+        all, [](const auto& a, const auto& b) { return worse(*a.first, a.second, *b.first, b.second); });
     text += "\nWorst chains:\n";
     for (std::size_t i = 0; i < std::min<std::size_t>(all.size(), 20); ++i) {
         text += std::format("{:2}. pic {}: {}\n", i + 1, all[i].second, all[i].first->text);
@@ -358,7 +358,7 @@ std::optional<Row> analyse(const sci::resource::ResourceManager& manager, std::u
         .integrity = sci::render::check_integrity(visual.scene, drawn->maps, drawn->trace, executor),
         .integrity_cases = {},
         .integrity_changes = {},
-        .round_trip = {},
+        .round_trip = sci::render::RoundTrip(),
         .round_trip_lines = {},
         .entry_ms = std::chrono::duration<double, std::milli>(end - start).count(),
     };
@@ -537,6 +537,43 @@ void print_summary(const std::vector<Row>& rows) {
     }
 }
 
+// The round-trip totals: chains passing and failing, by kind, automatic or
+// hinted, and by deviation (0, 1, 2, more), and the pixels.
+void print_round_trip(const std::vector<Row>& rows) {
+    int chains = 0;
+    int passing = 0;
+    int failing = 0;
+    int worst = 0;
+    for (const Row& row : rows) {
+        chains += static_cast<int>(row.round_trip.chains.size());
+        passing += row.round_trip.passing;
+        failing += row.round_trip.failing;
+        for (const auto& c : row.round_trip.chains) {
+            worst = std::max(worst, c.max_distance);
+        }
+    }
+    std::println("Round trip (A4 A.6): {} fitted chains, {} pass, {} fail; worst deviation {} px", chains, passing,
+                 failing, worst);
+    // Chains by kind, automatic or hinted, and by deviation (0, 1, 2, more).
+    std::map<std::pair<std::string_view, bool>, std::array<int, 4>> by_kind;
+    std::int64_t added = 0;
+    std::int64_t missed = 0;
+    std::int64_t pixels = 0;
+    for (const Row& row : rows) {
+        for (const auto& c : row.round_trip.chains) {
+            ++by_kind[{fitted_name(c.kind), c.hinted}][static_cast<std::size_t>(std::min(c.max_distance, 3))];
+            added += c.added;
+            missed += c.missed;
+            pixels += c.original_pixels;
+        }
+    }
+    for (const auto& [key, counts] : by_kind) {
+        std::println("Round trip, {} {}: deviation 0 / 1 / 2 / more: {} / {} / {} / {}", key.first,
+                     key.second ? "(hinted)" : "(automatic)", counts[0], counts[1], counts[2], counts[3]);
+    }
+    std::println("Round trip pixels: {} original, {} added, {} missed", pixels, added, missed);
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -583,38 +620,7 @@ int main(int argc, char** argv) {
         std::ofstream round_trip(*options->round_trip);
         round_trip << round_trip_report(rows);
         ok = ok && static_cast<bool>(round_trip);
-        int chains = 0;
-        int passing = 0;
-        int failing = 0;
-        int worst = 0;
-        for (const Row& row : rows) {
-            chains += static_cast<int>(row.round_trip.chains.size());
-            passing += row.round_trip.passing;
-            failing += row.round_trip.failing;
-            for (const auto& c : row.round_trip.chains) {
-                worst = std::max(worst, c.max_distance);
-            }
-        }
-        std::println("Round trip (A4 A.6): {} fitted chains, {} pass, {} fail; worst deviation {} px", chains, passing,
-                     failing, worst);
-        // Chains by kind, automatic or hinted, and by deviation (0, 1, 2, more).
-        std::map<std::pair<std::string_view, bool>, std::array<int, 4>> by_kind;
-        std::int64_t added = 0;
-        std::int64_t missed = 0;
-        std::int64_t pixels = 0;
-        for (const Row& row : rows) {
-            for (const auto& c : row.round_trip.chains) {
-                ++by_kind[{fitted_name(c.kind), c.hinted}][static_cast<std::size_t>(std::min(c.max_distance, 3))];
-                added += c.added;
-                missed += c.missed;
-                pixels += c.original_pixels;
-            }
-        }
-        for (const auto& [key, counts] : by_kind) {
-            std::println("Round trip, {} {}: deviation 0 / 1 / 2 / more: {} / {} / {} / {}", key.first,
-                         key.second ? "(hinted)" : "(automatic)", counts[0], counts[1], counts[2], counts[3]);
-        }
-        std::println("Round trip pixels: {} original, {} added, {} missed", pixels, added, missed);
+        print_round_trip(rows);
     }
     return ok && out ? 0 : 1;
 }

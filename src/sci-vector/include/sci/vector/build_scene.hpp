@@ -66,8 +66,8 @@ struct FittedLine {
 
 struct FittedChain {
     FittedKind kind = FittedKind::Line;
-    std::string hint;                   // The chain hint it was fitted for; empty if automatic.
-    std::vector<std::int32_t> lines;    // Trace indices of the lines with edges in the chain, ascending.
+    std::string hint;                // The chain hint it was fitted for; empty if automatic.
+    std::vector<std::int32_t> lines; // Trace indices of the lines with edges in the chain, ascending.
 };
 
 // What the analysis did, for the replacement report.
@@ -86,15 +86,15 @@ struct SceneStats {
     int brushes = 0;         // Solid brushes drawn as shapes.
     int textured = 0;        // Textured brushes drawn as blocks.
     // Chains of short lines replaced by fitted curves.
-    int straightened = 0;            // By one straight line.
-    int arcs = 0;                    // By circular arcs.
-    int splines = 0;                 // By cubic splines.
-    int ellipses = 0;                // Closed chains, by ellipses.
-    int fitted_lines = 0;            // PIC lines replaced by these curves.
-    int rejected_fits = 0;           // Fits left out because they would change the faces.
+    int straightened = 0;                   // By one straight line.
+    int arcs = 0;                           // By circular arcs.
+    int splines = 0;                        // By cubic splines.
+    int ellipses = 0;                       // Closed chains, by ellipses.
+    int fitted_lines = 0;                   // PIC lines replaced by these curves.
+    int rejected_fits = 0;                  // Fits left out because they would change the faces.
     std::vector<FittedChain> fitted_chains; // In the order they were fitted.
     std::vector<FittedLine> fitted_strokes; // Every line with fitted edges, in trace order.
-    std::vector<Fallback> fallbacks; // The mixed faces.
+    std::vector<Fallback> fallbacks;        // The mixed faces.
     // Hints (spec section 6.7).
     int hint_chains = 0;                     // Chain hints fitted as they ask.
     int hint_gaps = 0;                       // Gap hints closed.

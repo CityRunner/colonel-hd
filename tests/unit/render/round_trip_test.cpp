@@ -11,7 +11,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <numbers>
 #include <utility>
 #include <vector>
 
@@ -22,8 +21,10 @@ namespace {
 sci::pic::TracedPrimitive traced_line(int x0, int y0, int x1, int y1) {
     sci::pic::TracedPrimitive primitive;
     primitive.state.planes = sci::pic::plane_visual;
-    primitive.shape = sci::pic::Line{.from = {.x = static_cast<std::int16_t>(x0), .y = static_cast<std::int16_t>(y0)},
-                                     .to = {.x = static_cast<std::int16_t>(x1), .y = static_cast<std::int16_t>(y1)}};
+    primitive.shape = sci::pic::Line{
+        .from = {.x = static_cast<std::int16_t>(x0), .y = static_cast<std::int16_t>(y0)},
+        .to = {.x = static_cast<std::int16_t>(x1), .y = static_cast<std::int16_t>(y1)},
+    };
     return primitive;
 }
 
@@ -65,27 +66,36 @@ std::vector<std::uint32_t> path1_pixels(int x0, int y0, int x1, int y1) {
     std::vector<std::uint32_t> pixels;
     sci::pic::for_each_line_pixel({.x = x0, .y = y0}, {.x = x1, .y = y1},
                                   [&](int x, int y) { pixels.push_back(static_cast<std::uint32_t>((y * 320) + x)); });
-    std::ranges::sort(pixels);
+    std::ranges::stable_sort(pixels);
     const auto [first, last] = std::ranges::unique(pixels);
     pixels.erase(first, last);
     return pixels;
 }
 
-// A quarter circle of radius r around (cx, cy) as PIC lines between the
-// pixels nearest to it every `step` degrees, and the trace of those lines.
+// The point at parameter t (0 to 1) of the quarter circle of radius r
+// counter-clockwise from (r, 0), on screen (y down), in the rational
+// parametrisation: no trigonometry (spec section 5.3).
+Vec2 on_circle(double r, double t) {
+    const double d = 1 + (t * t);
+    return {.x = r * (1 - (t * t)) / d, .y = -r * 2 * t / d};
+}
+
+// A quarter circle of radius r around pixel (cx, cy) as PIC lines between
+// the pixels nearest to it at `steps` equal parameter steps, and the trace
+// of those lines.
 struct Staircase {
     sci::pic::DrawTrace trace;
     std::vector<std::int32_t> lines;
 };
 
-Staircase quarter_circle(int cx, int cy, int r, int step) {
+Staircase quarter_circle(int cx, int cy, int r, int steps) {
     Staircase stairs;
     int px = cx + r;
     int py = cy;
-    for (int degrees = step; degrees <= 90; degrees += step) {
-        const double a = degrees * std::numbers::pi / 180;
-        const int x = cx + static_cast<int>(std::lround(r * std::cos(a)));
-        const int y = cy - static_cast<int>(std::lround(r * std::sin(a)));
+    for (int k = 1; k <= steps; ++k) {
+        const Vec2 p = on_circle(r, static_cast<double>(k) / steps);
+        const int x = cx + static_cast<int>(std::lround(p.x));
+        const int y = cy + static_cast<int>(std::lround(p.y));
         stairs.lines.push_back(static_cast<std::int32_t>(stairs.trace.primitives.size()));
         stairs.trace.primitives.push_back(traced_line(px, py, x, y));
         px = x;
@@ -97,9 +107,11 @@ Staircase quarter_circle(int cx, int cy, int r, int step) {
 // The arc of radius r around the centre of pixel (cx, cy), flattened.
 std::vector<Vec2> arc(int cx, int cy, double r) {
     std::vector<Vec2> points;
-    for (int i = 0; i <= 360; ++i) {
-        const double a = (i / 4.0) * std::numbers::pi / 180;
-        points.push_back({.x = cx + 0.5 + (r * std::cos(a)), .y = cy + 0.5 - (r * std::sin(a))});
+    constexpr int chords = 360;
+    points.reserve(chords + 1);
+    for (int i = 0; i <= chords; ++i) {
+        const Vec2 p = on_circle(r, static_cast<double>(i) / chords);
+        points.push_back({.x = cx + 0.5 + p.x, .y = cy + 0.5 + p.y});
     }
     return points;
 }
@@ -118,6 +130,7 @@ SCI_TEST(round_trip_of_a_straight_line_is_exact) {
         const auto [x1, y1] = b;
         const auto expected = path1_pixels(x0, y0 + 10, x1, y1 + 10);
         std::vector<std::uint32_t> shifted;
+        shifted.reserve(expected.size());
         for (const std::uint32_t p : expected) {
             shifted.push_back(p - (10 * 320));
         }
@@ -149,7 +162,7 @@ SCI_TEST(round_trip_snaps_staircase_corners) {
 }
 
 SCI_TEST(round_trip_accepts_a_right_arc_and_rejects_a_wrong_one) {
-    const Staircase stairs = quarter_circle(100, 100, 30, 10);
+    const Staircase stairs = quarter_circle(100, 100, 30, 9);
     // The strokes of the chain: the arc, split among the lines as the
     // fitting would; here all on the first line, the others empty of fits.
     const auto check = [&](double radius) {
@@ -197,8 +210,7 @@ SCI_TEST(round_trip_tolerance_is_one_pixel) {
 
     // One stray pixel two away from the end fails the whole chain.
     const auto spur = sci::render::check_round_trip(
-        trace,
-        one_chain({0}, {{centre(10, 50), centre(40, 50), centre(42, 50)}}, sci::vector::FittedKind::Line));
+        trace, one_chain({0}, {{centre(10, 50), centre(40, 50), centre(42, 50)}}, sci::vector::FittedKind::Line));
     SCI_CHECK(spur.chains[0].max_distance == 2);
     SCI_CHECK(spur.chains[0].added == 2 && spur.chains[0].missed == 0);
     SCI_CHECK(spur.chains[0].worst_x == 42 && spur.chains[0].worst_y == 50);
