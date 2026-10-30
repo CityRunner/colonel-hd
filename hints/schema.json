@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/CityRunner/sierra-hd/hints/schema.json",
-  "title": "sierra-hd scene-analysis hints, version 1",
-  "description": "One file per picture, hints/pic.NNN.json. See hints/README.md. Checked by scripts/check-hints.py; the program's own reader (sci-vector, parse_hints) applies the same rules.",
+  "title": "sierra-hd scene-analysis hints, version 2",
+  "description": "One file per picture, hints/pic.NNN.json. See hints/README.md. Checked by scripts/check-hints.py; the program's own reader (sci-vector, parse_hints) applies the same rules. Version 2 adds the scene model of addendum A4 (objects, repetitions). A version 1 file stays valid and means the same: it is a version 2 file without objects and repetitions, which version 1 does not allow. A file is migrated by changing its version to 2, nothing else, when it first gains objects.",
   "type": "object",
   "additionalProperties": false,
   "required": ["format", "version", "picture", "pic_sha256", "analyser"],
   "properties": {
     "format": {"const": "sierra-hd-hints"},
-    "version": {"const": 1},
+    "version": {"enum": [1, 2]},
     "picture": {"type": "integer", "minimum": 0, "maximum": 999},
     "pic_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "analyser": {"$ref": "#/$defs/text"},
@@ -98,11 +98,164 @@
           "note": {"$ref": "#/$defs/text"}
         }
       }
+    },
+    "objects": {
+      "description": "Version 2. The scene model (docs/SPEC_ADDENDA.md A4, A.1 to A.7): what the picture shows, as objects made of parts made of primitives, anchored to PIC command indices and 1x points. An object holds its main hypothesis; alternatives hold others. Information for milestone 10; the vector path does not use it yet.",
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "cell", "confidence", "parts"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "type": {"$ref": "#/$defs/object-type"},
+          "cell": {"$ref": "#/$defs/cell"},
+          "confidence": {"$ref": "#/$defs/confidence"},
+          "label": {"$ref": "#/$defs/text"},
+          "parts": {"$ref": "#/$defs/parts"},
+          "relations": {"$ref": "#/$defs/geometry"},
+          "alternatives": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "type", "confidence", "parts"],
+              "properties": {
+                "id": {"$ref": "#/$defs/id"},
+                "type": {"$ref": "#/$defs/object-type"},
+                "confidence": {"$ref": "#/$defs/confidence"},
+                "note": {"$ref": "#/$defs/text"},
+                "parts": {"$ref": "#/$defs/parts"},
+                "relations": {"$ref": "#/$defs/geometry"}
+              }
+            }
+          },
+          "decision": {
+            "description": "A.7: the customer's choice between the hypotheses (the object's id for the main one), with the cell reference of the answer. Once present, the object is never asked again.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hypothesis", "by", "date", "cell"],
+            "properties": {
+              "hypothesis": {"$ref": "#/$defs/id"},
+              "by": {"const": "customer"},
+              "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+              "cell": {"$ref": "#/$defs/cell"},
+              "note": {"$ref": "#/$defs/text"}
+            }
+          }
+        }
+      }
+    },
+    "repetitions": {
+      "description": "Version 2. A.5: objects, or parts, that are reconstructed identically. All items are objects of one type, or parts of one role.",
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "items"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "items": {"type": "array", "minItems": 2, "maxItems": 512, "items": {"$ref": "#/$defs/id"}},
+          "note": {"$ref": "#/$defs/text"}
+        }
+      }
     }
   },
   "$defs": {
     "id": {"type": "string", "pattern": "^[a-z0-9-]{1,32}$"},
     "text": {"type": "string", "maxLength": 200, "pattern": "^[ -~]*$"},
-    "line": {"type": "integer", "minimum": 0, "maximum": 1000000}
+    "line": {"type": "integer", "minimum": 0, "maximum": 1000000},
+    "point": {
+      "description": "A 1x pixel in picture coordinates as stored (before mirroring).",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {"type": "integer", "minimum": 0, "maximum": 319},
+        {"type": "integer", "minimum": 0, "maximum": 189}
+      ]
+    },
+    "cell": {
+      "description": "A cell, quarter or range of the review grid (A4 part B): B3, B3.2, A2-A4.",
+      "type": "string",
+      "pattern": "^[A-C][1-5](\\.[1-4])?(-[A-C][1-5](\\.[1-4])?)?$"
+    },
+    "confidence": {"description": "Per mille, 0 to 1000.", "type": "integer", "minimum": 0, "maximum": 1000},
+    "object-type": {
+      "description": "A.2. Organic types (foliage, tree, rock, cloud, water, terrain, figure) get no geometric idealisation (A.4): only spline and polyline primitives, no relations, no repetitions.",
+      "enum": [
+        "window", "door", "arch", "staircase", "column", "roof", "railing", "fence", "gate", "furniture",
+        "fireplace", "curtain", "painting", "wall", "floor", "ceiling", "building", "bridge", "dock", "well",
+        "tombstone", "path", "foliage", "tree", "rock", "cloud", "water", "terrain", "figure", "other"
+      ]
+    },
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "role", "primitives"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "role": {
+            "enum": [
+              "outline", "edge", "frame", "glazing-bar", "pane", "sill", "lintel", "jamb", "leaf", "panel",
+              "handle", "hinge", "step", "riser", "tread", "landing", "baluster", "handrail", "newel", "post",
+              "rail", "picket", "shaft", "capital", "base", "ridge", "eave", "gable", "brick", "crenellation",
+              "board", "leg", "top", "shelf", "drawer", "rod", "valance", "fold", "trunk", "branch", "crown",
+              "root", "contour", "ripple", "shadow", "highlight", "opening", "other"
+            ]
+          },
+          "label": {"$ref": "#/$defs/text"},
+          "primitives": {"type": "array", "minItems": 1, "maxItems": 512, "items": {"$ref": "#/$defs/primitive"}}
+        }
+      }
+    },
+    "primitive": {
+      "description": "What the commands draw, as intended: points are its ends, corners and points it passes through, in order (an arc: start, a point on it, end; an ellipse: at least 3 points on it).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "commands", "points"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["line", "arc", "ellipse", "spline", "polyline"]},
+        "commands": {"type": "array", "minItems": 1, "maxItems": 512, "items": {"$ref": "#/$defs/line"}},
+        "points": {"type": "array", "minItems": 2, "maxItems": 512, "items": {"$ref": "#/$defs/point"}},
+        "corners": {
+          "type": "array",
+          "maxItems": 512,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["point", "kind"],
+            "properties": {
+              "point": {"type": "integer", "minimum": 0, "maximum": 511},
+              "kind": {"enum": ["sharp", "rounded", "step"]}
+            }
+          }
+        }
+      }
+    },
+    "geometry": {
+      "description": "A.3: relations between parts or primitives of the same hypothesis, solved together.",
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "items"],
+        "properties": {
+          "kind": {"enum": ["parallel", "perpendicular", "equal-spacing", "symmetry", "tangent", "aligned"]},
+          "items": {"type": "array", "minItems": 2, "maxItems": 512, "items": {"$ref": "#/$defs/id"}},
+          "axis": {"enum": ["horizontal", "vertical"]},
+          "note": {"$ref": "#/$defs/text"}
+        }
+      }
+    }
   }
 }
