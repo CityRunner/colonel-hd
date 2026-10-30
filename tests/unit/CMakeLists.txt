@@ -110,3 +110,10 @@ if(SCI_BUILD_APP)
     target_include_directories(sci-audio-output-tests PRIVATE ${PROJECT_SOURCE_DIR}/src/app/src)
     target_link_libraries(sci-audio-output-tests PRIVATE SDL3::SDL3-static)
 endif()
+
+# The grid of the review sheets (A4 part B) is compiled from the tool's
+# sources (tools/common).
+sci_add_unit_test(NAME sci-tools-tests
+    SOURCES tools/review_grid_test.cpp ${PROJECT_SOURCE_DIR}/tools/common/review_grid.cpp
+    DEPENDS sci-core)
+target_include_directories(sci-tools-tests PRIVATE ${PROJECT_SOURCE_DIR}/tools/common)
