@@ -3094,3 +3094,68 @@ No rendering and no golden hash changes. No real picture has objects yet.
   - Should curtains and other fabric count as organic?
   - Should a PIC command be in at most one primitive per hypothesis? A
     stricter rule would catch more analysis errors.
+
+## Milestone 10: the pilot scene models (2026-10-30)
+
+The first scene models of A4 A.1, A.2, A.5 and A.7 in real hint files,
+written by the agent as the offline analyser from the 1x maps, the review
+sheets and the command list of the new `sci-hint-tool <game> commands
+<n>[+<n>...]` (every traced primitive with its command index, picture
+coordinates, pair and owned pixels). No rendering change.
+
+- **Pictures.** 12 (house exterior: windows with shutters and glazing
+  bars, door with an arched transom, steps, cellar door, fence, tree);
+  74 with 174 on top, as the game draws it (attic stairway; 174 holds the
+  panelled wall and the rug, so its objects are in `pic.174.json` with 174's
+  command indices); and 58, the chapel, chosen from the 3a labels ("back
+  wall windows", "pews") because it has a clean repetition candidate: two
+  back-wall windows with the same glazing cross, plus an octagonal window
+  with a concentric casing. The pews were not modelled in this pilot.
+  **Decided.**
+- **Counts.** 12: 8 objects, 30 parts, 88 primitives, 19 relations,
+  2 alternatives. 74: 1 object (the stairs), 7 parts, 25 primitives,
+  2 relations, 1 alternative. 174: 2 objects (wall battens 18 px apart,
+  rug with three nested outlines), 17 primitives, 2 relations,
+  1 repetition (the battens). 58: 3 objects, 16 primitives, 5 relations.
+  Every primitive point lies within 1.5 px of its commands' lines (checked
+  with a scratch script against the command list). The four files are
+  version 2; the analyser member names the pilot. **Finding.**
+- **Never invent, in practice.** Relations were written only where the
+  1x coordinates show them: parallels with the same slope, equal spacing
+  where it is exact (pickets 5 px, battens 18 px, lit steps 7 px). Things
+  that the object type suggests but the pixels do not show were left out:
+  the octagonal window is not regular or symmetric (sides 18 to 26 px, the
+  wall is in perspective), the rug's right edges converge (not parallel),
+  window bars in perspective are not perpendicular, the steps of picture
+  12 are offset differently (11 / 7 px), so they are no repetition. These
+  differ by more than the 1 px tolerance, so they are not put to the
+  customer either. **Decided** (A.6).
+- **Batch 1** (A4 B.2): four cases, in
+  `reports/images/milestone-10/pilot/batch-1/batch-1.md` with crops (git
+  ignored): the tall window's pane spacing (12), the door transom as arc
+  or half ellipse (12), the pitch of the dark attic steps (74), whether
+  the two chapel windows are identical (58). Close calls of at most 1 px,
+  where the pixels do not decide. **Finding.**
+- **Schema gap: an uncertain repetition cannot be written.** Alternatives
+  belong to one object; `repetitions` is a file-level list without a
+  confidence, alternatives or a decision. "Are these two windows the same
+  window?" (case 4) is therefore asked in the batch but not recorded in
+  `pic.058.json`: writing it as a repetition would assert it, and an
+  alternative inside one object would have to copy the other object's
+  geometry. A possible extension: a `confidence`, `alternatives` (for
+  example "none") and a `decision` on a repetition, as on an object. Not
+  done here, by the task's rule to stop rather than bend the data.
+  **Open question for the customer/next task.**
+- **Smaller observations.** A wide glazing bar is drawn as two parallel
+  PIC lines; the pilot puts both commands in one `line` primitive whose
+  points are one edge. A stroke width or "double line" kind would say
+  this more exactly. Commands reused by an alternative's parts (allowed)
+  were needed for every alternative, which makes alternatives long.
+  **Assumed.**
+- **Validation.** `scripts/check-hints.py`: 87 files, 0 problems.
+  `sci-hint-tool check hints`: passes (exit 0). `sci-hd-report
+  --round-trip`: 13204 chains, 13187 pass, 17 fail, as the baseline
+  (pictures 12, 58, 74, 174 unchanged). `sci-golden-hashes --check --hints
+  hints`: all golden hashes match: the parser does not use objects yet,
+  and the golden hashes do not include the analysis cache key.
+  **Finding.**
