@@ -7,7 +7,7 @@
 // both scenes and the HD frame and priority map at the chosen scale).
 //
 //   sci-hd-report <game> <report.md> [--scale <N>] [--images <directory>] [--hints <directory>]
-//                 [--changes <file>]
+//                 [--changes <file>] [--round-trip <file>]
 //
 // --hints applies the hint files of a directory (spec section 6.7; the
 // repository's are in hints/) and reports what each did.
@@ -17,6 +17,12 @@
 // integrity pass counted by evidence. --changes writes every change with
 // its evidence to a file (about 24 MB for the whole game).
 //
+// --round-trip writes the round-trip check of A4 A.6
+// (sci::render::check_round_trip) to a file: per picture the fitted chains
+// checked, passing and failing, the worst deviation with its command and
+// review-grid quarter, every failing chain, and the worst chains of the
+// game.
+//
 // The report holds numbers only. --images also writes, per picture, the
 // original and the HD frame side by side at scale 3; those images are
 // derived from the game art and go to git-ignored places only.
@@ -24,12 +30,14 @@
 #include "game_folder.hpp"
 #include "picture.hpp"
 #include "png.hpp"
+#include "review_grid.hpp"
 #include "sci/platform/picture_hints.hpp"
 #include "sci/platform/thread_executor.hpp"
 #include "sci/render/acceptance.hpp"
 #include "sci/render/integrity.hpp"
 #include "sci/render/original.hpp"
 #include "sci/render/rasterize.hpp"
+#include "sci/render/round_trip.hpp"
 #include "sci/vector/build_scene.hpp"
 
 #include <algorithm>
@@ -61,6 +69,14 @@ struct Options {
     std::optional<fs::path> images;
     std::optional<fs::path> hints;
     std::optional<fs::path> changes;
+    std::optional<fs::path> round_trip;
+};
+
+// A chain of the round-trip check, described for the report.
+struct RoundTripLine {
+    sci::render::RoundTripChain check;
+    std::string text;
+    std::string where; // Where the deviation is largest: 1x coordinates, quarter, command.
 };
 
 struct Row {
@@ -71,6 +87,8 @@ struct Row {
     sci::render::Integrity integrity;
     std::vector<std::string> integrity_cases;   // Described with command indices.
     std::vector<std::string> integrity_changes; // The same, with their evidence.
+    sci::render::RoundTrip round_trip;
+    std::vector<RoundTripLine> round_trip_lines; // Per chain, as round_trip.chains.
     double entry_ms = 0;
 };
 
@@ -159,6 +177,105 @@ std::vector<std::string> describe_changes(const SceneStats& stats, const sci::pi
     return lines;
 }
 
+std::string_view fitted_name(sci::vector::FittedKind kind) {
+    switch (kind) {
+    case sci::vector::FittedKind::Line:
+        return "line";
+    case sci::vector::FittedKind::Arc:
+        return "arc";
+    case sci::vector::FittedKind::Spline:
+        return "spline";
+    case sci::vector::FittedKind::Ellipse:
+        return "ellipse";
+    }
+    return "?";
+}
+
+std::string milli(std::int64_t value) {
+    return std::format("{}.{:03}", value / 1000, value % 1000);
+}
+
+// Every chain of the round-trip check: its kind, its lines' commands, the
+// deviation, and where it is largest (command, 1x picture coordinates and
+// the review grid's quarter).
+std::vector<RoundTripLine> describe_round_trip(const sci::render::RoundTrip& round_trip, const SceneStats& stats,
+                                               const sci::pic::DrawTrace& trace) {
+    const auto command = [&](std::int32_t p) {
+        return p < 0 ? std::string("-") : std::format("{}", trace.primitives[static_cast<std::size_t>(p)].command);
+    };
+    std::vector<RoundTripLine> lines;
+    for (const auto& c : round_trip.chains) {
+        const auto& chain = stats.fitted_chains[c.chain];
+        std::string commands;
+        for (const std::int32_t line : chain.lines) {
+            commands += (commands.empty() ? "" : ", ") + command(line);
+        }
+        std::string text = std::format(
+            "{}{}, commands {}: max {} px, mean {} px, {} original / {} reconstructed pixels, {} added, {} missed "
+            "({} seen)",
+            fitted_name(c.kind), chain.hint.empty() ? std::string() : std::format(" (hint `{}`)", chain.hint), commands,
+            c.max_distance, milli(c.mean_milli()), c.original_pixels, c.reconstructed_pixels, c.added, c.missed,
+            c.missed_seen);
+        std::string where;
+        if (c.max_distance > 0) {
+            where = std::format("({}, {}) {}, command {}", c.worst_x, c.worst_y,
+                                sci::tools::review::to_string(sci::tools::review::quarter_at(c.worst_x, c.worst_y)),
+                                command(c.worst_line));
+            text += ", worst at " + where;
+        }
+        lines.push_back({.check = c, .text = std::move(text), .where = std::move(where)});
+    }
+    return lines;
+}
+
+// The worst chain first: largest deviation, then mean, then the picture
+// and chain order.
+bool worse(const RoundTripLine& a, std::uint16_t pic_a, const RoundTripLine& b, std::uint16_t pic_b) {
+    if (a.check.max_distance != b.check.max_distance) {
+        return a.check.max_distance > b.check.max_distance;
+    }
+    if (a.check.mean_milli() != b.check.mean_milli()) {
+        return a.check.mean_milli() > b.check.mean_milli();
+    }
+    return pic_a != pic_b ? pic_a < pic_b : a.check.chain < b.check.chain;
+}
+
+std::string round_trip_report(const std::vector<Row>& rows) {
+    std::string text = std::format(
+        "Round-trip check (A4 A.6, sci/render/round_trip.hpp): fitted chains rasterised back to 1x with path 1's "
+        "line rule against the pixels their lines drew; a chain passes at a Chebyshev deviation of at most {} "
+        "original pixel. Quarters are those of the review grid (A4 part B).\n\n",
+        sci::render::round_trip_tolerance);
+    std::vector<std::pair<const RoundTripLine*, std::uint16_t>> all;
+    for (const Row& row : rows) {
+        const auto& r = row.round_trip;
+        text += std::format("pic {}: {} checked, {} pass, {} fail", row.number, r.chains.size(), r.passing, r.failing);
+        const RoundTripLine* worst = nullptr;
+        for (const auto& line : row.round_trip_lines) {
+            all.emplace_back(&line, row.number);
+            if (worst == nullptr || worse(line, row.number, *worst, row.number)) {
+                worst = &line;
+            }
+        }
+        if (worst != nullptr && worst->check.max_distance > 0) {
+            text += std::format("; worst {} px at {}", worst->check.max_distance, worst->where);
+        }
+        text += '\n';
+        for (const auto& line : row.round_trip_lines) {
+            if (!line.check.passes()) {
+                text += std::format("  fail: {}\n", line.text);
+            }
+        }
+    }
+    std::ranges::stable_sort(
+        all, [](const auto& a, const auto& b) { return worse(*a.first, a.second, *b.first, b.second); });
+    text += "\nWorst chains:\n";
+    for (std::size_t i = 0; i < std::min<std::size_t>(all.size(), 20); ++i) {
+        text += std::format("{:2}. pic {}: {}\n", i + 1, all[i].second, all[i].first->text);
+    }
+    return text;
+}
+
 std::optional<Options> parse_options(std::span<char*> args) {
     if (args.size() < 3) {
         return std::nullopt;
@@ -170,6 +287,7 @@ std::optional<Options> parse_options(std::span<char*> args) {
         .images = std::nullopt,
         .hints = std::nullopt,
         .changes = std::nullopt,
+        .round_trip = std::nullopt,
     };
     for (std::size_t i = 3; i + 1 < args.size(); i += 2) {
         const std::string_view name = args[i];
@@ -183,6 +301,8 @@ std::optional<Options> parse_options(std::span<char*> args) {
             options.hints = fs::path(value);
         } else if (name == "--changes") {
             options.changes = fs::path(value);
+        } else if (name == "--round-trip") {
+            options.round_trip = fs::path(value);
         } else {
             return std::nullopt;
         }
@@ -238,10 +358,14 @@ std::optional<Row> analyse(const sci::resource::ResourceManager& manager, std::u
         .integrity = sci::render::check_integrity(visual.scene, drawn->maps, drawn->trace, executor),
         .integrity_cases = {},
         .integrity_changes = {},
+        .round_trip = sci::render::RoundTrip(),
+        .round_trip_lines = {},
         .entry_ms = std::chrono::duration<double, std::milli>(end - start).count(),
     };
     row.integrity_cases = describe_cases(row.integrity, drawn->trace);
     row.integrity_changes = describe_changes(row.visual, drawn->trace);
+    row.round_trip = sci::render::check_round_trip(drawn->trace, row.visual);
+    row.round_trip_lines = describe_round_trip(row.round_trip, row.visual, drawn->trace);
     (void)frame;
     (void)priority_map;
     if (options.images) {
@@ -413,6 +537,43 @@ void print_summary(const std::vector<Row>& rows) {
     }
 }
 
+// The round-trip totals: chains passing and failing, by kind, automatic or
+// hinted, and by deviation (0, 1, 2, more), and the pixels.
+void print_round_trip(const std::vector<Row>& rows) {
+    int chains = 0;
+    int passing = 0;
+    int failing = 0;
+    int worst = 0;
+    for (const Row& row : rows) {
+        chains += static_cast<int>(row.round_trip.chains.size());
+        passing += row.round_trip.passing;
+        failing += row.round_trip.failing;
+        for (const auto& c : row.round_trip.chains) {
+            worst = std::max(worst, c.max_distance);
+        }
+    }
+    std::println("Round trip (A4 A.6): {} fitted chains, {} pass, {} fail; worst deviation {} px", chains, passing,
+                 failing, worst);
+    // Chains by kind, automatic or hinted, and by deviation (0, 1, 2, more).
+    std::map<std::pair<std::string_view, bool>, std::array<int, 4>> by_kind;
+    std::int64_t added = 0;
+    std::int64_t missed = 0;
+    std::int64_t pixels = 0;
+    for (const Row& row : rows) {
+        for (const auto& c : row.round_trip.chains) {
+            ++by_kind[{fitted_name(c.kind), c.hinted}][static_cast<std::size_t>(std::min(c.max_distance, 3))];
+            added += c.added;
+            missed += c.missed;
+            pixels += c.original_pixels;
+        }
+    }
+    for (const auto& [key, counts] : by_kind) {
+        std::println("Round trip, {} {}: deviation 0 / 1 / 2 / more: {} / {} / {} / {}", key.first,
+                     key.second ? "(hinted)" : "(automatic)", counts[0], counts[1], counts[2], counts[3]);
+    }
+    std::println("Round trip pixels: {} original, {} added, {} missed", pixels, added, missed);
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -420,7 +581,7 @@ int main(int argc, char** argv) {
     const auto options = parse_options(args);
     if (!options) {
         std::println(stderr, "usage: sci-hd-report <game> <report.md> [--scale <N>] [--images <directory>] "
-                             "[--hints <directory>] [--changes <file>]");
+                             "[--hints <directory>] [--changes <file>] [--round-trip <file>]");
         return 2;
     }
     sci::tools::install_stderr_log();
@@ -455,5 +616,11 @@ int main(int argc, char** argv) {
         ok = ok && static_cast<bool>(changes);
     }
     print_summary(rows);
+    if (options->round_trip) {
+        std::ofstream round_trip(*options->round_trip);
+        round_trip << round_trip_report(rows);
+        ok = ok && static_cast<bool>(round_trip);
+        print_round_trip(rows);
+    }
     return ok && out ? 0 : 1;
 }

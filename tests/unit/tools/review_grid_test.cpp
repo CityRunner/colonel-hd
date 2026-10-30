@@ -14,6 +14,7 @@ using sci::tools::review::CellRef;
 using sci::tools::review::crop_of;
 using sci::tools::review::parse_area;
 using sci::tools::review::parse_cell;
+using sci::tools::review::quarter_at;
 using sci::tools::review::quarter_column_line;
 using sci::tools::review::quarter_row_line;
 using sci::tools::review::Rect;
@@ -103,4 +104,17 @@ SCI_TEST(crops_add_half_a_cell_clamped_to_the_picture) {
     SCI_CHECK(crop_of(parse_area("A1")->rect) == Rect{.left = 0, .top = 0, .right = 96, .bottom = 95});
     SCI_CHECK(crop_of(parse_area("C5.4")->rect) == Rect{.left = 256, .top = 127, .right = 320, .bottom = 190});
     SCI_CHECK(crop_of(parse_area("A1-C5")->rect) == Rect{.left = 0, .top = 0, .right = 320, .bottom = 190});
+}
+
+SCI_TEST(every_pixel_lies_in_the_quarter_whose_rectangle_holds_it) {
+    SCI_CHECK(to_string(quarter_at(0, 0)) == "A1.1");
+    SCI_CHECK(to_string(quarter_at(160, 95)) == "B3.4");
+    SCI_CHECK(to_string(quarter_at(159, 94)) == "B3.1");
+    SCI_CHECK(to_string(quarter_at(319, 189)) == "C5.4");
+    for (int y = 0; y < 190; ++y) {
+        for (int x = 0; x < 320; ++x) {
+            const Rect r = rect_of(quarter_at(x, y));
+            SCI_CHECK(x >= r.left && x < r.right && y >= r.top && y < r.bottom);
+        }
+    }
 }

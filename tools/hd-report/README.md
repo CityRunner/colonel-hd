@@ -23,11 +23,18 @@ lists:
   the pass's changes counted by evidence. `--changes <file>` writes every
   change with its evidence (about 24 MB for the whole game).
 
+- with `--round-trip <file>`, the round-trip check of A4 A.6
+  (`sci::render::check_round_trip`, `docs/hd-quality.md`): per picture the
+  fitted chains checked, passing and failing and the worst deviation with
+  its 1x coordinates, review-grid quarter and command; every failing
+  chain; the 20 worst chains of the game. Totals by kind and deviation go
+  to standard output.
+
 It exits with 1 if any picture fails the acceptance check.
 
     docker/run.sh cmake --build build/release --target sci-hd-report
     SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
-        build/release/tools/hd-report/sci-hd-report /game build/hd-report.md [--scale 10] [--images reports/images/hd] [--hints hints] [--changes build/changes.txt]
+        build/release/tools/hd-report/sci-hd-report /game build/hd-report.md [--scale 10] [--images reports/images/hd] [--hints hints] [--changes build/changes.txt] [--round-trip build/round-trip.txt]
 
 The report holds numbers only. `--images` writes, per picture, the original
 and the HD frame side by side at scale 3; they are derived from the game
