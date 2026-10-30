@@ -597,6 +597,24 @@ int main(int argc, char** argv) {
         }
         std::println("Round trip (A4 A.6): {} fitted chains, {} pass, {} fail; worst deviation {} px", chains, passing,
                      failing, worst);
+        // Chains by kind, automatic or hinted, and by deviation (0, 1, 2, more).
+        std::map<std::pair<std::string_view, bool>, std::array<int, 4>> by_kind;
+        std::int64_t added = 0;
+        std::int64_t missed = 0;
+        std::int64_t pixels = 0;
+        for (const Row& row : rows) {
+            for (const auto& c : row.round_trip.chains) {
+                ++by_kind[{fitted_name(c.kind), c.hinted}][static_cast<std::size_t>(std::min(c.max_distance, 3))];
+                added += c.added;
+                missed += c.missed;
+                pixels += c.original_pixels;
+            }
+        }
+        for (const auto& [key, counts] : by_kind) {
+            std::println("Round trip, {} {}: deviation 0 / 1 / 2 / more: {} / {} / {} / {}", key.first,
+                         key.second ? "(hinted)" : "(automatic)", counts[0], counts[1], counts[2], counts[3]);
+        }
+        std::println("Round trip pixels: {} original, {} added, {} missed", pixels, added, missed);
     }
     return ok && out ? 0 : 1;
 }
