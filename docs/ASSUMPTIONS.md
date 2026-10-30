@@ -2927,13 +2927,56 @@ The review sheets of A4 part B are written by `sci-review-sheet`
 
 ## Milestone 10: the round-trip check (2026-10-30)
 
-The round-trip check of A4 A.6, applied to the current reconstruction
-(milestone 3b) as a baseline. It changes no rendering and no golden hash.
+The round-trip check of A4 A.6 (`sci/render/round_trip.hpp`,
+`sci-hd-report --round-trip`), applied to the current reconstruction
+(milestone 3b) as a baseline (`docs/hd-quality.md`). It changes no
+rendering and no golden hash.
 
-- **What is checked.** The fitted chains of the visual scene: every chain
-  of the planar graph replaced by a fitted curve (line, arc, spline,
-  ellipse), automatic or from a chain hint. The chain's reconstruction is
-  the fitted strokes of the PIC lines whose edges it replaces, before the
-  stroke integrity pass (whose cuts and removed runs are A1's, not a
-  hypothesis about the shape). Its original pixels are the pixels those
-  lines drew by path 1's line rule. **Assumed** (work in progress).
+- **What is checked.** Every fitted chain of the visual scene: a chain of
+  the planar graph replaced by a fitted line, arc, spline or ellipse,
+  automatically or from a chain hint. `build_scene` now records the chains
+  (`SceneStats::fitted_chains`: kind, hint, the trace indices of the lines
+  with edges in the chain) and the strokes of those lines as fitted
+  (`SceneStats::fitted_strokes`); the scene itself is unchanged. The
+  priority plane is not checked: it is never shown. **Assumed.**
+- **Reconstruction.** The strokes of the chain's lines as fitted, before
+  the stroke integrity pass: its cuts, removed runs and connectors are A1
+  decisions about what is in front, not hypotheses about the shape. A line
+  partly in a chain contributes its whole stroke (straight where not
+  fitted), and the original side its whole line. **Assumed.**
+- **Rasterising back to 1x with path 1's rules.** Each stroke polyline (the
+  curve flattened into chords of at most 0.25 original pixels) becomes
+  pixels: every point snapped to the pixel it lies in (`floor`, clamped to
+  the picture area), a pixel dropped where its two neighbours in the
+  sequence already touch (a staircase corner, as path 1's line rule never
+  sets both), and consecutive pixels joined by
+  `sci::pic::for_each_line_pixel`. A straight stroke between pixel centres
+  gives exactly path 1's pixels (unit tested). Fills are not rasterised:
+  the faces are taken from path 1's map and a fit is accepted only if it
+  keeps them (`docs/hd-pipeline.md`, section 6), so the fills of a
+  reconstruction are the original ones by construction. **Assumed.**
+- **Original pixels.** The pixels the chain's lines drew by path 1's line
+  rule within the picture area, including pixels later commands drew over;
+  the owner map only splits the missed pixels into seen and not seen (the
+  report's "seen"). Comparing with the owned pixels alone would count the
+  overdrawn parts of a line as added. **Assumed.**
+- **The metric.** Chebyshev distance between pixels, in original pixels
+  (8-neighbours are 1 apart). A pixel of either set that is not in the
+  other has the distance to the nearest pixel of the other set; a pixel in
+  both has 0. A chain's deviation is the maximum; its mean is over all
+  pixels of both sets, in thousandths of a pixel (integer arithmetic; the
+  curve's doubles are read only to snap points). **Assumed.**
+- **The tolerance.** A chain passes at a deviation of at most 1
+  (`sci::render::round_trip_tolerance`): "about 1 original pixel" read as
+  "no pixel of either set more than one pixel step from the other". No
+  limit on the mean or on the counts of added and missed pixels.
+  **Assumed**; see the open question below.
+- **Grid references.** A failing chain is located by the pixel of largest
+  deviation (the first in raster order) and its quarter of the review
+  grid (`review::quarter_at`, `tools/common/review_grid.hpp`). **Decided.**
+- **Baseline** (`docs/hd-quality.md`): 13204 chains in 88 pictures, 17
+  fail, all hinted splines deviating by 2 pixels; no automatic fit fails.
+- **Open question for the customer:** some passing chains have half or
+  more of their pixels one pixel off (a curve parallel to the stepped
+  chain, half a pixel aside: mean 0.6). Should A.6's tolerance also limit
+  the mean (for example to 0.5 pixel)?

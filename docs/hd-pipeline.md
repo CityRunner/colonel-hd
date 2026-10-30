@@ -231,6 +231,17 @@ the milestone 3b report: the end pixel lies past the contour at 1x, the
 line meets the contour at under 30 degrees, or the end meets another line
 it touches.
 
+### The round-trip check (A4 A.6, milestone 10)
+
+`check_round_trip` (`sci/render/round_trip.hpp`) takes every fitted chain
+(`SceneStats::fitted_chains`) and the strokes of its lines as fitted,
+before the stroke integrity pass (`SceneStats::fitted_strokes`),
+rasterises them back to 1x (points snapped to their pixels, staircase
+corners dropped, joined by path 1's line rule) and compares them with the
+pixels the lines drew: Chebyshev deviation (maximum and mean), pixels
+added and missed. A chain passes at a deviation of at most 1 original
+pixel. The baseline is in `docs/hd-quality.md`.
+
 ## 9. Determinism
 
 Topology is exact. Fitting and rasterisation use `double` under the
