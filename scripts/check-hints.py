@@ -18,7 +18,8 @@ by sci-hint-tool check.
 The schema is interpreted by a small validator for the keywords it uses,
 so the check needs nothing beyond the Python standard library.
 
-Usage: check-hints.py [directory]   (default: hints/ of the repository)
+Usage: check-hints.py [directory]   (default: hints/ of the repository and the
+       synthetic example of the scene model in tests/hints/)
 """
 
 import json
@@ -241,10 +242,10 @@ def check_scene(hints, name):
 
 
 def main():
-    directory = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "hints"
+    directories = [Path(sys.argv[1])] if len(sys.argv) > 1 else [ROOT / "hints", ROOT / "tests" / "hints"]
     schema = json.loads((ROOT / "hints" / "schema.json").read_text())
     errors = []
-    files = sorted(p for p in directory.glob("*.json") if p.name != "schema.json")
+    files = [p for d in directories for p in sorted(d.glob("*.json")) if p.name != "schema.json"]
     for path in files:
         match = FILE_NAME.match(path.name)
         if not match:

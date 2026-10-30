@@ -3009,3 +3009,88 @@ rendering and no golden hash.
   more of their pixels one pixel off (a curve parallel to the stepped
   chain, half a pixel aside: mean 0.6). Should A.6's tolerance also limit
   the mean (for example to 0.5 pixel)?
+
+## Milestone 10: the scene model in the hint files (2026-10-30)
+
+A4 A.1 asks for a scene model in the hint files: objects, their parts, and
+the primitives that draw them. A.2 to A.7 need data in it too. The format
+is in `hints/README.md` ("The scene model") and `hints/schema.json`. It is
+checked by `scripts/check-hints.py` and by `parse_hints`, with unit tests.
+No rendering and no golden hash changes. No real picture has objects yet.
+
+- **Version 2, and version 1 is still read.** The scene model is optional
+  (`objects`, `repetitions`), but files that use it say `"version": 2`.
+  - A version 1 file is a version 2 file without those members, and
+    version 1 does not allow them. Migrating a file means changing its
+    version to 2, and nothing else.
+  - The bump is there so that a reader older than this change rejects a
+    scene-model file at `version`, with a clear message, and not at an
+    "unknown member".
+  - The 86 committed files stay at version 1 until they gain objects.
+    Rewriting them now would change no meaning, but it would invalidate
+    every analysis-cache entry, since the cache key hashes the hint file.
+    `tools/hint-tool/make_hints.py` (milestone 3a) still writes version 1.
+
+  **Decided.**
+- **The object's own members are its main hypothesis.** An object's id,
+  type, confidence, parts and relations are its main hypothesis, and
+  `alternatives` holds up to 8 more. A decision names the object's id or the
+  id of an alternative. This keeps the usual case of one hypothesis short.
+  **Assumed.**
+- **One id namespace for the whole file.** Objects, alternatives, parts,
+  primitives and repetitions share it with regions, chains and gaps. Then
+  every relation and repetition resolves without a path. Parts of
+  alternatives need their own ids (`door-pointed-top`). **Assumed.**
+- **Anchors.** Every primitive has command indices (1 or more, as in
+  chains) and 1x points in stored coordinates (as region `at`).
+  - The points are the ends, the corners and points on the shape, in order.
+    A line has 2, an arc 3, an ellipse at least 3, a spline or polyline at
+    least 2.
+  - Corners (`sharp`, `rounded`, `step`) sit at a point, by its index.
+  - Without the game, only the ranges are checked. `sci-hint-tool check`
+    now also reports a primitive command that draws no line.
+  - A command may appear in more than one primitive. A long PIC line can
+    run through two parts.
+
+  **Assumed.**
+- **Vocabulary.** The A.2 types plus what the 3a region and chain labels
+  name most often: `gate`, `fireplace`, `curtain`, `painting`, `ceiling`,
+  `building`, `bridge`, `dock`, `well`, `tombstone`, `path`, `terrain`,
+  `figure`. Part roles are a fixed list ending in `other`. A new type or role
+  is added to the schema and to the parser. That needs no version bump,
+  because older files stay valid. **Assumed.**
+- **Organic types** are `foliage`, `tree`, `rock`, `cloud`, `water`,
+  `terrain` and `figure` (people and statues). A.4 says these get "no
+  symmetry, no straightening", and the validators enforce it:
+  - their primitives are only splines and polylines (polylines for the
+    sharp corners of rocks);
+  - they have no geometric relations;
+  - they are in no repetition.
+
+  `curtain` is not organic: its rods and valances are geometric, and its
+  folds can still be drawn as splines. **Assumed**; see the open question
+  below.
+- **Relations** (A.3) join parts or primitives of the same hypothesis.
+  - `perpendicular` and `tangent` join exactly 2 items. A tangent joins one
+    arc primitive and one line primitive, as A.3 says.
+  - `equal-spacing` needs at least 3 items.
+  - `symmetry` and `aligned` carry an axis, `horizontal` or `vertical`,
+    without a position, which the solver finds. A position would need
+    half pixels, and the files hold integers only.
+
+  **Assumed.**
+- **Confidence** is in per mille, 0 to 1000. The hint files and the JSON
+  reader allow integers only. **Decided.**
+- **Cell references** use the syntax of `tools/common/review_grid.hpp`:
+  `B3`, `B3.2` or `A2-A4`. They must be upper case, while the review tool
+  also takes a lower-case row letter. sci-vector checks the syntax itself,
+  because it does not link the tools. **Decided.**
+- **Decisions** are written `by: "customer"` with a date and a cell. An
+  object with a decision is never asked again. An object with alternatives
+  and no decision is open: following A.7, the 3b reconstruction stays in
+  its place until the customer answers. The renderer will apply that rule
+  later; this change only records the data. **Decided** (A.7).
+- **Open questions for the customer:**
+  - Should curtains and other fabric count as organic?
+  - Should a PIC command be in at most one primitive per hypothesis? A
+    stricter rule would catch more analysis errors.
