@@ -2848,6 +2848,24 @@ the old numbers to the new ones, so older references stay unambiguous:
   "For now": it can be proposed again later, for example in the audit's
   iteration 2 backlog. **Decided (customer).**
 
+## Milestone 10: the round-trip baseline, what follows from it (2026-10-30)
+
+- **The pass rule stays the maximum** (at most 1 original pixel, A.6's
+  "about 1 original pixel"). The mean deviation is reported for every
+  chain and used to rank cases for review, but it does not reject: a curve
+  that runs half a pixel beside a stepped chain is the smoothing A.4 asks
+  for. **Decided.**
+- **The 17 hinted splines that fail** (deviation 2) are rejected
+  hypotheses under A.6: in the milestone 10 reconstruction they fall back
+  to the automatic fit of their lines, unless a new hypothesis passes. They
+  are not put to the customer, since the rule decides them. **Decided.**
+- **What the baseline says:** at the level of single chains, the 3b
+  reconstruction already stays within 1 original pixel almost everywhere
+  (13187 of 13204 chains). Part A's work is therefore at the object level
+  (A.1 to A.5): relations solved together, intended corners and steps,
+  repetitions, which the round-trip check guards but does not measure.
+  **Finding.**
+
 ## Spec items carried forward
 
 - Edge coverage is blended in the same sRGB-encoded space as the pairs, with
