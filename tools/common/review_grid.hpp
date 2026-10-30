@@ -61,6 +61,10 @@ struct CellRef {
 // The rectangle of a cell or quarter; `ref` must be valid.
 [[nodiscard]] Rect rect_of(CellRef ref) noexcept;
 
+// The quarter a pixel of the picture area lies in (0 <= x < 320,
+// 0 <= y < 190).
+[[nodiscard]] CellRef quarter_at(int x, int y) noexcept;
+
 // "B3" or "B3.2" (the row letter in either case); `ref` back as text.
 [[nodiscard]] core::Result<CellRef> parse_cell(std::string_view text);
 [[nodiscard]] std::string to_string(CellRef ref);

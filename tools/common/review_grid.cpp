@@ -64,6 +64,21 @@ Rect rect_of(CellRef ref) noexcept {
     return rect;
 }
 
+CellRef quarter_at(int x, int y) noexcept {
+    SCI_ASSERT(x >= 0 && x < picture_width && y >= 0 && y < picture_height);
+    CellRef ref;
+    while (column_edges[static_cast<std::size_t>(ref.column) + 1] <= x) {
+        ++ref.column;
+    }
+    while (row_edges[static_cast<std::size_t>(ref.row) + 1] <= y) {
+        ++ref.row;
+    }
+    const bool right = x >= quarter_column_line(ref.column);
+    const bool bottom = y >= quarter_row_line(ref.row);
+    ref.quarter = 1 + (right ? 1 : 0) + (bottom ? 2 : 0);
+    return ref;
+}
+
 core::Result<CellRef> parse_cell(std::string_view text) {
     if (text.size() != 2 && text.size() != 4) {
         return invalid(text);
