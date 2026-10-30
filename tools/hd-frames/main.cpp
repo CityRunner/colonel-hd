@@ -41,6 +41,7 @@
 #include "sci/vm/files.hpp"
 #include "sci/vm/game.hpp"
 #include "sci/vm/local_time.hpp"
+#include "stack_screen.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -491,36 +492,11 @@ private:
 // picture's everywhere, nothing else.
 int write_stack(const sci::resource::ResourceManager& manager, sci::platform::HdPictures& pictures,
                 const Options& options) {
-    const auto drawn = sci::tools::draw_pictures(manager, options.stack);
-    if (!drawn) {
+    const auto screen = sci::tools::stack_screen(manager, options.stack);
+    if (!screen) {
         return 1;
     }
-    std::vector<std::uint8_t> owner(screen_pixels, static_cast<std::uint8_t>(sci::vm::Owner::Picture));
-    std::vector<std::uint8_t> source(screen_pixels, sci::vm::priority_from_picture);
-    for (std::size_t i = 0; i < static_cast<std::size_t>(screen_width) * 10; ++i) {
-        owner[i] = static_cast<std::uint8_t>(sci::vm::Owner::Interface);
-    }
-    const std::vector<std::uint32_t> layer(screen_pixels, 0);
-    std::vector<sci::vm::ShownPicture> stack;
-    stack.reserve(options.stack.size());
-    for (const std::uint16_t number : options.stack) {
-        stack.push_back(sci::vm::ShownPicture{.number = number, .mirrored = false, .ega_palette = 0});
-    }
-    const sci::vm::ShownScreen shown{
-        .visual = drawn->maps.visual,
-        .serial = 1,
-        .owner = owner,
-        .background_visual = drawn->maps.visual,
-        .background_owner = owner,
-        .background_priority = drawn->maps.priority,
-        .background_source = source,
-        .sprite_layer = layer,
-        .sprite_lists = {},
-        .pictures = stack,
-        .lines = {},
-        .cursor = -1,
-        .mouse = sci::vm::Point{.x = 0, .y = 0},
-    };
+    const sci::vm::ShownScreen shown = screen->shown();
     std::string name = "stack";
     for (std::size_t i = 0; i < options.stack.size(); ++i) {
         name += std::format("{}{:03}", i == 0 ? "-" : "+", options.stack[i]);

@@ -2887,3 +2887,40 @@ the old numbers to the new ones, so older references stay unambiguous:
   "ZINK: vkCreateInstance failed" and "glx: failed to create drisw screen"
   (Xvfb has no GPU, so SDL's renderer is software), Xvfb's keyboard lines.
   Every warning or error of the program counts. **Decided.**
+
+## Milestone 10: review sheets (2026-10-30)
+
+The review sheets of A4 part B are written by `sci-review-sheet`
+(`tools/review-sheet/README.md`).
+
+- **The sheets show what the game shows.** Both images are composed by
+  the program's frame (`sci/platform/game_frame.hpp`) from the picture
+  stack as the interpreter shows it alone, with the repository's hints by
+  default, as `sci-hd-frames --stack` does (the two now share
+  `tools/common/stack_screen.hpp`; its output is unchanged). The menu
+  bar's 10 rows stay black, as the game shows them while the menu bar is
+  hidden. **Decided.**
+- **The grid follows the reading of "Milestone numbers after A4"**: rows
+  at picture y = 0, 63, 127, 190, quarter lines at x = 32, 96, 160, 224,
+  288 and picture y = 32, 95, 159 (`tools/common/review_grid.hpp`, unit
+  tested). Each line is centred on its boundary: cell lines N/2 pixels
+  wide (at least 2) with a one-pixel black outline on both sides, quarter
+  lines N/4 (at least 1), dashed, with a lighter outline. **Assumed**,
+  with the reading.
+- **References.** A cell "B3", a quarter "B3.2", or a range "A2-A4": the
+  rectangle spanning both ends, which may be cells or quarters, in either
+  order ("C4-B2" is B2 to C4). The row letter may be lower case; anything
+  else, spaces included, is rejected. **Assumed.**
+- **"Half a cell around it"** is 32 original pixels on every side: half
+  the cell width, and half a row (63 or 64 high) rounded up. The crop is
+  clamped to the picture area. Every cell in a crop is labelled at the
+  top left corner of its visible part, so a crop that starts inside a
+  cell still names it. **Assumed.**
+- **Header.** Room, picture numbers, sheet version ("V1" unless
+  `--sheet-version` says otherwise) and date; the date is an option
+  (default today), so that sheets can be reproduced. The room defaults to
+  the stack's first picture; a sheet for a picture whose room has another
+  number passes `--room`. **Assumed.**
+- **Text** is a 3 x 5 bitmap font built into the tool (capitals, digits,
+  a few signs), as `sci-hint-tool` draws its digits: no new dependency and
+  no game or system font. **Decided.**

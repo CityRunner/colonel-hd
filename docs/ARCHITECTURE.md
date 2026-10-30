@@ -53,6 +53,9 @@ program:
 - `hd-frames`: runs the game without a window on virtual time and writes
   the frames the program would show at chosen ticks, original and HD side
   by side, and measures the composition time (milestone 5).
+- `review-sheet`: writes the visual review sheets of A4 part B for a
+  picture stack: HD over original with the cell grid, the pair without
+  it, and enlarged crops of named cells, quarters or ranges (milestone 10).
 
 ### Dependency rules and how they are enforced
 
