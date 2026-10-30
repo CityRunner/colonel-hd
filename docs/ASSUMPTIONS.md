@@ -2837,6 +2837,17 @@ the old numbers to the new ones, so older references stay unambiguous:
   the pre-release. No tag or release exists yet, `v0.1.0` included.
   **Decided.**
 
+## Milestone 10: exact area coverage declined (2026-10-30)
+
+- **The customer declined** the optional part of milestone 10, exact area
+  coverage (spec section 6.6, A4 plan table), "for now", as the agent
+  recommended: at N = 4 its gain over the 16 x 16 supersampling is a
+  subtle smoothing of long shallow edges and sub-sample slivers, at the
+  cost of a new rasteriser and a cross-platform determinism risk.
+  Milestone 10 is part A only. The supersampling stays the rasteriser.
+  "For now": it can be proposed again later, for example in the audit's
+  iteration 2 backlog. **Decided (customer).**
+
 ## Spec items carried forward
 
 - Edge coverage is blended in the same sRGB-encoded space as the pairs, with
