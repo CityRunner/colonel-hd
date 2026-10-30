@@ -1202,6 +1202,50 @@ Curves fit_with_hints(const detail::Arrangement& arrangement, const std::vector<
     }
 }
 
+FittedKind fitted_kind(detail::CurveKind kind) {
+    switch (kind) {
+    case detail::CurveKind::Line:
+        return FittedKind::Line;
+    case detail::CurveKind::Arc:
+        return FittedKind::Arc;
+    case detail::CurveKind::Spline:
+        return FittedKind::Spline;
+    case detail::CurveKind::Ellipse:
+        return FittedKind::Ellipse;
+    }
+    return FittedKind::Spline;
+}
+
+// The fitted chains and the strokes of their lines as fitted, for the
+// round-trip check (A4 A.6). Changes nothing in the scene.
+void record_fits(const detail::Arrangement& arrangement, const Curves& curves, const std::vector<DrawnLine>& lines,
+                 const PlaneHints& hints, SceneStats& stats) {
+    for (const detail::FittedChain& chain : curves.fitted) {
+        FittedChain record{.kind = fitted_kind(chain.kind), .hint = {}, .lines = {}};
+        if (chain.hint >= 0) {
+            record.hint = hints.chains[static_cast<std::size_t>(chain.hint)].hint->id;
+        }
+        for (const std::int32_t edge : chain.edges) {
+            const std::int32_t source = arrangement.sources[static_cast<std::size_t>(edge)];
+            if (source >= 0) {
+                record.lines.push_back(static_cast<std::int32_t>(lines[static_cast<std::size_t>(source)].primitive));
+            }
+        }
+        std::ranges::sort(record.lines);
+        const auto [first, last] = std::ranges::unique(record.lines);
+        record.lines.erase(first, last);
+        stats.fitted_chains.push_back(std::move(record));
+    }
+    for (std::size_t line = 0; line < lines.size(); ++line) {
+        if (!curves.strokes[line].empty()) {
+            stats.fitted_strokes.push_back(FittedLine{
+                .primitive = static_cast<std::int32_t>(lines[line].primitive),
+                .points = curves.strokes[line],
+            });
+        }
+    }
+}
+
 // The layers over the faces, in drawing order: visible lines as strokes,
 // solid brushes as shapes, textured brushes as blocks.
 std::vector<Layer> build_layers(const pic::DrawTrace& trace, const PlaneView& view, Plane plane,
@@ -1300,6 +1344,7 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
 
     const std::vector<int> owned = owned_pixels(trace, view);
     const Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
+    record_fits(parts.arrangement, curves, lines, plane_hints, built.stats);
     scene.edges = scan_edges(parts.arrangement, curves.fitted);
     scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
     // Stroke integrity and occlusion (spec section 6.10) change the HD

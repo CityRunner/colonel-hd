@@ -53,6 +53,23 @@ struct IntegrityChange {
     const char* evidence = "";
 };
 
+// A chain of lines replaced by a fitted curve (spec section 6.3), kept for
+// the round-trip check of A4 A.6 (sci/render/round_trip.hpp).
+enum class FittedKind : std::int8_t { Line, Arc, Spline, Ellipse };
+
+// A line of a fitted chain: its trace index and its stroke as fitted,
+// before the stroke integrity pass (which may cut or split it).
+struct FittedLine {
+    std::int32_t primitive = -1;
+    std::vector<Vec2> points;
+};
+
+struct FittedChain {
+    FittedKind kind = FittedKind::Line;
+    std::string hint;                   // The chain hint it was fitted for; empty if automatic.
+    std::vector<std::int32_t> lines;    // Trace indices of the lines with edges in the chain, ascending.
+};
+
 // What the analysis did, for the replacement report.
 struct SceneStats {
     int lines = 0;           // PIC lines drawn into the plane.
@@ -75,6 +92,8 @@ struct SceneStats {
     int ellipses = 0;                // Closed chains, by ellipses.
     int fitted_lines = 0;            // PIC lines replaced by these curves.
     int rejected_fits = 0;           // Fits left out because they would change the faces.
+    std::vector<FittedChain> fitted_chains; // In the order they were fitted.
+    std::vector<FittedLine> fitted_strokes; // Every line with fitted edges, in trace order.
     std::vector<Fallback> fallbacks; // The mixed faces.
     // Hints (spec section 6.7).
     int hint_chains = 0;                     // Chain hints fitted as they ask.
