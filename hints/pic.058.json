@@ -1,9 +1,9 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 58,
   "pic_sha256": "461c8ce46686f8d15bec1bb616a142040ad70bf6bf4b9aa3350d6763fb644e46",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; scene model: Claude, pilot, 2026-10-30",
   "regions": [
     {"id": "wooden-plank-floor", "at": [150, 115], "label": "wooden plank floor"},
     {"id": "stained-glass-window", "at": [65, 55], "label": "stained glass window"},
@@ -12,5 +12,175 @@
     {"id": "lectern", "at": [75, 100], "label": "lectern"},
     {"id": "open-doorway", "at": [118, 55], "label": "open doorway", "uncertain": true},
     {"id": "right-wall-with-door", "at": [280, 110], "label": "right wall with door"}
+  ],
+  "objects": [
+    {
+      "id": "back-window-left",
+      "type": "window",
+      "cell": "A3.2-B3.2",
+      "confidence": 900,
+      "label": "back wall window with a glazing cross",
+      "parts": [
+        {
+          "id": "back-window-left-frame",
+          "role": "frame",
+          "primitives": [
+            {"id": "back-window-left-jamb-left", "kind": "line", "commands": [468], "points": [[160, 21], [160, 64]]},
+            {"id": "back-window-left-jamb-right", "kind": "line", "commands": [470], "points": [[189, 64], [189, 22]]},
+            {"id": "back-window-left-head", "kind": "line", "commands": [479], "points": [[160, 20], [189, 21]]},
+            {"id": "back-window-left-sill-line", "kind": "line", "commands": [476], "points": [[161, 64], [189, 65]]}
+          ]
+        },
+        {
+          "id": "back-window-left-bars",
+          "role": "glazing-bar",
+          "label": "each bar two lines wide",
+          "primitives": [
+            {"id": "back-window-left-bar-v", "kind": "line", "commands": [474, 475], "points": [[174, 21], [174, 63]]},
+            {"id": "back-window-left-bar-h", "kind": "line", "commands": [526, 527], "points": [[161, 42], [189, 43]]}
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "kind": "parallel",
+          "items": ["back-window-left-jamb-left", "back-window-left-jamb-right", "back-window-left-bar-v"]
+        },
+        {
+          "kind": "parallel",
+          "items": ["back-window-left-head", "back-window-left-sill-line", "back-window-left-bar-h"]
+        }
+      ]
+    },
+    {
+      "id": "back-window-right",
+      "type": "window",
+      "cell": "A4.1-B4.2",
+      "confidence": 900,
+      "label": "back wall window with a glazing cross",
+      "parts": [
+        {
+          "id": "back-window-right-frame",
+          "role": "frame",
+          "primitives": [
+            {"id": "back-window-right-jamb-left", "kind": "line", "commands": [471], "points": [[218, 65], [218, 23]]},
+            {
+              "id": "back-window-right-jamb-right",
+              "kind": "line",
+              "commands": [469],
+              "points": [[245, 25], [245, 68]]
+            },
+            {"id": "back-window-right-head", "kind": "line", "commands": [478], "points": [[218, 22], [245, 24]]},
+            {"id": "back-window-right-sill-line", "kind": "line", "commands": [477], "points": [[218, 66], [245, 68]]}
+          ]
+        },
+        {
+          "id": "back-window-right-bars",
+          "role": "glazing-bar",
+          "label": "each bar two lines wide",
+          "primitives": [
+            {
+              "id": "back-window-right-bar-v",
+              "kind": "line",
+              "commands": [472, 473],
+              "points": [[231, 24], [231, 67]]
+            },
+            {
+              "id": "back-window-right-bar-h",
+              "kind": "line",
+              "commands": [524, 525],
+              "points": [[219, 43], [244, 45]]
+            }
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "kind": "parallel",
+          "items": ["back-window-right-jamb-left", "back-window-right-jamb-right", "back-window-right-bar-v"]
+        },
+        {
+          "kind": "parallel",
+          "items": ["back-window-right-head", "back-window-right-sill-line", "back-window-right-bar-h"]
+        }
+      ]
+    },
+    {
+      "id": "rose-window",
+      "type": "window",
+      "cell": "A1.2-B2.2",
+      "confidence": 850,
+      "label": "octagonal stained glass window with a cross",
+      "parts": [
+        {
+          "id": "rose-frame",
+          "role": "frame",
+          "label": "inner edge of the frame",
+          "primitives": [
+            {
+              "id": "rose-frame-inner",
+              "kind": "polyline",
+              "commands": [493, 498, 495, 499, 489, 490, 491, 492],
+              "points": [[79, 29], [59, 34], [43, 54], [43, 74], [59, 85], [79, 76], [91, 60], [91, 41], [77, 30]],
+              "corners": [
+                {"point": 1, "kind": "sharp"},
+                {"point": 2, "kind": "sharp"},
+                {"point": 3, "kind": "sharp"},
+                {"point": 4, "kind": "sharp"},
+                {"point": 5, "kind": "sharp"},
+                {"point": 6, "kind": "sharp"},
+                {"point": 7, "kind": "sharp"}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rose-casing",
+          "role": "frame",
+          "label": "outer edge of the casing",
+          "primitives": [
+            {
+              "id": "rose-casing-outer",
+              "kind": "polyline",
+              "commands": [1237, 1238, 1239, 1247, 1248, 1249, 1235, 1236],
+              "points": [
+                [81, 25],
+                [55, 32],
+                [39, 53],
+                [39, 76],
+                [42, 79],
+                [57, 89],
+                [83, 80],
+                [96, 63],
+                [97, 62],
+                [97, 39],
+                [81, 25]
+              ],
+              "corners": [
+                {"point": 1, "kind": "sharp"},
+                {"point": 2, "kind": "sharp"},
+                {"point": 3, "kind": "sharp"},
+                {"point": 4, "kind": "sharp"},
+                {"point": 5, "kind": "sharp"},
+                {"point": 6, "kind": "sharp"},
+                {"point": 7, "kind": "sharp"},
+                {"point": 8, "kind": "sharp"},
+                {"point": 9, "kind": "sharp"}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rose-cross",
+          "role": "glazing-bar",
+          "label": "the cross's upright",
+          "primitives": [
+            {"id": "rose-cross-left", "kind": "line", "commands": [1314], "points": [[66, 52], [66, 75]]},
+            {"id": "rose-cross-right", "kind": "line", "commands": [1313], "points": [[72, 50], [72, 73]]}
+          ]
+        }
+      ],
+      "relations": [{"kind": "parallel", "items": ["rose-cross-left", "rose-cross-right"]}]
+    }
   ]
 }

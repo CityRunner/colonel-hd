@@ -1,9 +1,9 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 12,
   "pic_sha256": "6eb3fd430ca21f9873f4b6dc5d7f48a41c2b0c90f4eba79fd97ef36910aeab5f",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; scene model: Claude, pilot, 2026-10-30",
   "regions": [
     {"id": "house-wall", "at": [100, 60], "label": "house wall"},
     {"id": "open-doorway", "at": [155, 80], "label": "open doorway"},
@@ -51,5 +51,556 @@
     {"id": "lawn-edge-4", "lines": [1072, 1073, 1074, 1075, 1076, 1077, 1078], "primitive": "spline", "label": "lawn edge", "uncertain": true},
     {"id": "lawn-edge-5", "lines": [1084, 1085, 1086, 1087, 1088, 1089], "primitive": "spline", "label": "lawn edge", "uncertain": true},
     {"id": "path-edge", "lines": [2404, 2405, 2406], "primitive": "spline", "label": "path edge", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "window-left-tall",
+      "type": "window",
+      "cell": "A1.3-C1.2",
+      "confidence": 900,
+      "label": "tall arched window with shutters",
+      "parts": [
+        {
+          "id": "wl-frame",
+          "role": "frame",
+          "label": "glazed opening, drawn in perspective",
+          "primitives": [
+            {"id": "wl-jamb-left", "kind": "line", "commands": [54], "points": [[19, 141], [19, 58]]},
+            {"id": "wl-jamb-right", "kind": "line", "commands": [47], "points": [[48, 145], [48, 59]]},
+            {"id": "wl-head", "kind": "line", "commands": [103], "points": [[47, 59], [19, 57]]},
+            {"id": "wl-sill-line", "kind": "line", "commands": [83], "points": [[48, 145], [20, 141]]}
+          ]
+        },
+        {
+          "id": "wl-fanlight",
+          "role": "frame",
+          "label": "round-headed fanlight above the transom",
+          "primitives": [
+            {"id": "wl-arch-spring-left", "kind": "line", "commands": [127], "points": [[19, 55], [19, 50]]},
+            {
+              "id": "wl-arch",
+              "kind": "arc",
+              "commands": [128, 129, 126, 125, 124],
+              "points": [[19, 50], [31, 42], [48, 53]]
+            },
+            {"id": "wl-arch-spring-right", "kind": "line", "commands": [123], "points": [[48, 57], [48, 53]]},
+            {"id": "wl-transom", "kind": "line", "commands": [48], "points": [[47, 55], [22, 53]]}
+          ]
+        },
+        {
+          "id": "wl-fan-bars",
+          "role": "glazing-bar",
+          "label": "radial bars of the fanlight",
+          "primitives": [
+            {"id": "wl-fan-bar-centre", "kind": "line", "commands": [140, 141], "points": [[34, 49], [34, 43]]},
+            {"id": "wl-fan-bar-right", "kind": "line", "commands": [144, 145], "points": [[37, 50], [43, 46]]},
+            {"id": "wl-fan-bar-left", "kind": "line", "commands": [146, 147], "points": [[31, 50], [25, 46]]}
+          ]
+        },
+        {
+          "id": "wl-bars",
+          "role": "glazing-bar",
+          "label": "each bar two lines wide",
+          "primitives": [
+            {"id": "wl-bar-vertical", "kind": "line", "commands": [130, 400], "points": [[34, 59], [34, 142]]},
+            {"id": "wl-bar-1", "kind": "line", "commands": [429, 432], "points": [[20, 77], [47, 80]]},
+            {"id": "wl-bar-2", "kind": "line", "commands": [430, 433, 434], "points": [[20, 97], [47, 100]]},
+            {"id": "wl-bar-3", "kind": "line", "commands": [431, 435], "points": [[20, 119], [47, 122]]}
+          ]
+        },
+        {
+          "id": "wl-shutter-left",
+          "role": "leaf",
+          "label": "open shutter, its top follows the arch",
+          "primitives": [
+            {"id": "wl-shl-inner", "kind": "line", "commands": [397], "points": [[18, 141], [18, 54]]},
+            {
+              "id": "wl-shl-top",
+              "kind": "arc",
+              "commands": [398, 402, 403, 404, 405],
+              "points": [[17, 53], [14, 45], [9, 42]]
+            },
+            {"id": "wl-shl-outer", "kind": "line", "commands": [406], "points": [[8, 42], [8, 140]]},
+            {"id": "wl-shl-panel", "kind": "line", "commands": [409], "points": [[10, 45], [10, 138]]}
+          ]
+        },
+        {
+          "id": "wl-shutter-right",
+          "role": "leaf",
+          "label": "open shutter, its top follows the arch",
+          "primitives": [
+            {"id": "wl-shr-inner", "kind": "line", "commands": [388], "points": [[49, 145], [49, 59]]},
+            {
+              "id": "wl-shr-top",
+              "kind": "arc",
+              "commands": [391, 392, 393, 394],
+              "points": [[49, 58], [52, 48], [60, 44]]
+            },
+            {"id": "wl-shr-outer", "kind": "line", "commands": [390], "points": [[60, 146], [60, 45]]},
+            {"id": "wl-shr-panel", "kind": "line", "commands": [395], "points": [[52, 143], [52, 56]]},
+            {"id": "wl-shr-bottom", "kind": "line", "commands": [389], "points": [[49, 145], [60, 146]]}
+          ]
+        }
+      ],
+      "relations": [
+        {"kind": "parallel", "items": ["wl-jamb-left", "wl-jamb-right"]},
+        {
+          "kind": "parallel",
+          "items": ["wl-bar-1", "wl-bar-2", "wl-bar-3"],
+          "note": "the bars share one perspective slope"
+        },
+        {"kind": "tangent", "items": ["wl-arch", "wl-arch-spring-left"]},
+        {"kind": "tangent", "items": ["wl-arch", "wl-arch-spring-right"]},
+        {"kind": "parallel", "items": ["wl-shl-inner", "wl-shl-outer", "wl-shr-inner", "wl-shr-outer"]}
+      ],
+      "alternatives": [
+        {
+          "id": "window-left-tall-equal",
+          "type": "window",
+          "confidence": 450,
+          "note": "panes meant equal: bars evenly spaced between head and sill (moves bars up to 1 px)",
+          "parts": [
+            {
+              "id": "wl-eq-bars",
+              "role": "glazing-bar",
+              "label": "the four panes made equal",
+              "primitives": [
+                {"id": "wl-eq-bar-1", "kind": "line", "commands": [429, 432], "points": [[20, 77], [47, 80]]},
+                {"id": "wl-eq-bar-2", "kind": "line", "commands": [430, 433, 434], "points": [[20, 97], [47, 100]]},
+                {"id": "wl-eq-bar-3", "kind": "line", "commands": [431, 435], "points": [[20, 119], [47, 122]]},
+                {"id": "wl-eq-sill", "kind": "line", "commands": [83], "points": [[48, 145], [20, 141]]},
+                {"id": "wl-eq-head", "kind": "line", "commands": [103], "points": [[47, 59], [19, 57]]}
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "kind": "equal-spacing",
+              "items": ["wl-eq-head", "wl-eq-bar-1", "wl-eq-bar-2", "wl-eq-bar-3", "wl-eq-sill"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "window-upper-left",
+      "type": "window",
+      "cell": "A1.1-A1.2",
+      "confidence": 800,
+      "label": "upper window, cut by the top of the picture",
+      "parts": [
+        {
+          "id": "wu-frame",
+          "role": "frame",
+          "primitives": [
+            {"id": "wu-jamb-left", "kind": "line", "commands": [100], "points": [[19, 18], [19, 0]]},
+            {"id": "wu-jamb-right", "kind": "line", "commands": [49, 101], "points": [[47, 20], [47, 0]]},
+            {"id": "wu-sill-line", "kind": "line", "commands": [150], "points": [[47, 20], [19, 19]]}
+          ]
+        },
+        {
+          "id": "wu-bars",
+          "role": "glazing-bar",
+          "primitives": [{"id": "wu-bar-vertical", "kind": "line", "commands": [155, 156], "points": [[33, 19], [33, 0]]}]
+        }
+      ],
+      "relations": [{"kind": "parallel", "items": ["wu-jamb-left", "wu-jamb-right", "wu-bar-vertical"]}]
+    },
+    {
+      "id": "window-upper-mid",
+      "type": "window",
+      "cell": "A2.2",
+      "confidence": 750,
+      "label": "upper window above the door, cut by the top",
+      "parts": [
+        {
+          "id": "wm-frame",
+          "role": "frame",
+          "primitives": [
+            {"id": "wm-jamb-left", "kind": "line", "commands": [32], "points": [[97, 16], [97, 0]]},
+            {"id": "wm-jamb-right", "kind": "line", "commands": [33, 694], "points": [[122, 11], [122, 0]]},
+            {"id": "wm-sill-line", "kind": "line", "commands": [688], "points": [[98, 13], [118, 9]]}
+          ]
+        },
+        {
+          "id": "wm-bars",
+          "role": "glazing-bar",
+          "primitives": [{"id": "wm-bar-vertical", "kind": "line", "commands": [709, 710], "points": [[110, 13], [110, 0]]}]
+        }
+      ],
+      "relations": [{"kind": "parallel", "items": ["wm-jamb-left", "wm-jamb-right", "wm-bar-vertical"]}]
+    },
+    {
+      "id": "front-door",
+      "type": "door",
+      "cell": "A3.1-B3.4",
+      "confidence": 550,
+      "label": "open front door with arched transom",
+      "parts": [
+        {
+          "id": "door-opening",
+          "role": "opening",
+          "primitives": [
+            {"id": "door-jamb-left", "kind": "line", "commands": [35], "points": [[149, 124], [149, 45]]},
+            {"id": "door-jamb-right", "kind": "line", "commands": [45], "points": [[172, 38], [172, 114]]},
+            {"id": "door-head", "kind": "line", "commands": [38], "points": [[149, 44], [171, 38]]},
+            {"id": "door-threshold", "kind": "line", "commands": [98], "points": [[168, 115], [150, 114]]},
+            {"id": "door-reveal-right", "kind": "line", "commands": [96], "points": [[169, 115], [169, 40]]}
+          ]
+        },
+        {
+          "id": "door-transom",
+          "role": "frame",
+          "label": "arched transom (fanlight) over the door",
+          "primitives": [
+            {"id": "door-tr-spring-left", "kind": "line", "commands": [716], "points": [[149, 41], [149, 35]]},
+            {
+              "id": "door-tr-arch",
+              "kind": "arc",
+              "commands": [717, 718, 719, 720, 721, 722],
+              "points": [[149, 35], [161, 23], [172, 28]]
+            },
+            {"id": "door-tr-spring-right", "kind": "line", "commands": [715], "points": [[172, 35], [172, 29]]},
+            {"id": "door-tr-sill", "kind": "line", "commands": [714], "points": [[149, 41], [172, 35]]},
+            {"id": "door-tr-sill-top", "kind": "line", "commands": [723], "points": [[149, 39], [169, 34]]}
+          ]
+        },
+        {
+          "id": "door-tr-bars",
+          "role": "glazing-bar",
+          "label": "radial bars of the transom",
+          "primitives": [
+            {"id": "door-tr-bar-centre", "kind": "line", "commands": [728, 738], "points": [[160, 25], [160, 32]]},
+            {"id": "door-tr-bar-right", "kind": "line", "commands": [733, 734], "points": [[162, 31], [169, 25]]},
+            {"id": "door-tr-bar-left", "kind": "line", "commands": [735, 736], "points": [[159, 32], [151, 29]]}
+          ]
+        },
+        {
+          "id": "door-leaf-left",
+          "role": "leaf",
+          "label": "open leaf, seen edge-on",
+          "primitives": [
+            {"id": "door-ll-edge", "kind": "line", "commands": [749], "points": [[146, 40], [146, 122]]},
+            {"id": "door-ll-inner", "kind": "line", "commands": [753], "points": [[148, 122], [148, 44]]}
+          ]
+        },
+        {
+          "id": "door-leaf-right",
+          "role": "leaf",
+          "label": "open leaf",
+          "primitives": [
+            {"id": "door-lr-inner", "kind": "line", "commands": [743], "points": [[173, 113], [173, 33]]},
+            {"id": "door-lr-edge", "kind": "line", "commands": [748], "points": [[180, 23], [180, 109]]},
+            {"id": "door-lr-outer", "kind": "line", "commands": [744], "points": [[182, 110], [182, 20]]}
+          ]
+        }
+      ],
+      "relations": [
+        {"kind": "parallel", "items": ["door-jamb-left", "door-jamb-right", "door-reveal-right"]},
+        {"kind": "parallel", "items": ["door-head", "door-tr-sill", "door-tr-sill-top"]},
+        {"kind": "tangent", "items": ["door-tr-arch", "door-tr-spring-left"]},
+        {"kind": "tangent", "items": ["door-tr-arch", "door-tr-spring-right"]},
+        {
+          "kind": "parallel",
+          "items": ["door-ll-edge", "door-ll-inner", "door-lr-inner", "door-lr-edge", "door-lr-outer"]
+        }
+      ],
+      "alternatives": [
+        {
+          "id": "front-door-ellipse",
+          "type": "door",
+          "confidence": 450,
+          "note": "transom head is a half ellipse in perspective (spline), not a circular arc",
+          "parts": [
+            {
+              "id": "door-tr-ell",
+              "role": "frame",
+              "primitives": [
+                {"id": "door-tre-spring-left", "kind": "line", "commands": [716], "points": [[149, 41], [149, 35]]},
+                {
+                  "id": "door-tre-head",
+                  "kind": "spline",
+                  "commands": [717, 718, 719, 720, 721, 722],
+                  "points": [[149, 35], [150, 30], [154, 25], [164, 23], [168, 24], [171, 27], [172, 28]]
+                },
+                {"id": "door-tre-spring-right", "kind": "line", "commands": [715], "points": [[172, 35], [172, 29]]}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "front-steps",
+      "type": "staircase",
+      "cell": "B3.3-C4.1",
+      "confidence": 850,
+      "label": "three stone steps, each shifted right",
+      "parts": [
+        {
+          "id": "st-step-1",
+          "role": "step",
+          "primitives": [
+            {
+              "id": "st-1-nose",
+              "kind": "polyline",
+              "commands": [615, 613],
+              "points": [[150, 124], [158, 125], [179, 117]],
+              "corners": [{"point": 1, "kind": "sharp"}]
+            },
+            {"id": "st-1-riser", "kind": "line", "commands": [616], "points": [[159, 126], [159, 130]]},
+            {"id": "st-1-riser-foot", "kind": "line", "commands": [618], "points": [[159, 129], [178, 122]]}
+          ]
+        },
+        {
+          "id": "st-step-2",
+          "role": "step",
+          "primitives": [
+            {
+              "id": "st-2-nose",
+              "kind": "polyline",
+              "commands": [619, 623],
+              "points": [[160, 130], [168, 131], [187, 123]],
+              "corners": [{"point": 1, "kind": "sharp"}]
+            },
+            {"id": "st-2-riser", "kind": "line", "commands": [620], "points": [[168, 131], [168, 137]]},
+            {"id": "st-2-riser-foot", "kind": "line", "commands": [625], "points": [[169, 136], [187, 128]]}
+          ]
+        },
+        {
+          "id": "st-step-3",
+          "role": "step",
+          "primitives": [
+            {
+              "id": "st-3-nose",
+              "kind": "polyline",
+              "commands": [621, 628],
+              "points": [[168, 137], [175, 138], [196, 129]],
+              "corners": [{"point": 1, "kind": "sharp"}]
+            },
+            {"id": "st-3-riser", "kind": "line", "commands": [622], "points": [[175, 138], [175, 145]]},
+            {"id": "st-3-end", "kind": "line", "commands": [629], "points": [[196, 129], [196, 134]]},
+            {"id": "st-3-riser-foot", "kind": "line", "commands": [630], "points": [[196, 134], [176, 145]]}
+          ]
+        }
+      ],
+      "relations": [
+        {"kind": "parallel", "items": ["st-1-riser", "st-2-riser", "st-3-riser", "st-3-end"]},
+        {"kind": "parallel", "items": ["st-1-riser-foot", "st-2-riser-foot"]}
+      ]
+    },
+    {
+      "id": "cellar-bulkhead",
+      "type": "door",
+      "cell": "B3.2-C5.1",
+      "confidence": 900,
+      "label": "cellar door (bulkhead) with open leaf",
+      "parts": [
+        {
+          "id": "cb-frame",
+          "role": "frame",
+          "label": "outer frame",
+          "primitives": [
+            {
+              "id": "cb-frame-outline",
+              "kind": "polyline",
+              "commands": [57, 62, 65, 59],
+              "points": [[187, 79], [225, 66], [270, 117], [236, 135], [188, 79]],
+              "corners": [{"point": 1, "kind": "sharp"}, {"point": 2, "kind": "sharp"}, {"point": 3, "kind": "sharp"}]
+            }
+          ]
+        },
+        {
+          "id": "cb-opening",
+          "role": "opening",
+          "primitives": [
+            {"id": "cb-op-left", "kind": "line", "commands": [80], "points": [[194, 80], [237, 130]]},
+            {"id": "cb-op-right", "kind": "line", "commands": [77], "points": [[265, 117], [224, 70]]},
+            {
+              "id": "cb-op-bottom",
+              "kind": "polyline",
+              "commands": [81, 76],
+              "points": [[237, 130], [252, 123], [265, 117]]
+            },
+            {
+              "id": "cb-op-top",
+              "kind": "polyline",
+              "commands": [79, 78],
+              "points": [[194, 80], [210, 75], [212, 74], [224, 70]]
+            }
+          ]
+        },
+        {
+          "id": "cb-leaf",
+          "role": "leaf",
+          "primitives": [{"id": "cb-leaf-edge", "kind": "line", "commands": [74], "points": [[211, 74], [251, 123]]}]
+        },
+        {
+          "id": "cb-cheek",
+          "role": "panel",
+          "label": "boarded side of the bulkhead",
+          "primitives": [
+            {"id": "cb-cheek-front", "kind": "line", "commands": [56], "points": [[187, 123], [187, 79]]},
+            {"id": "cb-cheek-foot", "kind": "line", "commands": [58], "points": [[187, 124], [236, 135]]}
+          ]
+        }
+      ],
+      "relations": [{"kind": "parallel", "items": ["cb-op-left", "cb-op-right", "cb-leaf-edge"]}]
+    },
+    {
+      "id": "picket-fence",
+      "type": "fence",
+      "cell": "A4.4-B5.1",
+      "confidence": 850,
+      "label": "white picket fence beyond the bulkhead",
+      "parts": [
+        {
+          "id": "fence-rails",
+          "role": "rail",
+          "primitives": [
+            {"id": "fence-rail-top", "kind": "line", "commands": [86], "points": [[235, 68], [266, 58]]},
+            {"id": "fence-rail-top-2", "kind": "line", "commands": [1685], "points": [[235, 65], [265, 56]]},
+            {"id": "fence-far-rail", "kind": "line", "commands": [92], "points": [[258, 46], [235, 43]]}
+          ]
+        },
+        {
+          "id": "fence-pickets",
+          "role": "picket",
+          "label": "lit edges of the near pickets, 5 px apart",
+          "primitives": [
+            {"id": "fence-picket-1", "kind": "line", "commands": [1702], "points": [[241, 70], [241, 83]]},
+            {"id": "fence-picket-2", "kind": "line", "commands": [1703], "points": [[246, 69], [246, 88]]},
+            {"id": "fence-picket-3", "kind": "line", "commands": [1704], "points": [[251, 67], [251, 86]]},
+            {"id": "fence-picket-4", "kind": "line", "commands": [1705], "points": [[256, 65], [256, 84]]},
+            {"id": "fence-picket-5", "kind": "line", "commands": [1706], "points": [[261, 64], [261, 82]]},
+            {"id": "fence-picket-6", "kind": "line", "commands": [1707], "points": [[266, 62], [266, 80]]},
+            {"id": "fence-picket-7", "kind": "line", "commands": [1708], "points": [[271, 66], [271, 79]]}
+          ]
+        },
+        {
+          "id": "fence-far-pickets",
+          "role": "picket",
+          "label": "lit edges of the far pickets, 5 px apart",
+          "primitives": [
+            {"id": "fence-far-picket-1", "kind": "line", "commands": [1743], "points": [[239, 49], [239, 63]]},
+            {"id": "fence-far-picket-2", "kind": "line", "commands": [1748], "points": [[244, 50], [244, 61]]},
+            {"id": "fence-far-picket-3", "kind": "line", "commands": [1753], "points": [[249, 51], [249, 60]]},
+            {"id": "fence-far-picket-4", "kind": "line", "commands": [1758], "points": [[254, 51], [254, 58]]},
+            {"id": "fence-far-picket-5", "kind": "line", "commands": [1763], "points": [[259, 52], [259, 57]]}
+          ]
+        }
+      ],
+      "relations": [
+        {"kind": "parallel", "items": ["fence-rail-top", "fence-rail-top-2"]},
+        {
+          "kind": "equal-spacing",
+          "items": [
+            "fence-picket-1",
+            "fence-picket-2",
+            "fence-picket-3",
+            "fence-picket-4",
+            "fence-picket-5",
+            "fence-picket-6",
+            "fence-picket-7"
+          ]
+        },
+        {
+          "kind": "equal-spacing",
+          "items": [
+            "fence-far-picket-1",
+            "fence-far-picket-2",
+            "fence-far-picket-3",
+            "fence-far-picket-4",
+            "fence-far-picket-5"
+          ]
+        },
+        {
+          "kind": "parallel",
+          "items": [
+            "fence-picket-1",
+            "fence-picket-2",
+            "fence-picket-3",
+            "fence-picket-4",
+            "fence-picket-5",
+            "fence-picket-6",
+            "fence-picket-7",
+            "fence-far-picket-1",
+            "fence-far-picket-2",
+            "fence-far-picket-3",
+            "fence-far-picket-4",
+            "fence-far-picket-5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tree-right",
+      "type": "tree",
+      "cell": "A4.2-B5.2",
+      "confidence": 900,
+      "label": "bare tree at the right",
+      "parts": [
+        {
+          "id": "tr-0-trunk",
+          "role": "trunk",
+          "primitives": [
+            {
+              "id": "tr-0-curve",
+              "kind": "spline",
+              "commands": [463, 464, 465, 466, 467, 468],
+              "points": [[291, 85], [279, 77], [267, 58], [258, 43], [252, 39], [243, 28], [241, 23]]
+            }
+          ]
+        },
+        {
+          "id": "tr-1-branch",
+          "role": "branch",
+          "primitives": [
+            {
+              "id": "tr-1-curve",
+              "kind": "spline",
+              "commands": [524, 525, 526, 527],
+              "points": [[278, 35], [273, 27], [270, 13], [267, 2], [266, 0]]
+            }
+          ]
+        },
+        {
+          "id": "tr-2-branch",
+          "role": "branch",
+          "primitives": [
+            {
+              "id": "tr-2-curve",
+              "kind": "spline",
+              "commands": [547, 548, 549, 550],
+              "points": [[308, 26], [308, 22], [305, 17], [306, 9], [307, 0]]
+            }
+          ]
+        },
+        {
+          "id": "tr-3-branch",
+          "role": "branch",
+          "primitives": [
+            {
+              "id": "tr-3-curve",
+              "kind": "spline",
+              "commands": [555, 556, 557, 558, 559, 560],
+              "points": [[296, 48], [302, 38], [305, 30], [305, 23], [302, 17], [304, 3], [304, 0]]
+            }
+          ]
+        },
+        {
+          "id": "tr-4-branch",
+          "role": "branch",
+          "primitives": [
+            {
+              "id": "tr-4-curve",
+              "kind": "spline",
+              "commands": [588, 589, 590, 591, 592],
+              "points": [[287, 58], [284, 55], [284, 50], [281, 44], [281, 39], [287, 22]]
+            }
+          ]
+        }
+      ]
+    }
   ]
 }

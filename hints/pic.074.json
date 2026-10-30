@@ -1,13 +1,147 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 74,
   "pic_sha256": "d67cb95b591df869ad4fc07a041a65e48b41a5b8ab0eab0a46c4f0bb8ef8a24e",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; scene model: Claude, pilot, 2026-10-30",
   "regions": [
     {"id": "wooden-staircase", "at": [25, 150], "label": "wooden staircase"},
     {"id": "blank-wall", "at": [250, 80], "label": "blank wall"},
     {"id": "upper-landing", "at": [40, 40], "label": "upper landing"},
     {"id": "lower-floor", "at": [250, 175], "label": "lower floor"}
+  ],
+  "objects": [
+    {
+      "id": "attic-stairs",
+      "type": "staircase",
+      "cell": "B1.3-C2.3",
+      "confidence": 550,
+      "label": "stairs down from the attic",
+      "parts": [
+        {
+          "id": "as-step-1",
+          "role": "step",
+          "primitives": [
+            {"id": "as-1-back", "kind": "line", "commands": [188], "points": [[16, 137], [62, 137]]},
+            {"id": "as-1-nose", "kind": "line", "commands": [186], "points": [[16, 140], [63, 140]]},
+            {"id": "as-1-lit-1", "kind": "line", "commands": [199], "points": [[16, 138], [62, 138]]},
+            {"id": "as-1-lit-2", "kind": "line", "commands": [200], "points": [[17, 139], [63, 139]]}
+          ]
+        },
+        {
+          "id": "as-step-2",
+          "role": "step",
+          "primitives": [
+            {"id": "as-2-back", "kind": "line", "commands": [190], "points": [[16, 144], [63, 144]]},
+            {"id": "as-2-nose", "kind": "line", "commands": [191], "points": [[16, 147], [63, 147]]},
+            {"id": "as-2-lit-1", "kind": "line", "commands": [201], "points": [[16, 145], [63, 145]]},
+            {"id": "as-2-lit-2", "kind": "line", "commands": [202], "points": [[16, 146], [63, 146]]}
+          ]
+        },
+        {
+          "id": "as-step-3",
+          "role": "step",
+          "primitives": [
+            {"id": "as-3-back", "kind": "line", "commands": [192], "points": [[25, 151], [64, 151]]},
+            {"id": "as-3-nose", "kind": "line", "commands": [193, 212], "points": [[17, 154], [65, 154]]},
+            {"id": "as-3-lit-1", "kind": "line", "commands": [203], "points": [[28, 152], [64, 152]]},
+            {"id": "as-3-lit-2", "kind": "line", "commands": [204], "points": [[29, 153], [64, 153]]}
+          ]
+        },
+        {
+          "id": "as-step-4",
+          "role": "step",
+          "primitives": [
+            {"id": "as-4-back", "kind": "line", "commands": [194], "points": [[36, 158], [65, 158]]},
+            {"id": "as-4-nose", "kind": "line", "commands": [195, 211], "points": [[17, 161], [65, 161]]},
+            {"id": "as-4-lit-1", "kind": "line", "commands": [205], "points": [[40, 159], [65, 159]]},
+            {"id": "as-4-lit-2", "kind": "line", "commands": [206], "points": [[42, 160], [65, 160]]}
+          ]
+        },
+        {
+          "id": "as-step-5",
+          "role": "step",
+          "primitives": [
+            {"id": "as-5-back", "kind": "line", "commands": [196], "points": [[50, 165], [65, 165]]},
+            {"id": "as-5-nose", "kind": "line", "commands": [197, 210], "points": [[17, 168], [67, 168]]},
+            {"id": "as-5-lit-1", "kind": "line", "commands": [207], "points": [[53, 166], [65, 166]]},
+            {"id": "as-5-lit-2", "kind": "line", "commands": [208], "points": [[56, 167], [65, 167]]}
+          ]
+        },
+        {
+          "id": "as-dark-steps",
+          "role": "step",
+          "label": "steps in the dark, only the noses drawn",
+          "primitives": [
+            {"id": "as-dark-6", "kind": "line", "commands": [213], "points": [[17, 175], [66, 175]]},
+            {"id": "as-dark-7", "kind": "line", "commands": [214], "points": [[21, 183], [67, 183]]},
+            {"id": "as-dark-8", "kind": "line", "commands": [215], "points": [[37, 189], [67, 189]]}
+          ]
+        },
+        {
+          "id": "as-stringer",
+          "role": "edge",
+          "primitives": [
+            {"id": "as-stringer-line", "kind": "line", "commands": [71], "points": [[63, 133], [69, 189]]},
+            {"id": "as-opening-edge", "kind": "line", "commands": [42, 43], "points": [[65, 124], [80, 189]]}
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "kind": "equal-spacing",
+          "items": ["as-1-nose", "as-2-nose", "as-3-nose", "as-4-nose", "as-5-nose"],
+          "note": "7 px pitch"
+        },
+        {
+          "kind": "parallel",
+          "items": [
+            "as-1-nose",
+            "as-2-nose",
+            "as-3-nose",
+            "as-4-nose",
+            "as-5-nose",
+            "as-1-back",
+            "as-2-back",
+            "as-3-back",
+            "as-4-back",
+            "as-5-back",
+            "as-dark-6",
+            "as-dark-7",
+            "as-dark-8"
+          ]
+        }
+      ],
+      "alternatives": [
+        {
+          "id": "attic-stairs-even",
+          "type": "staircase",
+          "confidence": 450,
+          "note": "dark steps continue the 7 px pitch (175, 182, 189): the nose at 183 moves up 1 px",
+          "parts": [
+            {
+              "id": "as-even-steps",
+              "role": "step",
+              "primitives": [
+                {"id": "as-even-1", "kind": "line", "commands": [186], "points": [[16, 140], [63, 140]]},
+                {"id": "as-even-2", "kind": "line", "commands": [191], "points": [[16, 147], [63, 147]]},
+                {"id": "as-even-3", "kind": "line", "commands": [193, 212], "points": [[17, 154], [65, 154]]},
+                {"id": "as-even-4", "kind": "line", "commands": [195, 211], "points": [[17, 161], [65, 161]]},
+                {"id": "as-even-5", "kind": "line", "commands": [197, 210], "points": [[17, 168], [67, 168]]},
+                {"id": "as-even-6", "kind": "line", "commands": [213], "points": [[17, 175], [66, 175]]},
+                {"id": "as-even-7", "kind": "line", "commands": [214], "points": [[21, 183], [67, 183]]},
+                {"id": "as-even-8", "kind": "line", "commands": [215], "points": [[37, 189], [67, 189]]}
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "kind": "equal-spacing",
+              "items": ["as-even-1", "as-even-2", "as-even-3", "as-even-4", "as-even-5", "as-even-6", "as-even-7", "as-even-8"]
+            }
+          ]
+        }
+      ]
+    }
   ]
 }

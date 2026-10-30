@@ -1,9 +1,9 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 174,
   "pic_sha256": "b223437e3ee0817e04f51229a9ec59b115f3d1310be99b2f2b6cee5d7ab65b1a",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; scene model: Claude, pilot, 2026-10-30",
   "regions": [
     {"id": "rug", "at": [150, 120], "label": "rug"},
     {"id": "panelled-wall", "at": [120, 40], "label": "panelled wall"},
@@ -13,5 +13,148 @@
   ],
   "chains": [
     {"id": "foliage-outside-window", "lines": [481, 482, 483, 484], "primitive": "spline", "label": "foliage outside window", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "panelled-back-wall",
+      "type": "wall",
+      "cell": "A2.1-B3.2",
+      "confidence": 850,
+      "label": "back wall with vertical battens, 18 px apart",
+      "parts": [
+        {
+          "id": "pw-board-1",
+          "role": "board",
+          "primitives": [
+            {"id": "pw-1-a", "kind": "line", "commands": [337], "points": [[77, 9], [77, 35]]},
+            {"id": "pw-1-b", "kind": "line", "commands": [335], "points": [[74, 9], [74, 32]]}
+          ]
+        },
+        {
+          "id": "pw-board-2",
+          "role": "board",
+          "primitives": [
+            {"id": "pw-2-a", "kind": "line", "commands": [334], "points": [[92, 9], [92, 70]]},
+            {"id": "pw-2-b", "kind": "line", "commands": [339], "points": [[95, 9], [95, 70]]}
+          ]
+        },
+        {
+          "id": "pw-board-3",
+          "role": "board",
+          "primitives": [
+            {"id": "pw-3-a", "kind": "line", "commands": [331], "points": [[110, 9], [110, 70]]},
+            {"id": "pw-3-b", "kind": "line", "commands": [340], "points": [[113, 9], [113, 70]]}
+          ]
+        },
+        {
+          "id": "pw-board-4",
+          "role": "board",
+          "primitives": [
+            {"id": "pw-4-a", "kind": "line", "commands": [330], "points": [[128, 9], [128, 70]]},
+            {"id": "pw-4-b", "kind": "line", "commands": [341], "points": [[131, 9], [131, 70]]}
+          ]
+        },
+        {
+          "id": "pw-board-5",
+          "role": "board",
+          "primitives": [
+            {"id": "pw-5-a", "kind": "line", "commands": [329], "points": [[146, 9], [146, 70]]},
+            {"id": "pw-5-b", "kind": "line", "commands": [342], "points": [[149, 10], [149, 70]]}
+          ]
+        },
+        {
+          "id": "pw-board-6",
+          "role": "board",
+          "primitives": [
+            {"id": "pw-6-a", "kind": "line", "commands": [328], "points": [[164, 12], [164, 70]]},
+            {"id": "pw-6-b", "kind": "line", "commands": [343], "points": [[167, 13], [167, 70]]}
+          ]
+        },
+        {
+          "id": "pw-board-7",
+          "role": "board",
+          "primitives": [
+            {"id": "pw-7-a", "kind": "line", "commands": [332], "points": [[182, 26], [182, 70]]},
+            {"id": "pw-7-b", "kind": "line", "commands": [344], "points": [[185, 30], [185, 70]]}
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "kind": "equal-spacing",
+          "items": ["pw-board-1", "pw-board-2", "pw-board-3", "pw-board-4", "pw-board-5", "pw-board-6", "pw-board-7"]
+        },
+        {
+          "kind": "parallel",
+          "items": [
+            "pw-1-a",
+            "pw-1-b",
+            "pw-2-a",
+            "pw-2-b",
+            "pw-3-a",
+            "pw-3-b",
+            "pw-4-a",
+            "pw-4-b",
+            "pw-5-a",
+            "pw-5-b",
+            "pw-6-a",
+            "pw-6-b",
+            "pw-7-a",
+            "pw-7-b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attic-rug",
+      "type": "other",
+      "cell": "B2.2-C4.2",
+      "confidence": 900,
+      "label": "rug with a double border, in perspective",
+      "parts": [
+        {
+          "id": "rug-outer",
+          "role": "outline",
+          "primitives": [
+            {
+              "id": "rug-outer-edge",
+              "kind": "polyline",
+              "commands": [389, 390, 391, 392],
+              "points": [[96, 85], [121, 140], [239, 140], [193, 85], [97, 85]],
+              "corners": [{"point": 1, "kind": "sharp"}, {"point": 2, "kind": "sharp"}, {"point": 3, "kind": "sharp"}]
+            }
+          ]
+        },
+        {
+          "id": "rug-border",
+          "role": "edge",
+          "primitives": [
+            {
+              "id": "rug-border-edge",
+              "kind": "polyline",
+              "commands": [393, 394, 395, 396],
+              "points": [[100, 87], [123, 138], [233, 138], [192, 87], [100, 87]],
+              "corners": [{"point": 1, "kind": "sharp"}, {"point": 2, "kind": "sharp"}, {"point": 3, "kind": "sharp"}]
+            }
+          ]
+        },
+        {
+          "id": "rug-field",
+          "role": "edge",
+          "primitives": [
+            {
+              "id": "rug-field-edge",
+              "kind": "polyline",
+              "commands": [398, 399, 400, 401],
+              "points": [[105, 89], [190, 89], [226, 135], [125, 135], [104, 89]],
+              "corners": [{"point": 1, "kind": "sharp"}, {"point": 2, "kind": "sharp"}, {"point": 3, "kind": "sharp"}]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "repetitions": [
+    {"id": "attic-battens", "items": ["pw-board-1", "pw-board-2", "pw-board-3", "pw-board-4", "pw-board-5", "pw-board-6", "pw-board-7"], "note": "identical battens"}
   ]
 }
