@@ -4,7 +4,12 @@
 #include "sci_test.hpp"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <ios>
+#include <iterator>
 #include <string>
 
 using sci::vector::HintPrimitive;
@@ -122,4 +127,163 @@ SCI_TEST(hints_match_their_picture_data) {
                                           "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"));
     SCI_CHECK(abc.has_value() && sci::vector::hints_match(*abc, data));
     SCI_CHECK(sci::vector::hint_file_name(5) == "pic.005.json");
+}
+
+// The scene model of format version 2 (docs/SPEC_ADDENDA.md A4, A.1 to A.7).
+
+namespace {
+
+std::string scene_example() {
+    std::ifstream file(std::filesystem::path(SCI_TEST_HINTS_DIR) / "pic.900.json", std::ios::binary);
+    SCI_CHECK(file.good());
+    return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+}
+
+// The error of a file that must be rejected, or "" if it was accepted.
+std::string rejection(const std::string& text) {
+    const auto hints = parse_hints(text);
+    return hints ? std::string() : hints.error().message;
+}
+
+} // namespace
+
+SCI_TEST(hints_read_the_scene_model) {
+    using namespace sci::vector;
+    const auto hints = parse_hints(scene_example());
+    SCI_CHECK(hints.has_value());
+    if (!hints) {
+        return;
+    }
+    SCI_CHECK(hints->version == 2 && hints->picture == 900);
+    SCI_CHECK(hints->objects.size() == 4 && hints->chains.size() == 1);
+    const ObjectHint& window = hints->objects[0];
+    SCI_CHECK(window.id == "window-left" && window.main.id == "window-left" && window.cell == "B2.1");
+    SCI_CHECK(window.main.type == ObjectType::Window && window.main.confidence == 900);
+    SCI_CHECK(window.label == "left window" && window.alternatives.empty() && !window.decision);
+    SCI_CHECK(window.main.parts.size() == 3 && window.main.parts[1].role == PartRole::GlazingBar);
+    const PrimitiveHint& outline = window.main.parts[0].primitives[0];
+    SCI_CHECK(outline.kind == PrimitiveKind::Polyline && outline.commands.size() == 4 && outline.commands[3] == 13);
+    SCI_CHECK(outline.points.size() == 5 && outline.points[2] == (Point1x{.x = 90, .y = 100}));
+    SCI_CHECK(outline.corners.size() == 3 && outline.corners[2].point == 3);
+    SCI_CHECK(outline.corners[2].kind == CornerKind::Sharp);
+    SCI_CHECK(window.main.relations.size() == 3);
+    SCI_CHECK(window.main.relations[0].kind == GeometricKind::Perpendicular);
+    SCI_CHECK(window.main.relations[0].axis == Axis::None);
+    SCI_CHECK(window.main.relations[2].kind == GeometricKind::Symmetry);
+    SCI_CHECK(window.main.relations[2].axis == Axis::Vertical && window.main.relations[2].items[1] == "wl-sill");
+    const ObjectHint& door = hints->objects[2];
+    SCI_CHECK(door.cell == "B3.3-C3.1" && door.main.parts[1].primitives[0].kind == PrimitiveKind::Arc);
+    SCI_CHECK(door.main.parts[1].primitives[0].corners[1].kind == CornerKind::Rounded);
+    SCI_CHECK(door.main.relations[0].kind == GeometricKind::Tangent);
+    SCI_CHECK(door.alternatives.size() == 1 && door.alternatives[0].id == "door-pointed");
+    SCI_CHECK(door.alternatives[0].confidence == 400 && !door.alternatives[0].note.empty());
+    SCI_CHECK(door.decision && door.decision->hypothesis == "door" && door.decision->date == "2026-10-30");
+    SCI_CHECK(door.decision && door.decision->cell == "B3.3" && door.decision->note == "round");
+    const ObjectHint& oak = hints->objects[3];
+    SCI_CHECK(oak.main.type == ObjectType::Tree && is_organic(oak.main.type) && !is_organic(door.main.type));
+    SCI_CHECK(oak.main.parts[0].primitives[1].corners[0].kind == CornerKind::Step);
+    SCI_CHECK(hints->repetitions.size() == 1 && hints->repetitions[0].items[1] == "window-right");
+}
+
+// A version 1 file reads as before, and as the same file with version 2;
+// the scene model needs version 2.
+SCI_TEST(hints_migrate_version_1) {
+    const auto old = parse_hints(valid);
+    const auto migrated = parse_hints(replaced(valid, R"("version": 1)", R"("version": 2)"));
+    SCI_CHECK(old.has_value() && migrated.has_value());
+    if (!old || !migrated) {
+        return;
+    }
+    SCI_CHECK(old->version == 1 && migrated->version == 2);
+    SCI_CHECK(old->objects.empty() && old->repetitions.empty() && migrated->objects.empty());
+    SCI_CHECK(old->pic_sha256 == migrated->pic_sha256 && old->analyser == migrated->analyser);
+    SCI_CHECK(old->regions.size() == migrated->regions.size() && old->chains.size() == migrated->chains.size());
+    for (std::size_t i = 0; i < old->chains.size() && i < migrated->chains.size(); ++i) {
+        SCI_CHECK(old->chains[i].lines == migrated->chains[i].lines);
+        SCI_CHECK(old->chains[i].primitive == migrated->chains[i].primitive);
+    }
+    SCI_CHECK(old->gaps.size() == migrated->gaps.size() && old->symmetry.size() == migrated->symmetry.size());
+    SCI_CHECK(old->relations.size() == migrated->relations.size());
+    const std::string scene = scene_example();
+    SCI_CHECK(rejection(replaced(scene, R"("version": 2)", R"("version": 1)")).contains("need version 2"));
+    SCI_CHECK(rejection(replaced(valid, R"("version": 1)", R"("version": 1, "repetitions": [])"))
+                  .contains("need version 2"));
+    SCI_CHECK(!rejection(replaced(scene, R"("version": 2)", R"("version": 3)")).empty());
+}
+
+SCI_TEST(hints_reject_invalid_scene_models) {
+    struct Breakage {
+        const char* from;
+        const char* to;
+        const char* error; // Part of the message.
+    };
+    const std::array<Breakage, 44> breakages{{
+        // Vocabulary and values.
+        {R"("type": "tree")", R"("type": "bush")", "one of"},
+        {R"("role": "sill")", R"("role": "ledge")", "one of"},
+        {R"("kind": "step")", R"("kind": "jagged")", "one of"},
+        {R"("kind": "perpendicular")", R"("kind": "orthogonal")", "one of"},
+        {R"("axis": "vertical")", R"("axis": "diagonal")", "one of"},
+        {R"("confidence": 900)", R"("confidence": 1001)", "not in 0..1000"},
+        {R"("confidence": 900)", R"("confidence": -1)", "not in 0..1000"},
+        {R"("cell": "B2.1")", R"("cell": "D2.1")", "review grid"},
+        {R"("cell": "B2.1")", R"("cell": "B2.5")", "review grid"},
+        {R"("cell": "B2.1")", R"("cell": "b2.1")", "review grid"},
+        {R"("cell": "A1-B1")", R"("cell": "A1-")", "review grid"},
+        {R"("cell": "A1-B1")", R"("cell": "A1 - B1")", "review grid"},
+        {R"("corners": [{"point": 0)", R"("corner": [{"point": 0)", "unknown member"},
+        {R"("note": "a pointed arch)", R"("label": "a pointed arch)", "unknown member"},
+        // Anchors.
+        {"[10, 11, 12, 13]", "[10, 11, 11, 13]", "listed twice"},
+        {R"("commands": [53])", R"("commands": [1000001])", "not in 0..1000000"},
+        {R"("commands": [53])", R"("commands": [])", "items expected"},
+        {"[[70, 85], [90, 85]]", "[[70, 85], [320, 85]]", "not in 0..319"},
+        {"[[70, 85], [90, 85]]", "[[70, 85], [90, 190]]", "not in 0..189"},
+        {"[[80, 70], [80, 100]]", "[[80, 70], [80, 85], [80, 100]]", "points expected"},
+        {R"("kind": "arc")", R"("kind": "line")", "points expected"},
+        {R"({"point": 3, "kind": "sharp"})", R"({"point": 5, "kind": "sharp"})", "not in 0..4"},
+        {R"({"point": 2, "kind": "sharp"})", R"({"point": 1, "kind": "sharp"})", "two corners"},
+        // Ids and references.
+        {R"("id": "oak-bark-step")", R"("id": "door-arch-chain")", "used twice"},
+        {R"("id": "door-pointed")", R"("id": "window-left")", "used twice"},
+        {R"("id": "wl-sill")", R"("id": "wl-bars")", "used twice"},
+        {R"("id": "windows-row")", R"("id": "oak")", "used twice"},
+        {R"(["wl-bar-v", "wl-bar-h"])", R"(["wl-bar-v", "nothing"])", "no part or primitive"},
+        {R"(["wl-bar-h", "wl-sill-top"])", R"(["wl-bar-h", "door-jamb-left"])", "no part or primitive"},
+        {R"(["wl-bar-h", "wl-sill-top"])", R"(["wl-bar-h", "wl-bar-h"])", "listed twice"},
+        {R"(["wl-bar-v", "wl-bar-h"])", R"(["wl-bar-v", "wl-bar-h", "wl-sill-top"])", "two items"},
+        {R"("kind": "parallel")", R"("kind": "equal-spacing")", "three or more"},
+        {R"(, "axis": "vertical")", "", "an axis"},
+        {R"(["wl-bar-h", "wl-sill-top"]})", R"(["wl-bar-h", "wl-sill-top"], "axis": "vertical"})", "an axis"},
+        {R"(["door-arch-curve", "door-jamb-left"])", R"(["door-jamb-right", "door-jamb-left"])", "arc and a line"},
+        {R"(["door-arch-curve", "door-jamb-left"])", R"(["door-arch-curve", "door-jambs"])", "arc and a line"},
+        {R"("hypothesis": "door")", R"("hypothesis": "window-left")", "no hypothesis"},
+        {R"("by": "customer")", R"("by": "agent")", "customer"},
+        {R"("date": "2026-10-30")", R"("date": "2026-02-29")", "date"},
+        {R"("date": "2026-10-30")", R"("date": "26-10-30")", "date"},
+        {R"(["window-left", "window-right"])", R"(["window-left", "nothing"])", "no object or part"},
+        {R"(["window-left", "window-right"])", R"(["window-left", "door"])", "one type"},
+        {R"(["window-left", "window-right"])", R"(["window-left", "wl-frame"])", "not both"},
+        {R"("note": "same window twice"})",
+         R"("note": "same window twice"}, {"id": "again", "items": ["window-right", "window-left"]})",
+         "two repetitions"},
+    }};
+    const std::string scene = scene_example();
+    for (const auto& [from, to, error] : breakages) {
+        SCI_CHECK(rejection(replaced(scene, from, to)).contains(error));
+    }
+    // A.4: organic objects get no idealisation.
+    SCI_CHECK(rejection(replaced(scene, R"("kind": "spline")", R"("kind": "ellipse")")).contains("organic"));
+    SCI_CHECK(rejection(replaced(scene, R"("cell": "A1-B1",)",
+                                 R"("cell": "A1-B1", "relations": [{"kind": "parallel", "items": ["oak-trunk-left",
+                                    "oak-bark-step"]}],)"))
+                  .contains("organic"));
+    SCI_CHECK(rejection(replaced(replaced(scene, R"("type": "tree")", R"("type": "window")"),
+                                 R"(["window-left", "window-right"])", R"(["window-left", "oak"])"))
+                  .empty());
+    SCI_CHECK(rejection(replaced(replaced(scene, R"("role": "trunk")", R"("role": "frame")"),
+                                 R"(["window-left", "window-right"])", R"(["oak-trunk", "wl-frame"])"))
+                  .contains("organic"));
+    // A valid leap day.
+    SCI_CHECK(rejection(replaced(scene, R"("date": "2026-10-30")", R"("date": "2028-02-29")")).empty());
 }

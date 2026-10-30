@@ -1,0 +1,156 @@
+{
+  "format": "sierra-hd-hints",
+  "version": 2,
+  "picture": 900,
+  "pic_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "analyser": "synthetic example of the scene model (no picture)",
+  "chains": [{"id": "door-arch-chain", "lines": [40, 41, 42], "primitive": "arc", "label": "door arch"}],
+  "objects": [
+    {
+      "id": "window-left",
+      "type": "window",
+      "cell": "B2.1",
+      "confidence": 900,
+      "label": "left window",
+      "parts": [
+        {
+          "id": "wl-frame",
+          "role": "frame",
+          "primitives": [
+            {
+              "id": "wl-frame-outline",
+              "kind": "polyline",
+              "commands": [10, 11, 12, 13],
+              "points": [[70, 70], [90, 70], [90, 100], [70, 100], [70, 70]],
+              "corners": [{"point": 1, "kind": "sharp"}, {"point": 2, "kind": "sharp"}, {"point": 3, "kind": "sharp"}]
+            }
+          ]
+        },
+        {
+          "id": "wl-bars",
+          "role": "glazing-bar",
+          "primitives": [
+            {"id": "wl-bar-v", "kind": "line", "commands": [14], "points": [[80, 70], [80, 100]]},
+            {"id": "wl-bar-h", "kind": "line", "commands": [15], "points": [[70, 85], [90, 85]]}
+          ]
+        },
+        {
+          "id": "wl-sill",
+          "role": "sill",
+          "primitives": [{"id": "wl-sill-top", "kind": "line", "commands": [16], "points": [[68, 102], [92, 102]]}]
+        }
+      ],
+      "relations": [
+        {"kind": "perpendicular", "items": ["wl-bar-v", "wl-bar-h"]},
+        {"kind": "parallel", "items": ["wl-bar-h", "wl-sill-top"]},
+        {"kind": "symmetry", "items": ["wl-frame", "wl-sill"], "axis": "vertical"}
+      ]
+    },
+    {
+      "id": "window-right",
+      "type": "window",
+      "cell": "B3.2",
+      "confidence": 850,
+      "parts": [
+        {
+          "id": "wr-frame",
+          "role": "frame",
+          "primitives": [
+            {
+              "id": "wr-frame-outline",
+              "kind": "polyline",
+              "commands": [20, 21, 22, 23],
+              "points": [[170, 70], [190, 70], [190, 100], [170, 100], [170, 70]]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "door",
+      "type": "door",
+      "cell": "B3.3-C3.1",
+      "confidence": 600,
+      "parts": [
+        {
+          "id": "door-jambs",
+          "role": "jamb",
+          "primitives": [
+            {"id": "door-jamb-left", "kind": "line", "commands": [43], "points": [[140, 110], [140, 150]]},
+            {"id": "door-jamb-right", "kind": "line", "commands": [44], "points": [[160, 110], [160, 150]]}
+          ]
+        },
+        {
+          "id": "door-arch",
+          "role": "lintel",
+          "primitives": [
+            {
+              "id": "door-arch-curve",
+              "kind": "arc",
+              "commands": [40, 41, 42],
+              "points": [[140, 110], [150, 100], [160, 110]],
+              "corners": [{"point": 0, "kind": "rounded"}, {"point": 2, "kind": "rounded"}]
+            }
+          ]
+        }
+      ],
+      "relations": [
+        {"kind": "tangent", "items": ["door-arch-curve", "door-jamb-left"]},
+        {"kind": "tangent", "items": ["door-arch-curve", "door-jamb-right"]},
+        {"kind": "aligned", "items": ["door-jamb-left", "door-jamb-right"], "axis": "horizontal"}
+      ],
+      "alternatives": [
+        {
+          "id": "door-pointed",
+          "type": "door",
+          "confidence": 400,
+          "note": "a pointed arch: two lines meeting at a sharp apex",
+          "parts": [
+            {
+              "id": "door-pointed-top",
+              "role": "lintel",
+              "primitives": [
+                {
+                  "id": "door-pointed-apex",
+                  "kind": "polyline",
+                  "commands": [40, 41, 42],
+                  "points": [[140, 110], [150, 100], [160, 110]],
+                  "corners": [{"point": 1, "kind": "sharp"}]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "decision": {"hypothesis": "door", "by": "customer", "date": "2026-10-30", "cell": "B3.3", "note": "round"}
+    },
+    {
+      "id": "oak",
+      "type": "tree",
+      "cell": "A1-B1",
+      "confidence": 950,
+      "parts": [
+        {
+          "id": "oak-trunk",
+          "role": "trunk",
+          "primitives": [
+            {
+              "id": "oak-trunk-left",
+              "kind": "spline",
+              "commands": [50, 51, 52],
+              "points": [[20, 120], [24, 90], [22, 60]]
+            },
+            {
+              "id": "oak-bark-step",
+              "kind": "polyline",
+              "commands": [53],
+              "points": [[30, 100], [31, 100], [31, 101]],
+              "corners": [{"point": 1, "kind": "step"}]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "repetitions": [{"id": "windows-row", "items": ["window-left", "window-right"], "note": "same window twice"}]
+}

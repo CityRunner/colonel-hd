@@ -47,6 +47,8 @@ sci_add_unit_test(NAME sci-vector-tests
     DEPENDS sci-vector sci-render)
 # The fitting tests reach into sci-vector's internals.
 target_include_directories(sci-vector-tests PRIVATE pic ${PROJECT_SOURCE_DIR}/src/sci-vector/src)
+# The synthetic scene-model example (tests/hints/pic.900.json).
+target_compile_definitions(sci-vector-tests PRIVATE SCI_TEST_HINTS_DIR="${PROJECT_SOURCE_DIR}/tests/hints")
 
 sci_add_unit_test(NAME sci-audio-tests
     SOURCES audio/adlib_test.cpp audio/mixer_test.cpp audio/mt32_driver_test.cpp audio/mt32_test.cpp audio/opl3_test.cpp

@@ -13,7 +13,8 @@
 //       the game art: write it to a git-ignored place only.
 //   sci-hint-tool <game> check <hint directory>
 //       Checks every hint file against the game: it parses, matches its
-//       picture's data, and refers to lines the picture draws. Prints what
+//       picture's data, and refers to lines the picture draws (chains, gaps
+//       and the primitives of the scene model). Prints what
 //       the vector path does with each file; exits with 1 on a problem.
 //
 // The candidates are suggestions; which of them are curves, and of what
@@ -28,6 +29,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <format>
@@ -362,6 +364,38 @@ bool check_file(const sci::resource::ResourceManager& manager, const fs::path& p
             // A reference to a command without a line is an error in the file.
             ok = ok && !rejected.detail.ends_with("draws no line");
         }
+    }
+    // The primitives of the scene model (format version 2) name commands
+    // that draw lines.
+    std::vector<std::uint32_t> line_commands;
+    for (const auto& primitive : drawn->trace.primitives) {
+        if (std::holds_alternative<sci::pic::Line>(primitive.shape)) {
+            line_commands.push_back(primitive.command);
+        }
+    }
+    std::ranges::stable_sort(line_commands);
+    std::size_t primitives = 0;
+    for (const auto& object : hints->objects) {
+        std::vector<const sci::vector::Hypothesis*> hypotheses{&object.main};
+        for (const auto& alternative : object.alternatives) {
+            hypotheses.push_back(&alternative);
+        }
+        for (const auto* hypothesis : hypotheses) {
+            for (const auto& part : hypothesis->parts) {
+                for (const auto& primitive : part.primitives) {
+                    ++primitives;
+                    for (const std::uint32_t command : primitive.commands) {
+                        if (!std::ranges::binary_search(line_commands, command)) {
+                            std::println("  scene, {}: command {} draws no line", primitive.id, command);
+                            ok = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (!hints->objects.empty()) {
+        std::println("  scene: {} objects, {} primitives", hints->objects.size(), primitives);
     }
     return ok;
 }
