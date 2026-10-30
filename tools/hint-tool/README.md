@@ -24,6 +24,12 @@ Tooling for the scene-analysis hints (spec section 6.7, `hints/README.md`).
   lines. The command prints what the vector path does with each file and
   exits with 1 on a problem. It needs the game files, so CI runs only the
   schema check (`scripts/check-hints.py`).
+- `commands <n>[+<n>...]`: lists what the stack draws, one traced
+  primitive per output line, for the scene-model analysis (milestone 10):
+  the picture of the stack (0 = the first), the command index that hints
+  refer to, the kind (`line x0,y0 x1,y1`, `fill x,y`, `pattern x,y code
+  c`) in picture coordinates after mirroring, the planes (`vpc`), the
+  visual pair in hex and how many visual pixels it still owns at the end.
 - `make_hints.py <candidates> <decisions> <hints> <analyser>`: turns the
   review decisions (one JSON file per picture; see the script's header)
   into hint files. The committed hints were made this way; see

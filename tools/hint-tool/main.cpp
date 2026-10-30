@@ -16,6 +16,11 @@
 //       picture's data, and refers to lines the picture draws (chains, gaps
 //       and the primitives of the scene model). Prints what
 //       the vector path does with each file; exits with 1 on a problem.
+//   sci-hint-tool <game> commands <n>[+<n>...]
+//       Lists what the pictures draw, one traced primitive per line, for
+//       the scene-model analysis: picture (0 = the first of the stack),
+//       command index, kind, picture coordinates, the planes and visual
+//       pair, and how many visual pixels it still owns at the end.
 //
 // The candidates are suggestions; which of them are curves, and of what
 // kind, is decided by looking at the picture (docs/hints.md).
@@ -430,6 +435,38 @@ int check(const sci::resource::ResourceManager& manager, const fs::path& directo
     return ok ? 0 : 1;
 }
 
+int list_commands(const sci::resource::ResourceManager& manager, std::span<const std::uint16_t> numbers) {
+    const auto drawn = sci::tools::draw_pictures(manager, numbers);
+    if (!drawn) {
+        return 1;
+    }
+    std::vector<std::size_t> owned(drawn->trace.primitives.size(), 0);
+    for (const std::int32_t owner : drawn->trace.visual_owner) {
+        if (owner != sci::pic::no_owner) {
+            ++owned[static_cast<std::size_t>(owner)];
+        }
+    }
+    std::println("# picture command kind coordinates planes pair owned");
+    for (std::size_t i = 0; i < drawn->trace.primitives.size(); ++i) {
+        const auto& primitive = drawn->trace.primitives[i];
+        const auto& state = primitive.state;
+        const std::string planes = std::format("{}{}{}", (state.planes & sci::pic::plane_visual) != 0 ? "v" : "-",
+                                               (state.planes & sci::pic::plane_priority) != 0 ? "p" : "-",
+                                               (state.planes & sci::pic::plane_control) != 0 ? "c" : "-");
+        std::string shape;
+        if (const auto* line = std::get_if<sci::pic::Line>(&primitive.shape)) {
+            shape = std::format("line {},{} {},{}", line->from.x, line->from.y, line->to.x, line->to.y);
+        } else if (const auto* fill = std::get_if<sci::pic::Fill>(&primitive.shape)) {
+            shape = std::format("fill {},{}", fill->at.x, fill->at.y);
+        } else if (const auto* pattern = std::get_if<sci::pic::Pattern>(&primitive.shape)) {
+            shape = std::format("pattern {},{} code {}", pattern->at.x, pattern->at.y, pattern->code);
+        }
+        std::println("{} {} {} {} {:02x} {}", primitive.picture, primitive.command, shape, planes,
+                     static_cast<unsigned>(state.pair), owned[i]);
+    }
+    return 0;
+}
+
 std::optional<std::uint16_t> parse_number(std::string_view text) {
     if (text.empty() || text.size() > 3 || !std::ranges::all_of(text, [](char c) { return c >= '0' && c <= '9'; })) {
         return std::nullopt;
@@ -444,9 +481,27 @@ int main(int argc, char** argv) {
     const std::string_view command = args.size() > 2 ? args[2] : "";
     const bool is_check = command == "check" && args.size() == 4;
     const auto number = command == "candidates" && args.size() == 5 ? parse_number(args[3]) : std::nullopt;
-    if (!is_check && !number) {
+    std::vector<std::uint16_t> stack;
+    if (command == "commands" && args.size() == 4) {
+        std::string_view rest = args[3];
+        while (true) {
+            const std::size_t plus = rest.find('+');
+            const auto part = parse_number(rest.substr(0, plus));
+            if (!part) {
+                stack.clear();
+                break;
+            }
+            stack.push_back(*part);
+            if (plus == std::string_view::npos) {
+                break;
+            }
+            rest.remove_prefix(plus + 1);
+        }
+    }
+    if (!is_check && !number && stack.empty()) {
         std::println(stderr, "usage: sci-hint-tool <game> candidates <n> <directory>\n"
-                             "       sci-hint-tool <game> check <hint directory>");
+                             "       sci-hint-tool <game> check <hint directory>\n"
+                             "       sci-hint-tool <game> commands <n>[+<n>...]");
         return 2;
     }
     sci::tools::install_stderr_log();
@@ -456,6 +511,9 @@ int main(int argc, char** argv) {
     }
     if (number) {
         return candidates(*manager, *number, args[4]);
+    }
+    if (!stack.empty()) {
+        return list_commands(*manager, stack);
     }
     return check(*manager, args[3]);
 }
