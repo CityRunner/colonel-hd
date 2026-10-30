@@ -2814,7 +2814,7 @@ the old numbers to the new ones, so older references stay unambiguous:
     area, that is screen rows 10, 73, 137, 200 with the menu bar. A
     quarter boundary is the cell's midpoint rounded half up to a whole
     original pixel: x = 32, 96, 160, 224, 288 and picture y = 32, 95, 159.
-    **Assumed.**
+    **Confirmed by the customer (2026-10-30).**
   - The round-trip check of A.6 rasterises the reconstructed primitives
     back to 1x with path-1's rules for lines and fills, and compares them
     with the original pixels of the same commands (the owner and pair maps
