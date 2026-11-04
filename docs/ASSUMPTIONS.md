@@ -3607,4 +3607,22 @@ The customer's findings after batch 2 (above), applied on branch
   changes many pictures' HD output (all with scene-model data).
 - **Not impractical** in the sense of A4 ("stop and explain"): the design
   can take it, as the 3a hints already work there. It is proposed to the
-  customer before it starts. **Proposed.**
+  customer before it starts. **Proposed; started 2026-11-04 on the
+  customer's next findings (below), which need it.**
+
+## Milestone 10: the customer's findings after the halo and highlight step (2026-11-04)
+
+- **Picture 12, the halo** ("Halo still chipped"): still to be a smooth
+  oval, its yellow area included. Needs the shared boundary (section
+  above). **Decided (customer).**
+- **Picture 71, the light on the pipes** ("now have teeth"): the straight
+  highlights along the tube show saw teeth in HD, where the new straight
+  strokes meet the old edges of the areas beside them. They are to be
+  clean straight bands. **Decided (customer).**
+- **Picture 71, the rings on the shower curtain** ("make rings on shower
+  curtain ovals"): the yellow rings on the rod (row A, columns 3 to 4)
+  are closed ovals. **Decided (customer).**
+- **The rework of the section above starts now**, read from these
+  findings: all three need the steered shape to be the shared boundary
+  of the line and its neighbouring areas. **Decided (agent, on the
+  customer's findings).**
