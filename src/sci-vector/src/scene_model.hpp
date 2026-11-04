@@ -63,11 +63,14 @@ struct Steered {
 
 struct StepCut {
     std::size_t line = 0; // Index into SteerInput::lines.
-    Cut cut;
+    Vec2 end;             // The end's pixel centre, where the stroke ends.
+    Vec2 edge;            // Where it ends instead: the pixel's outer edge.
+    Cut cut;              // Through the edge, square to the line.
 };
 
 // The square ends of a polyline's horizontal and vertical lines whose end
-// pixel is one of its step corners.
+// pixel is one of its step corners: the stroke runs on to the pixel's
+// outer edge and is cut there, so it covers the end pixel exactly.
 [[nodiscard]] std::vector<StepCut> step_cuts(const SteerInput& input);
 
 } // namespace sci::vector::detail

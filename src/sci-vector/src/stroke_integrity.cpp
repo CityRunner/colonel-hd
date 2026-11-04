@@ -93,6 +93,12 @@ struct Line {
     std::vector<std::size_t> path;
     std::vector<Stroke> strokes;
     std::vector<Stroke> connectors; // Added to join other lines; not the line's own geometry.
+    std::vector<std::size_t> fixed; // End pixels the scene model fixed (step corners).
+
+    [[nodiscard]] bool is_fixed(std::size_t pixel) const { return std::ranges::find(fixed, pixel) != fixed.end(); }
+
+    // Whether an end of this line that the scene model fixed touches the pixel.
+    [[nodiscard]] bool fixed_near(std::size_t pixel) const;
 
     [[nodiscard]] std::size_t first() const { return path.front(); }
 
@@ -100,6 +106,10 @@ struct Line {
 
     [[nodiscard]] bool is_end(std::size_t pixel) const { return pixel == first() || pixel == last(); }
 };
+
+bool Line::fixed_near(std::size_t pixel) const {
+    return std::ranges::any_of(fixed, [&](std::size_t end) { return end == pixel || touching(end, pixel); });
+}
 
 // The closest point of a polyline to p: its arc-length position and the
 // distance.
@@ -334,9 +344,12 @@ private:
                 if (!seen(end, i)) {
                     continue;
                 }
+                if (lines_[i].is_fixed(end)) {
+                    continue; // A step corner of the scene model is drawn as it is.
+                }
                 neighbours(end, [&](std::size_t q) {
                     lines_at(q, [&](std::size_t j) {
-                        if (j == i || !seen(q, j)) {
+                        if (j == i || !seen(q, j) || lines_[j].fixed_near(end)) {
                             return;
                         }
                         if (lines_[j].is_end(q)) {
@@ -455,7 +468,7 @@ private:
                 continue;
             }
             for (const std::size_t end : {line.first(), line.last()}) {
-                if (seen(end, i)) {
+                if (seen(end, i) && !line.is_fixed(end)) {
                     clip_end(i, end);
                 }
             }
@@ -671,6 +684,7 @@ void apply_stroke_integrity(std::vector<Layer>& layers, std::span<const StrokeLi
             .path = line.path,
             .strokes = {std::get<Stroke>(layers[it->second])},
             .connectors = {},
+            .fixed = line.fixed,
         });
     }
     Pass pass(std::move(pass_lines), owners, stats);

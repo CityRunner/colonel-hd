@@ -50,10 +50,35 @@ bool touches(pic::ScreenPoint a, pic::ScreenPoint b) {
     return std::abs(a.x - b.x) <= 1 && std::abs(a.y - b.y) <= 1;
 }
 
+// Whether more than two pixels of b lie next to pixels of a: the lines run
+// side by side (a stroke drawn two lines wide, or stacked treads), they do
+// not continue each other.
+bool alongside(const SteerLine& a, const SteerLine& b) {
+    const std::vector<std::uint32_t> pa = line_pixels_1x(a.from, a.to);
+    const std::vector<std::uint32_t> pb = line_pixels_1x(b.from, b.to);
+    int near = 0;
+    for (const std::uint32_t q : pb) {
+        const auto qx = static_cast<int>(q % picture_width);
+        const auto qy = static_cast<int>(q / picture_width);
+        near += std::ranges::any_of(pa, [&](std::uint32_t p) {
+                    return std::abs(static_cast<int>(p % picture_width) - qx) <= 1 &&
+                           std::abs(static_cast<int>(p / picture_width) - qy) <= 1;
+                })
+                    ? 1
+                    : 0;
+    }
+    return near > 2;
+}
+
 // The lines oriented along one path, or nothing if they do not form one.
 std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines) {
     if (lines.empty()) {
         return std::nullopt;
+    }
+    for (std::size_t i = 1; i < lines.size(); ++i) {
+        if (alongside(lines[i - 1], lines[i]) || alongside(lines[i], lines[i - 1])) {
+            return std::nullopt;
+        }
     }
     std::vector<SteerLine> path(lines.begin(), lines.end());
     if (path.size() >= 2) {
@@ -349,7 +374,8 @@ std::vector<StepCut> step_cuts(const SteerInput& input) {
                 cut = end.y < other.y ? Cut{.point = {.x = static_cast<double>(end.x), .y = y}, .normal = {.x = 0, .y = -1}}
                                       : Cut{.point = {.x = static_cast<double>(end.x), .y = y + 1}, .normal = {.x = 0, .y = 1}};
             }
-            cuts.push_back(StepCut{.line = i, .cut = cut});
+            const Vec2 edge = horizontal ? Vec2{.x = cut.point.x, .y = c.y} : Vec2{.x = c.x, .y = cut.point.y};
+            cuts.push_back(StepCut{.line = i, .end = c, .edge = edge, .cut = cut});
         }
     }
     return cuts;

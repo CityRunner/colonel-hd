@@ -1209,7 +1209,7 @@ Curves fit_with_hints(const detail::Arrangement& arrangement, const std::vector<
 struct SceneModelFits {
     std::vector<bool> steered;                            // Per line.
     std::vector<FittedChain> records;                     // One per steered primitive.
-    std::vector<std::pair<std::size_t, Cut>> square_ends; // Per line: its ends at step corners.
+    std::vector<std::pair<std::size_t, detail::StepCut>> square_ends; // Lines' ends at step corners.
 };
 
 std::string_view primitive_name(PrimitiveKind kind) {
@@ -1348,7 +1348,7 @@ SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vect
                     }
                     const auto& [input, line_of] = *found;
                     for (const detail::StepCut& cut : detail::step_cuts(input)) {
-                        model.square_ends.emplace_back(line_of[cut.line], cut.cut);
+                        model.square_ends.emplace_back(line_of[cut.line], cut);
                     }
                     steer_primitive(input, line_of, hints[p]->picture, primitive, lines, curves, model, stats);
                 }
@@ -1513,11 +1513,18 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     record_fits(parts.arrangement, curves, lines, plane_hints, model, built.stats);
     scene.edges = scan_edges(parts.arrangement, curves.fitted);
     scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
-    for (const auto& [line, cut] : model.square_ends) {
+    for (const auto& [line, step] : model.square_ends) {
         for (Layer& layer : scene.layers) {
-            if (auto* stroke = std::get_if<Stroke>(&layer);
-                stroke != nullptr && std::cmp_equal(stroke->source, lines[line].primitive)) {
-                stroke->cuts.push_back(cut);
+            auto* stroke = std::get_if<Stroke>(&layer);
+            if (stroke == nullptr || !std::cmp_equal(stroke->source, lines[line].primitive)) {
+                continue;
+            }
+            for (Vec2* end : {&stroke->points.front(), &stroke->points.back()}) {
+                if (*end == step.end) {
+                    *end = step.edge;
+                    stroke->cuts.push_back(step.cut);
+                    break;
+                }
             }
         }
     }
@@ -1528,13 +1535,21 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     if (plane == Plane::Visual && !without_stroke_integrity) {
         std::vector<detail::StrokeLine> stroke_lines;
         stroke_lines.reserve(lines.size());
-        for (const DrawnLine& line : lines) {
-            detail::StrokeLine stroke_line{.primitive = static_cast<std::int32_t>(line.primitive), .path = {}};
+        for (std::size_t i = 0; i < lines.size(); ++i) {
+            const DrawnLine& line = lines[i];
+            detail::StrokeLine stroke_line{
+                .primitive = static_cast<std::int32_t>(line.primitive), .path = {}, .fixed = {}};
             pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) {
                 if (y >= picture_top && y < picture_top + picture_height) {
                     stroke_line.path.push_back(picture_index(x, y - picture_top));
                 }
             });
+            for (const auto& [square, step] : model.square_ends) {
+                if (square == i) {
+                    stroke_line.fixed.push_back(
+                        picture_index(static_cast<int>(step.end.x), static_cast<int>(step.end.y)));
+                }
+            }
             stroke_lines.push_back(std::move(stroke_line));
         }
         detail::apply_stroke_integrity(scene.layers, stroke_lines, view.owners, built.stats);
