@@ -55,7 +55,9 @@ struct IntegrityChange {
 
 // A chain of lines replaced by a fitted curve (spec section 6.3), kept for
 // the round-trip check of A4 A.6 (sci/render/round_trip.hpp).
-enum class FittedKind : std::int8_t { Line, Arc, Spline, Ellipse };
+// Polyline: straight segments meeting at corners, as a primitive of the
+// scene model asks (docs/hd-pipeline.md, section 6).
+enum class FittedKind : std::int8_t { Line, Arc, Spline, Ellipse, Polyline };
 
 // A line of a fitted chain: its trace index and its stroke as fitted,
 // before the stroke integrity pass (which may cut or split it).
@@ -66,7 +68,7 @@ struct FittedLine {
 
 struct FittedChain {
     FittedKind kind = FittedKind::Line;
-    std::string hint;                // The chain hint it was fitted for; empty if automatic.
+    std::string hint;                // The chain hint or scene-model primitive it was fitted for; empty if automatic.
     std::vector<std::int32_t> lines; // Trace indices of the lines with edges in the chain, ascending.
 };
 
@@ -92,6 +94,7 @@ struct SceneStats {
     int ellipses = 0;                       // Closed chains, by ellipses.
     int fitted_lines = 0;                   // PIC lines replaced by these curves.
     int rejected_fits = 0;                  // Fits left out because they would change the faces.
+    int scene_model_fits = 0;               // Primitives of the scene model whose lines follow their shape.
     std::vector<FittedChain> fitted_chains; // In the order they were fitted.
     std::vector<FittedLine> fitted_strokes; // Every line with fitted edges, in trace order.
     std::vector<Fallback> fallbacks;        // The mixed faces.
@@ -116,7 +119,7 @@ struct BuiltScene {
 // The version of the analysis, part of the analysis cache's key (spec
 // section 10.2): bump it with every change that changes the scenes
 // build_scene makes, that is whenever tests/golden/pictures.txt changes.
-inline constexpr std::uint32_t analyser_version = 1;
+inline constexpr std::uint32_t analyser_version = 2;
 
 // Builds the scene of one plane from the maps and trace of path 1. `hints`
 // holds the hints of each draw_picture call of the trace (by the trace's

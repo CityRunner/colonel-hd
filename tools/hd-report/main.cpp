@@ -187,6 +187,8 @@ std::string_view fitted_name(sci::vector::FittedKind kind) {
         return "spline";
     case sci::vector::FittedKind::Ellipse:
         return "ellipse";
+    case sci::vector::FittedKind::Polyline:
+        return "polyline";
     }
     return "?";
 }

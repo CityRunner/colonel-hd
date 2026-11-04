@@ -3,6 +3,7 @@
 #include "sci/vector/build_scene.hpp"
 
 #include "curves.hpp"
+#include "scene_model.hpp"
 #include "sci/pic/geometry.hpp"
 #include "stroke_integrity.hpp"
 #include "topology.hpp"
@@ -1202,6 +1203,161 @@ Curves fit_with_hints(const detail::Arrangement& arrangement, const std::vector<
     }
 }
 
+// The scene model steers the fit (A4 A.4, A.6, A.7; scene_model.hpp): the
+// lines of the primitives of decided and certain objects, as one path,
+// follow the primitive's shape where the round trip allows it.
+struct SceneModelFits {
+    std::vector<bool> steered;                            // Per line.
+    std::vector<FittedChain> records;                     // One per steered primitive.
+    std::vector<std::pair<std::size_t, Cut>> square_ends; // Per line: its ends at step corners.
+};
+
+std::string_view primitive_name(PrimitiveKind kind) {
+    switch (kind) {
+    case PrimitiveKind::Line:
+        return "line";
+    case PrimitiveKind::Polyline:
+        return "polyline";
+    case PrimitiveKind::Ellipse:
+        return "ellipse";
+    case PrimitiveKind::Arc:
+        return "arc";
+    case PrimitiveKind::Spline:
+        return "spline";
+    }
+    return "spline";
+}
+
+FittedKind fitted_kind(PrimitiveKind kind) {
+    switch (kind) {
+    case PrimitiveKind::Line:
+        return FittedKind::Line;
+    case PrimitiveKind::Polyline:
+        return FittedKind::Polyline;
+    case PrimitiveKind::Ellipse:
+        return FittedKind::Ellipse;
+    case PrimitiveKind::Arc:
+        return FittedKind::Arc;
+    case PrimitiveKind::Spline:
+        return FittedKind::Spline;
+    }
+    return FittedKind::Spline;
+}
+
+// The hypothesis the HD picture follows (A.7): the decided one; the main
+// one of an object without alternatives (certain); none for an open
+// object, whose milestone 3b reconstruction stays.
+const Hypothesis* followed_hypothesis(const ObjectHint& object) {
+    if (object.decision) {
+        if (object.decision->hypothesis == object.main.id) {
+            return &object.main;
+        }
+        const auto it = std::ranges::find(object.alternatives, object.decision->hypothesis, &Hypothesis::id);
+        return it == object.alternatives.end() ? nullptr : &*it;
+    }
+    return object.alternatives.empty() ? &object.main : nullptr;
+}
+
+// The input of one primitive, with the plane's line of each command;
+// nothing if a command draws no line here, or only a dot.
+std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>>
+steer_input(const HintLines& find, std::size_t picture, const std::vector<DrawnLine>& lines,
+            const PrimitiveHint& primitive) {
+    detail::SteerInput input{.kind = primitive.kind, .lines = {}, .points = {}, .corner = {}};
+    std::vector<std::size_t> line_of;
+    for (const LineRef ref : primitive.commands) {
+        const auto line = find.line(picture, ref);
+        if (!line || lines[*line].is_dot()) {
+            return std::nullopt;
+        }
+        line_of.push_back(*line);
+        input.lines.push_back(detail::SteerLine{.from = lines[*line].from, .to = lines[*line].to});
+    }
+    for (std::size_t k = 0; k < primitive.points.size(); ++k) {
+        input.points.push_back(Vec2{.x = primitive.points[k].x + 0.5, .y = primitive.points[k].y + 0.5});
+        const auto corner = std::ranges::find(primitive.corners, k, &CornerHint::point);
+        input.corner.push_back(corner == primitive.corners.end() ? std::nullopt : std::optional{corner->kind});
+    }
+    return std::pair{std::move(input), std::move(line_of)};
+}
+
+// Applies one primitive's shape to its lines' strokes, if it passes the
+// round trip and changes them.
+void steer_primitive(const detail::SteerInput& input, const std::vector<std::size_t>& line_of, int picture,
+                     const PrimitiveHint& primitive, const std::vector<DrawnLine>& lines, Curves& curves,
+                     SceneModelFits& model, SceneStats& stats) {
+    // A line in two primitives follows the first.
+    if (std::ranges::any_of(line_of, [&](std::size_t line) { return model.steered[line]; })) {
+        return;
+    }
+    detail::Steered result = detail::steer(input);
+    if (!result.applicable) {
+        return;
+    }
+    if (result.pieces.empty()) {
+        reject_hint(stats, picture, primitive.id, std::format("{}: the 3b reconstruction stays", result.reason));
+        return;
+    }
+    bool changed = false;
+    for (std::size_t i = 0; i < line_of.size(); ++i) {
+        const DrawnLine& line = lines[line_of[i]];
+        const std::vector<Vec2> current = curves.strokes[line_of[i]].empty()
+                                              ? std::vector<Vec2>{centre(line.from), centre(line.to)}
+                                              : curves.strokes[line_of[i]];
+        changed = changed || current != result.pieces[i];
+    }
+    if (!changed) {
+        return;
+    }
+    FittedChain record{.kind = fitted_kind(primitive.kind), .hint = primitive.id, .lines = {}};
+    for (std::size_t i = 0; i < line_of.size(); ++i) {
+        curves.strokes[line_of[i]] = std::move(result.pieces[i]);
+        model.steered[line_of[i]] = true;
+        record.lines.push_back(static_cast<std::int32_t>(lines[line_of[i]].primitive));
+    }
+    std::ranges::stable_sort(record.lines);
+    const auto [first, last] = std::ranges::unique(record.lines);
+    record.lines.erase(first, last);
+    model.records.push_back(std::move(record));
+    ++stats.scene_model_fits;
+    stats.applied_hints.push_back(HintOutcome{
+        .picture = picture,
+        .id = primitive.id,
+        .detail = std::format("drawn as its {} (round trip {})", primitive_name(primitive.kind), result.deviation),
+    });
+}
+
+SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vector<DrawnLine>& lines,
+                                    std::span<const PictureHints* const> hints, Curves& curves, SceneStats& stats) {
+    SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
+    const HintLines find(trace, lines);
+    for (std::size_t p = 0; p < hints.size() && p < trace.pictures; ++p) {
+        if (hints[p] == nullptr) {
+            continue;
+        }
+        for (const ObjectHint& object : hints[p]->objects) {
+            const Hypothesis* hypothesis = followed_hypothesis(object);
+            if (hypothesis == nullptr || is_organic(hypothesis->type)) {
+                continue;
+            }
+            for (const PartHint& part : hypothesis->parts) {
+                for (const PrimitiveHint& primitive : part.primitives) {
+                    const auto found = steer_input(find, p, lines, primitive);
+                    if (!found) {
+                        continue;
+                    }
+                    const auto& [input, line_of] = *found;
+                    for (const detail::StepCut& cut : detail::step_cuts(input)) {
+                        model.square_ends.emplace_back(line_of[cut.line], cut.cut);
+                    }
+                    steer_primitive(input, line_of, hints[p]->picture, primitive, lines, curves, model, stats);
+                }
+            }
+        }
+    }
+    return model;
+}
+
 FittedKind fitted_kind(detail::CurveKind kind) {
     switch (kind) {
     case detail::CurveKind::Line:
@@ -1219,7 +1375,7 @@ FittedKind fitted_kind(detail::CurveKind kind) {
 // The fitted chains and the strokes of their lines as fitted, for the
 // round-trip check (A4 A.6). Changes nothing in the scene.
 void record_fits(const detail::Arrangement& arrangement, const Curves& curves, const std::vector<DrawnLine>& lines,
-                 const PlaneHints& hints, SceneStats& stats) {
+                 const PlaneHints& hints, const SceneModelFits& model, SceneStats& stats) {
     for (const detail::FittedChain& chain : curves.fitted) {
         FittedChain record{.kind = fitted_kind(chain.kind), .hint = {}, .lines = {}};
         if (chain.hint >= 0) {
@@ -1227,15 +1383,19 @@ void record_fits(const detail::Arrangement& arrangement, const Curves& curves, c
         }
         for (const std::int32_t edge : chain.edges) {
             const std::int32_t source = arrangement.sources[static_cast<std::size_t>(edge)];
-            if (source >= 0) {
+            // Lines the scene model steers are checked with their primitive.
+            if (source >= 0 && !model.steered[static_cast<std::size_t>(source)]) {
                 record.lines.push_back(static_cast<std::int32_t>(lines[static_cast<std::size_t>(source)].primitive));
             }
         }
         std::ranges::stable_sort(record.lines);
         const auto [first, last] = std::ranges::unique(record.lines);
         record.lines.erase(first, last);
-        stats.fitted_chains.push_back(std::move(record));
+        if (!record.lines.empty()) {
+            stats.fitted_chains.push_back(std::move(record));
+        }
     }
+    stats.fitted_chains.insert(stats.fitted_chains.end(), model.records.begin(), model.records.end());
     for (std::size_t line = 0; line < lines.size(); ++line) {
         if (!curves.strokes[line].empty()) {
             stats.fitted_strokes.push_back(FittedLine{
@@ -1343,10 +1503,24 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     scene.block_values = block_values(view, trace);
 
     const std::vector<int> owned = owned_pixels(trace, view);
-    const Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
-    record_fits(parts.arrangement, curves, lines, plane_hints, built.stats);
+    Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
+    // The scene model changes the HD picture only, so the visual plane; the
+    // faces keep the fit above.
+    SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
+    if (plane == Plane::Visual) {
+        model = steer_by_scene_model(trace, lines, hints, curves, built.stats);
+    }
+    record_fits(parts.arrangement, curves, lines, plane_hints, model, built.stats);
     scene.edges = scan_edges(parts.arrangement, curves.fitted);
     scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
+    for (const auto& [line, cut] : model.square_ends) {
+        for (Layer& layer : scene.layers) {
+            if (auto* stroke = std::get_if<Stroke>(&layer);
+                stroke != nullptr && std::cmp_equal(stroke->source, lines[line].primitive)) {
+                stroke->cuts.push_back(cut);
+            }
+        }
+    }
     // Stroke integrity and occlusion (spec section 6.10) change the HD
     // picture only, so the visual plane.
     // The baseline of milestone 3b's report is measured without the pass

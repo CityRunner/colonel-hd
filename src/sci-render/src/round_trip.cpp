@@ -4,6 +4,7 @@
 
 #include "sci/pic/geometry.hpp"
 #include "sci/pic/picture_maps.hpp"
+#include "sci/vector/raster_1x.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -27,20 +28,7 @@ using vector::Vec2;
 struct Pixel {
     int x = 0;
     int y = 0;
-
-    friend bool operator==(const Pixel&, const Pixel&) = default;
 };
-
-int snap(double v, int size) {
-    const double floor = std::floor(v);
-    if (!(floor >= 0)) {
-        return 0;
-    }
-    if (floor >= size - 1) {
-        return size - 1;
-    }
-    return static_cast<int>(floor);
-}
 
 int chebyshev(Pixel a, Pixel b) {
     return std::max(std::abs(a.x - b.x), std::abs(a.y - b.y));
@@ -116,36 +104,7 @@ std::int64_t RoundTripChain::mean_milli() const {
 }
 
 std::vector<std::uint32_t> rasterize_1x(std::span<const Vec2> points) {
-    // The pixels the points lie in, with staircase corners dropped.
-    std::vector<Pixel> knots;
-    for (const Vec2 p : points) {
-        const Pixel pixel{.x = snap(p.x, picture_width), .y = snap(p.y, picture_height)};
-        if (!knots.empty() && knots.back() == pixel) {
-            continue;
-        }
-        while (knots.size() >= 2 && chebyshev(knots[knots.size() - 2], pixel) <= 1) {
-            knots.pop_back();
-        }
-        if (knots.empty() || knots.back() != pixel) {
-            knots.push_back(pixel);
-        }
-    }
-    std::vector<std::uint32_t> pixels;
-    const auto visit = [&](int x, int y) {
-        const int py = y - pic::picture_top;
-        if (py >= 0 && py < picture_height) {
-            pixels.push_back(index_of(x, py));
-        }
-    };
-    const auto screen = [](Pixel p) { return pic::ScreenPoint{.x = p.x, .y = p.y + pic::picture_top}; };
-    if (knots.size() == 1) {
-        visit(knots[0].x, knots[0].y + pic::picture_top);
-    }
-    for (std::size_t i = 1; i < knots.size(); ++i) {
-        pic::for_each_line_pixel(screen(knots[i - 1]), screen(knots[i]), visit);
-    }
-    normalise(pixels);
-    return pixels;
+    return vector::rasterize_1x(points);
 }
 
 namespace {
@@ -208,7 +167,7 @@ RoundTripChain check_chain(const pic::DrawTrace& trace, const vector::FittedChai
             }
         }
         if (const auto found = fitted.find(primitive); found != fitted.end()) {
-            for (const std::uint32_t p : rasterize_1x(found->second->points)) {
+            for (const std::uint32_t p : render::rasterize_1x(found->second->points)) {
                 reconstructed_of.tagged.emplace_back(p, primitive);
             }
         }
