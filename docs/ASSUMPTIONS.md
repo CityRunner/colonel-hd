@@ -3406,3 +3406,28 @@ the counts and the validation. No rendering change.
   (the customer's rule). Nothing is in the hint files yet: the questions
   wait for the answers, and the fanlight-like windows for the customer's
   silence or objection. **Assumed.**
+
+## Milestone 10: the customer's answers to batch 2 (2026-11-04)
+
+The customer's words, then how they are read. Each goes into the hint
+files as a decision with its cell reference (A4 A.7, B.4).
+
+- **Case 1, picture 37, B5.3** ("Leave slope as this part is railing, not
+  stairs"): the sloping edge is the railing's side, not the treads' ends.
+  Decision `keep`: the HD stays as it is (as "leave the arch" in batch
+  1). The detector's step signal can fire on a railing drawn over stacked
+  lines; such places are not steps by default. **Decided (customer).**
+- **Case 2, picture 61, B3.2-B4.1, the sofa cushion** ("Leave as is"):
+  decision `keep`. **Decided (customer).**
+- **Case 3, picture 20, A2.3-B2.2, the window under the eaves** ("A"): the
+  arch is half of an ellipse in perspective, as the picture 12 fanlight.
+  **Decided (customer).**
+- **Case 4, picture 57, A2, the stained-glass medallions** ("A"): the
+  medallions' ends are halves of ellipses, drawn smooth. **Decided
+  (customer).**
+- **Case 5, picture 71, A4, the red rail's hook** ("A"): one smooth
+  circular bend. **Decided (customer).**
+- **The arched windows of pictures 15, 10, 42 and 44** (listed as "will
+  be fixed like batch 1 unless you object"; no objection): each arch is
+  half of an ellipse through the drawn springers and crown, with the bars
+  meeting it. **Decided (customer, by not objecting).**
