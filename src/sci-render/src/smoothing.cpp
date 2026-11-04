@@ -276,6 +276,16 @@ std::optional<StepHit> step_hit(const pic::PictureMaps& maps, const pic::DrawTra
     if (perpendicular < 1 || perpendicular > 3 || (joint && (along < 1 || along > 4))) {
         return std::nullopt;
     }
+    // Lines of at least three pixels (shorter ones are the raster bits of
+    // organic shapes and textures); a joint only between lines of one
+    // colour (one shape: a tread, a plank, a highlight).
+    const auto span = [](const pic::Line& l) {
+        return std::max(std::abs(l.to.x - l.from.x), std::abs(l.to.y - l.from.y)) + 1;
+    };
+    const auto pair_of = [&](std::int32_t l) { return trace.primitives[static_cast<std::size_t>(l)].state.pair; };
+    if (std::min(span(*a), span(*b)) < 3 || (joint && pair_of(change.primitive) != pair_of(change.other))) {
+        return std::nullopt;
+    }
     if (!shows(maps, trace, change.primitive, end_a, target)) {
         return std::nullopt;
     }
@@ -398,6 +408,10 @@ std::vector<SmoothingSuspect> step_suspects(const pic::PictureMaps& maps, const 
 
 // --- Corner: a fitted curve through a sharp vertex -------------------------
 
+// How far a joint's connector passes from the corner of an L whose ends
+// touch diagonally: about half a diagonal.
+constexpr double cut_distance = 0.707;
+
 // The fitted stroke of every line with fitted edges.
 std::map<std::int32_t, const std::vector<Vec2>*> fitted_points(const vector::SceneStats& stats) {
     std::map<std::int32_t, const std::vector<Vec2>*> points;
@@ -504,7 +518,7 @@ std::optional<SmoothingSuspect> corner_at(const std::map<std::int32_t, Ends>& li
     s.bend = static_cast<int>(std::lround(bend * 1000));
     s.deviation = static_cast<int>(std::lround(distance * 1000));
     const int legs = std::min(std::min(ea.span(), eb.span()), 6);
-    s.score = static_cast<int>(std::lround(bend * 1000 * std::min(distance, 1.5) * legs / 3));
+    s.score = static_cast<int>(std::lround(bend * 100 * std::min(distance, 1.5) / cut_distance * legs / 3));
     s.lines = {std::min(a, b), std::max(a, b)};
     Box box;
     box.add(oa);
@@ -534,7 +548,16 @@ std::optional<SmoothingSuspect> bevel_at(const pic::PictureMaps& maps, const pic
     // 60 to 120 degrees: sharper turns back along a parallel line (a step).
     constexpr double least_bend = 0.5;
     constexpr double most_bend = 1.5;
-    if (bend < least_bend || bend > most_bend || !shows(maps, trace, change.primitive, end_a, end_b)) {
+    if (bend < least_bend || bend > most_bend) {
+        return std::nullopt;
+    }
+    // One outline of one colour turning a corner, and both corner pixels
+    // (inside and outside) of another colour at 1x: the connector shows.
+    const pic::ColorPair own = trace.primitives[static_cast<std::size_t>(change.primitive)].state.pair;
+    const Pixel outer{.x = end_a.x, .y = end_b.y};
+    const Pixel inner{.x = end_b.x, .y = end_a.y};
+    if (trace.primitives[static_cast<std::size_t>(change.other)].state.pair != own || pair_at(maps, outer) == own ||
+        pair_at(maps, inner) == own) {
         return std::nullopt;
     }
     SmoothingSuspect s;
@@ -543,10 +566,9 @@ std::optional<SmoothingSuspect> bevel_at(const pic::PictureMaps& maps, const pic
     s.y = end_a.y;
     s.count = 1;
     s.bend = static_cast<int>(std::lround(bend * 1000));
-    constexpr double cut = 0.707; // The connector passes about half a diagonal from the corner.
-    s.deviation = static_cast<int>(std::lround(cut * 1000));
+    s.deviation = static_cast<int>(std::lround(cut_distance * 1000));
     const int legs = std::min(std::min(ea.span(), eb.span()), 6);
-    s.score = static_cast<int>(std::lround(bend * 1000 * cut * legs / 3));
+    s.score = static_cast<int>(std::lround(bend * 100 * legs / 3));
     s.lines = {std::min(change.primitive, change.other), std::max(change.primitive, change.other)};
     Box box;
     box.add(end_a);
