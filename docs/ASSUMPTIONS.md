@@ -3675,3 +3675,92 @@ shared boundary"). First stage; not finished.
   back. Picture 71 A4: the inner hook arc and the grey arcs share; the
   outer red arc does not. Pictures 20 and 42 outer arches: still fall back
   (line rule). Pictures 37 and 61: identical. **Finding; open.**
+
+## Milestone 10: the customer's decisions on the halo and the curtain rings (2026-11-04)
+
+- **Deviation from spec 6.4, approved by the customer ("1a").** For a
+  shape the customer decided (a scene-model object with
+  `decision.by = "customer"` whose hypothesis steers the fit), the 6.4
+  line-pixel check does not count a line pixel of that shape's own lines
+  as untouched if the steered shape passes within 1 original pixel of it
+  (the A4 A.6 tolerance). Every such pixel is listed in the report.
+  Automatic fits and analyser hypotheses keep the full 6.4 rule. First
+  use: picture 12's halo becomes a smooth oval. **Decided (customer).**
+- **Curtain rings of picture 71 ("2b").** A4 A.6 "never invent" holds:
+  the rings stay open as drawn. Each ring's "(" of two short lines becomes
+  one clean curved stroke (an arc); the dot stays a dot. **Decided
+  (customer).**
+
+## Milestone 10: the shared boundary, second stage (2026-11-04)
+
+Continues "Milestone 10: the shared boundary" on branch
+`m10-shared-boundary` (design: `docs/hd-pipeline.md`, "The shared
+boundary, second stage").
+
+- **What was added.** (1) The shapes of one object are placed jointly
+  (then each alone if that fails). (2) A course leaving a vertex beside a
+  moved course that crosses it by a hair is pushed just off it (at most
+  0.25 px). (3) A straight `line` shape the partition cannot take enters
+  the arrangement as one segment (kept only if no more mixed faces or 1x
+  blocks), and the plane is built again. (4) The ends where a steered
+  shape's lines meet are fixed for the stroke integrity pass. **Decided
+  (agent).** Re-fitting the neighbouring 3b chains was looked at first:
+  none of the 16 failures was of that kind (the crossing edges were
+  straight lines, connectors or the shape's own pieces), so it was not
+  built. Joint placement alone changed none of the 16. **Finding.**
+- **The 16 shapes that failed before, now** (shares / keeps 3b faces):
+  picture 71 `tube-hl-upper`, `tube-hl-lower`, `tube-hl-red`: share (one
+  segment of the partition). 42 `window-curtain-left-arch-outer`, 44
+  `window-curtain-arch-outer` and `-arch-lit`, 57 `medallion-bottom-upper`:
+  share (pushed off the jamb). Still 3b faces: 10 `wsl-arch-inner` (two
+  of its lines run one edge differently), 20 `window-eaves-arch-inner`,
+  42 `window-curtain-left-arch-inner` and `-right-arch-inner`, 44
+  `window-curtain-arch-inner` (crossings at the springers: the inner
+  arc passes over short connectors and line ends), 58
+  `bwr-glint-top-left` and `-top-right` (order at a vertex), 71
+  `rail-hook-outer` and `rail-hook-highlight` (the outer arc passes 0.1
+  to 0.4 px over the end of the grey line and a horizontal edge: the
+  topology itself changes there). 7 of 16 now share. These need the
+  curved shape in the arrangement, which takes integer segment ends
+  only; not done. **Finding; open.**
+- **The teeth on picture 71's tube lights are gone** for the red tube
+  highlight and the brown pipe highlight: the band is straight on both
+  sides; the stubs were joints the stroke integrity pass drew from the
+  inner ends sideways to the grey line. Left: one short joint at the
+  lower end of the pipe highlight (a path end, where it meets the grey
+  line at 1x), and the grey lines inside the tube, which the art draws
+  as separate vertical steps. **Finding.**
+- **The approved 6.4 deviation** (section above) is applied as "the
+  shape's 1x raster has a pixel at Chebyshev distance at most 1", the
+  A.6 measure. Measured as the distance from the pixel centre to the
+  stroke's centreline, the halo's pixels (135, 58) and (136, 67) lie 1.2
+  to 1.5 px off and would still fail. **Assumed (the A.6 reading); the
+  customer may decide the stricter reading.** 12 pixels are taken so
+  (pictures 12, 20, 42, 57; listed by `sci-hd-report`).
+- **Picture 12's halo** steers as a closed oval (stroke) but its faces
+  keep the 3b fit: the oval crosses a short connector at (110.5, 61.5)
+  to (110.5, 63.2). The yellow area is far rounder than before; a few
+  small chips remain at its top left and bottom left. **Open.**
+- **Newly steered by the deviation** (stroke steered; faces): picture
+  20 `window-eaves-arch-outer-curve` (3b faces: a teal sliver of the old
+  face shows outside the arch at its top right), 42
+  `window-curtain-right-arch-outer` and `-arch-lit` (share), 57
+  `medallion-top-lower` (3b faces: a small notch at its right end).
+  **Finding.**
+- **Curtain rings (decision 2b).** Six rings drawn as "(" or ")" of two
+  lines are objects `curtain-ring-<x>` with one `arc` each (commands
+  203-204, 207-208, 216-217, 213-214, 210+212, 201-202); the dots stay.
+  The three rings drawn as one straight line (220, 221, 222) are left as
+  drawn. Four share their boundary, `ring-209` and `ring-216` keep 3b
+  faces (order at a vertex). They look much as before: the 3b fit had
+  already curved them. **Decided (customer); the commands are assumed.**
+- **Checks.** Release workflow: 27 of 27 test programs pass (the audio
+  timing test too, machine quiet). clang-tidy clean on the changed files
+  (the first stage's findings in `shared_boundary.*` fixed, `apply`
+  marked as one function on purpose). `sci-hint-tool check hints`,
+  `scripts/check-hints.py`, `scripts/check-repo-policy.py` clean. Golden
+  hashes differ from the committed file in the same 60 entries as
+  `milestone-10` (pictures 10, 12, 15, 20, 42, 44, 57, 58, 71, 74 and
+  stacks 74+174, 174+74, 74.palette1+174.palette1, 174.palette1+74,
+  42+162; hd1/2/5/10), all with new values; all `original1` entries and
+  pictures 37 and 61 unchanged. Not regenerated. **Finding.**
