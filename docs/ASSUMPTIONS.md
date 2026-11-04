@@ -3583,3 +3583,28 @@ The customer's findings after batch 2 (above), applied on branch
 - **Review images** in `reports/images/milestone-10/after-batch-2-findings/`
   (git ignored): crops, `-changed-before-after` crops, sheets and plain
   pairs of pictures 12 and 71. **Finding.**
+
+## Milestone 10: the design limit found after batch 2 (2026-11-04)
+
+- **Finding.** The scene model steers only the strokes (the drawn lines).
+  The faces (the coloured areas next to them) keep their 3b fit. Spec 6.6
+  asks for one shared boundary: "a fitted curve that replaces a chain of
+  edges is shared by both adjacent faces". With strokes and faces fitted
+  separately, a steered curve and the area beside it can disagree. That
+  is the cause of:
+  - the thin light slivers beside picture 57's medallions;
+  - the ragged red edge under the dark line of picture 71's hook;
+  - picture 12's halo staying polygonal: its outline lines could be made
+    oval, but the yellow area inside keeps its corners. The oval also
+    misses three line pixels by just over half a pixel, so the line-pixel
+    rule rejects it.
+  - the outer arches of pictures 20 and 42 falling back.
+- **What it takes.** The steered shape has to enter the arrangement (the
+  face partition) where the 3a chain hints act today, so that both faces
+  use the same curve. A first attempt that only re-fitted the faces after
+  the fact left a seam in picture 42 and was taken out. This is a change
+  to the core of the vector path, larger than the earlier steps, and it
+  changes many pictures' HD output (all with scene-model data).
+- **Not impractical** in the sense of A4 ("stop and explain"): the design
+  can take it, as the 3a hints already work there. It is proposed to the
+  customer before it starts. **Proposed.**
