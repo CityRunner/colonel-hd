@@ -3626,3 +3626,18 @@ The customer's findings after batch 2 (above), applied on branch
   findings: all three need the steered shape to be the shared boundary
   of the line and its neighbouring areas. **Decided (agent, on the
   customer's findings).**
+
+## Milestone 10: the customer's decisions on the halo and the curtain rings (2026-11-04)
+
+- **Deviation from spec 6.4, approved by the customer ("1a").** For a
+  shape the customer decided (a scene-model object with
+  `decision.by = "customer"` whose hypothesis steers the fit), the 6.4
+  line-pixel check does not count a line pixel of that shape's own lines
+  as untouched if the steered shape passes within 1 original pixel of it
+  (the A4 A.6 tolerance). Every such pixel is listed in the report.
+  Automatic fits and analyser hypotheses keep the full 6.4 rule. First
+  use: picture 12's halo becomes a smooth oval. **Decided (customer).**
+- **Curtain rings of picture 71 ("2b").** A4 A.6 "never invent" holds:
+  the rings stay open as drawn. Each ring's "(" of two short lines becomes
+  one clean curved stroke (an arc); the dot stays a dot. **Decided
+  (customer).**
