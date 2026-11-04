@@ -71,6 +71,150 @@
         "cell": "B4.4-C4.2",
         "note": "findings after batch 2: light on tube is crooked in hd, must be fixed as straight lines"
       }
+    },
+    {
+      "id": "curtain-ring-161",
+      "type": "other",
+      "cell": "A3",
+      "confidence": 900,
+      "label": "a ring of the shower curtain on the rod at x 161, open as drawn",
+      "parts": [
+        {
+          "id": "curtain-ring-161-curve",
+          "role": "other",
+          "label": "the ( of two short lines as one curved stroke; the dot (command 206) stays a dot",
+          "primitives": [
+            {"id": "ring-161", "kind": "arc", "commands": [203, 204], "points": [[161, 42], [160, 45], [161, 48]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "curtain-ring-161",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A3",
+        "note": "decision 2b: the rings stay open as drawn; each ring's two short lines become one arc, the dot stays"
+      }
+    },
+    {
+      "id": "curtain-ring-167",
+      "type": "other",
+      "cell": "A3",
+      "confidence": 900,
+      "label": "a ring of the shower curtain on the rod at x 167, open as drawn",
+      "parts": [
+        {
+          "id": "curtain-ring-167-curve",
+          "role": "other",
+          "label": "the ( of two short lines as one curved stroke; the dot (command 209) stays a dot",
+          "primitives": [
+            {"id": "ring-167", "kind": "arc", "commands": [207, 208], "points": [[167, 42], [166, 45], [167, 48]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "curtain-ring-167",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A3",
+        "note": "decision 2b: the rings stay open as drawn; each ring's two short lines become one arc, the dot stays"
+      }
+    },
+    {
+      "id": "curtain-ring-175",
+      "type": "other",
+      "cell": "A3",
+      "confidence": 900,
+      "label": "a ring of the shower curtain on the rod at x 175, open as drawn",
+      "parts": [
+        {
+          "id": "curtain-ring-175-curve",
+          "role": "other",
+          "label": "the ( of two short lines as one curved stroke; the dot (command 219) stays a dot",
+          "primitives": [
+            {"id": "ring-175", "kind": "arc", "commands": [216, 217], "points": [[175, 42], [174, 45], [175, 48]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "curtain-ring-175",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A3",
+        "note": "decision 2b: the rings stay open as drawn; each ring's two short lines become one arc, the dot stays"
+      }
+    },
+    {
+      "id": "curtain-ring-209",
+      "type": "other",
+      "cell": "A4",
+      "confidence": 900,
+      "label": "a ring of the shower curtain on the rod at x 209, open as drawn",
+      "parts": [
+        {
+          "id": "curtain-ring-209-curve",
+          "role": "other",
+          "label": "the ) of two short lines as one curved stroke; the dot (command 215) stays a dot",
+          "primitives": [
+            {"id": "ring-209", "kind": "arc", "commands": [213, 214], "points": [[209, 42], [210, 45], [209, 48]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "curtain-ring-209",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A4",
+        "note": "decision 2b: the rings stay open as drawn; each ring's two short lines become one arc, the dot stays"
+      }
+    },
+    {
+      "id": "curtain-ring-216",
+      "type": "other",
+      "cell": "A4",
+      "confidence": 900,
+      "label": "a ring of the shower curtain on the rod at x 216, open as drawn",
+      "parts": [
+        {
+          "id": "curtain-ring-216-curve",
+          "role": "other",
+          "label": "the ) of two short lines as one curved stroke; the dot (command 211) stays a dot",
+          "primitives": [
+            {"id": "ring-216", "kind": "arc", "commands": [210, 212], "points": [[216, 42], [217, 45], [216, 48]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "curtain-ring-216",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A4",
+        "note": "decision 2b: the rings stay open as drawn; each ring's two short lines become one arc, the dot stays"
+      }
+    },
+    {
+      "id": "curtain-ring-221",
+      "type": "other",
+      "cell": "A4",
+      "confidence": 900,
+      "label": "a ring of the shower curtain on the rod at x 221, open as drawn",
+      "parts": [
+        {
+          "id": "curtain-ring-221-curve",
+          "role": "other",
+          "label": "the ) of two short lines as one curved stroke; the dot (command 205) stays a dot",
+          "primitives": [
+            {"id": "ring-221", "kind": "arc", "commands": [201, 202], "points": [[221, 42], [222, 45], [221, 48]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "curtain-ring-221",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A4",
+        "note": "decision 2b: the rings stay open as drawn; each ring's two short lines become one arc, the dot stays"
+      }
     }
   ],
   "chains": [
