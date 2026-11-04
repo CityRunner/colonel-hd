@@ -3250,3 +3250,81 @@ The format is in `hints/README.md` and `hints/schema.json`, checked by
   `sci-hint-tool check hints`: passes. `sci-golden-hashes --check --hints
   hints`: all golden hashes match (the vector path does not read
   repetitions). Release workflow: all tests pass. **Finding.**
+
+## Milestone 10: the scene model steers the fit (2026-11-04)
+
+The first change of milestone 10 to the HD picture: the customer's
+answers to pilot batch 1 in the hint files, and the scene model used by
+the vector path (`docs/hd-pipeline.md`, section 6, "The scene model steers
+the fit"; `hints/README.md`).
+
+- **Decisions written** (`by: "customer"`, 2026-11-04, with the cell):
+  picture 12 `window-left-tall` its main hypothesis, "as drawn"
+  (A1.3-C1.2; the note names A1.3-A1.4 for the fanlight); picture 74
+  `attic-stairs` its main hypothesis, steps at their drawn heights (C1);
+  picture 58 `back-windows` `as-drawn` (A3.2-B4.2). **Decided
+  (customer).**
+- **Case 2 (the door transom) gets no decision.** `front-door` stays open,
+  and an open object keeps its 3b reconstruction; recording "front-door"
+  would apply its main hypothesis (an arc), which changes the transom.
+  The transom's HD pixels are unchanged (compared with the batch 1 sheet:
+  0 differing pixels in x 140-180, y 15-45). A.10 needs every uncertain
+  case decided by the gate, so the reading "no change" still has to be
+  confirmed, perhaps as a third hypothesis "as in 3b". **Assumed; open.**
+- **Scene-model data for the findings.** The fanlight `wl-arch` is an
+  `ellipse` (was `arc`): an open ellipse is half of an ellipse whose
+  first and last points end a diameter. Its tangent relations to the
+  springers stay, so a tangent may now join an ellipse and a line (schema
+  text, `check-hints.py`, `parse_hints`). Picture 58 gains the part
+  `back-window-right-glints` (role `highlight`): four polylines with a
+  sharp corner (commands 679+678, 682+680+681, 687+686, 685+683+684).
+  Picture 74 gains `as-3-profile` to `as-5-profile`: polylines of the back
+  and the two lit lines of steps 3 to 5 with `step` corners at their left
+  end pixels. **Assumed** (the analyser's reading of the answers).
+- **Which objects steer.** The followed hypothesis: decided, or the main
+  one of an object without alternatives (A.7: certain objects were never
+  put to the customer). So certain objects of pictures 12, 58 and 174
+  steer too, where their primitives change anything: the front step
+  noses and the cellar bulkhead frame of picture 12 now have sharp
+  corners (they were smoothed: the same defect as the glints). Picture
+  174 does not change (its polylines are its lines already). **Assumed.**
+- **The shape comes from the drawn lines, the hint only names it.** Ends
+  and corners are line ends (a corner point within one pixel of a line
+  end snaps to it), so a hint's approximate points cannot move a line.
+  Only the ellipse uses the inner anchor points, weighted, with the
+  lines' pixels. Points are compared in trace coordinates: in a mirrored
+  picture the corners would not snap, and the round trip would reject
+  the shape (no pilot picture is mirrored). **Assumed.**
+- **Lines side by side are not one path.** A `line` primitive of a bar
+  drawn two lines wide (both commands in one primitive, as the pilot
+  wrote them) would otherwise collapse the bar into one stroke, and the
+  round trip allows that (the two lines are one pixel apart). Such
+  primitives keep the fit above. **Decided.**
+- **Why the lit steps were sloped and split.** Not the faces: the lit
+  area is two 1 px lines (pair 6c) under the back line of each tread.
+  The stroke integrity pass of milestone 3b treated the stacked lines as
+  meeting: it closed joints between the left ends of the two lit lines
+  (diagonally touching pixels: a diagonal connector, the "slope") and
+  between the lower one and the nose, and clipped the upper one's end
+  onto the back line above ("the line end lies beside the contour"), and
+  the round caps left dark notches between the rows (the "split"). The
+  fix is general, not for picture 74: an end the scene model squares at a
+  step corner runs on to its pixel's edge, is cut square, and the pass
+  neither joins nor clips it. **Decided.**
+- **A1 checks.** The acceptance of section 6.4 holds (88 pictures, worst
+  agreement 99.993%, 0 failing). A1 residual counts against the 3b
+  report: overshoots 7070 to 7071 (picture 12, 177 to 178), fragments
+  6436 to 6438 (picture 12: 120 to 121; 74: 12 to 13), split groups 2958
+  to 2959, broken joints 7396 to 7397; picture 74's breaks 16 to 18: the
+  step corner at (29, 153) is kept as drawn, so the checker's joint
+  between the lower lit line (204) and the nose (212) reports a gap of
+  0.30 / 0.14 px there, where the nose has the dark notch of the
+  existing removed run of 193 under 212 (milestone 3b). **Finding.**
+- **Round trip and golden hashes.** `sci-hd-report --round-trip`: 13212
+  chains, 13195 pass, 17 fail (the same 17); only pictures 12, 58 and 74
+  differ from the baseline (`docs/hd-quality.md`). Golden hashes differ
+  for pic 12, 58 and 74 and the stacks 74+174, 174+74,
+  74.palette1+174.palette1 and 174.palette1+74 (all four scales each,
+  28 entries), and for nothing else. They are not regenerated: that
+  happens once at the milestone 10 gate (A4). `analyser_version` is 2,
+  so analysis caches are rebuilt. **Finding.**

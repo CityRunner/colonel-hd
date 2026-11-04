@@ -87,8 +87,15 @@ contain nothing derived from the game art beyond a description.
 
 Milestone 10 (addendum A4, part A, in `docs/SPEC_ADDENDA.md`) describes
 each picture as objects made of parts, and parts made of primitives. Two
-optional members hold this: `objects` and `repetitions`. They are
-information for milestone 10, and the vector path does not use them yet.
+optional members hold this: `objects` and `repetitions`. From milestone
+10 the vector path uses the `line`, `polyline` and open `ellipse`
+primitives of decided and certain objects to steer the fit
+(`docs/hd-pipeline.md`, section 6): an open object (alternatives, no
+decision) keeps its milestone 3b reconstruction, and repetitions are not
+rendered yet. An `ellipse` whose first and last points differ is half of
+an ellipse, those two points being the ends of a diameter (a round arch
+seen in perspective); `step` corners of a polyline square the ends of its
+horizontal and vertical lines there.
 
 **Versions.** Files with the scene model say `"version": 2`. A version 1
 file stays valid and means the same as before. It is a version 2 file that
