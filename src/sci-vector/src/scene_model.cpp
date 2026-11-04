@@ -103,6 +103,29 @@ std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines) 
     return path;
 }
 
+// Normal equations of a linear least-squares problem in three unknowns,
+// the right-hand side in column 3.
+using Normal3 = std::array<std::array<double, 4>, 3>;
+
+// Cramer's rule: the determinant of m with column `replace` taken from the
+// right-hand side; replace = 3 gives the system's own determinant.
+double det3(const Normal3& a, std::size_t replace) {
+    const auto at = [&](std::size_t r, std::size_t c) { return a[r][c == replace ? 3 : c]; };
+    return (at(0, 0) * ((at(1, 1) * at(2, 2)) - (at(1, 2) * at(2, 1)))) -
+           (at(0, 1) * ((at(1, 0) * at(2, 2)) - (at(1, 2) * at(2, 0)))) +
+           (at(0, 2) * ((at(1, 0) * at(2, 1)) - (at(1, 1) * at(2, 0))));
+}
+
+// Adds a weighted row (row . unknowns = rhs) to the normal equations.
+void add_row(Normal3& m, const std::array<double, 3>& row, double rhs, double weight) {
+    for (std::size_t r = 0; r < 3; ++r) {
+        for (std::size_t c = 0; c < 3; ++c) {
+            m[r][c] += weight * row[r] * row[c];
+        }
+        m[r][3] += weight * row[r] * rhs;
+    }
+}
+
 // The vertices of a polyline: its ends and its corners, each corner at the
 // nearest line end within one pixel (Chebyshev), else at its point.
 std::optional<std::vector<Vec2>> polyline_shape(const SteerInput& input, std::span<const SteerLine> path) {
@@ -150,17 +173,11 @@ std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::spa
     if (length(u) == 0) {
         return std::nullopt;
     }
-    std::array<std::array<double, 4>, 3> m{};
+    Normal3 m{};
     Vec2 side;
     const auto add = [&](Vec2 p, double weight) {
         const Vec2 q = p - middle;
-        const std::array<double, 3> row{q.x * q.x, q.x * q.y, q.y * q.y};
-        for (std::size_t r = 0; r < 3; ++r) {
-            for (std::size_t c = 0; c < 3; ++c) {
-                m[r][c] += weight * row[r] * row[c];
-            }
-            m[r][3] += weight * row[r];
-        }
+        add_row(m, {q.x * q.x, q.x * q.y, q.y * q.y}, 1, weight);
     };
     add(end, end_weight);
     for (std::size_t k = 1; k + 1 < input.points.size(); ++k) {
@@ -170,13 +187,6 @@ std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::spa
     for (const SteerLine& line : path) {
         pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) { add(centre({.x = x, .y = y}), 1); });
     }
-    // Cramer's rule.
-    const auto det3 = [](const std::array<std::array<double, 4>, 3>& a, std::size_t replace) {
-        const auto at = [&](std::size_t r, std::size_t c) { return a[r][c == replace ? 3 : c]; };
-        return (at(0, 0) * ((at(1, 1) * at(2, 2)) - (at(1, 2) * at(2, 1)))) -
-               (at(0, 1) * ((at(1, 0) * at(2, 2)) - (at(1, 2) * at(2, 0)))) +
-               (at(0, 2) * ((at(1, 0) * at(2, 1)) - (at(1, 1) * at(2, 0))));
-    };
     const double det = det3(m, 3);
     if (std::abs(det) < 1e-300) {
         return std::nullopt;
@@ -218,6 +228,84 @@ std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::spa
                 continue;
             }
             const Vec2 half = (p + q) * 0.5;
+            const Vec2 on_circle = half * (1 / length(half));
+            pending.emplace_back(on_circle, q);
+            pending.emplace_back(p, on_circle);
+        }
+    }
+    shape.back() = end;
+    return shape;
+}
+
+// u turned by a quarter turn, clockwise on screen (y down) for turn = 1.
+Vec2 quarter_turn(Vec2 u, double turn) {
+    return Vec2{.x = -u.y * turn, .y = u.x * turn};
+}
+
+double cross(Vec2 a, Vec2 b) {
+    return (a.x * b.y) - (a.y * b.x);
+}
+
+// A circular arc from the path's start to its end: the circle
+// x^2 + y^2 + D x + E y + F = 0 about their midpoint, fitted by weighted
+// least squares to the ends (strongly), the anchors and the lines' pixel
+// centres, and followed from the start the way the first line leaves it,
+// to the end. It may turn by more than half a circle (a hook). Flattened
+// by bisecting quarter turns (only +, -, *, / and sqrt).
+std::optional<std::vector<Vec2>> arc_shape(const SteerInput& input, std::span<const SteerLine> path) {
+    constexpr double end_weight = 1e4;
+    constexpr double anchor_weight = 1e2;
+    const Vec2 start = centre(path.front().from);
+    const Vec2 end = centre(path.back().to);
+    const Vec2 middle = (start + end) * 0.5;
+    Normal3 m{};
+    const auto add = [&](Vec2 p, double weight) {
+        const Vec2 q = p - middle;
+        add_row(m, {q.x, q.y, 1}, -dot(q, q), weight);
+    };
+    add(start, end_weight);
+    add(end, end_weight);
+    for (std::size_t k = 1; k + 1 < input.points.size(); ++k) {
+        add(input.points[k], anchor_weight);
+    }
+    for (const SteerLine& line : path) {
+        pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) { add(centre({.x = x, .y = y}), 1); });
+    }
+    const double det = det3(m, 3);
+    if (std::abs(det) < 1e-300) {
+        return std::nullopt;
+    }
+    const Vec2 offset{.x = -det3(m, 0) / det * 0.5, .y = -det3(m, 1) / det * 0.5};
+    const double radius_squared = dot(offset, offset) - (det3(m, 2) / det);
+    if (!(radius_squared > 0)) {
+        return std::nullopt;
+    }
+    const double radius = std::sqrt(radius_squared);
+    const Vec2 o = middle + offset;
+    const Vec2 a = (start - o) * (1 / length(start - o));
+    const Vec2 b = (end - o) * (1 / length(end - o));
+    if (!std::isfinite(a.x + a.y + b.x + b.y)) {
+        return std::nullopt;
+    }
+    const double turn = dot(quarter_turn(a, 1), centre(path.front().to) - start) >= 0 ? 1 : -1;
+    // Quarter turns from a until b lies within a quarter turn ahead.
+    std::vector<Vec2> keys{a};
+    while (!(cross(keys.back(), b) * turn > 0 && dot(keys.back(), b) >= 0) && keys.size() < 5) {
+        keys.push_back(quarter_turn(keys.back(), turn));
+    }
+    keys.push_back(b);
+    const auto map = [&](Vec2 u) { return o + (u * radius); };
+    std::vector<Vec2> shape{start};
+    for (std::size_t i = 0; i + 1 < keys.size(); ++i) {
+        std::vector<std::pair<Vec2, Vec2>> pending{{keys[i], keys[i + 1]}}; // Last first.
+        while (!pending.empty()) {
+            const auto [p, q] = pending.back();
+            pending.pop_back();
+            const Vec2 half = (p + q) * 0.5;
+            if (length(map(q) - map(p)) <= max_chord || length(half) == 0) {
+                shape.push_back(map(q));
+                continue;
+            }
             const Vec2 on_circle = half * (1 / length(half));
             pending.emplace_back(on_circle, q);
             pending.emplace_back(p, on_circle);
@@ -289,6 +377,13 @@ std::optional<std::vector<Vec2>> shape_of(const SteerInput& input, std::span<con
         auto shape = ellipse_shape(input, path);
         if (!shape) {
             reason = "no ellipse fits the lines";
+        }
+        return shape;
+    }
+    case PrimitiveKind::Arc: {
+        auto shape = arc_shape(input, path);
+        if (!shape) {
+            reason = "no circle fits the lines";
         }
         return shape;
     }

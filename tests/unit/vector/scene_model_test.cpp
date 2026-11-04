@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstddef>
 #include <optional>
+#include <span>
 #include <vector>
 
 using sci::pic::picture_top;
@@ -164,6 +165,117 @@ SCI_TEST(half_ellipse_fits_within_the_tolerance) {
         const double lengths = std::sqrt(((d1.x * d1.x) + (d1.y * d1.y)) * ((d2.x * d2.x) + (d2.y * d2.y)));
         SCI_CHECK(lengths == 0 || dot >= 0.866 * lengths);
     }
+}
+
+namespace {
+
+// The pieces of a steered primitive joined into one curve; empty if they
+// do not join.
+std::vector<Vec2> joined(const sci::vector::detail::Steered& steered) {
+    std::vector<Vec2> curve;
+    for (const auto& piece : steered.pieces) {
+        if (piece.size() < 2 || (!curve.empty() && curve.back() != piece.front())) {
+            return {};
+        }
+        curve.insert(curve.end(), piece.begin() + (curve.empty() ? 0 : 1), piece.end());
+    }
+    return curve;
+}
+
+// No chord turns by more than 30 degrees.
+bool smooth(const std::vector<Vec2>& curve) {
+    for (std::size_t i = 1; i + 1 < curve.size(); ++i) {
+        const Vec2 d1{.x = curve[i].x - curve[i - 1].x, .y = curve[i].y - curve[i - 1].y};
+        const Vec2 d2{.x = curve[i + 1].x - curve[i].x, .y = curve[i + 1].y - curve[i].y};
+        const double dot = (d1.x * d2.x) + (d1.y * d2.y);
+        const double lengths = std::sqrt(((d1.x * d1.x) + (d1.y * d1.y)) * ((d2.x * d2.x) + (d2.y * d2.y)));
+        if (lengths != 0 && dot < 0.866 * lengths) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Short PIC lines through the knots, rounded to whole pixels, centred at
+// (cx, cy) with the given radius, as an arc primitive anchored at its ends
+// and at the knot `anchor`.
+SteerInput stepped_arc(std::span<const Vec2> unit, int cx, int cy, int radius, std::size_t anchor,
+                       std::vector<Vec2>& drawn) {
+    std::vector<std::array<int, 2>> knots;
+    for (const Vec2 u : unit) {
+        knots.push_back(
+            {static_cast<int>(std::lround(cx + (radius * u.x))), static_cast<int>(std::lround(cy + (radius * u.y)))});
+    }
+    SteerInput input{.kind = PrimitiveKind::Arc, .lines = {}, .points = {}, .corner = {}};
+    drawn.clear();
+    for (std::size_t i = 0; i + 1 < knots.size(); ++i) {
+        input.lines.push_back(line(knots[i][0], knots[i][1], knots[i + 1][0], knots[i + 1][1]));
+        drawn.push_back(centre(knots[i][0], knots[i][1]));
+    }
+    drawn.push_back(centre(knots.back()[0], knots.back()[1]));
+    input.points = {drawn.front(), drawn[anchor], drawn.back()};
+    input.corner = {std::nullopt, std::nullopt, std::nullopt};
+    return input;
+}
+
+} // namespace
+
+// A hook drawn as short PIC lines around three quarters of a circle of
+// radius 12 (more than half a turn, which no half ellipse describes)
+// becomes one circular arc through both ends, within the tolerance.
+SCI_TEST(hook_of_three_quarter_turns_fits_as_a_circular_arc) {
+    constexpr std::array<Vec2, 10> unit{
+        Vec2{.x = 1, .y = 0},  Vec2{.x = 0.86603, .y = -0.5},  Vec2{.x = 0.5, .y = -0.86603},
+        Vec2{.x = 0, .y = -1}, Vec2{.x = -0.5, .y = -0.86603}, Vec2{.x = -0.86603, .y = -0.5},
+        Vec2{.x = -1, .y = 0}, Vec2{.x = -0.86603, .y = 0.5},  Vec2{.x = -0.5, .y = 0.86603},
+        Vec2{.x = 0, .y = 1},
+    };
+    std::vector<Vec2> drawn;
+    const SteerInput input = stepped_arc(unit, 100, 60, 12, 4, drawn);
+    const auto steered = sci::vector::detail::steer(input);
+    SCI_CHECK(steered.applicable && steered.pieces.size() == input.lines.size());
+    SCI_CHECK(steered.deviation <= sci::vector::detail::round_trip_limit);
+    const std::vector<Vec2> curve = joined(steered);
+    SCI_CHECK(!curve.empty() && curve.front() == drawn.front() && curve.back() == drawn.back());
+    SCI_CHECK(polyline_distance(curve, drawn) <= 1.0);
+    SCI_CHECK(smooth(curve));
+    // It goes the long way round, over the top (y < 60) and down the left.
+    SCI_CHECK(std::ranges::any_of(curve, [](Vec2 p) { return p.y < 50; }));
+    SCI_CHECK(std::ranges::any_of(curve, [](Vec2 p) { return p.x < 90; }));
+}
+
+// The same arc in the other direction, and a quarter of a circle: the
+// direction comes from the first line.
+SCI_TEST(arc_follows_the_first_line_from_the_start) {
+    constexpr std::array<Vec2, 4> unit{
+        Vec2{.x = 0, .y = -1},
+        Vec2{.x = 0.5, .y = -0.86603},
+        Vec2{.x = 0.86603, .y = -0.5},
+        Vec2{.x = 1, .y = 0},
+    };
+    std::vector<Vec2> drawn;
+    const SteerInput input = stepped_arc(unit, 50, 80, 16, 2, drawn);
+    const auto steered = sci::vector::detail::steer(input);
+    SCI_CHECK(steered.applicable && steered.deviation <= sci::vector::detail::round_trip_limit);
+    const std::vector<Vec2> curve = joined(steered);
+    SCI_CHECK(!curve.empty() && smooth(curve));
+    SCI_CHECK(polyline_distance(curve, drawn) <= 1.0);
+    // A quarter turn, not the three quarters the other way round.
+    SCI_CHECK(std::ranges::all_of(curve, [](Vec2 p) { return p.x >= 49 && p.y <= 81; }));
+}
+
+// Lines with a sharp corner are no arc: the round trip rejects it and the
+// 3b reconstruction stays.
+SCI_TEST(an_arc_the_pixels_contradict_is_not_used) {
+    const SteerInput input{
+        .kind = PrimitiveKind::Arc,
+        .lines = {line(10, 50, 30, 50), line(30, 50, 30, 70)},
+        .points = {centre(10, 50), centre(30, 50), centre(30, 70)},
+        .corner = {std::nullopt, std::nullopt, std::nullopt},
+    };
+    const auto steered = sci::vector::detail::steer(input);
+    SCI_CHECK(steered.applicable && steered.pieces.empty());
+    SCI_CHECK(steered.reason.contains("round trip"));
 }
 
 // A glint drawn as a vertical line, then two short horizontal ones a pixel
