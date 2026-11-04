@@ -3183,8 +3183,8 @@ files as a decision with its cell reference (A4 A.7, B.4).
   with its radial bars meeting it. **Decided (customer).**
 - **Case 2, picture 12, A3, the door transom** ("leave the arch"): read
   as no change: the fanlight over the door keeps its current (3b)
-  reconstruction; neither alternative is applied. **Assumed reading,
-  to be confirmed.**
+  reconstruction; neither alternative is applied. **Confirmed by the
+  customer (2026-11-04).**
 - **Case 3 and new, pictures 74+174, C1, the dark lower steps** ("fix
   stairs in C1: they are slope in HD, must be like stairs, and shadow must
   not be splitted like now"; case 3: "See above"): the steps are intended
@@ -3192,8 +3192,8 @@ files as a decision with its cell reference (A4 A.7, B.4).
   corners, and the lit (dithered) area of each step is one continuous
   shape, not broken into pieces. The step positions keep the drawn
   heights (175 / 183 / 189), since the answer asks for stairs, not for a
-  common pitch. **Decided (customer); the step positions are an assumed
-  reading.**
+  common pitch. **Decided (customer); the step positions confirmed by the
+  customer (2026-11-04).**
 - **Case 4, picture 58, the two back windows** ("Keep as is"):
   hypothesis "as-drawn", no repetition. **Decided (customer).**
 - **New, picture 58, A4.4 and B4.2** ("fix light at A4.4 B4.2 - light is
