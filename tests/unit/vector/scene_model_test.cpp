@@ -336,3 +336,89 @@ SCI_TEST(round_trip_raster_of_a_straight_stroke_is_path_1s_line) {
     SCI_CHECK(back == drawn);
     SCI_CHECK(sci::vector::raster_deviation(back, drawn) == 0);
 }
+
+namespace {
+
+// The outline of an ellipse (centre (100, 80), semi-axes 20 and 12) drawn
+// as 16 lines between points on it, one line left out (a gap where another
+// object bounds the area, as at picture 12's halo).
+SteerInput drawn_oval(std::size_t gap) {
+    constexpr std::array<Vec2, 16> unit{
+        Vec2{.x = 1, .y = 0},
+        Vec2{.x = 0.92388, .y = 0.38268},
+        Vec2{.x = 0.70711, .y = 0.70711},
+        Vec2{.x = 0.38268, .y = 0.92388},
+        Vec2{.x = 0, .y = 1},
+        Vec2{.x = -0.38268, .y = 0.92388},
+        Vec2{.x = -0.70711, .y = 0.70711},
+        Vec2{.x = -0.92388, .y = 0.38268},
+        Vec2{.x = -1, .y = 0},
+        Vec2{.x = -0.92388, .y = -0.38268},
+        Vec2{.x = -0.70711, .y = -0.70711},
+        Vec2{.x = -0.38268, .y = -0.92388},
+        Vec2{.x = 0, .y = -1},
+        Vec2{.x = 0.38268, .y = -0.92388},
+        Vec2{.x = 0.70711, .y = -0.70711},
+        Vec2{.x = 0.92388, .y = -0.38268},
+    };
+    const auto at = [&](std::size_t k) {
+        const Vec2 u = unit[k % unit.size()];
+        return std::pair{static_cast<int>(std::lround(100 + (20 * u.x))),
+                         static_cast<int>(std::lround(80 + (12 * u.y)))};
+    };
+    SteerInput input{.kind = PrimitiveKind::Ellipse, .lines = {}, .points = {}, .corner = {}};
+    for (std::size_t k = 0; k < unit.size(); ++k) {
+        if (k == gap) {
+            continue;
+        }
+        const auto [x0, y0] = at(k);
+        const auto [x1, y1] = at(k + 1);
+        input.lines.push_back(line(x0, y0, x1, y1));
+    }
+    for (const std::size_t k : {0U, 4U, 8U, 12U, 0U}) {
+        const auto [x, y] = at(k);
+        input.points.push_back(centre(x, y));
+        input.corner.emplace_back();
+    }
+    return input;
+}
+
+} // namespace
+
+// A whole ellipse (first and last point equal): one ellipse is fitted to
+// all the lines, each line's piece lies on it, and the gap stays open.
+SCI_TEST(closed_ellipse_puts_every_line_on_one_ellipse) {
+    const SteerInput input = drawn_oval(2);
+    const auto steered = sci::vector::detail::steer(input);
+    SCI_CHECK(steered.applicable && steered.pieces.size() == input.lines.size());
+    SCI_CHECK(steered.deviation <= sci::vector::detail::round_trip_limit);
+    for (const auto& piece : steered.pieces) {
+        SCI_CHECK(piece.size() >= 2);
+        for (const Vec2 p : piece) {
+            const double dx = (p.x - 100.5) / 20;
+            const double dy = (p.y - 80.5) / 12;
+            SCI_CHECK(std::abs(std::sqrt((dx * dx) + (dy * dy)) - 1) < 0.08);
+        }
+    }
+    // Nothing is drawn across the gap: near its middle, (111.6, 90.5),
+    // halfway between the ends of the lines on either side.
+    for (const auto& piece : steered.pieces) {
+        for (const Vec2 p : piece) {
+            SCI_CHECK(std::hypot(p.x - 111.6, p.y - 90.5) > 2);
+        }
+    }
+}
+
+// A square is no ellipse: the round trip rejects it and the 3b
+// reconstruction stays.
+SCI_TEST(closed_ellipse_the_pixels_contradict_is_not_used) {
+    const SteerInput input{
+        .kind = PrimitiveKind::Ellipse,
+        .lines = {line(10, 50, 40, 50), line(40, 51, 40, 80), line(39, 80, 10, 80), line(10, 79, 10, 51)},
+        .points = {centre(10, 50), centre(40, 50), centre(40, 80), centre(10, 80), centre(10, 50)},
+        .corner = {std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+    };
+    const auto steered = sci::vector::detail::steer(input);
+    SCI_CHECK(steered.applicable && steered.pieces.empty());
+    SCI_CHECK(!steered.reason.empty());
+}
