@@ -1,9 +1,9 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 37,
   "pic_sha256": "cea013c1454d689c91b4aadb170c70562cca2992a67dccbb42f98ef1a04a3842",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; batch 2: Claude, 2026-11-04",
   "regions": [
     {"id": "hall-runner-rug", "at": [160, 90], "label": "hall runner rug"},
     {"id": "wooden-floor", "at": [160, 170], "label": "wooden floor"},
@@ -11,6 +11,39 @@
     {"id": "right-staircase", "at": [280, 80], "label": "right staircase"},
     {"id": "upper-landing-railing", "at": [160, 10], "label": "upper landing railing"},
     {"id": "armchair", "at": [240, 105], "label": "armchair", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "stair-railing",
+      "type": "railing",
+      "cell": "B5.3",
+      "confidence": 900,
+      "label": "railing over the stair (its sloping side)",
+      "parts": [
+        {
+          "id": "stair-railing-side",
+          "role": "other",
+          "label": "stacked lines under the railing",
+          "primitives": [
+            {"id": "stair-railing-668", "kind": "line", "commands": [668], "points": [[257, 122], [257, 142]]},
+            {"id": "stair-railing-673", "kind": "line", "commands": [673], "points": [[262, 140], [262, 119]]},
+            {"id": "stair-railing-675", "kind": "line", "commands": [675], "points": [[261, 140], [261, 119]]},
+            {"id": "stair-railing-724", "kind": "line", "commands": [724], "points": [[263, 129], [263, 134]]},
+            {"id": "stair-railing-1083", "kind": "line", "commands": [1083], "points": [[260, 125], [260, 134]]},
+            {"id": "stair-railing-1649", "kind": "line", "commands": [1649], "points": [[258, 124], [258, 127]]},
+            {"id": "stair-railing-1655", "kind": "line", "commands": [1655], "points": [[259, 130], [259, 127]]},
+            {"id": "stair-railing-1656", "kind": "line", "commands": [1656], "points": [[258, 128], [258, 130]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "keep",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "B5.3",
+        "note": "batch 2 case 1: leave the slope, this part is railing, not stairs"
+      }
+    }
   ],
   "chains": [
     {"id": "lamp-shade-right", "lines": [217, 218, 219, 220, 221], "primitive": "spline", "label": "lamp shade, right"},

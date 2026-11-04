@@ -1,9 +1,9 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 20,
   "pic_sha256": "3fbdaf294de4de5b9fd60dbe8762411b6c9d8d813112167568f9dd0384da542d",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; batch 2: Claude, 2026-11-04",
   "regions": [
     {"id": "roof", "at": [160, 15], "label": "roof"},
     {"id": "left-doorway", "at": [80, 130], "label": "left doorway"},
@@ -12,6 +12,57 @@
     {"id": "dirt-ground", "at": [200, 180], "label": "dirt ground"},
     {"id": "side-window", "at": [20, 110], "label": "side window"},
     {"id": "brick-wall", "at": [120, 70], "label": "brick wall"}
+  ],
+  "objects": [
+    {
+      "id": "window-eaves",
+      "type": "window",
+      "cell": "A2.3-B2.2",
+      "confidence": 900,
+      "label": "round-topped window under the eaves",
+      "parts": [
+        {
+          "id": "window-eaves-arch",
+          "role": "frame",
+          "label": "inner arch and its springers",
+          "primitives": [
+            {"id": "window-eaves-spring-left", "kind": "line", "commands": [395], "points": [[74, 74], [74, 63]]},
+            {"id": "window-eaves-arch-inner", "kind": "ellipse", "commands": [396, 397, 398, 399, 400, 401], "points": [[74, 63], [93, 46], [112, 60]]},
+            {"id": "window-eaves-spring-right", "kind": "line", "commands": [402], "points": [[112, 60], [112, 69]]}
+          ]
+        },
+        {
+          "id": "window-eaves-arch-outer",
+          "role": "frame",
+          "label": "outer edge of the arched frame",
+          "primitives": [
+            {"id": "window-eaves-outer-right", "kind": "line", "commands": [892], "points": [[116, 72], [116, 57]]},
+            {"id": "window-eaves-arch-outer-curve", "kind": "arc", "commands": [898, 899, 900, 902, 903, 904, 905], "points": [[116, 57], [82, 45], [70, 63]]},
+            {"id": "window-eaves-outer-left", "kind": "line", "commands": [906], "points": [[70, 63], [70, 78]]}
+          ]
+        },
+        {
+          "id": "window-eaves-bars",
+          "role": "glazing-bar",
+          "label": "radial bars, each two lines wide",
+          "primitives": [
+            {"id": "window-eaves-bar-483", "kind": "line", "commands": [483], "points": [[94, 64], [94, 46]]},
+            {"id": "window-eaves-bar-484", "kind": "line", "commands": [484], "points": [[95, 62], [95, 47]]},
+            {"id": "window-eaves-bar-507", "kind": "line", "commands": [507], "points": [[99, 64], [108, 55]]},
+            {"id": "window-eaves-bar-508", "kind": "line", "commands": [508], "points": [[99, 65], [109, 55]]},
+            {"id": "window-eaves-bar-509", "kind": "line", "commands": [509], "points": [[91, 65], [76, 57]]},
+            {"id": "window-eaves-bar-510", "kind": "line", "commands": [510], "points": [[91, 66], [77, 59]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-eaves",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A2.3-B2.2",
+        "note": "batch 2 case 3: A, half of an ellipse in perspective, as the picture 12 fanlight"
+      }
+    }
   ],
   "chains": [
     {"id": "left-doorway-arch", "lines": [379, 380, 381, 382, 384], "primitive": "spline", "label": "left doorway arch", "uncertain": true},

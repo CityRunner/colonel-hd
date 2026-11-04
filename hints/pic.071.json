@@ -1,14 +1,41 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 71,
   "pic_sha256": "64308b72746b01cf44e4b15e2753ddf40ac6452bcb5a76cc6cce9a6c340f9a6a",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; batch 2: Claude, 2026-11-04",
   "regions": [
     {"id": "clawfoot-bathtub", "at": [160, 140], "label": "clawfoot bathtub"},
     {"id": "shower-curtain", "at": [190, 80], "label": "shower curtain"},
     {"id": "shower-pipe", "at": [235, 100], "label": "shower pipe"},
     {"id": "empty-background", "at": [60, 80], "label": "empty background", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "curtain-rail-hook",
+      "type": "other",
+      "cell": "A4",
+      "confidence": 900,
+      "label": "the red rail's hook above the shower curtain",
+      "parts": [
+        {
+          "id": "curtain-rail-hook-bend",
+          "role": "other",
+          "label": "one smooth circular bend (a bent rail)",
+          "primitives": [
+            {"id": "rail-hook-inner", "kind": "arc", "commands": [89, 90, 91, 92, 93, 94], "points": [[235, 42], [216, 29], [211, 34]]},
+            {"id": "rail-hook-outer", "kind": "arc", "commands": [96, 97, 98, 99, 100, 101], "points": [[208, 33], [224, 25], [238, 34]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "curtain-rail-hook",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A4",
+        "note": "batch 2 case 5: A, one smooth circular bend"
+      }
+    }
   ],
   "chains": [
     {"id": "tub-end-left", "lines": [16, 17, 18, 19, 20], "primitive": "spline", "label": "tub end, left"},

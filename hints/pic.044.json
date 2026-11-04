@@ -1,9 +1,9 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 44,
   "pic_sha256": "745a7dec953b8deb7cef18f3a3a1f3fc7a04750b439837b34a3dc506861978d8",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; batch 2: Claude, 2026-11-04",
   "regions": [
     {"id": "tiled-floor", "at": [160, 150], "label": "tiled floor"},
     {"id": "fireplace", "at": [128, 70], "label": "fireplace"},
@@ -11,6 +11,58 @@
     {"id": "back-wall", "at": [115, 20], "label": "back wall"},
     {"id": "right-wall", "at": [300, 100], "label": "right wall"},
     {"id": "right-window", "at": [175, 50], "label": "right window"}
+  ],
+  "objects": [
+    {
+      "id": "window-curtain",
+      "type": "window",
+      "cell": "A3.2",
+      "confidence": 900,
+      "label": "arched window with curtain",
+      "parts": [
+        {
+          "id": "window-curtain-arch",
+          "role": "frame",
+          "label": "inner edge of the arch",
+          "primitives": [
+            {"id": "window-curtain-arch-inner", "kind": "ellipse", "commands": [351, 352, 353, 354, 355, 356], "points": [[187, 18], [176, 10], [162, 19]]}
+          ]
+        },
+        {
+          "id": "window-curtain-outer",
+          "role": "frame",
+          "label": "outer edge of the arch",
+          "primitives": [
+            {"id": "window-curtain-arch-outer", "kind": "ellipse", "commands": [375, 376, 377, 378, 379, 380, 381], "points": [[191, 20], [171, 7], [158, 19]]}
+          ]
+        },
+        {
+          "id": "window-curtain-glazing",
+          "role": "glazing-bar",
+          "label": "lit bead of the arch, from the left springer to the crown",
+          "primitives": [
+            {"id": "window-curtain-arch-lit", "kind": "arc", "commands": [593, 594, 595, 596], "points": [[173, 10], [164, 14], [161, 19]]}
+          ]
+        },
+        {
+          "id": "window-curtain-bars",
+          "role": "glazing-bar",
+          "label": "radial bars",
+          "primitives": [
+            {"id": "window-curtain-bar-621", "kind": "line", "commands": [621], "points": [[174, 10], [174, 19]]},
+            {"id": "window-curtain-bar-625", "kind": "line", "commands": [625], "points": [[165, 14], [171, 20]]},
+            {"id": "window-curtain-bar-626", "kind": "line", "commands": [626], "points": [[182, 14], [177, 19]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-curtain",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A3.2",
+        "note": "batch 2: arched window: the arch half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    }
   ],
   "chains": [
     {"id": "right-window-arch", "lines": [374, 375, 376, 377, 378, 379, 380, 381, 382], "primitive": "arc", "label": "right window arch"},

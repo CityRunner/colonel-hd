@@ -1,9 +1,9 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 10,
   "pic_sha256": "7082ab29057f8db20e672fb00017a032d2cc8ded7d44eb3caa7b8f81c36df068",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; batch 2: Claude, 2026-11-04",
   "regions": [
     {"id": "house-front-wall", "at": [160, 30], "label": "house front wall"},
     {"id": "open-doorway", "at": [150, 100], "label": "open doorway"},
@@ -12,6 +12,101 @@
     {"id": "tree", "at": [50, 10], "label": "tree"},
     {"id": "pond", "at": [20, 180], "label": "pond"},
     {"id": "front-steps", "at": [140, 125], "label": "front steps"}
+  ],
+  "objects": [
+    {
+      "id": "window-shutters-left",
+      "type": "window",
+      "cell": "A3.1-A3.2",
+      "confidence": 900,
+      "label": "arched window between shutters, left",
+      "parts": [
+        {
+          "id": "window-shutters-left-arch",
+          "role": "frame",
+          "label": "inner arch and its springer",
+          "primitives": [
+            {"id": "wsl-arch-inner", "kind": "ellipse", "commands": [315, 316, 317, 318, 319, 320], "points": [[168, 35], [153, 23], [145, 28]]},
+            {"id": "wsl-spring-left", "kind": "line", "commands": [313], "points": [[145, 35], [145, 29]]}
+          ]
+        },
+        {
+          "id": "window-shutters-left-outer",
+          "role": "frame",
+          "label": "outer edge of the arch",
+          "primitives": [
+            {"id": "wsl-arch-outer", "kind": "ellipse", "commands": [1275, 1276, 1277, 1278, 1279, 1280, 1281, 1282], "points": [[171, 33], [155, 20], [144, 26]]}
+          ]
+        },
+        {
+          "id": "window-shutters-left-bars",
+          "role": "glazing-bar",
+          "label": "radial bars, each two lines wide",
+          "primitives": [
+            {"id": "wsl-bar-326", "kind": "line", "commands": [326], "points": [[157, 25], [157, 32]]},
+            {"id": "wsl-bar-336", "kind": "line", "commands": [336], "points": [[156, 25], [156, 31]]},
+            {"id": "wsl-bar-331", "kind": "line", "commands": [331], "points": [[155, 31], [148, 25]]},
+            {"id": "wsl-bar-332", "kind": "line", "commands": [332], "points": [[155, 32], [148, 26]]},
+            {"id": "wsl-bar-333", "kind": "line", "commands": [333], "points": [[158, 32], [166, 29]]},
+            {"id": "wsl-bar-334", "kind": "line", "commands": [334], "points": [[158, 33], [166, 30]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-shutters-left",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A3.1-A4.3",
+        "note": "batch 2: arched window: the arch half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    },
+    {
+      "id": "window-shutters-right",
+      "type": "window",
+      "cell": "A4.1-A4.3",
+      "confidence": 900,
+      "label": "arched window between shutters, right",
+      "parts": [
+        {
+          "id": "window-shutters-right-arch",
+          "role": "frame",
+          "label": "inner arch and its springers",
+          "primitives": [
+            {"id": "wsr-spring-left", "kind": "line", "commands": [485], "points": [[195, 48], [195, 42]]},
+            {"id": "wsr-arch-inner", "kind": "ellipse", "commands": [486, 487, 488, 489, 490], "points": [[195, 42], [211, 36], [219, 44]]},
+            {"id": "wsr-spring-right", "kind": "line", "commands": [491], "points": [[219, 44], [220, 54]]}
+          ]
+        },
+        {
+          "id": "window-shutters-right-outer",
+          "role": "frame",
+          "label": "outer edge of the arch",
+          "primitives": [
+            {"id": "wsr-arch-outer", "kind": "ellipse", "commands": [1255, 1256, 1257, 1258, 1259, 1260, 1261], "points": [[222, 48], [206, 32], [194, 39]]}
+          ]
+        },
+        {
+          "id": "window-shutters-right-bars",
+          "role": "glazing-bar",
+          "label": "radial bars, each two lines wide",
+          "primitives": [
+            {"id": "wsr-bar-583", "kind": "line", "commands": [583], "points": [[208, 44], [208, 37]]},
+            {"id": "wsr-bar-594", "kind": "line", "commands": [594], "points": [[207, 43], [207, 37]]},
+            {"id": "wsr-bar-591", "kind": "line", "commands": [591], "points": [[204, 44], [198, 38]]},
+            {"id": "wsr-bar-592", "kind": "line", "commands": [592], "points": [[204, 45], [198, 39]]},
+            {"id": "wsr-bar-586", "kind": "line", "commands": [586], "points": [[211, 45], [217, 43]]},
+            {"id": "wsr-bar-587", "kind": "line", "commands": [587], "points": [[211, 46], [217, 44]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-shutters-right",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A3.1-A4.3",
+        "note": "batch 2: arched window: the arch half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    }
   ],
   "chains": [
     {"id": "left-window-arch", "lines": [1283, 1284, 1285, 1286, 1287, 1288, 1289, 1290], "primitive": "spline", "label": "left window arch"},

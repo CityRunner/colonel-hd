@@ -1,9 +1,9 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 61,
   "pic_sha256": "5adf0a463f842062a6b7b62fc75393001fee7c41f6338980b89e5a44456ef8ae",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; batch 2: Claude, 2026-11-04",
   "regions": [
     {"id": "attic-floor", "at": [190, 145], "label": "attic floor"},
     {"id": "red-settee", "at": [190, 95], "label": "red settee"},
@@ -12,6 +12,42 @@
     {"id": "roof", "at": [100, 30], "label": "roof"},
     {"id": "box-left", "at": [40, 140], "label": "box, left", "uncertain": true},
     {"id": "round-gable-window", "at": [163, 22], "label": "round gable window"}
+  ],
+  "objects": [
+    {
+      "id": "sofa-cushion",
+      "type": "furniture",
+      "cell": "B3.2-B4.1",
+      "confidence": 900,
+      "label": "the red sofa's cushion",
+      "parts": [
+        {
+          "id": "sofa-cushion-stripes",
+          "role": "other",
+          "label": "stacked red lines with dark gaps",
+          "primitives": [
+            {"id": "sofa-cushion-1269", "kind": "line", "commands": [1269], "points": [[194, 80], [194, 74]]},
+            {"id": "sofa-cushion-1271", "kind": "line", "commands": [1271], "points": [[199, 78], [199, 74]]},
+            {"id": "sofa-cushion-1273", "kind": "line", "commands": [1273], "points": [[204, 79], [204, 74]]},
+            {"id": "sofa-cushion-1274", "kind": "line", "commands": [1274], "points": [[193, 75], [193, 79]]},
+            {"id": "sofa-cushion-1275", "kind": "line", "commands": [1275], "points": [[192, 76], [192, 78]]},
+            {"id": "sofa-cushion-1276", "kind": "line", "commands": [1276], "points": [[198, 75], [198, 79]]},
+            {"id": "sofa-cushion-1277", "kind": "line", "commands": [1277], "points": [[197, 76], [197, 78]]},
+            {"id": "sofa-cushion-1278", "kind": "line", "commands": [1278], "points": [[203, 75], [203, 79]]},
+            {"id": "sofa-cushion-1279", "kind": "line", "commands": [1279], "points": [[202, 76], [202, 78]]},
+            {"id": "sofa-cushion-1280", "kind": "line", "commands": [1280], "points": [[207, 76], [207, 79]]},
+            {"id": "sofa-cushion-1281", "kind": "line", "commands": [1281], "points": [[206, 77], [206, 78]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "keep",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "B3.2-B4.1",
+        "note": "batch 2 case 2: leave as is"
+      }
+    }
   ],
   "chains": [
     {"id": "left-round-window-rim", "lines": [407, 408, 409], "primitive": "arc", "label": "left round window rim"},

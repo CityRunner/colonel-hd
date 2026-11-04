@@ -1,9 +1,9 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 57,
   "pic_sha256": "a5ca2c8833af8936c81709044742dd1ffb4a85e3bdc8cf3953893835cb0c62e7",
-  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
+  "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21; batch 2: Claude, 2026-11-04",
   "regions": [
     {"id": "crypt-floor", "at": [160, 130], "label": "crypt floor"},
     {"id": "pink-carpet-runner", "at": [60, 120], "label": "pink carpet runner", "uncertain": true},
@@ -13,6 +13,42 @@
     {"id": "stairs-down", "at": [220, 170], "label": "stairs down"},
     {"id": "rocky-wall", "at": [290, 160], "label": "rocky wall"},
     {"id": "veined-left-wall", "at": [30, 90], "label": "veined left wall"}
+  ],
+  "objects": [
+    {
+      "id": "stained-glass-panel",
+      "type": "window",
+      "cell": "A2",
+      "confidence": 900,
+      "label": "stained-glass panel with two medallions",
+      "parts": [
+        {
+          "id": "medallion-top",
+          "role": "other",
+          "label": "upper medallion: its ends are halves of ellipses",
+          "primitives": [
+            {"id": "medallion-top-upper", "kind": "ellipse", "commands": [555, 554, 553, 550, 551, 552], "points": [[80, 22], [88, 16], [99, 20]]},
+            {"id": "medallion-top-lower", "kind": "ellipse", "commands": [558, 557, 556, 559, 560, 561], "points": [[98, 22], [89, 25], [80, 23]]}
+          ]
+        },
+        {
+          "id": "medallion-bottom",
+          "role": "other",
+          "label": "lower medallion: its ends are halves of ellipses",
+          "primitives": [
+            {"id": "medallion-bottom-upper", "kind": "ellipse", "commands": [567, 566, 565, 562, 563, 564], "points": [[80, 53], [89, 47], [99, 50]]},
+            {"id": "medallion-bottom-lower", "kind": "ellipse", "commands": [570, 569, 568, 571, 572, 573], "points": [[98, 51], [89, 56], [80, 54]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "stained-glass-panel",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A2",
+        "note": "batch 2 case 4: A, the medallions' ends are halves of ellipses, drawn smooth"
+      }
+    }
   ],
   "chains": [
     {"id": "left-portrait-oval-top", "lines": [550, 551, 552], "primitive": "arc", "label": "left portrait oval top"},
