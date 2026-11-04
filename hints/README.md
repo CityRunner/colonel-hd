@@ -87,8 +87,15 @@ contain nothing derived from the game art beyond a description.
 
 Milestone 10 (addendum A4, part A, in `docs/SPEC_ADDENDA.md`) describes
 each picture as objects made of parts, and parts made of primitives. Two
-optional members hold this: `objects` and `repetitions`. They are
-information for milestone 10, and the vector path does not use them yet.
+optional members hold this: `objects` and `repetitions`. From milestone
+10 the vector path uses the `line`, `polyline` and open `ellipse`
+primitives of decided and certain objects to steer the fit
+(`docs/hd-pipeline.md`, section 6): an open object (alternatives, no
+decision) keeps its milestone 3b reconstruction, and repetitions are not
+rendered yet. An `ellipse` whose first and last points differ is half of
+an ellipse, those two points being the ends of a diameter (a round arch
+seen in perspective); `step` corners of a polyline square the ends of its
+horizontal and vertical lines there.
 
 **Versions.** Files with the scene model say `"version": 2`. A version 1
 file stays valid and means the same as before. It is a version 2 file that
@@ -132,7 +139,7 @@ together with this directory.
 | `commands` | The PIC command indices of the lines the primitive replaces, as chains name them. They are never analyser ids. |
 | `points` | 1x pixels in stored coordinates, in order: the ends, corners and points the shape passes through. A line has 2, an arc 3 (start, a point on it, end), an ellipse at least 3, a spline or polyline at least 2. |
 | `corners` | `sharp`, `rounded` or `step` (an intentional step, kept by A.4) at a point, by its index in `points`. Each point has at most one. |
-| `relations` (in an object) | A.3, between parts or primitives of the same hypothesis: `parallel`, `perpendicular` (2 items), `equal-spacing` (3 or more), `symmetry` and `aligned` (these two with `axis` `horizontal` or `vertical`), and `tangent` (one arc and one line primitive). They are not the depth relations of the file. |
+| `relations` (in an object) | A.3, between parts or primitives of the same hypothesis: `parallel`, `perpendicular` (2 items), `equal-spacing` (3 or more), `symmetry` and `aligned` (these two with `axis` `horizontal` or `vertical`), and `tangent` (one arc or ellipse and one line primitive). They are not the depth relations of the file. |
 | `alternatives` | A.6: up to 8 other hypotheses for the object. Each has an `id`, `type`, `confidence`, `parts` and `relations`. The object's own members are its main hypothesis, named by the object's id. |
 | `decision` | A.7: the customer's choice of a hypothesis (`by` is always `customer`), with the date and the cell of the answer. An object with a decision is never asked again. Without one, an object with alternatives is still open. |
 | `repetitions` | A.5: objects of one type, or parts of one role, that are reconstructed identically. An item is in at most one repetition. |

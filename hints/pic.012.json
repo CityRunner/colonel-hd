@@ -79,7 +79,7 @@
             {"id": "wl-arch-spring-left", "kind": "line", "commands": [127], "points": [[19, 55], [19, 50]]},
             {
               "id": "wl-arch",
-              "kind": "arc",
+              "kind": "ellipse",
               "commands": [128, 129, 126, 125, 124],
               "points": [[19, 50], [31, 42], [48, 53]]
             },
@@ -180,7 +180,14 @@
             }
           ]
         }
-      ]
+      ],
+      "decision": {
+        "hypothesis": "window-left-tall",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A1.3-C1.2",
+        "note": "batch 1 case 1: keep as drawn; A1.3-A1.4: the fanlight is half an ellipse, a circle in perspective"
+      }
     },
     {
       "id": "window-upper-left",

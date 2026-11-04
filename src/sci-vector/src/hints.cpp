@@ -641,8 +641,9 @@ GeometricRelation read_geometric(Reader& in, const JsonValue& value, const std::
     } else if (relation.kind == GeometricKind::EqualSpacing && relation.items.size() < 3) {
         in.fail(where + ".items", "three or more items expected");
     } else if (relation.kind == GeometricKind::Tangent &&
-               (primitives.size() != 2 || count(PrimitiveKind::Arc) != 1 || count(PrimitiveKind::Line) != 1)) {
-        in.fail(where + ".items", "a tangent joins an arc and a line primitive");
+               (primitives.size() != 2 || count(PrimitiveKind::Arc) + count(PrimitiveKind::Ellipse) != 1 ||
+                count(PrimitiveKind::Line) != 1)) {
+        in.fail(where + ".items", "a tangent joins an arc or ellipse and a line primitive");
     }
     relation.note = in.text(value.member("note"), where + ".note");
     return relation;
@@ -807,7 +808,7 @@ RepetitionHint read_repetition(Reader& in, const JsonValue& value, const std::st
         Decision d = read_decision(in, *decision, at);
         if (in.ok() && d.hypothesis != repetition_repeat && d.hypothesis != repetition_as_drawn) {
             in.fail(at + ".hypothesis",
-                    std::format("\"{}\" or \"{}\" expected", repetition_repeat, repetition_as_drawn));
+                    std::format(R"("{}" or "{}" expected)", repetition_repeat, repetition_as_drawn));
         }
         repetition.decision = std::move(d);
     }

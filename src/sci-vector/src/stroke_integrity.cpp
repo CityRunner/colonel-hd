@@ -93,6 +93,12 @@ struct Line {
     std::vector<std::size_t> path;
     std::vector<Stroke> strokes;
     std::vector<Stroke> connectors; // Added to join other lines; not the line's own geometry.
+    std::vector<std::size_t> fixed; // End pixels the scene model fixed (step corners).
+
+    [[nodiscard]] bool is_fixed(std::size_t pixel) const { return std::ranges::find(fixed, pixel) != fixed.end(); }
+
+    // Whether an end of this line that the scene model fixed touches the pixel.
+    [[nodiscard]] bool fixed_near(std::size_t pixel) const;
 
     [[nodiscard]] std::size_t first() const { return path.front(); }
 
@@ -100,6 +106,10 @@ struct Line {
 
     [[nodiscard]] bool is_end(std::size_t pixel) const { return pixel == first() || pixel == last(); }
 };
+
+bool Line::fixed_near(std::size_t pixel) const {
+    return std::ranges::any_of(fixed, [&](std::size_t end) { return end == pixel || touching(end, pixel); });
+}
 
 // The closest point of a polyline to p: its arc-length position and the
 // distance.
@@ -331,25 +341,27 @@ private:
     void close_joints() {
         for (std::size_t i = 0; i < lines_.size(); ++i) {
             for (const std::size_t end : {lines_[i].first(), lines_[i].last()}) {
-                if (!seen(end, i)) {
+                // A step corner of the scene model is drawn as it is.
+                if (!seen(end, i) || lines_[i].is_fixed(end)) {
                     continue;
                 }
-                neighbours(end, [&](std::size_t q) {
-                    lines_at(q, [&](std::size_t j) {
-                        if (j == i || !seen(q, j)) {
-                            return;
-                        }
-                        if (lines_[j].is_end(q)) {
-                            if (j > i) {
-                                close_joint(i, end, j, q);
-                            }
-                        } else if (touching(lines_[j].first(), end) || touching(lines_[j].last(), end) ||
-                                   lines_[j].is_end(end)) {
-                            join_near_end(i, end, j);
-                        }
-                    });
-                });
+                neighbours(end,
+                           [&](std::size_t q) { lines_at(q, [&](std::size_t j) { close_joint_at(i, end, j, q); }); });
             }
+        }
+    }
+
+    // The joint of line i's end with line j, which drew the touching pixel q.
+    void close_joint_at(std::size_t i, std::size_t end, std::size_t j, std::size_t q) {
+        if (j == i || !seen(q, j) || lines_[j].fixed_near(end)) {
+            return;
+        }
+        if (lines_[j].is_end(q)) {
+            if (j > i) {
+                close_joint(i, end, j, q);
+            }
+        } else if (touching(lines_[j].first(), end) || touching(lines_[j].last(), end) || lines_[j].is_end(end)) {
+            join_near_end(i, end, j);
         }
     }
 
@@ -455,7 +467,7 @@ private:
                 continue;
             }
             for (const std::size_t end : {line.first(), line.last()}) {
-                if (seen(end, i)) {
+                if (seen(end, i) && !line.is_fixed(end)) {
                     clip_end(i, end);
                 }
             }
@@ -671,6 +683,7 @@ void apply_stroke_integrity(std::vector<Layer>& layers, std::span<const StrokeLi
             .path = line.path,
             .strokes = {std::get<Stroke>(layers[it->second])},
             .connectors = {},
+            .fixed = line.fixed,
         });
     }
     Pass pass(std::move(pass_lines), owners, stats);

@@ -170,6 +170,53 @@ lines by their command index.
 - Every hint used or left out is listed in `SceneStats` (`applied_hints`,
   `rejected_hints`) and in the replacement report.
 
+### The scene model steers the fit (milestone 10)
+
+The scene model of the hint files (A4 A.1; `hints/README.md`) says what
+an object's lines are meant to be. `steer_by_scene_model` in
+`build_scene.cpp` (visual plane only) applies it after the curves above,
+with `src/sci-vector/src/scene_model.cpp`:
+
+- **Which objects.** The hypothesis an object follows (A.7): the decided
+  one; the main one of an object without alternatives (certain). An open
+  object (alternatives, no decision) keeps the reconstruction above.
+  Organic objects (A.4) are never steered. Repetitions are not rendered.
+- **Which primitives.** `line`, `polyline` and open `ellipse`, whose
+  commands draw lines in this plane that form one path in the
+  primitive's order: each starts on or next to the pixel where the
+  previous one ends (either direction), and no two consecutive lines run
+  side by side (more than two pixels next to each other: a bar drawn two
+  lines wide, stacked treads). Arcs and splines keep the fit above.
+- **The shape.** `line`: one straight segment between the path's ends.
+  `polyline`: straight segments meeting at its inner points, each at the
+  nearest line end within one pixel (a `rounded` corner leaves the
+  primitive to the fit above). Open `ellipse`: half of an ellipse with the
+  path's ends as a diameter, the conic about their midpoint fitted by
+  weighted least squares to the ends, the anchor points and the lines'
+  pixel centres, and drawn through its conjugate diameters (+, -, *, /
+  and sqrt only; chords of at most 0.25 pixel).
+- **The strokes.** The shape is cut where consecutive lines meet (halfway
+  between their end pixels, or at a polyline corner within one pixel of
+  that), and each line's stroke becomes its piece. The faces keep the
+  fit above.
+- **Acceptance.** The pieces, rasterised back to 1x as the round-trip
+  check does (`sci/vector/raster_1x.hpp`, shared with
+  `sci/render/round_trip.hpp`), must lie within 1 original pixel of the
+  lines' pixels (A.6). Otherwise nothing changes, and the replacement
+  report lists the primitive with the deviation ("the 3b reconstruction
+  stays"). A primitive that changes nothing is not recorded; one that
+  does is listed as applied, and is a chain of the round-trip check of
+  kind `line`, `polyline` or `ellipse`, named after the primitive.
+- **Step corners** (`step` in a polyline's `corners`): the end of a
+  horizontal or vertical line of the primitive at that pixel runs on to
+  the pixel's outer edge and is cut there, square to the line. Stacked
+  lines then cover exactly their pixels: horizontal treads, vertical
+  risers, sharp corners. The stroke integrity pass (section 5) leaves such
+  an end as it is: no joint, connector or contour clip at it, from it or
+  to it. Without this, the pass joined the ends of stacked treads on
+  diagonally touching pixels and clipped them onto the line above, which
+  drew a slope and split the lit area of the attic steps (picture 74, C1).
+
 ## 7. Rasterisation
 
 `sci-render` samples a scene on a 16 x 16 grid per HD pixel (spec section

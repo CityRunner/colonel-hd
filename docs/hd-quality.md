@@ -9,6 +9,32 @@ milestone 3b (before any milestone 10 change to the rendering). Measured on
         build/release/tools/hd-report/sci-hd-report /game build/hd-report.md \
         --scale 1 --hints hints --round-trip build/round-trip.txt
 
+## After the scene model steers the fit (2026-11-04)
+
+Measured the same way after "the scene model steers the fit"
+(`docs/hd-pipeline.md`, section 6; batch 1 of the customer's answers).
+The tables below are the baseline; only pictures with scene-model data
+changed:
+
+| Picture | Chains (baseline) | Chains now | Fail | Worst |
+|---|---|---|---|---|
+| 12 | 227 | 231 | 0 | 1 px, unchanged |
+| 58 | 94 | 97 | 0 | 1 px, unchanged |
+| 74 | 12 | 13 | 0 | 1 px, unchanged |
+| 174 | 14 | 14 | 0 | 1 px, unchanged |
+
+- All: 13212 chains, 13195 pass, 17 fail (the same 17 hinted splines).
+  Every other picture's line is identical to the baseline.
+- The 13 steered primitives: 1 ellipse (deviation 1: the fanlight of
+  picture 12), 6 polylines (all 1: front step noses and cellar bulkhead
+  frame of picture 12, three glints of picture 58; the fourth glint is
+  already straight), 6 lines (all 0: springers and risers of picture 12,
+  a step nose and the opening edge of picture 74). Lines of a steered
+  primitive left the automatic chains they were in, which is why picture
+  12 (8 steered) has 4 chains more.
+- No steered primitive was rejected by the round trip.
+- Pixels: 163981 original (was 163572), 17329 added, 17119 missed.
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted

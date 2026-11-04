@@ -5,6 +5,8 @@ sci_add_library(NAME sci-vector
         src/curves.cpp
         src/fitting.cpp
         src/hints.cpp
+        src/raster_1x.cpp
+        src/scene_model.cpp
         src/scene_io.cpp
         src/stroke_integrity.cpp
         src/topology.cpp

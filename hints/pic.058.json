@@ -92,6 +92,41 @@
               "points": [[219, 43], [244, 45]]
             }
           ]
+        },
+        {
+          "id": "back-window-right-glints",
+          "role": "highlight",
+          "label": "light on the panes, straight strokes with sharp corners",
+          "primitives": [
+            {
+              "id": "bwr-glint-top-left",
+              "kind": "polyline",
+              "commands": [679, 678],
+              "points": [[219, 26], [219, 42], [230, 43]],
+              "corners": [{"point": 1, "kind": "sharp"}]
+            },
+            {
+              "id": "bwr-glint-top-right",
+              "kind": "polyline",
+              "commands": [682, 680, 681],
+              "points": [[233, 33], [233, 43], [239, 44]],
+              "corners": [{"point": 1, "kind": "sharp"}]
+            },
+            {
+              "id": "bwr-glint-bottom-left",
+              "kind": "polyline",
+              "commands": [687, 686],
+              "points": [[219, 47], [219, 65], [230, 66]],
+              "corners": [{"point": 1, "kind": "sharp"}]
+            },
+            {
+              "id": "bwr-glint-bottom-right",
+              "kind": "polyline",
+              "commands": [685, 683, 684],
+              "points": [[233, 56], [233, 66], [241, 67]],
+              "corners": [{"point": 1, "kind": "sharp"}]
+            }
+          ]
         }
       ],
       "relations": [
@@ -189,7 +224,8 @@
       "items": ["back-window-left", "back-window-right"],
       "cell": "A3.2-B4.2",
       "confidence": 450,
-      "note": "batch 1 case 4: frames 29 / 27 px wide, cross bar 14 / 13 px from the left jamb; open"
+      "note": "batch 1 case 4: frames 29 / 27 px wide, cross bar 14 / 13 px from the left jamb",
+      "decision": {"hypothesis": "as-drawn", "by": "customer", "date": "2026-11-04", "cell": "A3.2-B4.2", "note": "keep as is"}
     }
   ]
 }

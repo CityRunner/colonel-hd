@@ -31,6 +31,9 @@ namespace sci::vector::detail {
 struct StrokeLine {
     std::int32_t primitive = -1;
     std::vector<std::size_t> path; // The picture pixels the line drew, from its start (y * width + x).
+    // End pixels the scene model fixed: step corners (A4 A.4), squared and
+    // drawn as they are, so no joint or contour clip changes them.
+    std::vector<std::size_t> fixed;
 };
 
 // Changes the strokes of the lines (layers whose source is a line's

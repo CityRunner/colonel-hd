@@ -192,8 +192,8 @@ def check_hypothesis(hypothesis, where):
             errors.append(f"{here}: symmetry and aligned have an axis, the other kinds none")
         if kind == "tangent":
             kinds = sorted(primitives[item]["kind"] if item in primitives else "part" for item in items)
-            if kinds != ["arc", "line"]:
-                errors.append(f"{here}: a tangent joins an arc and a line primitive")
+            if kinds not in (["arc", "line"], ["ellipse", "line"]):
+                errors.append(f"{here}: a tangent joins an arc or ellipse and a line primitive")
     return errors
 
 
