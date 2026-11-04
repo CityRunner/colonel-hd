@@ -45,7 +45,14 @@
             {"id": "as-3-back", "kind": "line", "commands": [192], "points": [[25, 151], [64, 151]]},
             {"id": "as-3-nose", "kind": "line", "commands": [193, 212], "points": [[17, 154], [65, 154]]},
             {"id": "as-3-lit-1", "kind": "line", "commands": [203], "points": [[28, 152], [64, 152]]},
-            {"id": "as-3-lit-2", "kind": "line", "commands": [204], "points": [[29, 153], [64, 153]]}
+            {"id": "as-3-lit-2", "kind": "line", "commands": [204], "points": [[29, 153], [64, 153]]},
+            {
+              "id": "as-3-profile",
+              "kind": "polyline",
+              "commands": [192, 203, 204],
+              "points": [[25, 151], [28, 152], [29, 153]],
+              "corners": [{"point": 0, "kind": "step"}, {"point": 1, "kind": "step"}, {"point": 2, "kind": "step"}]
+            }
           ]
         },
         {
@@ -55,7 +62,14 @@
             {"id": "as-4-back", "kind": "line", "commands": [194], "points": [[36, 158], [65, 158]]},
             {"id": "as-4-nose", "kind": "line", "commands": [195, 211], "points": [[17, 161], [65, 161]]},
             {"id": "as-4-lit-1", "kind": "line", "commands": [205], "points": [[40, 159], [65, 159]]},
-            {"id": "as-4-lit-2", "kind": "line", "commands": [206], "points": [[42, 160], [65, 160]]}
+            {"id": "as-4-lit-2", "kind": "line", "commands": [206], "points": [[42, 160], [65, 160]]},
+            {
+              "id": "as-4-profile",
+              "kind": "polyline",
+              "commands": [194, 205, 206],
+              "points": [[36, 158], [40, 159], [42, 160]],
+              "corners": [{"point": 0, "kind": "step"}, {"point": 1, "kind": "step"}, {"point": 2, "kind": "step"}]
+            }
           ]
         },
         {
@@ -65,7 +79,14 @@
             {"id": "as-5-back", "kind": "line", "commands": [196], "points": [[50, 165], [65, 165]]},
             {"id": "as-5-nose", "kind": "line", "commands": [197, 210], "points": [[17, 168], [67, 168]]},
             {"id": "as-5-lit-1", "kind": "line", "commands": [207], "points": [[53, 166], [65, 166]]},
-            {"id": "as-5-lit-2", "kind": "line", "commands": [208], "points": [[56, 167], [65, 167]]}
+            {"id": "as-5-lit-2", "kind": "line", "commands": [208], "points": [[56, 167], [65, 167]]},
+            {
+              "id": "as-5-profile",
+              "kind": "polyline",
+              "commands": [196, 207, 208],
+              "points": [[50, 165], [53, 166], [56, 167]],
+              "corners": [{"point": 0, "kind": "step"}, {"point": 1, "kind": "step"}, {"point": 2, "kind": "step"}]
+            }
           ]
         },
         {
@@ -141,7 +162,14 @@
             }
           ]
         }
-      ]
+      ],
+      "decision": {
+        "hypothesis": "attic-stairs",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "C1",
+        "note": "batch 1 case 3 and C1: stairs, not a slope; the steps keep their drawn heights; the lit area of a step is one shape"
+      }
     }
   ]
 }
