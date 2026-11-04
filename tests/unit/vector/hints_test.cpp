@@ -184,6 +184,64 @@ SCI_TEST(hints_read_the_scene_model) {
     SCI_CHECK(oak.main.type == ObjectType::Tree && is_organic(oak.main.type) && !is_organic(door.main.type));
     SCI_CHECK(oak.main.parts[0].primitives[1].corners[0].kind == CornerKind::Step);
     SCI_CHECK(hints->repetitions.size() == 1 && hints->repetitions[0].items[1] == "window-right");
+    const RepetitionHint& row = hints->repetitions[0];
+    SCI_CHECK(row.cell == "B2" && row.confidence == 650 && row.note == "same window twice");
+    SCI_CHECK(row.decision && row.decision->hypothesis == "repeat" && row.decision->cell == "B2.1-B3.2");
+    SCI_CHECK(!is_open(row) && reconstructs_identically(row));
+}
+
+// A.5 with A.7: a repetition the analyser is unsure of is open until the
+// customer decides, and is drawn as drawn meanwhile.
+SCI_TEST(hints_read_uncertain_repetitions) {
+    using namespace sci::vector;
+    const std::string scene = scene_example();
+    const std::string decision =
+        R"(, "decision": {"hypothesis": "repeat", "by": "customer", "date": "2026-11-04", "cell": "B2.1-B3.2"})";
+    const auto read = [](const std::string& text) {
+        const auto hints = parse_hints(text);
+        SCI_CHECK(hints.has_value() && hints->repetitions.size() == 1);
+        return hints && hints->repetitions.size() == 1 ? hints->repetitions[0] : RepetitionHint{};
+    };
+    // Open: uncertain, no decision.
+    const RepetitionHint open = read(replaced(scene, decision, ""));
+    SCI_CHECK(open.confidence == 650 && !open.decision && is_open(open) && !reconstructs_identically(open));
+    // Certain: no confidence in the file, or 1000.
+    const RepetitionHint certain =
+        read(replaced(replaced(scene, decision, ""), R"("confidence": 650,)", ""));
+    SCI_CHECK(certain.confidence == 1000 && !is_open(certain) && reconstructs_identically(certain));
+    const RepetitionHint sure = read(replaced(replaced(scene, decision, ""), R"("confidence": 650)", R"("confidence": 1000)"));
+    SCI_CHECK(!is_open(sure) && reconstructs_identically(sure));
+    // Decided as drawn.
+    const RepetitionHint as_drawn = read(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "as-drawn")"));
+    SCI_CHECK(as_drawn.decision && !is_open(as_drawn) && !reconstructs_identically(as_drawn));
+    // A decision on a certain repetition is allowed and overrides it.
+    const RepetitionHint overridden = read(replaced(replaced(scene, R"("confidence": 650)", R"("confidence": 1000)"),
+                                                    R"("hypothesis": "repeat")", R"("hypothesis": "as-drawn")"));
+    SCI_CHECK(overridden.confidence == 1000 && !reconstructs_identically(overridden));
+    // Invalid.
+    SCI_CHECK(rejection(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "window-left")"))
+                  .contains("\"repeat\" or \"as-drawn\" expected"));
+    SCI_CHECK(rejection(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "identical")"))
+                  .contains("expected"));
+    SCI_CHECK(rejection(replaced(scene, R"("confidence": 650)", R"("confidence": 1001)")).contains("not in 0..1000"));
+    SCI_CHECK(rejection(replaced(scene, R"("date": "2026-11-04")", R"("date": "2026-11-31")")).contains("date"));
+    SCI_CHECK(rejection(replaced(scene, R"("cell": "B2.1-B3.2")", R"("cell": "B6")")).contains("review grid"));
+    SCI_CHECK(rejection(replaced(scene, R"("cell": "B2",)", R"("cell": "B2-",)")).contains("review grid"));
+    SCI_CHECK(read(replaced(scene, R"("cell": "B2",)", "")).cell.empty());
+    SCI_CHECK(rejection(replaced(scene, R"("by": "customer", "date": "2026-11-04")",
+                                 R"("by": "analyser", "date": "2026-11-04")"))
+                  .contains("customer"));
+    SCI_CHECK(rejection(replaced(scene, decision, R"(, "decided": "repeat")")).contains("unknown member"));
+    // The existing rules hold for open repetitions too.
+    const std::string open_scene = replaced(scene, decision, "");
+    SCI_CHECK(rejection(replaced(open_scene, R"(["window-left", "window-right"])", R"(["window-left", "door"])"))
+                  .contains("one type"));
+    SCI_CHECK(rejection(replaced(replaced(open_scene, R"("type": "tree")", R"("type": "window")"),
+                                 R"(["window-left", "window-right"])", R"(["window-left", "oak"])"))
+                  .empty());
+    SCI_CHECK(rejection(replaced(replaced(open_scene, R"("role": "trunk")", R"("role": "frame")"),
+                                 R"(["window-left", "window-right"])", R"(["oak-trunk", "wl-frame"])"))
+                  .contains("organic"));
 }
 
 // A version 1 file reads as before, and as the same file with version 2;
@@ -264,8 +322,8 @@ SCI_TEST(hints_reject_invalid_scene_models) {
             {R"(["window-left", "window-right"])", R"(["window-left", "door"])", "one type"},
             {R"(["window-left", "window-right"])", R"(["window-left", "wl-frame"])", "not both"},
             {
-                R"("note": "same window twice"})",
-                R"("note": "same window twice"}, {"id": "again", "items": ["window-right", "window-left"]})",
+                R"("cell": "B2.1-B3.2"})",
+                R"("cell": "B2.1-B3.2"}}, {"id": "again", "items": ["window-right", "window-left"])",
                 "two repetitions",
             },
         },

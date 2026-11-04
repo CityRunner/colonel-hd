@@ -265,11 +265,33 @@ struct ObjectHint {
 };
 
 // A.5: objects of one type, or parts of one role, reconstructed identically.
+// The analyser may be unsure (A.6, A.7): then the repetition has a
+// confidence below 1000 and is put to the customer. A repetition has two
+// fixed hypotheses: "repeat" (the items are reconstructed identically) and
+// "as-drawn" (each item as its pixels show it, no repetition).
+inline constexpr std::string_view repetition_repeat = "repeat";
+inline constexpr std::string_view repetition_as_drawn = "as-drawn";
+
 struct RepetitionHint {
     std::string id;
     std::vector<std::string> items;
+    std::string cell;      // Where the items are on the review grid, as for Decision; may be empty.
+    int confidence = 1000; // That the items are identical, 0 to 1000; certain when the file gives none.
     std::string note;
+    // The customer's choice: hypothesis repetition_repeat or
+    // repetition_as_drawn. Allowed on a certain repetition too, where it
+    // overrides the analyser.
+    std::optional<Decision> decision;
 };
+
+// Whether the repetition is still a question for the customer: uncertain
+// (confidence below 1000) and not decided.
+[[nodiscard]] bool is_open(const RepetitionHint& repetition) noexcept;
+
+// What the renderer is to do (A.7): follow the decision if there is one;
+// otherwise repeat a certain repetition, and draw an open one as drawn, so
+// that the milestone 3b reconstruction stays until the customer answers.
+[[nodiscard]] bool reconstructs_identically(const RepetitionHint& repetition) noexcept;
 
 struct PictureHints {
     int version = 0;                 // As the file says; the members of version 1 mean the same in 2.
