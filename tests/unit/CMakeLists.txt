@@ -43,6 +43,7 @@ sci_add_unit_test(NAME sci-vector-tests
         vector/hint_scene_test.cpp
         vector/hints_test.cpp
         vector/scene_io_test.cpp
+        vector/relations_test.cpp
         vector/scene_model_test.cpp
         vector/shared_boundary_test.cpp
         vector/stroke_integrity_test.cpp

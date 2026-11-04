@@ -1328,8 +1328,7 @@ std::optional<PendingShape> steer_primitive(const detail::SteerInput& input, con
                                             const std::vector<DrawnLine>& lines,
                                             const std::vector<std::vector<std::size_t>>& pixels, const Curves& curves,
                                             const SceneModelFits& model, SceneStats& stats,
-                                            const std::vector<Vec2>* solved = nullptr,
-                                            std::string* failure = nullptr) {
+                                            const std::vector<Vec2>* solved = nullptr, std::string* failure = nullptr) {
     const auto fail = [&](std::string why) {
         if (failure != nullptr) {
             *failure = std::format("{}: {}", primitive.id, why);
@@ -1483,8 +1482,8 @@ std::optional<StraightShape> straight_shape(const PendingShape& shape) {
 // the partition takes them so, else each on its own, and applies them.
 // How many of them keep the 3b faces (the partition could not take them).
 int share_shapes(std::vector<PendingShape>& shapes, int picture, const std::vector<DrawnLine>& lines,
-                  const std::vector<bool>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
-                  SceneModelFits& model, SceneStats& stats) {
+                 const std::vector<bool>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
+                 SceneModelFits& model, SceneStats& stats) {
     if (shapes.empty()) {
         return 0;
     }
@@ -1670,9 +1669,9 @@ std::vector<std::optional<std::vector<Vec2>>> solve_object(const ObjectHint& obj
         list += list.empty() ? std::string(name) : std::format(", {}", name);
     }
     if (!solution.solved) {
-        reject_hint(stats, picture, object.id,
-                    std::format("relations ({}) not solved: {}: the unsolved shapes are steered", list,
-                                solution.reason));
+        reject_hint(
+            stats, picture, object.id,
+            std::format("relations ({}) not solved: {}: the unsolved shapes are steered", list, solution.reason));
         return solved;
     }
     if (solution.largest_move == 0) {
@@ -1730,8 +1729,8 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
             continue;
         }
         std::string failure;
-        (void)steer_primitive(found[i].input, found[i].line_of, picture.picture, *found[i].hint, decided, lines,
-                              pixels, curves, model, stats, &*solved[i], &failure);
+        (void)steer_primitive(found[i].input, found[i].line_of, picture.picture, *found[i].hint, decided, lines, pixels,
+                              curves, model, stats, &*solved[i], &failure);
         if (!failure.empty()) {
             reject_hint(stats, picture.picture, object.id,
                         std::format("the solved relations fail ({}): the unsolved shapes are steered", failure));
@@ -1750,9 +1749,9 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
             if (std::ranges::any_of(primitive.line_of, [&](std::size_t line) { return taken[line]; })) {
                 continue; // A line in two primitives follows the first.
             }
-            if (auto shape = steer_primitive(primitive.input, primitive.line_of, picture.picture, *primitive.hint,
-                                             decided, lines, pixels, to_curves, to_model, to_stats,
-                                             use[i] ? &*use[i] : nullptr)) {
+            if (auto shape =
+                    steer_primitive(primitive.input, primitive.line_of, picture.picture, *primitive.hint, decided,
+                                    lines, pixels, to_curves, to_model, to_stats, use[i] ? &*use[i] : nullptr)) {
                 for (const std::size_t line : primitive.line_of) {
                     taken[line] = true;
                 }
@@ -1767,7 +1766,8 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
                 for (std::size_t i = 0; i < shapes[s].line_of.size(); ++i) {
                     const std::vector<Vec2>& piece = shapes[s].result.pieces[i];
                     const DrawnLine& line = lines[shapes[s].line_of[i]];
-                    for (const auto& [end, point] : {std::pair{line.from, piece.front()}, std::pair{line.to, piece.back()}}) {
+                    for (const auto& [end, point] :
+                         {std::pair{line.from, piece.front()}, std::pair{line.to, piece.back()}}) {
                         const bool shared = std::ranges::any_of(shapes, [&](const PendingShape& other) {
                             return &other != &shapes[s] &&
                                    std::ranges::any_of(other.result.pieces, [&](const std::vector<Vec2>& q) {
@@ -1784,8 +1784,7 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
                 }
             }
         }
-        return share_shapes(shapes, picture.picture, lines, in_arrangement, to_curves, to_boundary, to_model,
-                            to_stats);
+        return share_shapes(shapes, picture.picture, lines, in_arrangement, to_curves, to_boundary, to_model, to_stats);
     };
     const bool any_solved = std::ranges::any_of(solved, [](const auto& anchors) { return anchors.has_value(); });
     if (!any_solved || decided) {

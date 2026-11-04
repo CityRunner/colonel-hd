@@ -231,9 +231,8 @@ std::optional<std::string> add_relation(const RelationProblem& problem, const Ve
     }
     case GeometricKind::EqualSpacing: {
         // Across the first line of the first item, as drawn.
-        const auto first = std::ranges::find_if(relation.items.front(), [&](std::size_t p) {
-            return problem.primitives[p].kind == PrimitiveKind::Line;
-        });
+        const auto first = std::ranges::find_if(
+            relation.items.front(), [&](std::size_t p) { return problem.primitives[p].kind == PrimitiveKind::Line; });
         if (first == relation.items.front().end()) {
             return "equal spacing needs a line in its first item";
         }
