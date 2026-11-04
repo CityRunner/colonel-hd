@@ -1481,11 +1481,12 @@ std::optional<StraightShape> straight_shape(const PendingShape& shape) {
 
 // Makes the shapes of one object the boundary of their faces, jointly if
 // the partition takes them so, else each on its own, and applies them.
-void share_shapes(std::vector<PendingShape>& shapes, int picture, const std::vector<DrawnLine>& lines,
+// How many of them keep the 3b faces (the partition could not take them).
+int share_shapes(std::vector<PendingShape>& shapes, int picture, const std::vector<DrawnLine>& lines,
                   const std::vector<bool>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
                   SceneModelFits& model, SceneStats& stats) {
     if (shapes.empty()) {
-        return;
+        return 0;
     }
     // Straight shapes already in the arrangement are its boundary.
     const auto entered = [&](const PendingShape& shape) {
@@ -1517,6 +1518,7 @@ void share_shapes(std::vector<PendingShape>& shapes, int picture, const std::vec
         }
         apply_shape(shapes[i], picture, why[i], entered(shapes[i]), lines, curves, model, stats);
     }
+    return static_cast<int>(std::ranges::count_if(why, [](const std::string& w) { return !w.empty(); }));
 }
 
 // A primitive of the followed hypothesis whose commands draw lines here.
@@ -1737,48 +1739,92 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
             break;
         }
     }
-    std::vector<PendingShape> shapes;
-    std::vector<bool> taken(lines.size(), false); // Lines of an earlier shape of this object.
-    for (std::size_t i = 0; i < found.size(); ++i) {
-        const ObjectPrimitive& primitive = found[i];
-        if (std::ranges::any_of(primitive.line_of, [&](std::size_t line) { return taken[line]; })) {
-            continue; // A line in two primitives follows the first.
-        }
-        if (auto shape = steer_primitive(primitive.input, primitive.line_of, picture.picture, *primitive.hint,
-                                         decided, lines, pixels, curves, model, stats,
-                                         solved[i] ? &*solved[i] : nullptr)) {
-            for (const std::size_t line : primitive.line_of) {
-                taken[line] = true;
+    // Places the shapes (with the solved anchors where given); how many keep
+    // the 3b faces.
+    const auto place = [&](const std::vector<std::optional<std::vector<Vec2>>>& use, Curves& to_curves,
+                           detail::SharedBoundary& to_boundary, SceneModelFits& to_model, SceneStats& to_stats) {
+        std::vector<PendingShape> shapes;
+        std::vector<bool> taken(lines.size(), false); // Lines of an earlier shape of this object.
+        for (std::size_t i = 0; i < found.size(); ++i) {
+            const ObjectPrimitive& primitive = found[i];
+            if (std::ranges::any_of(primitive.line_of, [&](std::size_t line) { return taken[line]; })) {
+                continue; // A line in two primitives follows the first.
             }
-            shapes.push_back(std::move(*shape));
+            if (auto shape = steer_primitive(primitive.input, primitive.line_of, picture.picture, *primitive.hint,
+                                             decided, lines, pixels, to_curves, to_model, to_stats,
+                                             use[i] ? &*use[i] : nullptr)) {
+                for (const std::size_t line : primitive.line_of) {
+                    taken[line] = true;
+                }
+                shapes.push_back(std::move(*shape));
+            }
         }
-    }
-    // A corner the solver made one point of two shapes (tied points) is
-    // inside the object: the stroke integrity pass leaves those ends, as it
-    // leaves the inner ends of one shape.
-    if (std::ranges::any_of(solved, [](const auto& anchors) { return anchors.has_value(); })) {
-        for (std::size_t s = 0; s < shapes.size(); ++s) {
-            for (std::size_t i = 0; i < shapes[s].line_of.size(); ++i) {
-                const std::vector<Vec2>& piece = shapes[s].result.pieces[i];
-                const DrawnLine& line = lines[shapes[s].line_of[i]];
-                for (const auto& [end, point] : {std::pair{line.from, piece.front()}, std::pair{line.to, piece.back()}}) {
-                    const bool shared = std::ranges::any_of(shapes, [&](const PendingShape& other) {
-                        return &other != &shapes[s] &&
-                               std::ranges::any_of(other.result.pieces, [&](const std::vector<Vec2>& q) {
-                                   const auto same = [&](Vec2 r) {
-                                       return std::abs(r.x - point.x) < 1e-6 && std::abs(r.y - point.y) < 1e-6;
-                                   };
-                                   return same(q.front()) || same(q.back());
-                               });
-                    });
-                    if (shared) {
-                        model.inner_ends.emplace_back(shapes[s].line_of[i], end);
+        // A corner the solver made one point of two shapes (tied points) is
+        // inside the object: the stroke integrity pass leaves those ends, as it
+        // leaves the inner ends of one shape.
+        if (std::ranges::any_of(use, [](const auto& anchors) { return anchors.has_value(); })) {
+            for (std::size_t s = 0; s < shapes.size(); ++s) {
+                for (std::size_t i = 0; i < shapes[s].line_of.size(); ++i) {
+                    const std::vector<Vec2>& piece = shapes[s].result.pieces[i];
+                    const DrawnLine& line = lines[shapes[s].line_of[i]];
+                    for (const auto& [end, point] : {std::pair{line.from, piece.front()}, std::pair{line.to, piece.back()}}) {
+                        const bool shared = std::ranges::any_of(shapes, [&](const PendingShape& other) {
+                            return &other != &shapes[s] &&
+                                   std::ranges::any_of(other.result.pieces, [&](const std::vector<Vec2>& q) {
+                                       const auto same = [&](Vec2 r) {
+                                           return std::abs(r.x - point.x) < 1e-6 && std::abs(r.y - point.y) < 1e-6;
+                                       };
+                                       return same(q.front()) || same(q.back());
+                                   });
+                        });
+                        if (shared) {
+                            to_model.inner_ends.emplace_back(shapes[s].line_of[i], end);
+                        }
                     }
                 }
             }
         }
+        return share_shapes(shapes, picture.picture, lines, in_arrangement, to_curves, to_boundary, to_model,
+                            to_stats);
+    };
+    const bool any_solved = std::ranges::any_of(solved, [](const auto& anchors) { return anchors.has_value(); });
+    if (!any_solved || decided) {
+        // The customer's decision asks for its relations: a solved shape the
+        // partition cannot take keeps its stroke, as any decided shape.
+        (void)place(solved, curves, boundary, model, stats);
+        return;
     }
-    share_shapes(shapes, picture.picture, lines, in_arrangement, curves, boundary, model, stats);
+    // An analyser's hypothesis (certain, not decided): solving must not cost
+    // the shared boundary; where it does, the unsolved shapes are steered.
+    Curves solved_curves = curves;
+    detail::SharedBoundary solved_boundary = boundary;
+    SceneModelFits solved_model = model;
+    SceneStats solved_stats = stats;
+    const int solved_keep = place(solved, solved_curves, solved_boundary, solved_model, solved_stats);
+    const std::vector<std::optional<std::vector<Vec2>>> unsolved(found.size());
+    Curves unsolved_curves = curves;
+    detail::SharedBoundary unsolved_boundary = boundary;
+    SceneModelFits unsolved_model = model;
+    SceneStats unsolved_stats = stats;
+    const int unsolved_keep = place(unsolved, unsolved_curves, unsolved_boundary, unsolved_model, unsolved_stats);
+    if (solved_keep > unsolved_keep) {
+        std::erase_if(unsolved_stats.applied_hints, [&](const HintOutcome& outcome) {
+            return outcome.id == object.id && outcome.detail.starts_with("relations solved");
+        });
+        reject_hint(unsolved_stats, picture.picture, object.id,
+                    std::format("the solved relations cost the shared boundary ({} shapes keep the 3b faces, "
+                                "unsolved {}): the unsolved shapes are steered",
+                                solved_keep, unsolved_keep));
+        curves = std::move(unsolved_curves);
+        boundary = std::move(unsolved_boundary);
+        model = std::move(unsolved_model);
+        stats = std::move(unsolved_stats);
+    } else {
+        curves = std::move(solved_curves);
+        boundary = std::move(solved_boundary);
+        model = std::move(solved_model);
+        stats = std::move(solved_stats);
+    }
 }
 
 SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vector<DrawnLine>& lines,
