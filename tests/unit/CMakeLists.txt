@@ -44,6 +44,7 @@ sci_add_unit_test(NAME sci-vector-tests
         vector/hints_test.cpp
         vector/scene_io_test.cpp
         vector/scene_model_test.cpp
+        vector/shared_boundary_test.cpp
         vector/stroke_integrity_test.cpp
     DEPENDS sci-vector sci-render)
 # The fitting tests reach into sci-vector's internals.
