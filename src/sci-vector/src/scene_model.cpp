@@ -312,7 +312,18 @@ Steered steer(const SteerInput& input) {
     result.applicable = true;
     std::vector<Vec2> joints;
     for (std::size_t i = 0; i + 1 < path->size(); ++i) {
-        joints.push_back((centre((*path)[i].to) + centre((*path)[i + 1].from)) * 0.5);
+        Vec2 joint = (centre((*path)[i].to) + centre((*path)[i + 1].from)) * 0.5;
+        // Lines that meet at a polyline's corner meet exactly there.
+        if (input.kind == PrimitiveKind::Polyline) {
+            for (std::size_t k = 1; k + 1 < shape->size(); ++k) {
+                const Vec2 corner = (*shape)[k];
+                if (std::abs(corner.x - joint.x) <= 1 && std::abs(corner.y - joint.y) <= 1) {
+                    joint = corner;
+                    break;
+                }
+            }
+        }
+        joints.push_back(joint);
     }
     std::vector<std::vector<Vec2>> pieces = split(*shape, joints);
     // The round trip (A4 A.6) over the whole primitive.
