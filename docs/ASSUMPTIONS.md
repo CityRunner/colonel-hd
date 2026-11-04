@@ -3496,3 +3496,16 @@ rendering (branch `m10-batch2-fixes`).
   along the hook (other commands, not in the decision's list) still show
   their joints, so at review size the hook looks much as before.
   **Finding; picture 71 open for a follow-up.**
+
+## Milestone 10: the customer's findings after batch 2 (2026-11-04)
+
+- **Picture 71, B4.4 and C4.2** ("light on tube is crooked in hd, must be
+  fixed as straight lines"): the yellow highlight along the red tube
+  (below the hook) is bent in HD. Its segments are straight lines, joined
+  at sharp corners where the drawing turns. **Decided (customer).**
+- **Picture 12, A2.4, A3.3, B2.2 and B3.1** ("light halo ... must be
+  oval"): the pale yellow halo of the lamp by the door is a closed oval
+  (a full ellipse), drawn smooth. **Decided (customer).**
+- **No objection to the shutter tops** of picture 12 A1 becoming smooth
+  arcs (a side effect of batch 2, shown to the customer). **Assumed
+  accepted; the customer can still object.**
