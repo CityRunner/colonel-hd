@@ -335,7 +335,14 @@
             }
           ]
         }
-      ]
+      ],
+      "decision": {
+        "hypothesis": "keep",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A3",
+        "note": "leave the arch"
+      }
     },
     {
       "id": "front-steps",

@@ -3328,3 +3328,35 @@ the fit"; `hints/README.md`).
   28 entries), and for nothing else. They are not regenerated: that
   happens once at the milestone 10 gate (A4). `analyser_version` is 2,
   so analysis caches are rebuilt. **Finding.**
+
+## Milestone 10: the keep decision (2026-11-04)
+
+Closes the format gap of batch 1 case 2 (picture 12, A3, the door
+transom; "leave the arch"): the answer keeps the current reconstruction,
+which no hypothesis of the object `front-door` describes, and deciding the
+main hypothesis would apply it and change the transom. A4 A.10 needs the
+object decided, not open.
+
+- **An object's decision may name the reserved hypothesis `keep`**: the
+  customer decided, no hypothesis of the object steers the fit, and the 3b
+  reconstruction stays. The object is decided (never asked again, not
+  open). It is allowed on a certain object (no alternatives) too, where it
+  overrides the analyser, as a repetition's decision does. **Decided**
+  (A.7).
+- **`keep` is never a hypothesis id.** An object or alternative named
+  `keep` is rejected (`schema.json`, `scripts/check-hints.py`,
+  `parse_hints`), so a decision is never ambiguous. Parts, primitives and
+  the other items may still use the id, since a decision names only
+  hypotheses. **Assumed.**
+- **Repetitions do not accept `keep`.** Their two fixed hypotheses already
+  cover it: `as-drawn` is "no repetition, each item as its pixels show
+  it", which is what keeping the 3b reconstruction means for them.
+  **Assumed.**
+- **In sci-vector**, `keeps_reconstruction`, `is_open` and
+  `followed_hypothesis` for an object state the rule; the steering of the
+  fit uses `followed_hypothesis`, which follows nothing for a kept object.
+- **Recorded in `hints/pic.012.json`:** `front-door` is decided `keep`
+  (customer, 2026-11-04, cell A3, "leave the arch"). The golden hashes of
+  every picture and stack are identical before and after (picture 12's
+  included); the only differences from the committed `tests/golden/pictures.txt`
+  are the 28 entries of the batch 1 fixes. **Decided (customer).**

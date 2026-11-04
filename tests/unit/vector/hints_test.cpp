@@ -214,7 +214,8 @@ SCI_TEST(hints_read_keep_decisions) {
     SCI_CHECK(keeps_reconstruction(transom) && !is_open(transom) && followed_hypothesis(transom) == nullptr);
     // Without the decision it is open, and follows nothing either.
     const std::string keep =
-        R"(, "decision": {"hypothesis": "keep", "by": "customer", "date": "2026-11-04", "cell": "C3", "note": "leave it"})";
+        ",\n      "
+        R"("decision": {"hypothesis": "keep", "by": "customer", "date": "2026-11-04", "cell": "C3", "note": "leave it"})";
     const ObjectHint open = object(replaced(scene, keep, ""), "transom");
     SCI_CHECK(!open.decision && is_open(open) && !keeps_reconstruction(open) && followed_hypothesis(open) == nullptr);
     // Decided for a hypothesis, it follows that one.
@@ -230,18 +231,20 @@ SCI_TEST(hints_read_keep_decisions) {
     SCI_CHECK(!is_open(window) && followed_hypothesis(window) == &window.main);
     // "keep" may also override a certain object.
     const ObjectHint kept_window = object(
-        replaced(scene, R"("label": "left window",)",
-                 R"("label": "left window", "decision": {"hypothesis": "keep", "by": "customer", "date": "2026-11-04", "cell": "B2"},)"),
+        replaced(
+            scene, R"("label": "left window",)",
+            R"("label": "left window", "decision": {"hypothesis": "keep", "by": "customer", "date": "2026-11-04", "cell": "B2"},)"),
         "window-left");
     SCI_CHECK(keeps_reconstruction(kept_window) && followed_hypothesis(kept_window) == nullptr);
     // "keep" is reserved: no object or alternative is named so.
     SCI_CHECK(rejection(replaced(replaced(scene, R"("id": "transom-flat")", R"("id": "keep")"), keep, ""))
                   .contains("reserved"));
-    SCI_CHECK(rejection(replaced(replaced(scene, R"("id": "transom",)", R"("id": "keep",)"), keep, ""))
-                  .contains("reserved"));
+    SCI_CHECK(
+        rejection(replaced(replaced(scene, R"("id": "transom",)", R"("id": "keep",)"), keep, "")).contains("reserved"));
     // Other names are still checked; a repetition is decided "repeat" or
     // "as-drawn", never "keep".
-    SCI_CHECK(rejection(replaced(scene, R"("hypothesis": "keep")", R"("hypothesis": "kept")")).contains("no hypothesis"));
+    SCI_CHECK(
+        rejection(replaced(scene, R"("hypothesis": "keep")", R"("hypothesis": "kept")")).contains("no hypothesis"));
     SCI_CHECK(rejection(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "keep")"))
                   .contains("\"repeat\" or \"as-drawn\" expected"));
 }
