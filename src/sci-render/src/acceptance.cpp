@@ -5,6 +5,7 @@
 #include "sci/core/assert.hpp"
 #include "sci/render/colors.hpp"
 #include "sci/render/rasterize.hpp"
+#include "sci/vector/raster_1x.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -142,7 +143,18 @@ std::vector<std::vector<std::int32_t>> stroke_layers(const vector::Scene& scene,
     return layers;
 }
 
-void check_lines(const vector::Scene& scene, const pic::DrawTrace& trace, Acceptance& result) {
+// Whether a pixel of a decided line lies within the A.6 tolerance of one
+// of the line's strokes (the approved deviation from 6.4).
+bool tolerated(const vector::Scene& scene, const std::vector<std::int32_t>& layers,
+               std::span<const std::int32_t> decided, std::int32_t line, int x, int y) {
+    return std::ranges::find(decided, line) != decided.end() && std::ranges::any_of(layers, [&](std::int32_t layer) {
+               const auto& points = std::get<vector::Stroke>(scene.layers[static_cast<std::size_t>(layer)]).points;
+               return vector::within_round_trip_tolerance(points, x, y);
+           });
+}
+
+void check_lines(const vector::Scene& scene, const pic::DrawTrace& trace, std::span<const std::int32_t> decided,
+                 Acceptance& result) {
     const std::vector<std::vector<std::int32_t>> layers_of = stroke_layers(scene, trace.primitives.size());
     // The primitive of every layer.
     std::vector<std::int32_t> source_of(scene.layers.size(), -1);
@@ -181,7 +193,9 @@ void check_lines(const vector::Scene& scene, const pic::DrawTrace& trace, Accept
             const bool touched = std::ranges::any_of(layers, [&](std::int32_t layer) {
                 return touches(std::get<vector::Stroke>(scene.layers[static_cast<std::size_t>(layer)]), x, y);
             });
-            if (!touched) {
+            if (!touched && tolerated(scene, layers, decided, line, x, y)) {
+                result.tolerated_line_pixels.push_back(ToleratedPixel{.primitive = line, .x = x, .y = y});
+            } else if (!touched) {
                 ++result.untouched_line_pixels;
             } else if (!shown[index(x, y)]) {
                 ++result.overlapped_line_pixels;
@@ -192,7 +206,8 @@ void check_lines(const vector::Scene& scene, const pic::DrawTrace& trace, Accept
 
 } // namespace
 
-Acceptance check_acceptance(const vector::Scene& visual, const pic::PictureMaps& maps, const pic::DrawTrace& trace) {
+Acceptance check_acceptance(const vector::Scene& visual, const pic::PictureMaps& maps, const pic::DrawTrace& trace,
+                            std::span<const std::int32_t> decided) {
     SCI_ASSERT(visual.plane == vector::Plane::Visual);
     Acceptance result;
     const std::vector<std::uint8_t> reduced = reduce_to_1x(visual);
@@ -215,7 +230,7 @@ Acceptance check_acceptance(const vector::Scene& visual, const pic::PictureMaps&
         }
     }
     result.swaps = count_swaps(std::move(differing));
-    check_lines(visual, trace, result);
+    check_lines(visual, trace, decided, result);
     return result;
 }
 

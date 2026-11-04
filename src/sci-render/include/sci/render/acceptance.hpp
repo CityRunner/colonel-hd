@@ -16,21 +16,39 @@
 //   line's stroke (at least one of its 16 x 16 samples lies within the
 //   stroke). Pixels whose samples later layers cover completely are counted
 //   separately; they show the drawing order, not a missing line.
+//   Approved deviation (docs/ASSUMPTIONS.md, "Milestone 10: the customer's
+//   decisions on the halo and the curtain rings"): a pixel of a line the
+//   caller names as decided by the customer counts as tolerated, not
+//   untouched, if the stroke passes within 1 original pixel of it in the
+//   sense of A4 A.6 (vector::within_round_trip_tolerance); every such
+//   pixel is listed.
 #pragma once
 
 #include "sci/pic/draw_trace.hpp"
 #include "sci/pic/picture_maps.hpp"
 #include "sci/vector/scene.hpp"
 
+#include <cstdint>
+#include <span>
+#include <vector>
+
 namespace sci::render {
+
+// A line pixel taken within the A.6 tolerance.
+struct ToleratedPixel {
+    std::int32_t primitive = 0; // The line's index in the trace.
+    int x = 0;                  // Picture coordinates.
+    int y = 0;
+};
 
 struct Acceptance {
     int compared_pixels = 0;  // Outside the edge band.
     int differing_pixels = 0; // Of those, with another class after reduction.
     int swaps = 0;
-    int line_pixels = 0;            // Pixels owned by visible lines.
-    int untouched_line_pixels = 0;  // Not touched by their line's stroke.
-    int overlapped_line_pixels = 0; // Touched, but covered by later layers.
+    int line_pixels = 0;                               // Pixels owned by visible lines.
+    int untouched_line_pixels = 0;                     // Not touched by their line's stroke.
+    int overlapped_line_pixels = 0;                    // Touched, but covered by later layers.
+    std::vector<ToleratedPixel> tolerated_line_pixels; // Not touched, within the tolerance (decided lines).
 
     [[nodiscard]] double agreement() const {
         return compared_pixels == 0 ? 1.0 : 1.0 - (static_cast<double>(differing_pixels) / compared_pixels);
@@ -39,8 +57,10 @@ struct Acceptance {
     [[nodiscard]] bool passes() const { return agreement() >= 0.99 && swaps == 0 && untouched_line_pixels == 0; }
 };
 
-// Checks a visual scene built from these maps and trace.
+// Checks a visual scene built from these maps and trace. `decided` holds
+// the trace indices of the lines whose pixels are taken within the A.6
+// tolerance (vector::SceneStats::decided_lines).
 [[nodiscard]] Acceptance check_acceptance(const vector::Scene& visual, const pic::PictureMaps& maps,
-                                          const pic::DrawTrace& trace);
+                                          const pic::DrawTrace& trace, std::span<const std::int32_t> decided = {});
 
 } // namespace sci::render

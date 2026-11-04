@@ -116,4 +116,10 @@ int raster_deviation(std::span<const std::uint32_t> a, std::span<const std::uint
     return std::max(one_way(a, b), one_way(b, a));
 }
 
+bool within_round_trip_tolerance(std::span<const Vec2> points, int x, int y) {
+    const Pixel target{.x = x, .y = y};
+    return std::ranges::any_of(rasterize_1x(points),
+                               [&](std::uint32_t pixel) { return chebyshev(pixel_of(pixel), target) <= 1; });
+}
+
 } // namespace sci::vector

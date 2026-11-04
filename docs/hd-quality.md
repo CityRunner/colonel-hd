@@ -99,6 +99,30 @@ highlight and hook"):
 - Smoothing suspects: 3038 step / 206 corner / 299 curve before, 3035 /
   206 / 299 now (picture 71: 18 step suspects).
 
+## After the shared boundary, second stage (2026-11-04)
+
+Measured the same way on branch `m10-shared-boundary` (`docs/hd-pipeline.md`,
+"The shared boundary, second stage"; the curtain rings and the approved
+6.4 deviation included), against the `milestone-10` build:
+
+- Round trip: 13202 chains, 13185 pass, 17 fail (was 13208 / 13191 / 17;
+  the same 17 fail). Hinted arcs 82 -> 86 (curtain rings), hinted
+  ellipses 15 -> 18 (picture 12's halo and the arches the deviation now
+  steers), automatic splines 10685 -> 10672 (lines now steered).
+- Acceptance (section 6.4): 88 pictures, worst agreement 99.993%, 0
+  failing, 0 swaps, 0 untouched line pixels; 12 line pixels taken within
+  the A.6 tolerance under the approved deviation (picture 12: 3, 20: 4,
+  42: 4, 57: 1; listed in the report).
+- A1 residual totals, before / now: overshoots 7075 / 7079, doubled
+  boundaries 2859 / 2861, fragments 6451 / 6460, breaks 10672 / 10750
+  (joints the pass no longer closes at the inner ends of steered shapes).
+- Smoothing suspects: 3035 step / 206 corner / 299 curve before, 3033 /
+  206 / 297 now (pictures 12, 20, 57).
+- Steered shapes: 58 (the 47 before; the halo, three arch shapes of
+  pictures 20 and 42 and picture 57's upper medallion's lower edge, which
+  the deviation lets through; 6 curtain rings): 44 share their boundary,
+  14 keep 3b faces (see `docs/ASSUMPTIONS.md`).
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted

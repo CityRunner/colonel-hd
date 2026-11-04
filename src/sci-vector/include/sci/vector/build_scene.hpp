@@ -97,7 +97,11 @@ struct SceneStats {
     int scene_model_fits = 0;               // Primitives of the scene model whose lines follow their shape.
     std::vector<FittedChain> fitted_chains; // In the order they were fitted.
     std::vector<FittedLine> fitted_strokes; // Every line with fitted edges, in trace order.
-    std::vector<Fallback> fallbacks;        // The mixed faces.
+    // Trace indices of the lines of steered shapes the customer decided:
+    // the 6.4 line check takes their pixels within the A.6 tolerance
+    // (sci/vector/raster_1x.hpp, decided_line_tolerance).
+    std::vector<std::int32_t> decided_lines;
+    std::vector<Fallback> fallbacks; // The mixed faces.
     // Hints (spec section 6.7).
     int hint_chains = 0;                     // Chain hints fitted as they ask.
     int hint_gaps = 0;                       // Gap hints closed.

@@ -237,6 +237,89 @@ with `src/sci-vector/src/scene_model.cpp`:
   diagonally touching pixels and clipped them onto the line above, which
   drew a slope and split the lit area of the attic steps (picture 74, C1).
 
+### The shared boundary (milestone 10, design)
+
+Spec section 6.6: "a fitted curve that replaces a chain of edges is
+shared by both adjacent faces". Before this step the scene model steered
+only the strokes; the faces kept the 3b fit (`docs/ASSUMPTIONS.md`,
+"Milestone 10: the design limit found after batch 2"). Design:
+
+- **Where the steered curve enters.** At the same place the 3a chain
+  hints act: after `fit_with_hints`, before the scan edges are built. A
+  steered primitive that passes its checks (round trip, line check)
+  gives each of its lines a piece; that piece becomes the geometry of
+  every arrangement edge of the line (`sci-vector/src/shared_boundary`),
+  replacing the line's straight edges or 3b fitted pieces. The faces keep
+  their labels and values (taken from the 1x pixels, section 4); only
+  where their boundary runs changes.
+- **Vertices move onto the curve.** A 3a hint curve passes through every
+  pinned vertex; a steered shape does not (that is what makes it straight
+  or oval). So every vertex on a steered line is moved onto its piece: a
+  line end to the piece's end; a vertex where one other straight line
+  meets or crosses, along that line to where it meets the piece (it stays
+  straight); otherwise to the nearest point of the piece. Every other
+  edge at a moved vertex (other lines, gap connectors, 3b pieces) ends at
+  the new point. A vertex keeps one position: two steered shapes that
+  disagree on it are a conflict, and the later one falls back.
+- **The partition stays valid.** The moved geometry must cross no other
+  edge (apart from at shared vertices), the region between a moved edge's
+  old and new course must contain no other vertex, and the order of the
+  pieces along each line must follow the vertices. Otherwise the shape
+  falls back.
+- **Fallback, per shape.** A shape that fails the round trip or the line
+  check is removed completely (3b strokes and faces). A shape that passes
+  them but that the partition cannot take keeps its steered stroke while
+  its edges keep the 3b geometry exactly (nothing of the attempt is
+  kept), and the replacement report lists it ("the faces keep the 3b
+  fit: the shared boundary fails (...)"); see `docs/ASSUMPTIONS.md`,
+  "Milestone 10: the shared boundary". Pictures without steered shapes
+  are built exactly as before.
+- **Strokes** are the pieces, as before; the stroke integrity pass and
+  the step corners are unchanged. The line check stays as section 6.4's
+  code measures it (`check_acceptance`: a line pixel counts only if its
+  own line's stroke touches it; a face covering it does not), so it is
+  not loosened for steered shapes.
+
+### The shared boundary, second stage (milestone 10)
+
+- **Shapes of one object are placed jointly** (one call, so vertices they
+  share move together); if the partition does not take them so, each is
+  tried on its own, in order, as before.
+- **A course that leaves a vertex beside a moved course** (an arch
+  springing from its jamb, two curves leaving one vertex at almost the
+  same direction) and crosses it by a hair is pushed just onto its side
+  (points at most 0.25 original pixels off, 1e-6 beyond; the far vertex
+  stays; the side is the one it lay on before). The validity checks then
+  run unchanged.
+- **A straight shape the partition cannot take by moving vertices**
+  (a `line` primitive whose ends are pixel centres) enters the
+  arrangement itself: its lines' segments are replaced by one segment
+  between the path's ends, the gap connectors at the lines' inner ends
+  go, and the plane is built again (visual plane, at most once). A shape
+  is kept only if the partition gets no more mixed faces or 1x-block
+  pixels (the rule of gap hints); such a shape needs no vertex moved
+  ("shared by the faces (one segment of the partition)"). This is what
+  makes picture 71's tube highlights straight bands.
+- **The inner ends of a steered shape** (a line end on or next to the end
+  of another line of the same shape) are fixed for the stroke integrity
+  pass, like step corners: no joint, connector or clip at them. Joints
+  there drew short stubs sideways out of the smooth shape (the "teeth"
+  of picture 71's tube highlights).
+- **The 6.4 line rule for shapes the customer decided** (approved
+  deviation; `docs/ASSUMPTIONS.md`, "Milestone 10: the customer's
+  decisions on the halo and the curtain rings"): a pixel of such a
+  shape's lines that its stroke does not touch still counts if the shape,
+  rasterised back to 1x as the round-trip check does, has a pixel at
+  Chebyshev distance at most 1 from it (`within_round_trip_tolerance`,
+  `sci/vector/raster_1x.hpp`): in the steering's line check and in
+  `check_acceptance`, which lists every such pixel (`sci-hd-report`,
+  "Line pixels within the A.6 tolerance"). Automatic fits and analyser
+  hypotheses keep the full rule.
+- **Not done:** re-fitting a neighbouring 3b chain whose end vertex moved
+  (the remaining failures are not of that kind; see `docs/ASSUMPTIONS.md`,
+  "Milestone 10: the shared boundary, second stage"); curved shapes do not
+  enter the arrangement (its segments have integer end points).
+
 ## 7. Rasterisation
 
 `sci-render` samples a scene on a 16 x 16 grid per HD pixel (spec section
