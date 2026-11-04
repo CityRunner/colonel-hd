@@ -4,6 +4,7 @@
 
 #include "curves.hpp"
 #include "scene_model.hpp"
+#include "shared_boundary.hpp"
 #include "sci/pic/geometry.hpp"
 #include "stroke_integrity.hpp"
 #include "topology.hpp"
@@ -582,13 +583,35 @@ void add_scan_edge(Vec2 from, Vec2 to, std::int32_t face_forward, std::int32_t f
     edges.push_back(ScanEdge{.top = top, .bottom = bottom, .face_after = down ? face_backward : face_forward});
 }
 
-std::vector<ScanEdge> scan_edges(const detail::Arrangement& arrangement,
-                                 const std::vector<detail::FittedChain>& fitted) {
+// The scan edges of an edge whose course the shared boundary set (from
+// half-edge 2i's origin), if it did.
+bool add_override(const detail::Arrangement& arrangement, std::size_t edge,
+                  const std::vector<std::optional<std::vector<Vec2>>>* overrides, std::vector<ScanEdge>& edges) {
+    if (overrides == nullptr || !(*overrides)[edge]) {
+        return false;
+    }
+    const auto& course = *(*overrides)[edge];
+    const std::int32_t forward = arrangement.half_edges[2 * edge].face;
+    const std::int32_t backward = arrangement.half_edges[(2 * edge) + 1].face;
+    for (std::size_t k = 0; k + 1 < course.size(); ++k) {
+        add_scan_edge(course[k], course[k + 1], forward, backward, edges);
+    }
+    return true;
+}
+
+// The faces' boundaries: the arrangement's edges, the fitted pieces where
+// a fit replaced them, and the courses the shared boundary set (spec
+// section 6.6) where it moved them.
+std::vector<ScanEdge> scan_edges(const detail::Arrangement& arrangement, const std::vector<detail::FittedChain>& fitted,
+                                 const std::vector<std::optional<std::vector<Vec2>>>* overrides) {
     std::vector<bool> replaced(arrangement.sources.size(), false);
     std::vector<ScanEdge> edges;
     for (const detail::FittedChain& chain : fitted) {
         for (std::size_t i = 0; i < chain.edges.size(); ++i) {
             replaced[static_cast<std::size_t>(chain.edges[i])] = true;
+            if (add_override(arrangement, static_cast<std::size_t>(chain.edges[i]), overrides, edges)) {
+                continue;
+            }
             const detail::HalfEdge& along = arrangement.half_edges[static_cast<std::size_t>(chain.half_edges[i])];
             const std::int32_t back = arrangement.half_edges[static_cast<std::size_t>(along.twin)].face;
             const auto& piece = chain.pieces[i];
@@ -598,7 +621,7 @@ std::vector<ScanEdge> scan_edges(const detail::Arrangement& arrangement,
         }
     }
     for (std::size_t edge = 0; edge < replaced.size(); ++edge) {
-        if (replaced[edge]) {
+        if (replaced[edge] || add_override(arrangement, edge, overrides, edges)) {
             continue;
         }
         const detail::HalfEdge& forward = arrangement.half_edges[2 * edge];
@@ -1272,8 +1295,8 @@ std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>> steer_inp
 // round trip and changes them.
 void steer_primitive(const detail::SteerInput& input, const std::vector<std::size_t>& line_of, int picture,
                      const PrimitiveHint& primitive, const std::vector<DrawnLine>& lines,
-                     const std::vector<std::vector<std::size_t>>& pixels, Curves& curves, SceneModelFits& model,
-                     SceneStats& stats) {
+                     const std::vector<std::vector<std::size_t>>& pixels, Curves& curves,
+                     detail::SharedBoundary& boundary, SceneModelFits& model, SceneStats& stats) {
     // A line in two primitives follows the first.
     if (std::ranges::any_of(line_of, [&](std::size_t line) { return model.steered[line]; })) {
         return;
@@ -1306,6 +1329,24 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
     if (!changed) {
         return;
     }
+    // Spec section 6.6: the shape is the boundary of the faces on both
+    // sides too; where it cannot be, the 3b reconstruction stays, strokes
+    // and faces.
+    std::vector<detail::BoundaryLine> shared;
+    for (std::size_t i = 0; i < line_of.size(); ++i) {
+        const DrawnLine& line = lines[line_of[i]];
+        shared.push_back(detail::BoundaryLine{
+            .source = static_cast<std::int32_t>(line_of[i]),
+            .from = centre(line.from),
+            .to = centre(line.to),
+            .piece = result.pieces[i],
+        });
+    }
+    if (const std::string why = boundary.apply(shared); !why.empty()) {
+        reject_hint(stats, picture, primitive.id,
+                    std::format("the shared boundary fails ({}): the 3b reconstruction stays", why));
+        return;
+    }
     FittedChain record{.kind = fitted_kind(primitive.kind), .hint = primitive.id, .lines = {}};
     for (std::size_t i = 0; i < line_of.size(); ++i) {
         curves.strokes[line_of[i]] = std::move(result.pieces[i]);
@@ -1328,7 +1369,7 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
 // organic (A.4). An open object, or one decided "keep", steers nothing.
 void steer_object(const HintLines& find, std::size_t p, const PictureHints& picture, const ObjectHint& object,
                   const std::vector<DrawnLine>& lines, const std::vector<std::vector<std::size_t>>& pixels,
-                  Curves& curves, SceneModelFits& model, SceneStats& stats) {
+                  Curves& curves, detail::SharedBoundary& boundary, SceneModelFits& model, SceneStats& stats) {
     const Hypothesis* hypothesis = followed_hypothesis(object);
     if (hypothesis == nullptr || is_organic(hypothesis->type)) {
         return;
@@ -1343,14 +1384,15 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
             for (const detail::StepCut& cut : detail::step_cuts(input)) {
                 model.square_ends.emplace_back(line_of[cut.line], cut);
             }
-            steer_primitive(input, line_of, picture.picture, primitive, lines, pixels, curves, model, stats);
+            steer_primitive(input, line_of, picture.picture, primitive, lines, pixels, curves, boundary, model,
+                            stats);
         }
     }
 }
 
 SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vector<DrawnLine>& lines,
                                     const PlaneView& view, std::span<const PictureHints* const> hints, Curves& curves,
-                                    SceneStats& stats) {
+                                    detail::SharedBoundary& boundary, SceneStats& stats) {
     SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
     const HintLines find(trace, lines);
     // The pixels each line owns at 1x (every line counts).
@@ -1361,7 +1403,7 @@ SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vect
             continue;
         }
         for (const ObjectHint& object : hints[p]->objects) {
-            steer_object(find, p, *hints[p], object, lines, pixels, curves, model, stats);
+            steer_object(find, p, *hints[p], object, lines, pixels, curves, boundary, model, stats);
         }
     }
     return model;
@@ -1557,14 +1599,15 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
 
     const std::vector<int> owned = owned_pixels(trace, view);
     Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
-    // The scene model changes the HD picture only, so the visual plane; the
-    // faces keep the fit above.
+    // The scene model changes the HD picture only, so the visual plane; a
+    // steered shape is the faces' boundary as well as the strokes.
     SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
+    detail::SharedBoundary boundary(parts.arrangement, curves.fitted);
     if (plane == Plane::Visual) {
-        model = steer_by_scene_model(trace, lines, view, hints, curves, built.stats);
+        model = steer_by_scene_model(trace, lines, view, hints, curves, boundary, built.stats);
     }
     record_fits(parts.arrangement, curves, lines, plane_hints, model, built.stats);
-    scene.edges = scan_edges(parts.arrangement, curves.fitted);
+    scene.edges = scan_edges(parts.arrangement, curves.fitted, boundary.changed() ? &boundary.overrides() : nullptr);
     scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
     square_step_ends(scene.layers, lines, model);
     // Stroke integrity and occlusion (spec section 6.10) change the HD
