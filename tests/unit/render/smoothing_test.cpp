@@ -21,17 +21,19 @@ using sci::vector::Vec2;
 
 namespace {
 
-// A trace of visual lines, each owning the pixels it draws (later lines on
-// top), as path 1 would leave them.
+// A trace of visual lines, each owning the pixels it draws in its colour
+// pair (later lines on top) on a background of pair 0, as path 1 would
+// leave them.
 struct Synthetic {
     sci::pic::PictureMaps maps;
     sci::pic::DrawTrace trace;
     sci::vector::SceneStats stats;
 
-    std::int32_t line(int x0, int y0, int x1, int y1) {
+    std::int32_t line(int x0, int y0, int x1, int y1, sci::pic::ColorPair pair = 0x66) {
         sci::pic::TracedPrimitive primitive;
         primitive.command = static_cast<std::uint32_t>(trace.primitives.size());
         primitive.state.planes = sci::pic::plane_visual;
+        primitive.state.pair = pair;
         primitive.shape = sci::pic::Line{
             .from = {.x = static_cast<std::int16_t>(x0), .y = static_cast<std::int16_t>(y0)},
             .to = {.x = static_cast<std::int16_t>(x1), .y = static_cast<std::int16_t>(y1)},
@@ -40,7 +42,10 @@ struct Synthetic {
         trace.primitives.push_back(primitive);
         sci::pic::for_each_line_pixel({.x = x0, .y = y0 + sci::pic::picture_top},
                                       {.x = x1, .y = y1 + sci::pic::picture_top},
-                                      [&](int x, int y) { trace.visual_owner[sci::pic::PictureMaps::index(x, y)] = index; });
+                                      [&](int x, int y) {
+                                          trace.visual_owner[sci::pic::PictureMaps::index(x, y)] = index;
+                                          maps.pairs[sci::pic::PictureMaps::index(x, y)] = pair;
+                                      });
         return index;
     }
 
@@ -74,8 +79,9 @@ Vec2 centre(int x, int y) {
 } // namespace
 
 // Kind 1: two stacked treads whose left ends touch diagonally, joined by
-// the stroke integrity pass, are a step suspect; a joint of flush ends (a
-// bar drawn two lines wide) and a joint of lines at a corner are not.
+// the stroke integrity pass over pixels of another colour, are a step
+// suspect; a joint of flush ends (a bar drawn two lines wide) is not, nor
+// a joint over pixels of the line's own colour.
 SCI_TEST(smoothing_step_joint_between_stacked_lines) {
     Synthetic s;
     const auto upper = s.line(20, 40, 40, 40);
@@ -88,16 +94,35 @@ SCI_TEST(smoothing_step_joint_between_stacked_lines) {
     SCI_CHECK(suspects[0].kind == SmoothingKind::Step);
     SCI_CHECK(suspects[0].count == 2);
     SCI_CHECK(suspects[0].lines.size() == std::size_t{3});
-    SCI_CHECK(suspects[0].score == 250);
+    SCI_CHECK(suspects[0].score == 240);
 
     Synthetic flush;
     const auto a = flush.line(20, 40, 40, 40);
     const auto b = flush.line(20, 41, 40, 41);
-    const auto c = flush.line(50, 20, 50, 40);
-    const auto d = flush.line(51, 41, 70, 41);
     flush.stats.integrity_changes.push_back(joint(a, b, 20, 40));
-    flush.stats.integrity_changes.push_back(joint(c, d, 50, 40));
     SCI_CHECK(flush.suspects().empty());
+
+    Synthetic same;
+    const auto fill = same.line(18, 41, 22, 41);
+    const auto top = same.line(20, 40, 40, 40);
+    const auto under = same.line(21, 41, 40, 41);
+    same.stats.integrity_changes.push_back(joint(top, under, 20, 40));
+    SCI_CHECK(fill >= 0 && same.suspects().empty());
+}
+
+// Kind 2: a joint of the ends of an L that touch diagonally cuts the
+// corner where the corner pixel shows another colour.
+SCI_TEST(smoothing_corner_bevelled_by_a_joint) {
+    Synthetic s;
+    const auto down = s.line(50, 20, 50, 40);
+    const auto right = s.line(51, 41, 70, 41);
+    s.stats.integrity_changes.push_back(joint(down, right, 50, 40));
+    s.stats.integrity_changes.push_back(joint(down, right, 50, 40));
+    const auto suspects = s.suspects();
+    SCI_CHECK(suspects.size() == std::size_t{1});
+    SCI_CHECK(suspects[0].kind == SmoothingKind::Corner);
+    SCI_CHECK(suspects[0].x == 50 && suspects[0].y == 40);
+    SCI_CHECK(suspects[0].bend == 1000);
 }
 
 // Kind 2: an L of two long lines fitted by a spline that cuts the corner is
