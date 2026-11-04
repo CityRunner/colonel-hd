@@ -3856,3 +3856,18 @@ general, on branch `m10-relations` (design: `docs/hd-pipeline.md`,
   (hd1/2/5/10) differ; against the committed file the same 60 entries as
   `milestone-10`, nothing new; all `original1` entries and pictures 37
   and 61 unchanged. Not regenerated. **Finding.**
+
+## Milestone 10: the two choices in relation solving (2026-11-04)
+
+- **Equal points in two primitives are one shared corner.** Confirmed
+  by the agent: it is how the hint files already describe objects drawn
+  in two colours (the rhombus) and needs no extra member. **Decided.**
+- **"Decided over alternatives keeps relations unsolved", narrowed.** The
+  rule as built would also leave unsolved an alternative the customer
+  chose because of its relations (for example "equal panes"). Narrowed
+  to: when the customer chose the object's main hypothesis over
+  alternatives, its relations stay unsolved (the main hypothesis is the
+  "as drawn" reading in every case so far: picture 12's tall window,
+  picture 74's stairs); when the customer chose an alternative, that
+  alternative's relations are solved. To be built with the next step.
+  **Decided.**
