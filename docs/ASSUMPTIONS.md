@@ -3449,7 +3449,8 @@ rendering (branch `m10-batch2-fixes`).
   (only) hypothesis. **Decided (customer).**
 - **What the objects hold.** Arched windows: the inner arch as an open
   `ellipse` from springer to springer through the crown, the outer edge
-  of the frame as a second `ellipse` where it ends on the springing line,
+  of the frame as a second `ellipse` where it ends on the springing line
+  (picture 20: an `arc`, which falls back),
   the springers and the bars as `line` primitives (a bar drawn two lines
   wide is one primitive per line, which keeps its fit and still meets the
   arch through the stroke integrity pass). The cyan bead of the curtained

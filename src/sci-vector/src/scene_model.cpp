@@ -290,7 +290,7 @@ std::optional<std::vector<Vec2>> arc_shape(const SteerInput& input, std::span<co
     const double turn = dot(quarter_turn(a, 1), centre(path.front().to) - start) >= 0 ? 1 : -1;
     // Quarter turns from a until b lies within a quarter turn ahead.
     std::vector<Vec2> keys{a};
-    while (!(cross(keys.back(), b) * turn > 0 && dot(keys.back(), b) >= 0) && keys.size() < 5) {
+    while ((cross(keys.back(), b) * turn <= 0 || dot(keys.back(), b) < 0) && keys.size() < 5) {
         keys.push_back(quarter_turn(keys.back(), turn));
     }
     keys.push_back(b);
