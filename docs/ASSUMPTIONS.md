@@ -3167,3 +3167,42 @@ coordinates, pair and owned pixels). No rendering change.
   A.7, part B) is sent with, for each picture in the batch: the close-up
   crop of each case, the overview sheet with the grid, and the same pair
   without the grid. **Decided (customer).**
+
+## Milestone 10: the customer's answers to pilot batch 1 (2026-11-04)
+
+The customer's words, then how they are read. Each goes into the hint
+files as a decision with its cell reference (A4 A.7, B.4).
+
+- **Case 1, picture 12, the tall window** ("Keep as drawn"): hypothesis
+  a, the panes keep their drawn heights 18 / 17 / 19 / 19. **Decided
+  (customer).**
+- **New, picture 12, A1.3-A1.4** ("the arch is crooked now, must be like
+  isometric oval"): the fanlight on top of the tall window is drawn in HD
+  as an uneven polygon. It is to be reconstructed as half of an ellipse
+  (a circle seen in perspective) through the drawn springers and crown,
+  with its radial bars meeting it. **Decided (customer).**
+- **Case 2, picture 12, A3, the door transom** ("leave the arch"): read
+  as no change: the fanlight over the door keeps its current (3b)
+  reconstruction; neither alternative is applied. **Assumed reading,
+  to be confirmed.**
+- **Case 3 and new, pictures 74+174, C1, the dark lower steps** ("fix
+  stairs in C1: they are slope in HD, must be like stairs, and shadow must
+  not be splitted like now"; case 3: "See above"): the steps are intended
+  steps (A.4): each tread is horizontal, each riser vertical, with sharp
+  corners, and the lit (dithered) area of each step is one continuous
+  shape, not broken into pieces. The step positions keep the drawn
+  heights (175 / 183 / 189), since the answer asks for stairs, not for a
+  common pitch. **Decided (customer); the step positions are an assumed
+  reading.**
+- **Case 4, picture 58, the two back windows** ("Keep as is"):
+  hypothesis "as-drawn", no repetition. **Decided (customer).**
+- **New, picture 58, A4.4 and B4.2** ("fix light at A4.4 B4.2 - light is
+  bend now in hd"): the cyan glints on the right back window's panes are
+  bent in HD. They are straight strokes with sharp corners, as drawn.
+  **Decided (customer).**
+- **What this says about the 3b reconstruction:** three of the four
+  findings are the same defect: an intended sharp shape (a step, a
+  corner of a glint) or an intended regular curve (the fanlight) is
+  smoothed into a slope, a bend or a lumpy curve. The reconstruction step
+  of milestone 10 handles these first, and the next batches look for the
+  same pattern in other rooms. **Finding.**
