@@ -197,6 +197,7 @@ Bilinear bilinear(const RelationProblem& problem, const Vertices& vertices, std:
 }
 
 // The constraints of one relation; a reason if it cannot be stated.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity): one case per relation kind.
 std::optional<std::string> add_relation(const RelationProblem& problem, const Vertices& vertices,
                                         const SolveRelation& relation, const std::vector<Vec2>& position,
                                         std::vector<std::size_t>& parent, Constraints& out) {
@@ -377,6 +378,7 @@ std::optional<std::vector<double>> solve_dense(std::vector<std::vector<double>> 
 
 } // namespace
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity): the steps share the unknowns and constraints.
 RelationSolution solve_relations(const RelationProblem& problem) {
     RelationSolution solution;
     const Vertices vertices(problem);
@@ -392,7 +394,7 @@ RelationSolution solve_relations(const RelationProblem& problem) {
     }
     // Tied vertices: one group each, at their mean, represented by the smallest.
     std::vector<std::size_t> parent(vertices.count);
-    std::iota(parent.begin(), parent.end(), std::size_t{0});
+    std::ranges::iota(parent, std::size_t{0});
     Constraints constraints;
     for (const auto& [a, b] : problem.ties) {
         const std::size_t ra = find(parent, vertices.of(a));

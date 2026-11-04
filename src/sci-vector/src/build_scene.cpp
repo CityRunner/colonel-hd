@@ -1573,6 +1573,7 @@ std::size_t hint_point_of(const PrimitiveHint& hint, const std::vector<Vec2>& an
 // nothing solved). An object the customer decided over alternatives keeps
 // its relations unsolved: the customer chose that hypothesis as it was
 // shown, as drawn (picture 12's tall window: "keep as drawn").
+// NOLINTNEXTLINE(readability-function-cognitive-complexity): resolving the items and ties shares the problem.
 std::vector<std::optional<std::vector<Vec2>>> solve_object(const ObjectHint& object, const Hypothesis& hypothesis,
                                                            const std::vector<ObjectPrimitive>& found, int picture,
                                                            SceneStats& stats) {
@@ -1698,6 +1699,7 @@ std::vector<std::optional<std::vector<Vec2>>> solve_object(const ObjectHint& obj
 // tried on its own, in order. Where the partition cannot take a shape, its
 // stroke is still steered (the state before the shared boundary) and the
 // faces keep the 3b fit; the report says so.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity): the solved and unsolved placements share their state.
 void steer_object(const HintLines& find, std::size_t p, const PictureHints& picture, const ObjectHint& object,
                   const std::vector<DrawnLine>& lines, const std::vector<std::vector<std::size_t>>& pixels,
                   const std::vector<bool>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
@@ -1717,7 +1719,10 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
                 model.square_ends.emplace_back(input->second[cut.line], cut);
             }
             found.push_back(ObjectPrimitive{
-                .hint = &primitive, .input = std::move(input->first), .line_of = std::move(input->second)});
+                .hint = &primitive,
+                .input = std::move(input->first),
+                .line_of = std::move(input->second),
+            });
         }
     }
     const bool decided = object.decision.has_value();
@@ -1725,12 +1730,14 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
         solve_object(object, *hypothesis, found, picture.picture, stats);
     // The solved shapes must pass the same checks; otherwise none is used.
     for (std::size_t i = 0; i < found.size(); ++i) {
-        if (!solved[i]) {
+        const std::optional<std::vector<Vec2>>& entry = solved[i];
+        const std::vector<Vec2>* anchors = entry.has_value() ? &*entry : nullptr;
+        if (anchors == nullptr) {
             continue;
         }
         std::string failure;
         (void)steer_primitive(found[i].input, found[i].line_of, picture.picture, *found[i].hint, decided, lines, pixels,
-                              curves, model, stats, &*solved[i], &failure);
+                              curves, model, stats, anchors, &failure);
         if (!failure.empty()) {
             reject_hint(stats, picture.picture, object.id,
                         std::format("the solved relations fail ({}): the unsolved shapes are steered", failure));

@@ -18,7 +18,6 @@ using sci::vector::Vec2;
 using sci::vector::detail::AnchorRef;
 using sci::vector::detail::RelationProblem;
 using sci::vector::detail::SolvePrimitive;
-using sci::vector::detail::SolveRelation;
 using sci::vector::detail::SteerInput;
 using sci::vector::detail::SteerLine;
 
@@ -38,13 +37,19 @@ SolvePrimitive line(double x0, double y0, double x1, double y1) {
 RelationProblem lopsided_rhombus() {
     RelationProblem problem;
     problem.primitives = {
-        {.kind = PrimitiveKind::Polyline,
-         .anchors = {{.x = 181.5, .y = 27.5}, {.x = 190.5, .y = 9.5}, {.x = 201.5, .y = 26.5}}},
-        {.kind = PrimitiveKind::Polyline,
-         .anchors = {{.x = 201.5, .y = 28.5}, {.x = 191.5, .y = 45.5}, {.x = 180.5, .y = 27.5}}},
+        {
+            .kind = PrimitiveKind::Polyline,
+            .anchors = {{.x = 181.5, .y = 27.5}, {.x = 190.5, .y = 9.5}, {.x = 201.5, .y = 26.5}},
+        },
+        {
+            .kind = PrimitiveKind::Polyline,
+            .anchors = {{.x = 201.5, .y = 28.5}, {.x = 191.5, .y = 45.5}, {.x = 180.5, .y = 27.5}},
+        },
     };
-    problem.ties = {{AnchorRef{.primitive = 0, .point = 0}, AnchorRef{.primitive = 1, .point = 2}},
-                    {AnchorRef{.primitive = 0, .point = 2}, AnchorRef{.primitive = 1, .point = 0}}};
+    problem.ties = {
+        {AnchorRef{.primitive = 0, .point = 0}, AnchorRef{.primitive = 1, .point = 2}},
+        {AnchorRef{.primitive = 0, .point = 2}, AnchorRef{.primitive = 1, .point = 0}},
+    };
     problem.relations = {
         {.kind = GeometricKind::Symmetry, .axis = Axis::Vertical, .items = {{0}, {1}}},
         {.kind = GeometricKind::Symmetry, .axis = Axis::Horizontal, .items = {{0}, {1}}},
@@ -59,7 +64,7 @@ RelationProblem lopsided_rhombus() {
 SCI_TEST(lopsided_diamond_becomes_symmetric_about_both_axes) {
     const auto solution = sci::vector::detail::solve_relations(lopsided_rhombus());
     SCI_CHECK(solution.solved);
-    if (!(solution.solved)) {
+    if (!solution.solved) {
         return;
     }
     const Vec2 left = solution.anchors[0][0];
@@ -81,25 +86,30 @@ SCI_TEST(lopsided_diamond_becomes_symmetric_about_both_axes) {
 SCI_TEST(solved_polyline_is_steered_through_its_solved_corners) {
     const auto solution = sci::vector::detail::solve_relations(lopsided_rhombus());
     SCI_CHECK(solution.solved);
-    if (!(solution.solved)) {
+    if (!solution.solved) {
         return;
     }
     const auto at = [](int x, int y) { return ScreenPoint{.x = x, .y = y + picture_top}; };
     const SteerInput dark{
         .kind = PrimitiveKind::Polyline,
         .lines = {SteerLine{.from = at(189, 10), .to = at(181, 27)}, SteerLine{.from = at(190, 9), .to = at(201, 26)}},
-        .points = {{.x = 180.5, .y = 27.5}, {.x = 190.5, .y = 9.5}, {.x = 201.5, .y = 27.5}},
+        .points =
+            {
+                {.x = 180.5, .y = 27.5},
+                {.x = 190.5, .y = 9.5},
+                {.x = 201.5, .y = 27.5},
+            },
         .corner = {std::nullopt, CornerKind::Sharp, std::nullopt},
     };
     const auto anchors = sci::vector::detail::anchors(dark);
     SCI_CHECK(anchors.has_value() && anchors->size() == 3);
-    if (!(anchors.has_value() && anchors->size() == 3)) {
+    if (!anchors.has_value() || anchors->size() != 3) {
         return;
     }
     SCI_CHECK(near((*anchors)[1].x, 190.5) && near((*anchors)[1].y, 9.5));
-    const auto steered = sci::vector::detail::steer(dark, &solution.anchors[0]);
+    const auto steered = sci::vector::detail::steer(dark, solution.anchors.data());
     SCI_CHECK(steered.applicable && steered.pieces.size() == 2);
-    if (!(steered.applicable && steered.pieces.size() == 2)) {
+    if (!steered.applicable || steered.pieces.size() != 2) {
         return;
     }
     SCI_CHECK(steered.deviation <= 1);
@@ -120,12 +130,14 @@ SCI_TEST(parallel_and_perpendicular_hold_after_solving) {
     };
     const auto solution = sci::vector::detail::solve_relations(problem);
     SCI_CHECK(solution.solved);
-    if (!(solution.solved)) {
+    if (!solution.solved) {
         return;
     }
     const auto direction = [&](std::size_t p) {
-        return Vec2{.x = solution.anchors[p][1].x - solution.anchors[p][0].x,
-                    .y = solution.anchors[p][1].y - solution.anchors[p][0].y};
+        return Vec2{
+            .x = solution.anchors[p][1].x - solution.anchors[p][0].x,
+            .y = solution.anchors[p][1].y - solution.anchors[p][0].y,
+        };
     };
     const Vec2 a = direction(0);
     const Vec2 b = direction(1);
@@ -142,7 +154,7 @@ SCI_TEST(equal_spacing_moves_the_items_least) {
     problem.relations = {{.kind = GeometricKind::EqualSpacing, .axis = Axis::None, .items = {{0}, {1}, {2}}}};
     const auto solution = sci::vector::detail::solve_relations(problem);
     SCI_CHECK(solution.solved);
-    if (!(solution.solved)) {
+    if (!solution.solved) {
         return;
     }
     const double first = solution.anchors[1][0].x - solution.anchors[0][0].x;
