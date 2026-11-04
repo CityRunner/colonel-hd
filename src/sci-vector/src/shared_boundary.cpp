@@ -180,6 +180,50 @@ std::optional<Vec2> leaving(const std::vector<Vec2>& course) {
     return std::nullopt;
 }
 
+// A course that leaves the end point of another course at almost the same
+// direction (an arch springing from its jamb, two curves leaving one
+// vertex) can cross it by a hair. Moves the points of `course` (oriented
+// from the shared point) that lie on the wrong side of `other` (oriented
+// from it too; `side` is the sign of the side `course` lay on before) just
+// onto the right side, if none is farther than max_off_piece from it;
+// nothing otherwise.
+std::optional<std::vector<Vec2>> push_off(const std::vector<Vec2>& course, const std::vector<Vec2>& other,
+                                          double side) {
+    constexpr double step = 0.25;   // Original pixels between the points of a pushed course.
+    constexpr double margin = 1e-6; // How far onto the right side.
+    std::vector<Vec2> dense{course.front()};
+    for (std::size_t k = 0; k + 1 < course.size(); ++k) {
+        const double len = distance(course[k], course[k + 1]);
+        const auto n = static_cast<std::size_t>(std::ceil(len / step));
+        for (std::size_t j = 1; j <= n; ++j) {
+            const double f = static_cast<double>(j) / static_cast<double>(n);
+            dense.push_back(Vec2{.x = course[k].x + (f * (course[k + 1].x - course[k].x)),
+                                 .y = course[k].y + (f * (course[k + 1].y - course[k].y))});
+        }
+    }
+    bool pushed = false;
+    for (std::size_t i = 1; i < dense.size(); ++i) {
+        const Vec2 p = dense[i];
+        const OnPiece q = nearest_on(other, p);
+        const auto k = std::min(static_cast<std::size_t>(q.param), other.size() - 2);
+        const Vec2 d{.x = other[k + 1].x - other[k].x, .y = other[k + 1].y - other[k].y};
+        const double len = std::sqrt((d.x * d.x) + (d.y * d.y));
+        if (len == 0.0 || ((d.x * (p.y - other[k].y)) - (d.y * (p.x - other[k].x))) * side > collinear) {
+            continue;
+        }
+        // The far end is a vertex: it stays.
+        if (i + 1 == dense.size() || distance(p, q.point) > max_off_piece) {
+            return std::nullopt;
+        }
+        dense[i] = Vec2{.x = q.point.x - (side * margin * d.y / len), .y = q.point.y + (side * margin * d.x / len)};
+        pushed = true;
+    }
+    if (!pushed) {
+        return std::nullopt;
+    }
+    return dense;
+}
+
 } // namespace
 
 SharedBoundary::SharedBoundary(const Arrangement& arrangement, const std::vector<FittedChain>& fitted)
@@ -414,6 +458,52 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         return found != placed.end() ? found->second : position(v);
     };
 
+    // A moved edge that crosses an edge leaving the same vertex at almost
+    // the same direction is pushed just off it (at most max_off_piece).
+    for (auto& [e, course] : new_course) {
+        const Bounds box = box_of(course);
+        for (std::size_t f = 0; f < edge_count; ++f) {
+            if (f == e || !box.meets(box_of(now(f))) || !courses_cross(course, now(f))) {
+                continue;
+            }
+            // The shared end, now and before, and the side e lay on.
+            for (const bool e_front : {true, false}) {
+                for (const bool f_front : {true, false}) {
+                    std::vector<Vec2> mine = course;
+                    std::vector<Vec2> theirs = now(f);
+                    std::vector<Vec2> mine_old = course_[e];
+                    std::vector<Vec2> theirs_old = course_[f];
+                    if (!e_front) {
+                        std::ranges::reverse(mine);
+                        std::ranges::reverse(mine_old);
+                    }
+                    if (!f_front) {
+                        std::ranges::reverse(theirs);
+                        std::ranges::reverse(theirs_old);
+                    }
+                    if (distance(mine.front(), theirs.front()) > same_point ||
+                        distance(mine_old.front(), theirs_old.front()) > same_point) {
+                        continue;
+                    }
+                    const auto de = leaving(mine_old);
+                    const auto df = leaving(theirs_old);
+                    if (!de || !df) {
+                        continue;
+                    }
+                    const double side = (df->x * de->y) - (df->y * de->x);
+                    if (std::abs(side) <= collinear) {
+                        continue;
+                    }
+                    if (auto pushed = push_off(mine, theirs, side > 0.0 ? 1.0 : -1.0)) {
+                        if (!e_front) {
+                            std::ranges::reverse(*pushed);
+                        }
+                        course = std::move(*pushed);
+                    }
+                }
+            }
+        }
+    }
     // No moved edge crosses another edge.
     std::vector<Bounds> boxes(edge_count);
     for (std::size_t e = 0; e < edge_count; ++e) {
