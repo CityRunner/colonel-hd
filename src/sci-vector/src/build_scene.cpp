@@ -4,8 +4,8 @@
 
 #include "curves.hpp"
 #include "scene_model.hpp"
-#include "shared_boundary.hpp"
 #include "sci/pic/geometry.hpp"
+#include "shared_boundary.hpp"
 #include "stroke_integrity.hpp"
 #include "topology.hpp"
 
@@ -1387,8 +1387,7 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
             for (const detail::StepCut& cut : detail::step_cuts(input)) {
                 model.square_ends.emplace_back(line_of[cut.line], cut);
             }
-            steer_primitive(input, line_of, picture.picture, primitive, lines, pixels, curves, boundary, model,
-                            stats);
+            steer_primitive(input, line_of, picture.picture, primitive, lines, pixels, curves, boundary, model, stats);
         }
     }
 }

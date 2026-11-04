@@ -118,6 +118,7 @@ double pseudo_angle(Vec2 d) {
 
 struct Bounds {
     double x0, y0, x1, y1;
+
     [[nodiscard]] bool meets(const Bounds& o) const { return x0 <= o.x1 && o.x0 <= x1 && y0 <= o.y1 && o.y0 <= y1; }
 };
 
@@ -249,9 +250,8 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         std::vector<std::size_t> edges;
         for (std::size_t e = 0; e < edge_count; ++e) {
             const std::int32_t source = arr.sources[e];
-            if (source == line.source ||
-                (source == shared_source && on_line(to_picture(arr.vertices[origin(2 * e)])) &&
-                 on_line(to_picture(arr.vertices[origin((2 * e) + 1)])))) {
+            if (source == line.source || (source == shared_source && on_line(to_picture(arr.vertices[origin(2 * e)])) &&
+                                          on_line(to_picture(arr.vertices[origin((2 * e) + 1)])))) {
                 edges.push_back(e);
             }
         }
