@@ -30,4 +30,13 @@ namespace sci::vector {
 // picture_width if exactly one set is empty.
 [[nodiscard]] int raster_deviation(std::span<const std::uint32_t> a, std::span<const std::uint32_t> b);
 
+// The approved deviation from spec section 6.4 (docs/ASSUMPTIONS.md,
+// "Milestone 10: the customer's decisions on the halo and the curtain
+// rings"): for the lines of a shape the customer decided, a line pixel the
+// stroke does not touch still counts if the shape passes within 1 original
+// pixel of it in the sense of A4 A.6: the polyline, rasterised back to 1x
+// as the round-trip check does, has a pixel at Chebyshev distance at most
+// 1 from pixel (x, y) (picture coordinates).
+[[nodiscard]] bool within_round_trip_tolerance(std::span<const Vec2> points, int x, int y);
+
 } // namespace sci::vector

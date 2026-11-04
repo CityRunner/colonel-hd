@@ -449,7 +449,8 @@ std::optional<Row> analyse(const sci::resource::ResourceManager& manager, std::u
         .number = number,
         .visual = visual.stats,
         .priority = priority.stats,
-        .acceptance = sci::render::check_acceptance(visual.scene, drawn->maps, drawn->trace),
+        .acceptance =
+            sci::render::check_acceptance(visual.scene, drawn->maps, drawn->trace, visual.stats.decided_lines),
         .integrity = sci::render::check_integrity(visual.scene, drawn->maps, drawn->trace, executor),
         .integrity_cases = {},
         .integrity_changes = {},
@@ -488,6 +489,18 @@ std::string table_row(const Row& row) {
         v.fallback_pixels, v.straightened, v.arcs, v.splines, v.ellipses, v.fitted_lines, v.brushes, v.textured,
         v.hint_chains, v.hint_gaps, v.rejected_hints.size(), 100 * a.agreement(), a.swaps, a.untouched_line_pixels,
         a.overlapped_line_pixels, row.priority.mixed_faces, row.entry_ms);
+}
+
+// The line pixels taken within the A.6 tolerance (the approved deviation
+// from spec section 6.4 for shapes the customer decided).
+std::string tolerated_list(const std::vector<Row>& rows) {
+    std::string text;
+    for (const Row& row : rows) {
+        for (const auto& p : row.acceptance.tolerated_line_pixels) {
+            text += std::format("- pic {}: ({}, {}), line {}\n", row.number, p.x, p.y, p.primitive);
+        }
+    }
+    return text.empty() ? "None.\n" : text;
 }
 
 std::string fallback_list(const std::vector<Row>& rows) {
@@ -565,6 +578,11 @@ std::string report(const std::vector<Row>& rows, int scale) {
         }
     }
     text += "\n## Fallbacks (mixed faces of the visual plane)\n\n" + fallback_list(rows);
+    text += "\n## Line pixels within the A.6 tolerance\n\n"
+            "The approved deviation from spec section 6.4 (`docs/ASSUMPTIONS.md`, \"Milestone 10: the customer's "
+            "decisions on the halo and the curtain rings\"): pixels of lines of shapes the customer decided that "
+            "the stroke does not touch but passes within 1 original pixel of; they do not count as untouched.\n\n" +
+            tolerated_list(rows);
     text += "\n## Hints used\n\n" + hint_list(rows, true);
     text += "\n## Hints left out\n\n" + hint_list(rows, false);
     return text;
@@ -586,6 +604,11 @@ void print_summary(const std::vector<Row>& rows) {
     std::println("{} pictures: worst agreement {:.3f}%, {} swaps, {} untouched line pixels, {} failing; slowest "
                  "room entry {:.0f} ms",
                  rows.size(), 100 * worst, swaps, untouched, failing, slowest);
+    std::size_t tolerated = 0;
+    for (const Row& row : rows) {
+        tolerated += row.acceptance.tolerated_line_pixels.size();
+    }
+    std::println("Line pixels within the A.6 tolerance (decided shapes): {}", tolerated);
     sci::render::Integrity total;
     for (const Row& row : rows) {
         total.contacts += row.integrity.contacts;

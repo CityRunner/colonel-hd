@@ -4,6 +4,12 @@
 // docs/hd-pipeline.md, "The shared boundary"): synthetic arrangements.
 
 #include "curves.hpp"
+#include "pic_builder.hpp"
+#include "sci/pic/draw_pic.hpp"
+#include "sci/pic/parse_pic.hpp"
+#include "sci/render/acceptance.hpp"
+#include "sci/vector/build_scene.hpp"
+#include "sci/vector/raster_1x.hpp"
 #include "sci_test.hpp"
 #include "shared_boundary.hpp"
 #include "topology.hpp"
@@ -14,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <variant>
 #include <vector>
 
 using sci::core::IntPoint;
@@ -236,4 +243,64 @@ SCI_TEST(an_arch_springing_from_its_jamb_is_pushed_just_off_it) {
             }
         }
     }
+}
+
+namespace {
+
+// A red line along row 60, x 40 to 120, its stroke moved down by `shift`
+// pixels, checked with and without the line among the decided lines.
+struct Shifted {
+    sci::render::Acceptance full;
+    sci::render::Acceptance decided;
+};
+
+Shifted shifted_line(double shift) {
+    sci::pic::PictureMaps maps;
+    sci::pic::DrawTrace trace;
+    const auto commands = sci::pic::parse_pic(sci::test::PicBuilder().color(4).line(40, 60, 120, 60).end());
+    SCI_CHECK(commands.has_value());
+    if (commands) {
+        SCI_CHECK(sci::pic::draw_picture(*commands, maps, {}, &trace).has_value());
+    }
+    auto built = sci::vector::build_scene(maps, trace, sci::vector::Plane::Visual);
+    for (auto& layer : built.scene.layers) {
+        if (auto* stroke = std::get_if<sci::vector::Stroke>(&layer); stroke != nullptr && stroke->source == 0) {
+            for (Vec2& p : stroke->points) {
+                p.y += shift;
+            }
+        }
+    }
+    const std::vector<std::int32_t> decided{0};
+    return {.full = sci::render::check_acceptance(built.scene, maps, trace),
+            .decided = sci::render::check_acceptance(built.scene, maps, trace, decided)};
+}
+
+} // namespace
+
+SCI_TEST(a_decided_line_one_pixel_off_is_tolerated_and_listed) {
+    const Shifted one = shifted_line(1.0);
+    // The full 6.4 rule counts every pixel of the line as untouched.
+    SCI_CHECK(one.full.untouched_line_pixels == 81);
+    SCI_CHECK(one.full.tolerated_line_pixels.empty());
+    // For a decided shape, they are within the A.6 tolerance: listed, not
+    // counted.
+    SCI_CHECK(one.decided.untouched_line_pixels == 0);
+    SCI_CHECK(one.decided.tolerated_line_pixels.size() == 81);
+    SCI_CHECK(std::ranges::all_of(one.decided.tolerated_line_pixels,
+                                  [](const auto& p) { return p.primitive == 0 && p.y == 60; }));
+}
+
+SCI_TEST(a_decided_line_two_pixels_off_still_fails) {
+    const Shifted two = shifted_line(2.0);
+    SCI_CHECK(two.full.untouched_line_pixels == 81);
+    SCI_CHECK(two.decided.untouched_line_pixels == 81);
+    SCI_CHECK(two.decided.tolerated_line_pixels.empty());
+}
+
+SCI_TEST(the_round_trip_tolerance_is_one_pixel_chebyshev) {
+    const std::vector<Vec2> row{{.x = 10.5, .y = 20.5}, {.x = 30.5, .y = 20.5}};
+    SCI_CHECK(sci::vector::within_round_trip_tolerance(row, 20, 21));
+    SCI_CHECK(sci::vector::within_round_trip_tolerance(row, 31, 19));
+    SCI_CHECK(!sci::vector::within_round_trip_tolerance(row, 20, 22));
+    SCI_CHECK(!sci::vector::within_round_trip_tolerance(row, 32, 20));
 }

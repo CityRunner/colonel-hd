@@ -5,6 +5,7 @@
 #include "curves.hpp"
 #include "scene_model.hpp"
 #include "sci/pic/geometry.hpp"
+#include "sci/vector/raster_1x.hpp"
 #include "shared_boundary.hpp"
 #include "stroke_integrity.hpp"
 #include "topology.hpp"
@@ -1309,13 +1310,14 @@ struct PendingShape {
     const PrimitiveHint* primitive = nullptr;
     std::vector<std::size_t> line_of;
     detail::Steered result;
+    bool decided = false; // The customer decided the object.
 };
 
 // One primitive's shape, if it passes the round trip and the line check
 // and changes its lines' strokes; otherwise the report says why, if it
 // was tried.
 std::optional<PendingShape> steer_primitive(const detail::SteerInput& input, const std::vector<std::size_t>& line_of,
-                                            int picture, const PrimitiveHint& primitive,
+                                            int picture, const PrimitiveHint& primitive, bool decided,
                                             const std::vector<DrawnLine>& lines,
                                             const std::vector<std::vector<std::size_t>>& pixels, const Curves& curves,
                                             const SceneModelFits& model, SceneStats& stats) {
@@ -1332,9 +1334,16 @@ std::optional<PendingShape> steer_primitive(const detail::SteerInput& input, con
         return std::nullopt;
     }
     // As for a chain hint (spec section 6.4): every pixel the lines own at
-    // 1x is still touched by its stroke.
+    // 1x is still touched by its stroke; for a shape the customer decided,
+    // or passed within the A.6 tolerance (the approved deviation).
     for (std::size_t i = 0; i < line_of.size(); ++i) {
-        if (!keeps_line_pixels(pixels[line_of[i]], result.pieces[i])) {
+        const std::vector<Vec2>& piece = result.pieces[i];
+        const bool kept = std::ranges::all_of(pixels[line_of[i]], [&](std::size_t pixel) {
+            const int x = static_cast<int>(pixel % picture_width);
+            const int y = static_cast<int>(pixel / picture_width);
+            return stroke_touches(piece, x, y) || (decided && within_round_trip_tolerance(piece, x, y));
+        });
+        if (!kept) {
             reject_hint(stats, picture, primitive.id,
                         "the shape misses pixels its lines own: the 3b reconstruction stays");
             return std::nullopt;
@@ -1351,7 +1360,7 @@ std::optional<PendingShape> steer_primitive(const detail::SteerInput& input, con
     if (!changed) {
         return std::nullopt;
     }
-    return PendingShape{.primitive = &primitive, .line_of = line_of, .result = std::move(result)};
+    return PendingShape{.primitive = &primitive, .line_of = line_of, .result = std::move(result), .decided = decided};
 }
 
 // Spec section 6.6: the shape as the boundary of the faces on both sides.
@@ -1394,6 +1403,9 @@ void apply_shape(PendingShape& shape, int picture, const std::string& why, bool 
         curves.strokes[shape.line_of[i]] = std::move(shape.result.pieces[i]);
         model.steered[shape.line_of[i]] = true;
         record.lines.push_back(static_cast<std::int32_t>(lines[shape.line_of[i]].primitive));
+        if (shape.decided) {
+            stats.decided_lines.push_back(static_cast<std::int32_t>(lines[shape.line_of[i]].primitive));
+        }
     }
     std::ranges::stable_sort(record.lines);
     const auto [first, last] = std::ranges::unique(record.lines);
@@ -1476,8 +1488,8 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
             if (std::ranges::any_of(line_of, [&](std::size_t line) { return taken[line]; })) {
                 continue; // A line in two primitives follows the first.
             }
-            if (auto shape =
-                    steer_primitive(input, line_of, picture.picture, primitive, lines, pixels, curves, model, stats)) {
+            if (auto shape = steer_primitive(input, line_of, picture.picture, primitive, object.decision.has_value(),
+                                             lines, pixels, curves, model, stats)) {
                 for (const std::size_t line : line_of) {
                     taken[line] = true;
                 }
