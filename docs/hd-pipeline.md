@@ -266,12 +266,14 @@ only the strokes; the faces kept the 3b fit (`docs/ASSUMPTIONS.md`,
   old and new course must contain no other vertex, and the order of the
   pieces along each line must follow the vertices. Otherwise the shape
   falls back.
-- **Fallback, per shape.** A shape that fails any check is removed
-  completely: its strokes return to the 3b fit and its edges to the 3b
-  geometry (the scene is the one without that primitive), and the
-  replacement report lists it ("the shared boundary ...: the 3b
-  reconstruction stays"). Pictures without steered shapes are built
-  exactly as before.
+- **Fallback, per shape.** A shape that fails the round trip or the line
+  check is removed completely (3b strokes and faces). A shape that passes
+  them but that the partition cannot take keeps its steered stroke while
+  its edges keep the 3b geometry exactly (nothing of the attempt is
+  kept), and the replacement report lists it ("the faces keep the 3b
+  fit: the shared boundary fails (...)"); see `docs/ASSUMPTIONS.md`,
+  "Milestone 10: the shared boundary". Pictures without steered shapes
+  are built exactly as before.
 - **Strokes** are the pieces, as before; the stroke integrity pass and
   the step corners are unchanged. The line check stays as section 6.4's
   code measures it (`check_acceptance`: a line pixel counts only if its
