@@ -3360,3 +3360,49 @@ object decided, not open.
   every picture and stack are identical before and after (picture 12's
   included); the only differences from the committed `tests/golden/pictures.txt`
   are the 28 entries of the batch 1 fixes. **Decided (customer).**
+
+## Milestone 10: the smoothing detector and batch 2 (2026-11-04)
+
+The customer's three batch 1 findings are one defect class (above): an
+intended step, corner or regular curve smoothed by the 3b reconstruction.
+`sci-hd-report --smoothing-suspects <file>` (`sci/render/smoothing.hpp`,
+unit tested on synthetic cases of each kind) lists where it may happen in
+every picture; `docs/hd-quality.md`, "Smoothing suspects", has the signals,
+the counts and the validation. No rendering change.
+
+- **Signals from what the analysis exposes.** Steps: joints and clips of
+  the stroke integrity pass between parallel horizontal or vertical lines
+  a few pixels apart, where a pixel between them shows another colour.
+  Corners: joints that bevel a one-colour corner, and automatic curves
+  that cut a vertex where the turn is concentrated. Curves: runs of lines
+  whose vertices and pixels lie on one ellipse while the HD strokes leave
+  it. The automatic fit never crosses a sharp vertex (the chains stop at
+  50 degrees), so in practice corners come from joints. **Assumed.**
+- **Organic exclusion** reads the hint files: scene-model objects of an
+  organic type, and 3a chain and region labels that name trees, foliage,
+  rocks, clouds, water, ground or figures (whole words). Region hints are
+  applied to the 1x region of their pixel, unmirrored (no picture of the
+  report is mirrored). Many trees and figures carry no such label, so the
+  list still holds organic places. **Assumed.**
+- **Steered lines are not suspects.** Lines in a chain the scene model
+  steers follow a decided or certain shape (A.7), so they are left out.
+  **Decided.**
+- **Validation by stripping the scene model.** The pre-fix state is the
+  same build with `objects` and `repetitions` removed from the hint files
+  of pictures 12, 58, 74 and 174 (in a scratch copy): the scene model then
+  steers nothing there, which is the 3b reconstruction. All three findings
+  are flagged there and not after the fix; the rest of those pictures'
+  suspects is unchanged. Their game-wide rank is low (540 to 3100 of
+  3571): the detector has the recall, not the precision; candidates are
+  triaged by eye. **Finding.**
+- **Counts** (current state): 3041 step, 207 corner, 311 curve suspects
+  in 85 pictures. **Finding.**
+- **Batch 2** (`reports/images/milestone-10/batch-2/batch-2.md`, git
+  ignored): 21 suspects looked at, 12 dropped as false positives, 5
+  questions (pictures 37, 61, 20, 57, 71) and 4 pictures of round-topped
+  windows (10, 15, 42, 44) listed as "will be fixed like batch 1 unless you
+  object": their arches are polygons in HD exactly as the fanlight of
+  picture 12 was. With each picture's crop, overview sheet and plain pair
+  (the customer's rule). Nothing is in the hint files yet: the questions
+  wait for the answers, and the fanlight-like windows for the customer's
+  silence or objection. **Assumed.**

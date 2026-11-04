@@ -210,3 +210,135 @@ one of the chain's lines owns at 1x.
 - Ranks 18 to 20 pass, with half or more of their pixels one pixel off:
   a curve that runs parallel to the stepped chain, half a pixel aside.
   They pass the tolerance as A.6 states it; a mean limit would catch them.
+
+## Smoothing suspects (2026-11-04)
+
+The defect class the customer found in pilot batch 1 (docs/ASSUMPTIONS.md,
+"the customer's answers to pilot batch 1"): the 3b reconstruction smooths an
+intentionally sharp or regular shape. `sci-hd-report --smoothing-suspects
+<file>` (`sci::render::find_smoothing_suspects`,
+`sci/render/smoothing.hpp`) lists the places where that may happen, over
+every picture, measured the same way as above:
+
+    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+        build/release/tools/hd-report/sci-hd-report /game build/hd-report.md \
+        --scale 1 --hints hints --smoothing-suspects build/smoothing.txt
+
+The signals, from what the vector analysis exposes (no rendering change):
+
+- **Step**: the stroke integrity pass (`docs/hd-pipeline.md`, section 5)
+  joined the ends of two parallel horizontal or vertical lines of one colour
+  one to three pixels apart, with the ends offset along the lines (the
+  connector is diagonal: a slope), or clipped a line's end onto a parallel
+  line beside it (a bend); both lines at least three pixels long, and a
+  pixel between them shows another colour at 1x, so the change shows.
+  Changes within 4 pixels of each other form one suspect; score 100 per
+  joint, 60 per clip, 40 per stacked line beyond two.
+- **Corner**: a joint between two lines of one outline meeting at 60 to
+  120 degrees whose ends touch diagonally, where both corner pixels show
+  another colour at 1x (the connector bevels the corner); or an automatic
+  arc, spline or ellipse that passes at least 0.2 px from a vertex where
+  two of its lines (two pixels or longer) turn by more than about 26
+  degrees and their neighbours at most half as much. Score 100 x (1 - cos
+  of the turn) x the shorter leg (at most 6) / 3.
+- **Curve**: a run of lines drawn end to end (followed through any vertex
+  where the next line turns least, at most 60 degrees, whatever else meets
+  there) that turns one way by at least about 70 degrees, whose vertices
+  lie within 0.8 px and whose 1x pixels within 1.5 px of one ellipse
+  (least squares, vertices weighted, axes 2 to 160 px, ratio at most 6),
+  while the HD strokes leave that ellipse by 0.3 px or more. Score: that
+  distance in thousandths of a pixel, times the turn (up to 180 degrees)
+  / 180.
+- Lines of organic things are left out: scene-model objects of an organic
+  type, 3a chain hints whose label names a tree, branch, foliage, rock,
+  cloud, water, ground, figure and the like, and lines next to a 3a region
+  with such a label. Lines whose shape the scene model steers are left out
+  (decided).
+
+**Counts** (current state, with the batch 1 fixes): 3041 step / 207 corner / 311 curve. Per picture
+(step / corner / curve):
+
+1: 94/5/3; 2: 11/2/4; 3: 31/1/4; 4: 53/6/6; 5: 29/1/7; 6: 51/1/5; 7: 55/3/3;
+8: 25/0/0; 9: 37/4/2; 10: 41/6/10; 11: 81/2/2; 12: 66/6/6; 13: 38/2/7; 14:
+43/1/8; 15: 37/10/15; 16: 37/2/8; 17: 49/3/12; 18: 38/2/5; 20: 31/2/6; 21:
+19/1/1; 22: 70/37/3; 23: 18/0/0; 24: 29/1/1; 25: 71/5/10; 26: 40/2/1; 27:
+59/1/3; 28: 95/8/6; 29: 28/0/1; 30: 36/0/5; 31: 64/1/4; 32: 77/6/0; 33:
+25/2/2; 34: 56/1/1; 35: 53/7/6; 36: 39/1/3; 37: 46/6/3; 38: 41/2/2; 39:
+3/0/3; 40: 3/0/3; 41: 76/3/5; 42: 38/5/5; 43: 23/2/4; 44: 40/3/4; 45:
+60/1/6; 46: 32/2/2; 47: 63/4/1; 48: 33/1/2; 49: 18/3/11; 51: 10/0/4; 52:
+53/1/1; 53: 11/0/0; 56: 2/0/3; 57: 15/1/7; 58: 35/3/7; 59: 34/2/3; 61:
+31/1/7; 62: 15/0/0; 63: 12/1/6; 64: 20/1/1; 65: 25/1/1; 66: 21/2/11; 67:
+51/3/9; 69: 31/2/0; 70: 9/2/12; 71: 22/0/1; 73: 43/7/0; 74: 19/0/0; 75:
+44/1/0; 76: 43/1/2; 77: 39/0/0; 78: 79/3/6; 79: 9/0/1; 80: 10/0/1; 83:
+31/0/4; 84: 52/0/0; 85: 25/3/5; 86: 13/0/1; 87: 30/2/2; 88: 3/3/0; 128:
+59/2/0; 174: 9/0/1; 182: 2/0/0; 282: 6/0/2; 382: 3/0/1; 888: 23/1/1
+
+**The 30 highest scores** (the full list is in the file the option
+writes):
+
+    1. pic 61: step score 2280, B4.1 at (194, 74), box (190, 72)-(206, 82), commands 1269, 1271, 1273, 1274, 1275, 1276, 1277, 1278, 1279: 20 joints or clips across stacked lines up to 1 px apart, ends offset up to 1 px
+    2. pic 12: step score 1500, A5.3 at (268, 61), box (255, 59)-(274, 71), commands 1705, 1706, 1707, 1708, 1732, 1733, 1734, 1770, 1771, 1772, 1773, 1774, 1775, 1776: 13 joints or clips across stacked lines up to 1 px apart, ends offset up to 7 px
+    3. pic 69: step score 1500, C3.3 at (158, 159), box (153, 157)-(160, 169), commands 166, 695, 696, 697, 698, 699, 700, 705, 706: 13 joints or clips across stacked lines up to 1 px apart, ends offset up to 5 px
+    4. pic 27: step score 1480, C3.1 at (154, 157), box (152, 155)-(180, 166), commands 1168, 1307, 1355, 1356, 1490, 1492, 1720, 1721, 2173, 2430, 2432, 2451, 2457, 2469: 14 joints or clips across stacked lines up to 1 px apart, ends offset up to 11 px
+    5. pic 59: step score 1380, C4.1 at (206, 134), box (200, 132)-(212, 143), commands 84, 92, 93, 262, 263, 268, 272, 312, 632, 633, 641, 642, 643: 11 joints or clips across stacked lines up to 2 px apart, ends offset up to 6 px
+    6. pic 67: step score 1320, A3.1 at (133, 26), box (126, 24)-(136, 41), commands 783, 784, 786, 1081, 1082, 1083, 1084, 1085, 1086: 12 joints or clips across stacked lines up to 1 px apart, ends offset up to 36 px
+    7. pic 7: curve score 1239, A3.2 at (176, 12), box (146, 5)-(176, 17), commands 2093, 2094, 2095, 2096, 2097, 2098: 6 lines turning about 154 degrees; HD up to 1.445 px off the ellipse, 1x up to 1.325 px
+    8. pic 28: step score 1220, B3.1 at (156, 77), box (154, 75)-(166, 87), commands 292, 294, 1223, 1245, 2471, 2648, 2649, 2650, 2651, 3013, 3015, 3018, 3022: 11 joints or clips across stacked lines up to 1 px apart, ends offset up to 31 px
+    9. pic 128: step score 1220, C3.1 at (156, 127), box (154, 125)-(166, 137), commands 319, 321, 912, 934, 2072, 2212, 2213, 2214, 2215, 2256, 2258, 2261, 2265: 11 joints or clips across stacked lines up to 1 px apart, ends offset up to 31 px
+    10. pic 10: curve score 1208, C4.1 at (203, 129), box (199, 115)-(206, 127), commands 1373, 1374, 1375, 1376: 4 lines turning about 151 degrees; HD up to 1.439 px off the ellipse, 1x up to 1.075 px
+    11. pic 28: step score 1180, B3.1 at (151, 94), box (149, 92)-(168, 101), commands 947, 948, 1214, 1215, 1217, 1229, 1230, 1232, 1233, 1235, 1613: 11 joints or clips across stacked lines up to 2 px apart, ends offset up to 6 px
+    12. pic 128: step score 1180, C3.1 at (151, 144), box (149, 142)-(168, 151), commands 713, 714, 903, 904, 906, 918, 919, 921, 922, 924, 1302: 11 joints or clips across stacked lines up to 2 px apart, ends offset up to 6 px
+    13. pic 10: step score 1160, A1.4 at (49, 61), box (43, 59)-(57, 72), commands 391, 392, 393, 403, 411, 412, 443, 446, 447, 448, 449, 1705: 10 joints or clips across stacked lines up to 1 px apart, ends offset up to 9 px
+    14. pic 1: step score 1120, A5.4 at (319, 37), box (311, 35)-(319, 55), commands 658, 756, 814, 1116, 1118, 1272, 1273, 1302, 2387, 2388: 12 joints or clips across stacked lines up to 1 px apart, ends offset up to 11 px
+    15. pic 25: curve score 1076, B2.4 at (117, 110), box (100, 101)-(118, 113), commands 610, 611, 612, 613, 614: 5 lines turning about 173 degrees; HD up to 1.123 px off the ellipse, 1x up to 1.458 px
+    16. pic 17: curve score 1046, A5.4 at (297, 53), box (294, 39)-(302, 51), commands 2043, 2044, 2045, 2046: 4 lines turning about 149 degrees; HD up to 1.268 px off the ellipse, 1x up to 1.062 px
+    17. pic 78: step score 1040, A4.2 at (241, 11), box (237, 9)-(250, 18), commands 415, 416, 417, 418, 1032, 1034, 1036, 1038, 1413: 10 joints or clips across stacked lines up to 1 px apart, ends offset up to 7 px
+    18. pic 78: step score 1040, A5.1 at (268, 11), box (259, 9)-(272, 18), commands 415, 416, 417, 418, 1032, 1034, 1037, 1038, 1413: 10 joints or clips across stacked lines up to 1 px apart, ends offset up to 7 px
+    19. pic 1: curve score 1011, C5.2 at (308, 145), box (308, 137)-(319, 154), commands 1397, 1407, 1414, 1415, 1416: 5 lines turning about 135 degrees; HD up to 1.348 px off the ellipse, 1x up to 1.335 px
+    20. pic 49: curve score 1009, A3.3 at (153, 61), box (151, 61)-(161, 85), commands 97, 98, 99, 100, 101: 5 lines turning about 102 degrees; HD up to 1.780 px off the ellipse, 1x up to 1.214 px
+    21. pic 52: step score 1000, B1.2 at (58, 85), box (54, 83)-(60, 95), commands 365, 1487, 1844, 1851, 1852, 1854: 10 joints or clips across stacked lines up to 1 px apart, ends offset up to 22 px
+    22. pic 71: step score 1000, C4.2 at (239, 137), box (237, 135)-(246, 149), commands 134, 135, 137, 138, 154, 163, 164, 165, 166: 8 joints or clips across stacked lines up to 2 px apart, ends offset up to 3 px
+    23. pic 27: curve score 999, B2.1 at (73, 74), box (73, 68)-(84, 76), commands 1896, 1897, 1898, 1899: 4 lines turning about 120 degrees; HD up to 1.498 px off the ellipse, 1x up to 1.460 px
+    24. pic 10: curve score 984, A4.3 at (219, 49), box (195, 35)-(220, 54), commands 485, 486, 487, 488, 489, 490, 491: 7 lines turning about 172 degrees; HD up to 1.031 px off the ellipse, 1x up to 1.443 px
+    25. pic 25: step score 980, B5.3 at (264, 103), box (262, 101)-(272, 109), commands 375, 506, 507, 508, 516, 517, 1225, 1226: 9 joints or clips across stacked lines up to 1 px apart, ends offset up to 3 px
+    26. pic 42: curve score 969, B1.3 at (21, 97), box (6, 99)-(20, 108), commands 20, 21, 22, 24: 4 lines turning about 114 degrees; HD up to 1.530 px off the ellipse, 1x up to 1.208 px
+    27. pic 25: curve score 968, B5.2 at (297, 85), box (297, 74)-(312, 92), commands 2968, 2969, 2970, 2971: 4 lines turning about 135 degrees; HD up to 1.290 px off the ellipse, 1x up to 1.290 px
+    28. pic 10: curve score 950, A3.4 at (172, 35), box (144, 20)-(171, 33), commands 1275, 1276, 1277, 1278, 1279, 1280, 1281, 1282: 8 lines turning about 158 degrees; HD up to 1.086 px off the ellipse, 1x up to 0.916 px
+    29. pic 57: curve score 946, A2.4 at (99, 49), box (80, 51)-(98, 56), commands 568, 569, 570, 571, 572, 573: 6 lines turning about 105 degrees; HD up to 1.621 px off the ellipse, 1x up to 0.770 px
+    30. pic 14: step score 940, C4.2 at (233, 154), box (227, 152)-(235, 167), commands 329, 333, 335, 337, 363, 365, 367, 368, 897: 7 joints or clips across stacked lines up to 1 px apart, ends offset up to 2 px
+
+**Validation on batch 1.** The pre-fix state was measured by running the
+same build with a copy of `hints/` in which pictures 12, 58, 74 and 174 have
+no `objects` and `repetitions` (the scene model steers nothing there, which
+is the 3b reconstruction; the stroke integrity pass only spares ends the
+scene model squares). All three customer findings are flagged before the
+fix and gone after it:
+
+- 74, C1 (the dark steps): step suspects at (28, 152) commands 192, 203,
+  204 (score 300, 2nd of 23 in the picture) and (40, 159) commands 194,
+  195, 205, 206 (200, 4th), plus two smaller ones at (53, 166) and (65,
+  167); none after the fix.
+- 58, A4.4 and B4.2 (the glints): clips of the glints' ends onto the
+  window frame beside them (commands 679 and 682 on 471 and 472, five
+  suspects of score 60) and the joint 683 / 684 at (238, 66) (score 100);
+  none after the fix.
+- 12, A1.3-A1.4 (the fanlight): curve commands 123-126 (score 247, 14th
+  of 80 in the picture); gone after the fix, as is the bevelled corner of
+  the cellar bulkhead frame at (168, 131) (commands 620, 623) that the fix
+  squared too.
+
+The other suspects of these pictures are the same before and after (12:
+80 to 78, 58: 51 to 45, 74: 23 to 19). Game-wide the batch 1 places rank
+between about 540 and 3100 of 3570: the detector finds them (recall), but
+its score does not single them out, because joints across stacked lines
+are everywhere in the game's art (hatching, dithered shading, foliage
+outside the organic labels). It is a list to triage by eye, not a verdict.
+
+**Batch 2.** 21 suspects were looked at in crops; 12 were false positives
+(6 organic things the labels miss, 6 where the HD does not look wrong at
+review size), 9 were kept: 5 questions (picture 37 stair ends, 61 sofa
+cushion, 20 window arch, 57 stained-glass medallions, 71 curved rail) and
+4 pictures of round-topped windows drawn as polygons, to be fixed like the
+fanlight of batch 1 unless the customer objects (pictures 10, 15, 42, 44).
+The batch is `reports/images/milestone-10/batch-2/batch-2.md` (git
+ignored, with the crops, sheets and plain images).

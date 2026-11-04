@@ -7,7 +7,7 @@
 // both scenes and the HD frame and priority map at the chosen scale).
 //
 //   sci-hd-report <game> <report.md> [--scale <N>] [--images <directory>] [--hints <directory>]
-//                 [--changes <file>] [--round-trip <file>]
+//                 [--changes <file>] [--round-trip <file>] [--smoothing-suspects <file>]
 //
 // --hints applies the hint files of a directory (spec section 6.7; the
 // repository's are in hints/) and reports what each did.
@@ -22,6 +22,12 @@
 // checked, passing and failing, the worst deviation with its command and
 // review-grid quarter, every failing chain, and the worst chains of the
 // game.
+//
+// --smoothing-suspects writes the smoothing detector of milestone 10
+// (sci::render::find_smoothing_suspects, docs/hd-quality.md): places where
+// the reconstruction may smooth an intended step, corner or regular curve,
+// ranked by score, with their picture, review-grid quarter, commands and
+// 1x coordinates, and counts per kind and picture.
 //
 // The report holds numbers only. --images also writes, per picture, the
 // original and the HD frame side by side at scale 3; those images are
@@ -38,6 +44,7 @@
 #include "sci/render/original.hpp"
 #include "sci/render/rasterize.hpp"
 #include "sci/render/round_trip.hpp"
+#include "sci/render/smoothing.hpp"
 #include "sci/vector/build_scene.hpp"
 
 #include <algorithm>
@@ -70,6 +77,7 @@ struct Options {
     std::optional<fs::path> hints;
     std::optional<fs::path> changes;
     std::optional<fs::path> round_trip;
+    std::optional<fs::path> smoothing;
 };
 
 // A chain of the round-trip check, described for the report.
@@ -89,6 +97,8 @@ struct Row {
     std::vector<std::string> integrity_changes; // The same, with their evidence.
     sci::render::RoundTrip round_trip;
     std::vector<RoundTripLine> round_trip_lines; // Per chain, as round_trip.chains.
+    std::vector<sci::render::SmoothingSuspect> smoothing;
+    std::vector<std::string> smoothing_lines; // Per suspect, described.
     double entry_ms = 0;
 };
 
@@ -278,6 +288,86 @@ std::string round_trip_report(const std::vector<Row>& rows) {
     return text;
 }
 
+std::string_view smoothing_name(sci::render::SmoothingKind kind) {
+    switch (kind) {
+    case sci::render::SmoothingKind::Step:
+        return "step";
+    case sci::render::SmoothingKind::Corner:
+        return "corner";
+    case sci::render::SmoothingKind::Curve:
+        return "curve";
+    }
+    return "?";
+}
+
+// The measures of a suspect, by kind.
+std::string smoothing_measures(const sci::render::SmoothingSuspect& s) {
+    switch (s.kind) {
+    case sci::render::SmoothingKind::Step:
+        return std::format("{} joints or clips across stacked lines up to {} px apart, ends offset up to {} px",
+                           s.count, s.bend, s.deviation);
+    case sci::render::SmoothingKind::Corner:
+        return std::format("turn 1-cos {}, HD passes {} px from the corner pixel", milli(s.bend), milli(s.deviation));
+    case sci::render::SmoothingKind::Curve:
+        return std::format("{} lines turning about {} degrees; HD up to {} px off the ellipse, 1x up to {} px", s.count,
+                           s.bend, milli(s.deviation), milli(s.residual));
+    }
+    return {};
+}
+
+// A suspect of the smoothing detector: kind, score, quarter, 1x
+// coordinates and box, the commands, and the kind's measures.
+std::vector<std::string> describe_smoothing(const std::vector<sci::render::SmoothingSuspect>& suspects,
+                                            const sci::pic::DrawTrace& trace) {
+    std::vector<std::string> lines;
+    lines.reserve(suspects.size());
+    for (const auto& s : suspects) {
+        std::string commands;
+        for (const std::int32_t line : s.lines) {
+            commands += std::format("{}{}", commands.empty() ? "" : ", ",
+                                    trace.primitives[static_cast<std::size_t>(line)].command);
+        }
+        lines.push_back(std::format("{} score {}, {} at ({}, {}), box ({}, {})-({}, {}), commands {}: {}",
+                                    smoothing_name(s.kind), s.score,
+                                    sci::tools::review::to_string(sci::tools::review::quarter_at(s.x, s.y)), s.x, s.y,
+                                    s.left, s.top, s.right, s.bottom, commands, smoothing_measures(s)));
+    }
+    return lines;
+}
+
+// Counts per kind and picture, then every suspect of the game ranked by
+// score (then picture, then the detector's order).
+std::string smoothing_report(const std::vector<Row>& rows) {
+    std::string text = "Smoothing suspects (milestone 10, sci/render/smoothing.hpp): places where the HD "
+                       "reconstruction may smooth an intended step, corner or regular curve. Quarters are those of "
+                       "the review grid (A4 part B); coordinates are 1x picture coordinates.\n\n";
+    std::array<int, 3> totals{};
+    std::vector<std::pair<const Row*, std::size_t>> all;
+    for (const Row& row : rows) {
+        std::array<int, 3> counts{};
+        for (std::size_t i = 0; i < row.smoothing.size(); ++i) {
+            ++counts.at(static_cast<std::size_t>(row.smoothing[i].kind));
+            all.emplace_back(&row, i);
+        }
+        for (std::size_t k = 0; k < counts.size(); ++k) {
+            totals.at(k) += counts.at(k);
+        }
+        if (!row.smoothing.empty()) {
+            text +=
+                std::format("pic {}: {} step / {} corner / {} curve\n", row.number, counts[0], counts[1], counts[2]);
+        }
+    }
+    text += std::format("\nAll: {} step / {} corner / {} curve\n\nRanked:\n", totals[0], totals[1], totals[2]);
+    std::ranges::stable_sort(all, [](const auto& a, const auto& b) {
+        return a.first->smoothing[a.second].score > b.first->smoothing[b.second].score;
+    });
+    for (std::size_t i = 0; i < all.size(); ++i) {
+        text += std::format("{:4}. pic {}: {}\n", i + 1, all[i].first->number,
+                            all[i].first->smoothing_lines[all[i].second]);
+    }
+    return text;
+}
+
 std::optional<Options> parse_options(std::span<char*> args) {
     if (args.size() < 3) {
         return std::nullopt;
@@ -290,6 +380,7 @@ std::optional<Options> parse_options(std::span<char*> args) {
         .hints = std::nullopt,
         .changes = std::nullopt,
         .round_trip = std::nullopt,
+        .smoothing = std::nullopt,
     };
     for (std::size_t i = 3; i + 1 < args.size(); i += 2) {
         const std::string_view name = args[i];
@@ -305,6 +396,8 @@ std::optional<Options> parse_options(std::span<char*> args) {
             options.changes = fs::path(value);
         } else if (name == "--round-trip") {
             options.round_trip = fs::path(value);
+        } else if (name == "--smoothing-suspects") {
+            options.smoothing = fs::path(value);
         } else {
             return std::nullopt;
         }
@@ -362,12 +455,18 @@ std::optional<Row> analyse(const sci::resource::ResourceManager& manager, std::u
         .integrity_changes = {},
         .round_trip = sci::render::RoundTrip(),
         .round_trip_lines = {},
+        .smoothing = {},
+        .smoothing_lines = {},
         .entry_ms = std::chrono::duration<double, std::milli>(end - start).count(),
     };
     row.integrity_cases = describe_cases(row.integrity, drawn->trace);
     row.integrity_changes = describe_changes(row.visual, drawn->trace);
     row.round_trip = sci::render::check_round_trip(drawn->trace, row.visual);
     row.round_trip_lines = describe_round_trip(row.round_trip, row.visual, drawn->trace);
+    if (options.smoothing) {
+        row.smoothing = sci::render::find_smoothing_suspects(drawn->maps, drawn->trace, row.visual, hints.pointers());
+        row.smoothing_lines = describe_smoothing(row.smoothing, drawn->trace);
+    }
     (void)frame;
     (void)priority_map;
     if (options.images) {
@@ -583,7 +682,8 @@ int main(int argc, char** argv) {
     const auto options = parse_options(args);
     if (!options) {
         std::println(stderr, "usage: sci-hd-report <game> <report.md> [--scale <N>] [--images <directory>] "
-                             "[--hints <directory>] [--changes <file>] [--round-trip <file>]");
+                             "[--hints <directory>] [--changes <file>] [--round-trip <file>] "
+                             "[--smoothing-suspects <file>]");
         return 2;
     }
     sci::tools::install_stderr_log();
@@ -623,6 +723,11 @@ int main(int argc, char** argv) {
         round_trip << round_trip_report(rows);
         ok = ok && static_cast<bool>(round_trip);
         print_round_trip(rows);
+    }
+    if (options->smoothing) {
+        std::ofstream smoothing(*options->smoothing);
+        smoothing << smoothing_report(rows);
+        ok = ok && static_cast<bool>(smoothing);
     }
     return ok && out ? 0 : 1;
 }
