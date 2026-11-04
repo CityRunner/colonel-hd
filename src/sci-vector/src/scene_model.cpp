@@ -284,8 +284,7 @@ std::optional<EllipseFrame> fit_closed_ellipse(const SteerInput& input) {
     constexpr double anchor_weight = 1e2;
     std::vector<Vec2> pixels;
     for (const SteerLine& line : input.lines) {
-        pic::for_each_line_pixel(line.from, line.to,
-                                 [&](int x, int y) { pixels.push_back(centre({.x = x, .y = y})); });
+        pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) { pixels.push_back(centre({.x = x, .y = y})); });
     }
     if (pixels.size() < 5) {
         return std::nullopt;

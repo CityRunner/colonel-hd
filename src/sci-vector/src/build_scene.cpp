@@ -586,8 +586,7 @@ void add_scan_edge(Vec2 from, Vec2 to, std::int32_t face_forward, std::int32_t f
 // (steered[edge], from its forward half-edge's origin to its twin's) takes
 // that course, an edge of a fitted chain its curve, any other edge stays
 // straight.
-std::vector<ScanEdge> scan_edges(const detail::Arrangement& arrangement,
-                                 const std::vector<detail::FittedChain>& fitted,
+std::vector<ScanEdge> scan_edges(const detail::Arrangement& arrangement, const std::vector<detail::FittedChain>& fitted,
                                  const std::vector<std::vector<Vec2>>& steered) {
     std::vector<bool> replaced(arrangement.sources.size(), false);
     std::vector<ScanEdge> edges;
@@ -1229,11 +1228,13 @@ struct SceneModelFits {
     std::vector<bool> steered;                                        // Per line.
     std::vector<FittedChain> records;                                 // One per steered primitive.
     std::vector<std::pair<std::size_t, detail::StepCut>> square_ends; // Lines' ends at step corners.
+
     struct Applied {
         int picture = 0;
         std::string id;
         std::vector<std::size_t> lines;
     };
+
     std::vector<Applied> applied; // The steered primitives, with their lines.
 };
 
@@ -1494,9 +1495,8 @@ std::pair<std::size_t, double> project_onto(const std::vector<Vec2>& path, Vec2 
     for (std::size_t j = 0; j + 1 < path.size(); ++j) {
         const Vec2 d{.x = path[j + 1].x - path[j].x, .y = path[j + 1].y - path[j].y};
         const double length_squared = (d.x * d.x) + (d.y * d.y);
-        double t = length_squared == 0 ? 0
-                                       : (((point.x - path[j].x) * d.x) + ((point.y - path[j].y) * d.y)) /
-                                             length_squared;
+        double t =
+            length_squared == 0 ? 0 : (((point.x - path[j].x) * d.x) + ((point.y - path[j].y) * d.y)) / length_squared;
         t = std::clamp(t, 0.0, 1.0);
         const double dx = path[j].x + (d.x * t) - point.x;
         const double dy = path[j].y + (d.y * t) - point.y;
@@ -1590,9 +1590,11 @@ struct Bounds {
         right = std::max(right, p.x);
         bottom = std::max(bottom, p.y);
     }
+
     [[nodiscard]] bool meets(const Bounds& other) const {
         return left <= other.right && other.left <= right && top <= other.bottom && other.top <= bottom;
     }
+
     [[nodiscard]] bool contains(Vec2 p) const { return p.x >= left && p.x <= right && p.y >= top && p.y <= bottom; }
 };
 
@@ -1652,8 +1654,8 @@ std::vector<std::vector<Vec2>> steer_faces(const detail::Arrangement& arrangemen
         Bounds area;
         for (std::size_t edge = 0; edge < edge_count; ++edge) {
             const std::int32_t source = arrangement.sources[edge];
-            if (source < 0 || std::ranges::find(primitive.lines, static_cast<std::size_t>(source)) ==
-                                  primitive.lines.end()) {
+            if (source < 0 ||
+                std::ranges::find(primitive.lines, static_cast<std::size_t>(source)) == primitive.lines.end()) {
                 continue;
             }
             const std::vector<Vec2>& stroke = curves.strokes[static_cast<std::size_t>(source)];
@@ -1834,7 +1836,8 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
         model = steer_by_scene_model(trace, lines, view, hints, curves, built.stats);
     }
     record_fits(parts.arrangement, curves, lines, plane_hints, model, built.stats);
-    scene.edges = scan_edges(parts.arrangement, curves.fitted, steer_faces(parts.arrangement, curves, model, built.stats));
+    scene.edges =
+        scan_edges(parts.arrangement, curves.fitted, steer_faces(parts.arrangement, curves, model, built.stats));
     scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
     square_step_ends(scene.layers, lines, model);
     // Stroke integrity and occlusion (spec section 6.10) change the HD
