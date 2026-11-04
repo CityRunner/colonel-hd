@@ -26,6 +26,16 @@
             {"id": "rail-hook-inner", "kind": "arc", "commands": [89, 90, 91, 92, 93, 94], "points": [[235, 42], [216, 29], [211, 34]]},
             {"id": "rail-hook-outer", "kind": "arc", "commands": [96, 97, 98, 99, 100, 101], "points": [[208, 33], [224, 25], [238, 34]]}
           ]
+        },
+        {
+          "id": "curtain-rail-hook-light",
+          "role": "highlight",
+          "label": "the yellow highlight and the grey line along the bend, arcs beside the red outline's",
+          "primitives": [
+            {"id": "rail-hook-highlight", "kind": "arc", "commands": [192, 190, 191, 193, 194], "points": [[225, 25], [233, 28], [238, 38]]},
+            {"id": "rail-hook-grey-upper", "kind": "arc", "commands": [180, 179], "points": [[226, 27], [229, 28], [232, 30]]},
+            {"id": "rail-hook-grey-lower", "kind": "arc", "commands": [188, 187, 186], "points": [[234, 32], [236, 36], [236, 42]]}
+          ]
         }
       ],
       "decision": {
@@ -34,6 +44,32 @@
         "date": "2026-11-04",
         "cell": "A4",
         "note": "batch 2 case 5: A, one smooth circular bend"
+      }
+    },
+    {
+      "id": "tube-highlights",
+      "type": "other",
+      "cell": "B4.4-C4.2",
+      "confidence": 900,
+      "label": "the yellow highlights along the tubes below the hook",
+      "parts": [
+        {
+          "id": "tube-highlight-lines",
+          "role": "highlight",
+          "label": "straight lines, sharp where the drawing turns",
+          "primitives": [
+            {"id": "tube-hl-upper", "kind": "line", "commands": [150, 151, 152, 153, 154], "points": [[243, 118], [239, 137]]},
+            {"id": "tube-hl-lower", "kind": "line", "commands": [162, 160, 161], "points": [[238, 149], [240, 160]]},
+            {"id": "tube-hl-red", "kind": "line", "commands": [163, 164, 165, 166], "points": [[242, 135], [245, 150]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "tube-highlights",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "B4.4-C4.2",
+        "note": "findings after batch 2: light on tube is crooked in hd, must be fixed as straight lines"
       }
     }
   ],
