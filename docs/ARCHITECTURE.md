@@ -18,7 +18,7 @@ purpose and invariants:
 | sci-view | View, loop and cel decoding (done, milestone 2); SCI0 cursors (milestone 6b) | sci-core, sci-resource |
 | sci-text | Fonts (done, milestone 2), messages, vocabulary, Said | sci-core, sci-resource |
 | sci-audio | Sound playback, silent driver, AdLib (the OPL core on Nuked OPL3 and the SCI0 driver, milestone 7), MT-32, mixer | sci-core, sci-resource; Nuked OPL3 and mt32emu (vendored) |
-| sci-render | HD rasteriser (done, milestone 3), original mode, acceptance check, A1 checks (milestone 3b), composition of the game screen (milestone 5), the round-trip check of A4 A.6 (milestone 10) | sci-core, sci-pic, sci-vector, sci-view |
+| sci-render | HD rasteriser (done, milestone 3), original mode, acceptance check, A1 checks (milestone 3b), composition of the game screen (milestone 5), the round-trip check of A4 A.6 and the smoothing detector (milestone 10) | sci-core, sci-pic, sci-vector, sci-view |
 | sci-vm | Bytecode interpreter, objects, kernel functions, the 1x graphics they drive, the music player with a silent driver or a sci-audio device (milestone 7), events, virtual clock, random source (boot gate, milestone 4a) | sci-core, sci-resource, sci-pic, sci-view, sci-text, sci-audio |
 | sci-platform (in `src/app/platform`) | The parts of app without a window, shared with the tools: thread executor, game-folder reading, release identification, configuration file, hint loading (done, milestone 3a), analysis cache (milestone 4b), the HD images of the picture shown and the game's frame (milestone 5) | sci-core, sci-resource, sci-pic, sci-vector, sci-render, sci-vm |
 | app (`sierra-hd`) | Window, input, presentation (the room viewer at release v0.1), saves, cache | all libraries |

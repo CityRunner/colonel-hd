@@ -30,11 +30,19 @@ lists:
   chain; the 20 worst chains of the game. Totals by kind and deviation go
   to standard output.
 
+- with `--smoothing-suspects <file>`, the smoothing detector of milestone
+  10 (`sci::render::find_smoothing_suspects`, `docs/hd-quality.md`,
+  "Smoothing suspects"): places where the reconstruction may smooth an
+  intended step, corner or regular curve, counted per kind and picture,
+  then ranked by score with the picture, review-grid quarter, 1x
+  coordinates and box, and commands. Organic things and lines the scene
+  model steers are left out.
+
 It exits with 1 if any picture fails the acceptance check.
 
     docker/run.sh cmake --build build/release --target sci-hd-report
     SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
-        build/release/tools/hd-report/sci-hd-report /game build/hd-report.md [--scale 10] [--images reports/images/hd] [--hints hints] [--changes build/changes.txt] [--round-trip build/round-trip.txt]
+        build/release/tools/hd-report/sci-hd-report /game build/hd-report.md [--scale 10] [--images reports/images/hd] [--hints hints] [--changes build/changes.txt] [--round-trip build/round-trip.txt] [--smoothing-suspects build/smoothing.txt]
 
 The report holds numbers only. `--images` writes, per picture, the original
 and the HD frame side by side at scale 3; they are derived from the game
