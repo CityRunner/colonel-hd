@@ -537,7 +537,10 @@ std::vector<std::vector<Vec2>> split(const std::vector<Vec2>& shape, std::span<c
 // The shape a primitive asks for, along the path; nothing if the kind is
 // not steered here, or (with a reason) if no shape of that kind fits.
 std::optional<std::vector<Vec2>> shape_of(const SteerInput& input, std::span<const SteerLine> path,
-                                          std::string& reason) {
+                                          const std::vector<Vec2>* solved, std::string& reason) {
+    if (solved != nullptr && (input.kind == PrimitiveKind::Line || input.kind == PrimitiveKind::Polyline)) {
+        return *solved;
+    }
     switch (input.kind) {
     case PrimitiveKind::Line:
         return std::vector<Vec2>{centre(path.front().from), centre(path.back().to)};
@@ -567,8 +570,14 @@ std::optional<std::vector<Vec2>> shape_of(const SteerInput& input, std::span<con
 
 // Where consecutive lines of the path meet: halfway between their end
 // pixels, or at a polyline's corner within one pixel of that.
-std::vector<Vec2> joints_of(const SteerInput& input, std::span<const SteerLine> path, const std::vector<Vec2>& shape) {
+std::vector<Vec2> joints_of(const SteerInput& input, std::span<const SteerLine> path, const std::vector<Vec2>& shape,
+                            bool solved) {
     std::vector<Vec2> joints;
+    // A solved polyline with a vertex between every two lines meets there.
+    if (solved && input.kind == PrimitiveKind::Polyline && shape.size() == path.size() + 1) {
+        joints.assign(shape.begin() + 1, shape.end() - 1);
+        return joints;
+    }
     for (std::size_t i = 0; i + 1 < path.size(); ++i) {
         Vec2 joint = (centre(path[i].to) + centre(path[i + 1].from)) * 0.5;
         if (input.kind == PrimitiveKind::Polyline) {
@@ -636,7 +645,21 @@ bool is_closed_ellipse(const SteerInput& input) {
 
 } // namespace
 
-Steered steer(const SteerInput& input) {
+std::optional<std::vector<Vec2>> anchors(const SteerInput& input) {
+    if (input.kind != PrimitiveKind::Line && input.kind != PrimitiveKind::Polyline) {
+        return std::nullopt;
+    }
+    const std::optional<std::vector<SteerLine>> path = as_path(input.lines);
+    if (!path) {
+        return std::nullopt;
+    }
+    if (input.kind == PrimitiveKind::Line) {
+        return std::vector<Vec2>{centre(path->front().from), centre(path->back().to)};
+    }
+    return polyline_shape(input, *path);
+}
+
+Steered steer(const SteerInput& input, const std::vector<Vec2>* solved) {
     Steered result;
     if (is_closed_ellipse(input)) {
         if (input.lines.empty()) {
@@ -660,13 +683,13 @@ Steered steer(const SteerInput& input) {
     if (!path) {
         return result;
     }
-    const std::optional<std::vector<Vec2>> shape = shape_of(input, *path, result.reason);
+    const std::optional<std::vector<Vec2>> shape = shape_of(input, *path, solved, result.reason);
     if (!shape) {
         result.applicable = !result.reason.empty();
         return result;
     }
     result.applicable = true;
-    std::vector<std::vector<Vec2>> pieces = split(*shape, joints_of(input, *path, *shape));
+    std::vector<std::vector<Vec2>> pieces = split(*shape, joints_of(input, *path, *shape, solved != nullptr));
     result.deviation = round_trip_of(*path, pieces);
     if (result.deviation > round_trip_limit) {
         result.reason = std::format("round trip deviation {}", result.deviation);

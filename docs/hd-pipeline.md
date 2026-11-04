@@ -320,6 +320,61 @@ only the strokes; the faces kept the 3b fit (`docs/ASSUMPTIONS.md`,
   "Milestone 10: the shared boundary, second stage"); curved shapes do not
   enter the arrangement (its segments have integer end points).
 
+### Relation solving (milestone 10, A4 A.3)
+
+`solve_object` in `build_scene.cpp` with `src/sci-vector/src/relations.*`,
+run for each object before its primitives are steered:
+
+- **Which objects.** Those that steer (decided or certain, not organic,
+  not `keep`) and whose followed hypothesis has relations. An object the
+  customer decided **over alternatives** keeps its relations unsolved: the
+  customer chose that hypothesis as it was shown, as drawn (picture 12's
+  tall window, "keep as drawn": its bars are not touched; picture 74's
+  stairs, "drawn heights"). Open and organic objects are never solved.
+- **Unknowns.** The anchor points of the object's `line` (its path's two
+  ends) and `polyline` (its vertices) primitives that are items of a
+  relation (`anchors` in `scene_model.hpp`). Points the hint gives equal
+  in two primitives are one point (a shared corner, tied). Arcs, ellipses
+  and splines are not unknowns; a relation with such an item is not
+  solved and is listed ("an item is not a steered line or polyline").
+- **Relations.** `symmetry` (axis horizontal or vertical): the items'
+  points (tied ones as one) are paired with the point nearest to their
+  mirror image about the points' mean, the pairing must be mutual (a point
+  paired with itself lies on the axis); paired points share the other
+  coordinate and every pair's midpoint lies on one axis, whose position is
+  part of the solution. `parallel`, `perpendicular`: of line items (a part
+  stands for its lines), cross or dot product of their directions zero.
+  `aligned` (axis): the items' centres (mean of their anchors) share one
+  x (vertical) or y (horizontal). `equal-spacing`: consecutive centres are
+  equally far apart across the first item's first line, as drawn.
+  `tangent`: not solved yet (listed).
+- **Solution.** Least squares on the points' displacements subject to the
+  relations: x = x0 + J^T lambda with (J J^T) lambda = -g(x) - J (x0 - x),
+  repeated (Gauss-Newton; one step for linear relations, at most 50),
+  dependent rows (two symmetries state some facts twice) left out by
+  Gram-Schmidt, Gaussian elimination with partial pivoting; +, -, *, /
+  and sqrt only, deterministic. Afterwards every relation must hold
+  (1e-9), and no point may move by more than 1 original pixel
+  (Chebyshev, A.6); otherwise nothing is solved and the report says why
+  ("the relations need a move of ... px").
+- **Then the usual steering.** A solved line or polyline runs through its
+  solved points (a polyline's lines meet at its solved vertices), and
+  passes the round trip, the line check (with the approved deviation for
+  shapes the customer decided) and the shared boundary as before. If any
+  solved shape fails the round trip or the line check, none is used and
+  the object is steered unsolved ("the solved relations fail ..."); a
+  primitive that fails that too keeps its 3b reconstruction. For an
+  object the customer did not decide, solving must also not cost the
+  shared boundary: if more of its solved shapes than unsolved ones keep
+  the 3b faces, the unsolved shapes are steered ("the solved relations
+  cost the shared boundary"). Ends of two shapes of a solved object that
+  meet at one solved point are fixed for the stroke integrity pass, like
+  the inner ends of one shape.
+- **Report.** "relations solved jointly (...), largest move ... px" among
+  the hints used; every relation not solved, with the reason, among those
+  left out. Relations that hold as drawn change nothing and are not
+  listed.
+
 ## 7. Rasterisation
 
 `sci-render` samples a scene on a 16 x 16 grid per HD pixel (spec section

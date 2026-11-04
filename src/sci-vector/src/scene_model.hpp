@@ -67,7 +67,17 @@ struct Steered {
     std::string reason;                    // Why it was not used, when applicable.
 };
 
-[[nodiscard]] Steered steer(const SteerInput& input);
+// With `solved` (the relation solver's anchors, relations.hpp), a line or
+// polyline runs through those points instead of its lines' ends and
+// corners, each line of a polyline between its two vertices; the checks are
+// the same.
+[[nodiscard]] Steered steer(const SteerInput& input, const std::vector<Vec2>* solved = nullptr);
+
+// The points a line (its path's two ends) or a polyline (its vertices: the
+// ends and corners) runs through, which the relation solver may move;
+// nothing for other kinds, or if the lines form no path or a corner is
+// rounded.
+[[nodiscard]] std::optional<std::vector<Vec2>> anchors(const SteerInput& input);
 
 struct StepCut {
     std::size_t line = 0; // Index into SteerInput::lines.

@@ -118,6 +118,42 @@
         "cell": "A3.1-A4.2",
         "note": "batch 2: arched window: the arch half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
       }
+    },
+    {
+      "id": "cabinet-rhombus",
+      "type": "furniture",
+      "cell": "A3.2",
+      "confidence": 1000,
+      "label": "rhombus on the cabinet door, upper half dark, lower half light",
+      "parts": [
+        {
+          "id": "cabinet-rhombus-upper",
+          "role": "outline",
+          "label": "upper half, dark: left corner, top corner, right corner",
+          "primitives": [
+            {"id": "cabinet-rhombus-dark", "kind": "polyline", "commands": [1282, 1283], "points": [[180, 27], [190, 9], [201, 27]], "corners": [{"point": 1, "kind": "sharp"}]}
+          ]
+        },
+        {
+          "id": "cabinet-rhombus-lower",
+          "role": "outline",
+          "label": "lower half, light: right corner, bottom corner, left corner",
+          "primitives": [
+            {"id": "cabinet-rhombus-light", "kind": "polyline", "commands": [1285, 1286], "points": [[201, 27], [191, 45], [180, 27]], "corners": [{"point": 1, "kind": "sharp"}]}
+          ]
+        }
+      ],
+      "relations": [
+        {"kind": "symmetry", "axis": "vertical", "items": ["cabinet-rhombus-dark", "cabinet-rhombus-light"], "note": "about its vertical diagonal"},
+        {"kind": "symmetry", "axis": "horizontal", "items": ["cabinet-rhombus-dark", "cabinet-rhombus-light"], "note": "about its horizontal diagonal"}
+      ],
+      "decision": {
+        "hypothesis": "cabinet-rhombus",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A3.2",
+        "note": "finding: the rhombus must be symmetrical about both diagonals, straight sides, sharp corners, its two colours kept; the halves meet at the left and right corners (equal points)"
+      }
     }
   ],
   "chains": [

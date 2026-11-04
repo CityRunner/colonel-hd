@@ -3792,3 +3792,67 @@ boundary, second stage").
   steered shapes whose areas keep the 3b fit (the halo's chips, picture
   20's sliver, picture 57's notch, picture 71's hook edge, among others)
   share their curve with both areas. **Decided (customer).**
+
+## Milestone 10: relation solving (2026-11-04)
+
+The customer's finding on picture 42's rhombus (above), and A4 A.3 in
+general, on branch `m10-relations` (design: `docs/hd-pipeline.md`,
+"Relation solving").
+
+- **What is solved.** The relations of a decided or certain object
+  (`symmetry` with the axis position solved, `parallel`,
+  `perpendicular`, `aligned`, `equal-spacing`), jointly, over the anchor
+  points of its line and polyline primitives: least squares on the
+  points' displacements, at most 1 original pixel (Chebyshev, A.6), every
+  relation exact afterwards. `tangent` is not solved yet: the arc and
+  ellipse fits would have to take it as a constraint. **Decided (agent).**
+- **Shared corners.** Points given equal in two primitives of the object
+  are one point. The hint states it; the solver does not guess which
+  ends meet. **Assumed.**
+- **"As drawn" decisions win.** An object the customer decided over
+  alternatives keeps its relations unsolved: the customer chose what the
+  sheet showed. So picture 12's tall window keeps its panes as drawn
+  (case 1; its bars' `parallel` is not applied), picture 74's stairs keep
+  their drawn heights. A decided object without alternatives (the
+  rhombus) is solved. **Assumed; the customer may decide otherwise.**
+- **Fallbacks.** A solved shape that fails the round trip or the line
+  check makes the whole object steer unsolved, and a primitive failing
+  that too keeps 3b. For an analyser's (not decided) object, solving must
+  not make more of its shapes keep 3b faces than without it; picture 12's
+  `cellar-bulkhead` falls back on this rule (its solved leaf edge showed
+  orange and dark slivers beside the stroke). **Decided (agent).**
+- **Picture 42, A3.2, the rhombus** (`cabinet-rhombus`, decided by the
+  customer, cell A3.2): two polylines by colour, dark 1282+1283 (left,
+  top, right) and light 1285+1286 (right, bottom, left), sharp corners
+  at top and bottom, the left and right corners shared; symmetry about a
+  vertical and a horizontal axis. Solved: axes x = 191.17, y = 27.5;
+  corners left (180.92, 27.5), top (191.17, 9.5), right (201.42, 27.5),
+  bottom (191.17, 45.5) (pixel-centre coordinates); moves: top 0.67, bottom
+  0.33, left 0.58 (dark end) and 0.42 (light end), right 1.00 (both ends;
+  the drawn halves leave the pixel (201, 27) between them). Round trip 1;
+  no line pixel needs the A.6 deviation. The dark half shares its
+  boundary; the light half's faces keep the 3b fit (a gap-closing
+  extension of the dark line ends on the light line off its new course);
+  the faces are the same teal on both sides, so nothing shows. The
+  rhombus is symmetric in the crop: straight sides, sharp top and
+  bottom, the two colours meeting at the side corners, where the light
+  stroke's round end lies over the dark one. **Decided (customer); the
+  commands and points are assumed.**
+- **Other places that changed.** Picture 12 only: `front-steps` (the two
+  riser feet made parallel, 0.31 px; the steps look the same at review
+  size) and `picket-fence` (rails parallel, pickets equally spaced, 0.16
+  px; a barely visible shift of the rails). Neither looks worse.
+  Pictures 58 and 174: their relations hold as drawn or their items are
+  not steered lines (58's window bars drawn two lines wide), so nothing
+  changes. **Finding.**
+- **Checks.** Release workflow passes (6 new unit tests: a lopsided
+  diamond made symmetric about both axes, a solved polyline steered
+  through its corners, parallel and perpendicular, equal spacing, a
+  relation needing more than 1 px rejected, symmetry without partners
+  rejected). `scripts/check-hints.py` and `sci-hint-tool check hints`
+  clean (they list the relations not solved). Round trip, acceptance, A1
+  and suspects in `docs/hd-quality.md`, "After relation solving". Golden
+  hashes against `milestone-10`: pictures 12, 42 and the stack 42+162
+  (hd1/2/5/10) differ; against the committed file the same 60 entries as
+  `milestone-10`, nothing new; all `original1` entries and pictures 37
+  and 61 unchanged. Not regenerated. **Finding.**
