@@ -3159,3 +3159,11 @@ coordinates, pair and owned pixels). No rendering change.
   hints`: all golden hashes match: the parser does not use objects yet,
   and the golden hashes do not include the analysis cache key.
   **Finding.**
+
+## Milestone 10: what each review batch contains (2026-11-04)
+
+- **The customer's instruction:** "Let's keep this format but also provide
+  full images for me to analyse." Every batch of review questions (A4
+  A.7, part B) is sent with, for each picture in the batch: the close-up
+  crop of each case, the overview sheet with the grid, and the same pair
+  without the grid. **Decided (customer).**
