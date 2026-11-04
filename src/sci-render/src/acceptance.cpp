@@ -143,6 +143,16 @@ std::vector<std::vector<std::int32_t>> stroke_layers(const vector::Scene& scene,
     return layers;
 }
 
+// Whether a pixel of a decided line lies within the A.6 tolerance of one
+// of the line's strokes (the approved deviation from 6.4).
+bool tolerated(const vector::Scene& scene, const std::vector<std::int32_t>& layers,
+               std::span<const std::int32_t> decided, std::int32_t line, int x, int y) {
+    return std::ranges::find(decided, line) != decided.end() && std::ranges::any_of(layers, [&](std::int32_t layer) {
+               const auto& points = std::get<vector::Stroke>(scene.layers[static_cast<std::size_t>(layer)]).points;
+               return vector::within_round_trip_tolerance(points, x, y);
+           });
+}
+
 void check_lines(const vector::Scene& scene, const pic::DrawTrace& trace, std::span<const std::int32_t> decided,
                  Acceptance& result) {
     const std::vector<std::vector<std::int32_t>> layers_of = stroke_layers(scene, trace.primitives.size());
@@ -183,15 +193,7 @@ void check_lines(const vector::Scene& scene, const pic::DrawTrace& trace, std::s
             const bool touched = std::ranges::any_of(layers, [&](std::int32_t layer) {
                 return touches(std::get<vector::Stroke>(scene.layers[static_cast<std::size_t>(layer)]), x, y);
             });
-            const auto tolerated = [&] {
-                return std::ranges::find(decided, line) != decided.end() &&
-                       std::ranges::any_of(layers, [&](std::int32_t layer) {
-                           const auto& points =
-                               std::get<vector::Stroke>(scene.layers[static_cast<std::size_t>(layer)]).points;
-                           return vector::within_round_trip_tolerance(points, x, y);
-                       });
-            };
-            if (!touched && tolerated()) {
+            if (!touched && tolerated(scene, layers, decided, line, x, y)) {
                 result.tolerated_line_pixels.push_back(ToleratedPixel{.primitive = line, .x = x, .y = y});
             } else if (!touched) {
                 ++result.untouched_line_pixels;

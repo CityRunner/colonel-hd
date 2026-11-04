@@ -271,8 +271,10 @@ Shifted shifted_line(double shift) {
         }
     }
     const std::vector<std::int32_t> decided{0};
-    return {.full = sci::render::check_acceptance(built.scene, maps, trace),
-            .decided = sci::render::check_acceptance(built.scene, maps, trace, decided)};
+    return {
+        .full = sci::render::check_acceptance(built.scene, maps, trace),
+        .decided = sci::render::check_acceptance(built.scene, maps, trace, decided),
+    };
 }
 
 } // namespace

@@ -71,9 +71,14 @@ OnPiece at_fraction(const std::vector<Vec2>& piece, double t) {
         const double len = distance(piece[k], piece[k + 1]);
         if (left <= len && len > 0.0) {
             const double f = left / len;
-            return OnPiece{.point = {.x = piece[k].x + (f * (piece[k + 1].x - piece[k].x)),
-                                     .y = piece[k].y + (f * (piece[k + 1].y - piece[k].y))},
-                           .param = static_cast<double>(k) + f};
+            return OnPiece{
+                .point =
+                    {
+                        .x = piece[k].x + (f * (piece[k + 1].x - piece[k].x)),
+                        .y = piece[k].y + (f * (piece[k + 1].y - piece[k].y)),
+                    },
+                .param = static_cast<double>(k) + f,
+            };
         }
         left -= len;
     }
@@ -197,8 +202,10 @@ std::optional<std::vector<Vec2>> push_off(const std::vector<Vec2>& course, const
         const auto n = static_cast<std::size_t>(std::ceil(len / step));
         for (std::size_t j = 1; j <= n; ++j) {
             const double f = static_cast<double>(j) / static_cast<double>(n);
-            dense.push_back(Vec2{.x = course[k].x + (f * (course[k + 1].x - course[k].x)),
-                                 .y = course[k].y + (f * (course[k + 1].y - course[k].y))});
+            dense.push_back(Vec2{
+                .x = course[k].x + (f * (course[k + 1].x - course[k].x)),
+                .y = course[k].y + (f * (course[k + 1].y - course[k].y)),
+            });
         }
     }
     bool pushed = false;
@@ -227,7 +234,7 @@ std::optional<std::vector<Vec2>> push_off(const std::vector<Vec2>& course, const
 } // namespace
 
 SharedBoundary::SharedBoundary(const Arrangement& arrangement, const std::vector<FittedChain>& fitted)
-    : arrangement_(arrangement), base_(arrangement.sources.size()), moved_(arrangement.vertices.size()),
+    : arrangement_(&arrangement), base_(arrangement.sources.size()), moved_(arrangement.vertices.size()),
       overrides_(arrangement.sources.size()) {
     for (const FittedChain& chain : fitted) {
         for (std::size_t i = 0; i < chain.edges.size(); ++i) {
@@ -249,8 +256,9 @@ SharedBoundary::SharedBoundary(const Arrangement& arrangement, const std::vector
     course_ = base_;
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity): one shape's placement and its checks share its state.
 std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
-    const Arrangement& arr = arrangement_;
+    const Arrangement& arr = *arrangement_;
     const std::size_t edge_count = arr.sources.size();
     const auto origin = [&](std::size_t h) { return static_cast<std::size_t>(arr.half_edges[h].origin); };
     const auto position = [&](std::size_t v) { return moved_[v] ? *moved_[v] : to_picture(arr.vertices[v]); };
@@ -329,9 +337,11 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
             }
             if (t < 0.0 || t > 1.0) {
                 // On an extension that closes a gap: it stays.
-                return OnPiece{.point = fixed.value_or(p),
-                               .param = t < 0.0 ? -std::numeric_limits<double>::infinity()
-                                                : std::numeric_limits<double>::infinity()};
+                return OnPiece{
+                    .point = fixed.value_or(p),
+                    .param =
+                        t < 0.0 ? -std::numeric_limits<double>::infinity() : std::numeric_limits<double>::infinity(),
+                };
             }
             if (fixed) {
                 const OnPiece q = nearest_on(piece, *fixed);
@@ -361,10 +371,11 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
             return at_fraction(piece, t);
         };
         std::vector<std::pair<double, std::size_t>> by_t;
+        by_t.reserve(vertices.size());
         for (const std::size_t v : vertices) {
             by_t.emplace_back(along(to_picture(arr.vertices[v])), v);
         }
-        std::ranges::sort(by_t);
+        std::ranges::stable_sort(by_t);
         std::map<std::size_t, OnPiece> found_at;
         bool ordered = false;
         for (const bool allow_slide : {true, false}) {
@@ -555,8 +566,8 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         if (before.size() < 3) {
             continue;
         }
-        std::ranges::sort(before);
-        std::ranges::sort(after);
+        std::ranges::stable_sort(before);
+        std::ranges::stable_sort(after);
         const auto start = std::ranges::find(after, before.front().second, &std::pair<double, std::size_t>::second);
         std::ranges::rotate(after, start);
         if (!std::ranges::equal(before, after, {}, &std::pair<double, std::size_t>::second,

@@ -590,10 +590,14 @@ void add_scan_edge(Vec2 from, Vec2 to, std::int32_t face_forward, std::int32_t f
 // half-edge 2i's origin), if it did.
 bool add_override(const detail::Arrangement& arrangement, std::size_t edge,
                   const std::vector<std::optional<std::vector<Vec2>>>* overrides, std::vector<ScanEdge>& edges) {
-    if (overrides == nullptr || !(*overrides)[edge]) {
+    if (overrides == nullptr) {
         return false;
     }
-    const auto& course = *(*overrides)[edge];
+    const auto& found = (*overrides)[edge];
+    if (!found) {
+        return false;
+    }
+    const auto& course = *found;
     const std::int32_t forward = arrangement.half_edges[2 * edge].face;
     const std::int32_t backward = arrangement.half_edges[(2 * edge) + 1].face;
     for (std::size_t k = 0; k + 1 < course.size(); ++k) {
@@ -1458,6 +1462,46 @@ std::optional<StraightShape> straight_shape(const PendingShape& shape) {
     return StraightShape{.lines = shape.line_of, .a = *a, .b = *b};
 }
 
+// Makes the shapes of one object the boundary of their faces, jointly if
+// the partition takes them so, else each on its own, and applies them.
+void share_shapes(std::vector<PendingShape>& shapes, int picture, const std::vector<DrawnLine>& lines,
+                  const std::vector<bool>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
+                  SceneModelFits& model, SceneStats& stats) {
+    if (shapes.empty()) {
+        return;
+    }
+    // Straight shapes already in the arrangement are its boundary.
+    const auto entered = [&](const PendingShape& shape) {
+        return std::ranges::all_of(shape.line_of, [&](std::size_t line) { return in_arrangement[line]; });
+    };
+    std::vector<std::string> why(shapes.size());
+    bool joint = false;
+    if (std::ranges::count_if(shapes, [&](const PendingShape& shape) { return !entered(shape); }) > 1) {
+        std::vector<detail::BoundaryLine> all;
+        for (const PendingShape& shape : shapes) {
+            if (!entered(shape)) {
+                std::ranges::move(boundary_lines(shape, lines), std::back_inserter(all));
+            }
+        }
+        joint = boundary.apply(all).empty();
+    }
+    if (!joint) {
+        for (std::size_t i = 0; i < shapes.size(); ++i) {
+            if (!entered(shapes[i])) {
+                why[i] = boundary.apply(boundary_lines(shapes[i], lines));
+            }
+        }
+    }
+    for (std::size_t i = 0; i < shapes.size(); ++i) {
+        if (!why[i].empty()) {
+            if (auto straight = straight_shape(shapes[i])) {
+                model.straight.push_back(std::move(*straight));
+            }
+        }
+        apply_shape(shapes[i], picture, why[i], entered(shapes[i]), lines, curves, model, stats);
+    }
+}
+
 // The primitives of the hypothesis an object follows (A.7), if it is not
 // organic (A.4). An open object, or one decided "keep", steers nothing.
 // The shapes of one object are placed jointly, so that the vertices they
@@ -1497,50 +1541,20 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
             }
         }
     }
-    if (shapes.empty()) {
-        return;
-    }
-    // Straight shapes already in the arrangement are its boundary.
-    const auto entered = [&](const PendingShape& shape) {
-        return std::ranges::all_of(shape.line_of, [&](std::size_t line) { return in_arrangement[line]; });
-    };
-    std::vector<std::string> why(shapes.size());
-    bool joint = false;
-    if (std::ranges::count_if(shapes, [&](const PendingShape& shape) { return !entered(shape); }) > 1) {
-        std::vector<detail::BoundaryLine> all;
-        for (const PendingShape& shape : shapes) {
-            if (!entered(shape)) {
-                std::ranges::move(boundary_lines(shape, lines), std::back_inserter(all));
-            }
-        }
-        joint = boundary.apply(all).empty();
-    }
-    if (!joint) {
-        for (std::size_t i = 0; i < shapes.size(); ++i) {
-            if (!entered(shapes[i])) {
-                why[i] = boundary.apply(boundary_lines(shapes[i], lines));
-            }
-        }
-    }
-    for (std::size_t i = 0; i < shapes.size(); ++i) {
-        if (!why[i].empty()) {
-            if (auto straight = straight_shape(shapes[i])) {
-                model.straight.push_back(std::move(*straight));
-            }
-        }
-        apply_shape(shapes[i], picture.picture, why[i], entered(shapes[i]), lines, curves, model, stats);
-    }
+    share_shapes(shapes, picture.picture, lines, in_arrangement, curves, boundary, model, stats);
 }
 
 SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vector<DrawnLine>& lines,
                                     const PlaneView& view, std::span<const PictureHints* const> hints,
                                     const std::vector<bool>& in_arrangement, Curves& curves,
                                     detail::SharedBoundary& boundary, SceneStats& stats) {
-    SceneModelFits model{.steered = std::vector<bool>(lines.size(), false),
-                         .straight = {},
-                         .records = {},
-                         .square_ends = {},
-                         .inner_ends = {}};
+    SceneModelFits model{
+        .steered = std::vector<bool>(lines.size(), false),
+        .straight = {},
+        .records = {},
+        .square_ends = {},
+        .inner_ends = {},
+    };
     const HintLines find(trace, lines);
     // The pixels each line owns at 1x (every line counts).
     const std::vector<std::vector<std::size_t>> pixels =
@@ -1801,11 +1815,13 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
         Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
         // The scene model changes the HD picture only, so the visual plane;
         // a steered shape is the faces' boundary as well as the strokes.
-        SceneModelFits model{.steered = std::vector<bool>(lines.size(), false),
-                             .straight = {},
-                             .records = {},
-                             .square_ends = {},
-                             .inner_ends = {}};
+        SceneModelFits model{
+            .steered = std::vector<bool>(lines.size(), false),
+            .straight = {},
+            .records = {},
+            .square_ends = {},
+            .inner_ends = {},
+        };
         detail::SharedBoundary boundary(parts.arrangement, curves.fitted);
         if (plane == Plane::Visual) {
             model = steer_by_scene_model(trace, lines, view, hints, in_arrangement, curves, boundary, built.stats);

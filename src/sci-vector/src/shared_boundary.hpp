@@ -53,7 +53,7 @@ public:
     [[nodiscard]] const std::vector<std::optional<std::vector<Vec2>>>& overrides() const { return overrides_; }
 
 private:
-    const Arrangement& arrangement_;
+    const Arrangement* arrangement_;
     std::vector<std::vector<Vec2>> base_;    // Per edge, the 3b course.
     std::vector<std::vector<Vec2>> course_;  // Per edge, the current course.
     std::vector<std::optional<Vec2>> moved_; // Per vertex, where steering put it.
