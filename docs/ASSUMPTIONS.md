@@ -3626,3 +3626,52 @@ The customer's findings after batch 2 (above), applied on branch
   findings: all three need the steered shape to be the shared boundary
   of the line and its neighbouring areas. **Decided (agent, on the
   customer's findings).**
+
+## Milestone 10: the shared boundary (2026-11-04)
+
+The rework of "the design limit found after batch 2", on branch
+`m10-shared-boundary` (design: `docs/hd-pipeline.md`, section 6, "The
+shared boundary"). First stage; not finished.
+
+- **Where it acts.** After the 3b fit and the 3a chain hints, a steered
+  shape that passes its round trip and line check becomes the course of
+  every arrangement edge of its lines (`sci-vector/src/shared_boundary.*`):
+  the vertices on those lines move onto the pieces (line ends to the piece
+  ends, a vertex where one other straight line meets along that line,
+  otherwise to the point at the same fraction of the piece), the other
+  edges at a moved vertex end at the new point, and the scan edges of the
+  faces on both sides follow. Faces keep their values. **Decided.**
+- **Validity.** No moved edge crosses another, no vertex lies between a
+  moved edge's old and new course, the order along each line and around
+  each moved vertex is kept, and a vertex has one place. **Decided.**
+- **When the partition cannot take a shape** the stroke stays steered as
+  before this step and only the faces keep the 3b fit, and the
+  replacement report says why ("the faces keep the 3b fit: the shared
+  boundary fails (...)"). A full fallback to 3b (stroke too) was run first
+  and undid the batch 1 and 2 fixes that fail the new check (picture 58's
+  glints, picture 71's tube highlights, the arches of 42 and 44), so it was
+  not kept. The round trip and the line check still fall back to 3b
+  completely. **Assumed; the customer may decide otherwise.**
+- **The line-pixel rule is not loosened.** Section 6.4 as the code
+  measures it (`check_acceptance`, `untouched_line_pixels`) counts a line
+  pixel only when its own line's stroke touches one of its samples; a
+  face covering it does not count. A steered shape whose stroke misses an
+  owned pixel by 0.6 px therefore fails 6.4's own metric, shared boundary
+  or not. Picture 12's halo still falls back on it. **Decided** (A.8).
+- **Result now.** 31 steered shapes share their boundary; 16 keep 3b
+  faces (crossings with neighbouring edges at thin places: the tube
+  highlights and hook outline of picture 71, the arches of 20, 42 and 44,
+  one medallion edge of 57, two glints of 58; one arch of picture 10 whose
+  lines run one edge differently). Acceptance of 6.4: 88 pictures, 0
+  failing, worst agreement 99.993% (unchanged). Round trip unchanged
+  (13212 / 13195 / 17). **Finding.**
+- **Acceptance cases, honestly:** picture 12 halo (A2.4-B3.1): not fixed
+  (line rule fallback, HD identical). Picture 71 tube lights (B4.4-C4.2):
+  not fixed (shared boundary fails: crossing; HD identical). Picture 71
+  curtain rings: not done; the rings are drawn as a "(" of two short lines
+  and a dot each, so a closed oval would need pixels no line drew; not in
+  the hint file yet. Picture 57 A2: the upper medallion's upper edge and
+  the lower medallion's lower edge now share the boundary; one edge falls
+  back. Picture 71 A4: the inner hook arc and the grey arcs share; the
+  outer red arc does not. Pictures 20 and 42 outer arches: still fall back
+  (line rule). Pictures 37 and 61: identical. **Finding; open.**
