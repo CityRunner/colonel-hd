@@ -11,9 +11,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdlib>
 #include <format>
+#include <iterator>
 #include <numeric>
 #include <optional>
 #include <span>
@@ -1229,10 +1231,20 @@ Curves fit_with_hints(const detail::Arrangement& arrangement, const std::vector<
 // The scene model steers the fit (A4 A.4, A.6, A.7; scene_model.hpp): the
 // lines of the primitives of decided and certain objects, as one path,
 // follow the primitive's shape where the round trip allows it.
+// A straight steered shape the partition cannot take by moving vertices:
+// one segment of the arrangement in place of its lines' segments.
+struct StraightShape {
+    std::vector<std::size_t> lines;
+    IntPoint a; // Doubled picture coordinates of the shape's ends.
+    IntPoint b;
+};
+
 struct SceneModelFits {
     std::vector<bool> steered;                                        // Per line.
+    std::vector<StraightShape> straight;                              // Shapes to enter the arrangement.
     std::vector<FittedChain> records;                                 // One per steered primitive.
     std::vector<std::pair<std::size_t, detail::StepCut>> square_ends; // Lines' ends at step corners.
+    std::vector<std::pair<std::size_t, pic::ScreenPoint>> inner_ends; // Where the lines of a shape meet.
 };
 
 std::string_view primitive_name(PrimitiveKind kind) {
@@ -1291,23 +1303,33 @@ std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>> steer_inp
     return std::pair{std::move(input), std::move(line_of)};
 }
 
-// Applies one primitive's shape to its lines' strokes, if it passes the
-// round trip and changes them.
-void steer_primitive(const detail::SteerInput& input, const std::vector<std::size_t>& line_of, int picture,
-                     const PrimitiveHint& primitive, const std::vector<DrawnLine>& lines,
-                     const std::vector<std::vector<std::size_t>>& pixels, Curves& curves,
-                     detail::SharedBoundary& boundary, SceneModelFits& model, SceneStats& stats) {
+// A primitive whose shape passed its checks and changes its strokes,
+// before it is applied.
+struct PendingShape {
+    const PrimitiveHint* primitive = nullptr;
+    std::vector<std::size_t> line_of;
+    detail::Steered result;
+};
+
+// One primitive's shape, if it passes the round trip and the line check
+// and changes its lines' strokes; otherwise the report says why, if it
+// was tried.
+std::optional<PendingShape> steer_primitive(const detail::SteerInput& input, const std::vector<std::size_t>& line_of,
+                                            int picture, const PrimitiveHint& primitive,
+                                            const std::vector<DrawnLine>& lines,
+                                            const std::vector<std::vector<std::size_t>>& pixels, const Curves& curves,
+                                            const SceneModelFits& model, SceneStats& stats) {
     // A line in two primitives follows the first.
     if (std::ranges::any_of(line_of, [&](std::size_t line) { return model.steered[line]; })) {
-        return;
+        return std::nullopt;
     }
     detail::Steered result = detail::steer(input);
     if (!result.applicable) {
-        return;
+        return std::nullopt;
     }
     if (result.pieces.empty()) {
         reject_hint(stats, picture, primitive.id, std::format("{}: the 3b reconstruction stays", result.reason));
-        return;
+        return std::nullopt;
     }
     // As for a chain hint (spec section 6.4): every pixel the lines own at
     // 1x is still touched by its stroke.
@@ -1315,7 +1337,7 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
         if (!keeps_line_pixels(pixels[line_of[i]], result.pieces[i])) {
             reject_hint(stats, picture, primitive.id,
                         "the shape misses pixels its lines own: the 3b reconstruction stays");
-            return;
+            return std::nullopt;
         }
     }
     bool changed = false;
@@ -1327,30 +1349,51 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
         changed = changed || current != result.pieces[i];
     }
     if (!changed) {
-        return;
+        return std::nullopt;
     }
-    // Spec section 6.6: the shape is the boundary of the faces on both
-    // sides too; where it cannot be, the 3b reconstruction stays, strokes
-    // and faces.
+    return PendingShape{.primitive = &primitive, .line_of = line_of, .result = std::move(result)};
+}
+
+// Spec section 6.6: the shape as the boundary of the faces on both sides.
+std::vector<detail::BoundaryLine> boundary_lines(const PendingShape& shape, const std::vector<DrawnLine>& lines) {
     std::vector<detail::BoundaryLine> shared;
-    for (std::size_t i = 0; i < line_of.size(); ++i) {
-        const DrawnLine& line = lines[line_of[i]];
+    for (std::size_t i = 0; i < shape.line_of.size(); ++i) {
+        const DrawnLine& line = lines[shape.line_of[i]];
         shared.push_back(detail::BoundaryLine{
-            .source = static_cast<std::int32_t>(line_of[i]),
+            .source = static_cast<std::int32_t>(shape.line_of[i]),
             .from = centre(line.from),
             .to = centre(line.to),
-            .piece = result.pieces[i],
+            .piece = shape.result.pieces[i],
         });
     }
-    // Where the partition cannot take it, the stroke is still steered (the
-    // state before the shared boundary) and the faces keep the 3b fit; the
-    // report says so.
-    const std::string why = boundary.apply(shared);
+    return shared;
+}
+
+// Makes the shape the lines' strokes and records it; `why` is why the
+// partition could not take it (empty: the faces share it).
+void apply_shape(PendingShape& shape, int picture, const std::string& why, bool entered,
+                 const std::vector<DrawnLine>& lines, Curves& curves, SceneModelFits& model, SceneStats& stats) {
+    const PrimitiveHint& primitive = *shape.primitive;
+    // The ends where the shape's lines meet (on or next to another line's
+    // end) are inside the shape: the stroke integrity pass leaves them.
+    for (const std::size_t line : shape.line_of) {
+        for (const pic::ScreenPoint end : {lines[line].from, lines[line].to}) {
+            const bool inner = std::ranges::any_of(shape.line_of, [&](std::size_t other) {
+                return other != line &&
+                       std::ranges::any_of(std::array{lines[other].from, lines[other].to}, [&](pic::ScreenPoint e) {
+                           return std::abs(e.x - end.x) <= 1 && std::abs(e.y - end.y) <= 1;
+                       });
+            });
+            if (inner) {
+                model.inner_ends.emplace_back(line, end);
+            }
+        }
+    }
     FittedChain record{.kind = fitted_kind(primitive.kind), .hint = primitive.id, .lines = {}};
-    for (std::size_t i = 0; i < line_of.size(); ++i) {
-        curves.strokes[line_of[i]] = std::move(result.pieces[i]);
-        model.steered[line_of[i]] = true;
-        record.lines.push_back(static_cast<std::int32_t>(lines[line_of[i]].primitive));
+    for (std::size_t i = 0; i < shape.line_of.size(); ++i) {
+        curves.strokes[shape.line_of[i]] = std::move(shape.result.pieces[i]);
+        model.steered[shape.line_of[i]] = true;
+        record.lines.push_back(static_cast<std::int32_t>(lines[shape.line_of[i]].primitive));
     }
     std::ranges::stable_sort(record.lines);
     const auto [first, last] = std::ranges::unique(record.lines);
@@ -1360,23 +1403,54 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
     stats.applied_hints.push_back(HintOutcome{
         .picture = picture,
         .id = primitive.id,
-        .detail = why.empty() ? std::format("drawn as its {} (round trip {}), shared by the faces",
-                                            primitive_name(primitive.kind), result.deviation)
+        .detail = why.empty() ? std::format("drawn as its {} (round trip {}), shared by the faces{}",
+                                            primitive_name(primitive.kind), shape.result.deviation,
+                                            entered ? " (one segment of the partition)" : "")
                               : std::format("drawn as its {} (round trip {}); the faces keep the 3b fit: the shared "
                                             "boundary fails ({})",
-                                            primitive_name(primitive.kind), result.deviation, why),
+                                            primitive_name(primitive.kind), shape.result.deviation, why),
     });
+}
+
+// A `line` shape as one segment of the arrangement, if its ends lie on the
+// doubled grid (pixel centres); nothing for other kinds.
+std::optional<StraightShape> straight_shape(const PendingShape& shape) {
+    if (shape.primitive->kind != PrimitiveKind::Line || shape.result.pieces.empty()) {
+        return std::nullopt;
+    }
+    const auto on_grid = [](Vec2 p) -> std::optional<IntPoint> {
+        const double x = 2 * p.x;
+        const double y = 2 * p.y;
+        if (x != std::floor(x) || y != std::floor(y)) {
+            return std::nullopt;
+        }
+        return IntPoint{.x = static_cast<std::int64_t>(x), .y = static_cast<std::int64_t>(y)};
+    };
+    const auto a = on_grid(shape.result.pieces.front().front());
+    const auto b = on_grid(shape.result.pieces.back().back());
+    if (!a || !b || *a == *b) {
+        return std::nullopt;
+    }
+    return StraightShape{.lines = shape.line_of, .a = *a, .b = *b};
 }
 
 // The primitives of the hypothesis an object follows (A.7), if it is not
 // organic (A.4). An open object, or one decided "keep", steers nothing.
+// The shapes of one object are placed jointly, so that the vertices they
+// share move together; where the partition cannot take them all, each is
+// tried on its own, in order. Where the partition cannot take a shape, its
+// stroke is still steered (the state before the shared boundary) and the
+// faces keep the 3b fit; the report says so.
 void steer_object(const HintLines& find, std::size_t p, const PictureHints& picture, const ObjectHint& object,
                   const std::vector<DrawnLine>& lines, const std::vector<std::vector<std::size_t>>& pixels,
-                  Curves& curves, detail::SharedBoundary& boundary, SceneModelFits& model, SceneStats& stats) {
+                  const std::vector<bool>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
+                  SceneModelFits& model, SceneStats& stats) {
     const Hypothesis* hypothesis = followed_hypothesis(object);
     if (hypothesis == nullptr || is_organic(hypothesis->type)) {
         return;
     }
+    std::vector<PendingShape> shapes;
+    std::vector<bool> taken(lines.size(), false); // Lines of an earlier shape of this object.
     for (const PartHint& part : hypothesis->parts) {
         for (const PrimitiveHint& primitive : part.primitives) {
             const auto found = steer_input(find, p, lines, primitive);
@@ -1387,15 +1461,62 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
             for (const detail::StepCut& cut : detail::step_cuts(input)) {
                 model.square_ends.emplace_back(line_of[cut.line], cut);
             }
-            steer_primitive(input, line_of, picture.picture, primitive, lines, pixels, curves, boundary, model, stats);
+            if (std::ranges::any_of(line_of, [&](std::size_t line) { return taken[line]; })) {
+                continue; // A line in two primitives follows the first.
+            }
+            if (auto shape =
+                    steer_primitive(input, line_of, picture.picture, primitive, lines, pixels, curves, model, stats)) {
+                for (const std::size_t line : line_of) {
+                    taken[line] = true;
+                }
+                shapes.push_back(std::move(*shape));
+            }
         }
+    }
+    if (shapes.empty()) {
+        return;
+    }
+    // Straight shapes already in the arrangement are its boundary.
+    const auto entered = [&](const PendingShape& shape) {
+        return std::ranges::all_of(shape.line_of, [&](std::size_t line) { return in_arrangement[line]; });
+    };
+    std::vector<std::string> why(shapes.size());
+    bool joint = false;
+    if (std::ranges::count_if(shapes, [&](const PendingShape& shape) { return !entered(shape); }) > 1) {
+        std::vector<detail::BoundaryLine> all;
+        for (const PendingShape& shape : shapes) {
+            if (!entered(shape)) {
+                std::ranges::move(boundary_lines(shape, lines), std::back_inserter(all));
+            }
+        }
+        joint = boundary.apply(all).empty();
+    }
+    if (!joint) {
+        for (std::size_t i = 0; i < shapes.size(); ++i) {
+            if (!entered(shapes[i])) {
+                why[i] = boundary.apply(boundary_lines(shapes[i], lines));
+            }
+        }
+    }
+    for (std::size_t i = 0; i < shapes.size(); ++i) {
+        if (!why[i].empty()) {
+            if (auto straight = straight_shape(shapes[i])) {
+                model.straight.push_back(std::move(*straight));
+            }
+        }
+        apply_shape(shapes[i], picture.picture, why[i], entered(shapes[i]), lines, curves, model, stats);
     }
 }
 
 SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vector<DrawnLine>& lines,
-                                    const PlaneView& view, std::span<const PictureHints* const> hints, Curves& curves,
+                                    const PlaneView& view, std::span<const PictureHints* const> hints,
+                                    const std::vector<bool>& in_arrangement, Curves& curves,
                                     detail::SharedBoundary& boundary, SceneStats& stats) {
-    SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
+    SceneModelFits model{.steered = std::vector<bool>(lines.size(), false),
+                         .straight = {},
+                         .records = {},
+                         .square_ends = {},
+                         .inner_ends = {}};
     const HintLines find(trace, lines);
     // The pixels each line owns at 1x (every line counts).
     const std::vector<std::vector<std::size_t>> pixels =
@@ -1405,10 +1526,57 @@ SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vect
             continue;
         }
         for (const ObjectHint& object : hints[p]->objects) {
-            steer_object(find, p, *hints[p], object, lines, pixels, curves, boundary, model, stats);
+            steer_object(find, p, *hints[p], object, lines, pixels, in_arrangement, curves, boundary, model, stats);
         }
     }
     return model;
+}
+
+// Puts each straight shape into the topology as one segment in place of
+// its lines' segments; the connectors at the lines' inner ends go, as
+// those ends are no longer drawn. A shape is kept only if the partition
+// gets no more mixed faces or 1x-block pixels (the rule of gap hints).
+// Whether any shape was put in.
+bool enter_straight_shapes(std::vector<TopoSegment>& topology, const std::vector<StraightShape>& shapes,
+                           const std::vector<DrawnLine>& lines, const PlaneView& view, const pic::DrawTrace& trace,
+                           std::vector<bool>& in_arrangement) {
+    bool entered = false;
+    Partition current = partition(topology, view, trace);
+    for (const StraightShape& shape : shapes) {
+        std::vector<bool> own(lines.size(), false);
+        std::vector<IntPoint> inner_ends;
+        for (const std::size_t line : shape.lines) {
+            own[line] = true;
+            for (const pic::ScreenPoint end : {lines[line].from, lines[line].to}) {
+                if (const IntPoint p = doubled(end); p != shape.a && p != shape.b) {
+                    inner_ends.push_back(p);
+                }
+            }
+        }
+        const auto at_inner_end = [&](const RationalPoint& p) {
+            return std::ranges::any_of(inner_ends, [&](IntPoint e) { return RationalPoint(e) == p; });
+        };
+        std::vector<TopoSegment> candidate;
+        for (const TopoSegment& segment : topology) {
+            const bool own_line = segment.source >= 0 && std::cmp_less(segment.source, lines.size()) &&
+                                  own[static_cast<std::size_t>(segment.source)];
+            const bool inner_connector =
+                segment.source == detail::no_source && (at_inner_end(segment.from) || at_inner_end(segment.to));
+            if (!own_line && !inner_connector) {
+                candidate.push_back(segment);
+            }
+        }
+        candidate.push_back(detail::make_segment(shape.a, shape.b));
+        if (Partition with = partition(candidate, view, trace); no_worse(with, current)) {
+            topology = std::move(candidate);
+            current = std::move(with);
+            for (const std::size_t line : shape.lines) {
+                in_arrangement[line] = true;
+            }
+            entered = true;
+        }
+    }
+    return entered;
 }
 
 // The step corners: each stroke runs on to its end pixel's outer edge and
@@ -1451,6 +1619,9 @@ std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& li
     }
     for (const auto& [line, step] : model.square_ends) {
         stroke_lines[line].fixed.push_back(picture_index(static_cast<int>(step.end.x), static_cast<int>(step.end.y)));
+    }
+    for (const auto& [line, end] : model.inner_ends) {
+        stroke_lines[line].fixed.push_back(picture_index(end.x, end.y - picture_top));
     }
     return stroke_lines;
 }
@@ -1594,33 +1765,49 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     topology.insert(topology.end(), frame.begin(), frame.end());
 
     const PlaneHints plane_hints = resolve_hints(trace, lines, hints, built.stats);
-    Partition parts = close_hinted_gaps(std::move(topology), plane_hints, lines, view, trace, built.stats);
-    copy_face_stats(parts.stats, built.stats);
-    scene.faces = std::move(parts.faces);
-    scene.block_values = block_values(view, trace);
-
     const std::vector<int> owned = owned_pixels(trace, view);
-    Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
-    // The scene model changes the HD picture only, so the visual plane; a
-    // steered shape is the faces' boundary as well as the strokes.
-    SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
-    detail::SharedBoundary boundary(parts.arrangement, curves.fitted);
-    if (plane == Plane::Visual) {
-        model = steer_by_scene_model(trace, lines, view, hints, curves, boundary, built.stats);
+    // A straight steered shape the partition cannot take by moving its
+    // vertices enters the arrangement as one segment, and the plane is
+    // built again (docs/hd-pipeline.md, "The shared boundary").
+    const SceneStats before_steering = built.stats;
+    std::vector<bool> in_arrangement(lines.size(), false);
+    for (bool again = plane == Plane::Visual;; again = false) {
+        Partition parts = close_hinted_gaps(topology, plane_hints, lines, view, trace, built.stats);
+        Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
+        // The scene model changes the HD picture only, so the visual plane;
+        // a steered shape is the faces' boundary as well as the strokes.
+        SceneModelFits model{.steered = std::vector<bool>(lines.size(), false),
+                             .straight = {},
+                             .records = {},
+                             .square_ends = {},
+                             .inner_ends = {}};
+        detail::SharedBoundary boundary(parts.arrangement, curves.fitted);
+        if (plane == Plane::Visual) {
+            model = steer_by_scene_model(trace, lines, view, hints, in_arrangement, curves, boundary, built.stats);
+        }
+        if (again && !model.straight.empty() &&
+            enter_straight_shapes(topology, model.straight, lines, view, trace, in_arrangement)) {
+            built.stats = before_steering;
+            continue;
+        }
+        copy_face_stats(parts.stats, built.stats);
+        scene.faces = std::move(parts.faces);
+        scene.block_values = block_values(view, trace);
+        record_fits(parts.arrangement, curves, lines, plane_hints, model, built.stats);
+        scene.edges =
+            scan_edges(parts.arrangement, curves.fitted, boundary.changed() ? &boundary.overrides() : nullptr);
+        scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
+        square_step_ends(scene.layers, lines, model);
+        // Stroke integrity and occlusion (spec section 6.10) change the HD
+        // picture only, so the visual plane.
+        // The baseline of milestone 3b's report is measured without the pass
+        // (development option SCI_WITHOUT_STROKE_INTEGRITY).
+        if (plane == Plane::Visual && !without_stroke_integrity) {
+            const std::vector<detail::StrokeLine> stroke_lines = stroke_lines_of(lines, model);
+            detail::apply_stroke_integrity(scene.layers, stroke_lines, view.owners, built.stats);
+        }
+        return built;
     }
-    record_fits(parts.arrangement, curves, lines, plane_hints, model, built.stats);
-    scene.edges = scan_edges(parts.arrangement, curves.fitted, boundary.changed() ? &boundary.overrides() : nullptr);
-    scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
-    square_step_ends(scene.layers, lines, model);
-    // Stroke integrity and occlusion (spec section 6.10) change the HD
-    // picture only, so the visual plane.
-    // The baseline of milestone 3b's report is measured without the pass
-    // (development option SCI_WITHOUT_STROKE_INTEGRITY).
-    if (plane == Plane::Visual && !without_stroke_integrity) {
-        const std::vector<detail::StrokeLine> stroke_lines = stroke_lines_of(lines, model);
-        detail::apply_stroke_integrity(scene.layers, stroke_lines, view.owners, built.stats);
-    }
-    return built;
 }
 
 } // namespace sci::vector
