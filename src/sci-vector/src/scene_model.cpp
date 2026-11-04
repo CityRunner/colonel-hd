@@ -237,6 +237,178 @@ std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::spa
     return shape;
 }
 
+// Solves the n x n system m (right-hand side in column n) by Gaussian
+// elimination with partial pivoting; nothing if it is singular.
+template <std::size_t N>
+std::optional<std::array<double, N>> solve(std::array<std::array<double, N + 1>, N> m) {
+    for (std::size_t c = 0; c < N; ++c) {
+        std::size_t pivot = c;
+        for (std::size_t r = c + 1; r < N; ++r) {
+            if (std::abs(m[r][c]) > std::abs(m[pivot][c])) {
+                pivot = r;
+            }
+        }
+        if (!(std::abs(m[pivot][c]) > 1e-300)) {
+            return std::nullopt;
+        }
+        std::swap(m[c], m[pivot]);
+        for (std::size_t r = c + 1; r < N; ++r) {
+            const double f = m[r][c] / m[c][c];
+            for (std::size_t k = c; k <= N; ++k) {
+                m[r][k] -= f * m[c][k];
+            }
+        }
+    }
+    std::array<double, N> x{};
+    for (std::size_t c = N; c-- > 0;) {
+        double sum = m[c][N];
+        for (std::size_t k = c + 1; k < N; ++k) {
+            sum -= m[c][k] * x[k];
+        }
+        x[c] = sum / m[c][c];
+    }
+    return x;
+}
+
+// A whole ellipse: its centre and two conjugate semi-diameters.
+struct EllipseFrame {
+    Vec2 centre;
+    Vec2 u;
+    Vec2 w;
+};
+
+// The ellipse A x^2 + B xy + C y^2 + D x + E y = 1 about the centroid of
+// the lines' pixel centres, fitted by weighted least squares to the anchor
+// points and those pixel centres; nothing if the conic is no ellipse.
+std::optional<EllipseFrame> fit_closed_ellipse(const SteerInput& input) {
+    constexpr double anchor_weight = 1e2;
+    std::vector<Vec2> pixels;
+    for (const SteerLine& line : input.lines) {
+        pic::for_each_line_pixel(line.from, line.to,
+                                 [&](int x, int y) { pixels.push_back(centre({.x = x, .y = y})); });
+    }
+    if (pixels.size() < 5) {
+        return std::nullopt;
+    }
+    Vec2 origin;
+    for (const Vec2 p : pixels) {
+        origin = origin + p;
+    }
+    origin = origin * (1 / static_cast<double>(pixels.size()));
+    std::array<std::array<double, 6>, 5> m{};
+    const auto add = [&](Vec2 p, double weight) {
+        const Vec2 q = p - origin;
+        const std::array<double, 5> row{q.x * q.x, q.x * q.y, q.y * q.y, q.x, q.y};
+        for (std::size_t r = 0; r < 5; ++r) {
+            for (std::size_t c = 0; c < 5; ++c) {
+                m[r][c] += weight * row[r] * row[c];
+            }
+            m[r][5] += weight * row[r];
+        }
+    };
+    for (std::size_t k = 0; k + 1 < input.points.size(); ++k) { // The last point repeats the first.
+        add(input.points[k], anchor_weight);
+    }
+    for (const Vec2 p : pixels) {
+        add(p, 1);
+    }
+    const auto conic = solve<5>(m);
+    if (!conic) {
+        return std::nullopt;
+    }
+    const auto [a, b, c, d, e] = *conic;
+    const double det = (4 * a * c) - (b * b);
+    if (!(a > 0) || !(det > 0)) {
+        return std::nullopt;
+    }
+    // The centre, where the gradient vanishes, and the form about it.
+    const Vec2 offset{.x = ((b * e) - (2 * c * d)) / det, .y = ((b * d) - (2 * a * e)) / det};
+    const double level = 1 + (a * offset.x * offset.x) + (b * offset.x * offset.y) + (c * offset.y * offset.y);
+    if (!(level > 0)) {
+        return std::nullopt;
+    }
+    const auto form = [&](Vec2 p, Vec2 q) {
+        return ((a * p.x * q.x) + (b * 0.5 * ((p.x * q.y) + (p.y * q.x))) + (c * p.y * q.y)) / level;
+    };
+    Vec2 u{.x = 1, .y = 0};
+    u = u * (1 / std::sqrt(form(u, u)));
+    // The conjugate semi-diameter: along the tangent at u's end.
+    const Vec2 qu{.x = (a * u.x) + (b * 0.5 * u.y), .y = (b * 0.5 * u.x) + (c * u.y)};
+    Vec2 w{.x = -qu.y, .y = qu.x};
+    w = w * (1 / std::sqrt(form(w, w)));
+    const EllipseFrame frame{.centre = origin + offset, .u = u, .w = w};
+    if (!std::isfinite(frame.centre.x + frame.centre.y + u.x + u.y + w.x + w.y)) {
+        return std::nullopt;
+    }
+    return frame;
+}
+
+// The point of the unit circle that p maps to in the ellipse's frame (p
+// projected radially onto the ellipse); nothing at the centre.
+std::optional<Vec2> on_unit_circle(const EllipseFrame& frame, Vec2 p) {
+    const Vec2 q = p - frame.centre;
+    const double det = (frame.u.x * frame.w.y) - (frame.u.y * frame.w.x);
+    const Vec2 s{.x = ((q.x * frame.w.y) - (q.y * frame.w.x)) / det,
+                 .y = ((frame.u.x * q.y) - (frame.u.y * q.x)) / det};
+    const double r = length(s);
+    if (!(r > 0) || !std::isfinite(r)) {
+        return std::nullopt;
+    }
+    return s * (1 / r);
+}
+
+// A whole ellipse (first and last point equal): each line's piece is the
+// part of one ellipse, fitted to all the lines, between the line's ends
+// projected onto it, the shorter way round. Ends of two lines on touching
+// pixels meet halfway, so the outline stays connected where it was drawn
+// so; where the lines leave a gap (another object bounds the area there),
+// the gap stays. The lines need not form one path.
+std::optional<std::vector<std::vector<Vec2>>> closed_ellipse_pieces(const SteerInput& input) {
+    const std::optional<EllipseFrame> frame = fit_closed_ellipse(input);
+    if (!frame) {
+        return std::nullopt;
+    }
+    const auto end_point = [&](std::size_t line, bool to) {
+        const pic::ScreenPoint end = to ? input.lines[line].to : input.lines[line].from;
+        for (std::size_t other = 0; other < input.lines.size(); ++other) {
+            if (other == line) {
+                continue;
+            }
+            for (const pic::ScreenPoint e : {input.lines[other].from, input.lines[other].to}) {
+                if (touches(end, e)) {
+                    return (centre(end) + centre(e)) * 0.5;
+                }
+            }
+        }
+        return centre(end);
+    };
+    const auto map = [&](Vec2 p) { return frame->centre + (frame->u * p.x) + (frame->w * p.y); };
+    std::vector<std::vector<Vec2>> pieces;
+    for (std::size_t i = 0; i < input.lines.size(); ++i) {
+        const auto a = on_unit_circle(*frame, end_point(i, false));
+        const auto b = on_unit_circle(*frame, end_point(i, true));
+        if (!a || !b || dot(*a, *b) < 0) {
+            return std::nullopt; // A line spans half the ellipse or more: not a piece of its outline.
+        }
+        std::vector<Vec2> piece{map(*a)};
+        std::vector<std::pair<Vec2, Vec2>> pending{{*a, *b}}; // Last first.
+        while (!pending.empty()) {
+            const auto [p, q] = pending.back();
+            pending.pop_back();
+            const Vec2 half = (p + q) * 0.5;
+            if (length(map(q) - map(p)) <= max_chord || length(half) == 0) {
+                piece.push_back(map(q));
+                continue;
+            }
+            const Vec2 mid = half * (1 / length(half));
+            pending.emplace_back(mid, q);
+            pending.emplace_back(p, mid);
+        }
+        pieces.push_back(std::move(piece));
+    }
+    return pieces;
+}
+
 // u turned by a quarter turn, clockwise on screen (y down) for turn = 1.
 Vec2 quarter_turn(Vec2 u, double turn) {
     return Vec2{.x = -u.y * turn, .y = u.x * turn};
@@ -372,7 +544,7 @@ std::optional<std::vector<Vec2>> shape_of(const SteerInput& input, std::span<con
         return polyline_shape(input, path);
     case PrimitiveKind::Ellipse: {
         if (input.points.size() < 3 || input.points.front() == input.points.back()) {
-            return std::nullopt; // A closed ellipse is fitted as a chain (section 6).
+            return std::nullopt; // A whole ellipse is steered by closed_ellipse_pieces.
         }
         auto shape = ellipse_shape(input, path);
         if (!shape) {
@@ -456,10 +628,33 @@ StepCut square_end(std::size_t line, pic::ScreenPoint end, pic::ScreenPoint othe
     return StepCut{.line = line, .end = c, .edge = edge, .cut = cut};
 }
 
+bool is_closed_ellipse(const SteerInput& input) {
+    return input.kind == PrimitiveKind::Ellipse && input.points.size() >= 4 &&
+           input.points.front() == input.points.back();
+}
+
 } // namespace
 
 Steered steer(const SteerInput& input) {
     Steered result;
+    if (is_closed_ellipse(input)) {
+        if (input.lines.empty()) {
+            return result;
+        }
+        result.applicable = true;
+        std::optional<std::vector<std::vector<Vec2>>> pieces = closed_ellipse_pieces(input);
+        if (!pieces) {
+            result.reason = "no ellipse fits the lines";
+            return result;
+        }
+        result.deviation = round_trip_of(input.lines, *pieces);
+        if (result.deviation > round_trip_limit) {
+            result.reason = std::format("round trip deviation {}", result.deviation);
+            return result;
+        }
+        result.pieces = std::move(*pieces);
+        return result;
+    }
     const std::optional<std::vector<SteerLine>> path = as_path(input.lines);
     if (!path) {
         return result;

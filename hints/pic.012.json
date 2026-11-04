@@ -54,6 +54,31 @@
   ],
   "objects": [
     {
+      "id": "door-lamp-halo",
+      "type": "other",
+      "cell": "A2.4-B3.1",
+      "confidence": 900,
+      "label": "the pale yellow light halo of the lamp by the door",
+      "parts": [
+        {
+          "id": "halo-outline",
+          "role": "highlight",
+          "label": "a whole oval; on the right the shutter bounds it where no line is drawn",
+          "primitives": [
+            {"id": "halo-oval", "kind": "ellipse", "commands": [7, 9, 14, 19, 20, 16, 13, 11, 12, 17, 27, 28, 29, 30, 21, 18, 15, 10, 8],
+             "points": [[123, 51], [136, 63], [136, 86], [123, 96], [108, 73], [123, 51]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "door-lamp-halo",
+        "by": "customer",
+        "date": "2026-11-04",
+        "cell": "A2.4-B3.1",
+        "note": "findings after batch 2: A2.4, A3.3, B2.2, B3.1, the light halo must be oval"
+      }
+    },
+    {
       "id": "window-left-tall",
       "type": "window",
       "cell": "A1.3-C1.2",

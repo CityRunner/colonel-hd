@@ -582,12 +582,31 @@ void add_scan_edge(Vec2 from, Vec2 to, std::int32_t face_forward, std::int32_t f
     edges.push_back(ScanEdge{.top = top, .bottom = bottom, .face_after = down ? face_backward : face_forward});
 }
 
+// The faces' boundaries for the scan: an edge the scene model steered
+// (steered[edge], from its forward half-edge's origin to its twin's) takes
+// that course, an edge of a fitted chain its curve, any other edge stays
+// straight.
 std::vector<ScanEdge> scan_edges(const detail::Arrangement& arrangement,
-                                 const std::vector<detail::FittedChain>& fitted) {
+                                 const std::vector<detail::FittedChain>& fitted,
+                                 const std::vector<std::vector<Vec2>>& steered) {
     std::vector<bool> replaced(arrangement.sources.size(), false);
     std::vector<ScanEdge> edges;
+    for (std::size_t edge = 0; edge < steered.size(); ++edge) {
+        if (steered[edge].empty()) {
+            continue;
+        }
+        replaced[edge] = true;
+        const std::int32_t forward = arrangement.half_edges[2 * edge].face;
+        const std::int32_t backward = arrangement.half_edges[(2 * edge) + 1].face;
+        for (std::size_t k = 0; k + 1 < steered[edge].size(); ++k) {
+            add_scan_edge(steered[edge][k], steered[edge][k + 1], forward, backward, edges);
+        }
+    }
     for (const detail::FittedChain& chain : fitted) {
         for (std::size_t i = 0; i < chain.edges.size(); ++i) {
+            if (replaced[static_cast<std::size_t>(chain.edges[i])]) {
+                continue;
+            }
             replaced[static_cast<std::size_t>(chain.edges[i])] = true;
             const detail::HalfEdge& along = arrangement.half_edges[static_cast<std::size_t>(chain.half_edges[i])];
             const std::int32_t back = arrangement.half_edges[static_cast<std::size_t>(along.twin)].face;
@@ -1210,6 +1229,12 @@ struct SceneModelFits {
     std::vector<bool> steered;                                        // Per line.
     std::vector<FittedChain> records;                                 // One per steered primitive.
     std::vector<std::pair<std::size_t, detail::StepCut>> square_ends; // Lines' ends at step corners.
+    struct Applied {
+        int picture = 0;
+        std::string id;
+        std::vector<std::size_t> lines;
+    };
+    std::vector<Applied> applied; // The steered primitives, with their lines.
 };
 
 std::string_view primitive_name(PrimitiveKind kind) {
@@ -1316,6 +1341,7 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
     const auto [first, last] = std::ranges::unique(record.lines);
     record.lines.erase(first, last);
     model.records.push_back(std::move(record));
+    model.applied.push_back(SceneModelFits::Applied{.picture = picture, .id = primitive.id, .lines = line_of});
     ++stats.scene_model_fits;
     stats.applied_hints.push_back(HintOutcome{
         .picture = picture,
@@ -1351,7 +1377,8 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
 SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vector<DrawnLine>& lines,
                                     const PlaneView& view, std::span<const PictureHints* const> hints, Curves& curves,
                                     SceneStats& stats) {
-    SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
+    SceneModelFits model{
+        .steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}, .applied = {}};
     const HintLines find(trace, lines);
     // The pixels each line owns at 1x (every line counts).
     const std::vector<std::vector<std::size_t>> pixels =
@@ -1459,6 +1486,248 @@ void record_fits(const detail::Arrangement& arrangement, const Curves& curves, c
     }
 }
 
+// Where a point lies along a polyline: the nearest point's segment and its
+// parameter on it.
+std::pair<std::size_t, double> project_onto(const std::vector<Vec2>& path, Vec2 point) {
+    std::pair<std::size_t, double> best{0, 0};
+    double best_distance = 1e300;
+    for (std::size_t j = 0; j + 1 < path.size(); ++j) {
+        const Vec2 d{.x = path[j + 1].x - path[j].x, .y = path[j + 1].y - path[j].y};
+        const double length_squared = (d.x * d.x) + (d.y * d.y);
+        double t = length_squared == 0 ? 0
+                                       : (((point.x - path[j].x) * d.x) + ((point.y - path[j].y) * d.y)) /
+                                             length_squared;
+        t = std::clamp(t, 0.0, 1.0);
+        const double dx = path[j].x + (d.x * t) - point.x;
+        const double dy = path[j].y + (d.y * t) - point.y;
+        if ((dx * dx) + (dy * dy) < best_distance) {
+            best_distance = (dx * dx) + (dy * dy);
+            best = {j, t};
+        }
+    }
+    return best;
+}
+
+// The edge from `from` to `to` along the stroke: from the vertex onto the
+// stroke where it lies nearest, along it, and back to the other vertex.
+std::vector<Vec2> along_stroke(const std::vector<Vec2>& stroke, Vec2 from, Vec2 to) {
+    const auto at = [&](std::pair<std::size_t, double> where) {
+        const Vec2 a = stroke[where.first];
+        const Vec2 b = stroke[where.first + 1];
+        return Vec2{.x = a.x + ((b.x - a.x) * where.second), .y = a.y + ((b.y - a.y) * where.second)};
+    };
+    const auto start = project_onto(stroke, from);
+    const auto end = project_onto(stroke, to);
+    std::vector<Vec2> course{from};
+    const auto push = [&](Vec2 p) {
+        if (course.back() != p) {
+            course.push_back(p);
+        }
+    };
+    push(at(start));
+    if (start <= end) {
+        for (std::size_t j = start.first + 1; j <= end.first; ++j) {
+            push(stroke[j]);
+        }
+    } else {
+        for (std::size_t j = start.first; j > end.first; --j) {
+            push(stroke[j]);
+        }
+    }
+    push(at(end));
+    push(to);
+    return course;
+}
+
+double orientation(Vec2 a, Vec2 b, Vec2 c) {
+    return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
+}
+
+// Where the segments cross at a point inside both (touching ends and
+// collinear overlaps do not count).
+std::optional<Vec2> proper_crossing(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+    const double o1 = orientation(a, b, c);
+    const double o2 = orientation(a, b, d);
+    const double o3 = orientation(c, d, a);
+    const double o4 = orientation(c, d, b);
+    if (!(((o1 > 0 && o2 < 0) || (o1 < 0 && o2 > 0)) && ((o3 > 0 && o4 < 0) || (o3 < 0 && o4 > 0)))) {
+        return std::nullopt;
+    }
+    const double t = o3 / (o3 - o4);
+    return Vec2{.x = a.x + ((b.x - a.x) * t), .y = a.y + ((b.y - a.y) * t)};
+}
+
+// Whether a point lies under a stroke (within half a pixel of its course).
+bool under_stroke(const std::vector<Vec2>& stroke, Vec2 p) {
+    const auto [j, t] = project_onto(stroke, p);
+    const double dx = stroke[j].x + ((stroke[j + 1].x - stroke[j].x) * t) - p.x;
+    const double dy = stroke[j].y + ((stroke[j + 1].y - stroke[j].y) * t) - p.y;
+    return (dx * dx) + (dy * dy) <= 0.25;
+}
+
+// Even-odd rule.
+bool inside_polygon(const std::vector<Vec2>& polygon, Vec2 p) {
+    bool inside = false;
+    for (std::size_t i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+        const Vec2 a = polygon[i];
+        const Vec2 b = polygon[j];
+        if ((a.y > p.y) != (b.y > p.y) && p.x < a.x + ((p.y - a.y) * (b.x - a.x) / (b.y - a.y))) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+struct Bounds {
+    double left = 1e300;
+    double top = 1e300;
+    double right = -1e300;
+    double bottom = -1e300;
+
+    void add(Vec2 p) {
+        left = std::min(left, p.x);
+        top = std::min(top, p.y);
+        right = std::max(right, p.x);
+        bottom = std::max(bottom, p.y);
+    }
+    [[nodiscard]] bool meets(const Bounds& other) const {
+        return left <= other.right && other.left <= right && top <= other.bottom && other.top <= bottom;
+    }
+    [[nodiscard]] bool contains(Vec2 p) const { return p.x >= left && p.x <= right && p.y >= top && p.y <= bottom; }
+};
+
+// The faces follow the steered strokes (spec section 6.6: a face and the
+// line that bounds it share one boundary): every edge of a steered line
+// runs from its vertex onto the line's stroke, along it, and back to its
+// other vertex. The vertices stay, so the edges around them still meet. A
+// primitive whose edges would then cross other edges, or sweep over
+// another vertex, keeps its faces' fit above (listed as such); its strokes
+// stay steered. Crossings and vertices under the steered stroke itself
+// (within half a pixel of it: where the edge leaves its vertex, a
+// connector or a line meeting it there) are allowed: the stroke covers
+// them. Per edge, the course; empty where nothing changes.
+std::vector<std::vector<Vec2>> steer_faces(const detail::Arrangement& arrangement, const Curves& curves,
+                                           const SceneModelFits& model, SceneStats& stats) {
+    const std::size_t edge_count = arrangement.sources.size();
+    std::vector<std::vector<Vec2>> steered(edge_count);
+    if (model.applied.empty()) {
+        return steered;
+    }
+    // Every edge's course as the scan would draw it without the scene model.
+    std::vector<std::vector<Vec2>> current(edge_count);
+    for (const detail::FittedChain& chain : curves.fitted) {
+        for (std::size_t i = 0; i < chain.edges.size(); ++i) {
+            std::vector<Vec2> piece = chain.pieces[i];
+            if (chain.half_edges[i] % 2 == 1) {
+                std::ranges::reverse(piece);
+            }
+            current[static_cast<std::size_t>(chain.edges[i])] = std::move(piece);
+        }
+    }
+    std::vector<Vec2> vertices;
+    vertices.reserve(arrangement.vertices.size());
+    for (const RationalPoint& v : arrangement.vertices) {
+        vertices.push_back(detail::to_picture(v));
+    }
+    const auto ends_of = [&](std::size_t edge) {
+        return std::pair{vertices[static_cast<std::size_t>(arrangement.half_edges[2 * edge].origin)],
+                         vertices[static_cast<std::size_t>(arrangement.half_edges[(2 * edge) + 1].origin)]};
+    };
+    for (std::size_t edge = 0; edge < edge_count; ++edge) {
+        if (current[edge].empty()) {
+            const auto [a, b] = ends_of(edge);
+            current[edge] = {a, b};
+        }
+    }
+    std::vector<Bounds> bounds(edge_count);
+    for (std::size_t edge = 0; edge < edge_count; ++edge) {
+        for (const Vec2 p : current[edge]) {
+            bounds[edge].add(p);
+        }
+    }
+    for (const SceneModelFits::Applied& primitive : model.applied) {
+        std::vector<bool> own(edge_count, false);
+        std::vector<std::pair<std::size_t, std::vector<Vec2>>> courses;
+        std::vector<const std::vector<Vec2>*> strokes_of; // Per course.
+        Bounds area;
+        for (std::size_t edge = 0; edge < edge_count; ++edge) {
+            const std::int32_t source = arrangement.sources[edge];
+            if (source < 0 || std::ranges::find(primitive.lines, static_cast<std::size_t>(source)) ==
+                                  primitive.lines.end()) {
+                continue;
+            }
+            const std::vector<Vec2>& stroke = curves.strokes[static_cast<std::size_t>(source)];
+            if (stroke.size() < 2) {
+                continue;
+            }
+            own[edge] = true;
+            const auto [a, b] = ends_of(edge);
+            courses.emplace_back(edge, along_stroke(stroke, a, b));
+            strokes_of.push_back(&stroke);
+            for (const Vec2 p : courses.back().second) {
+                area.add(p);
+            }
+            for (const Vec2 p : current[edge]) {
+                area.add(p);
+            }
+        }
+        if (courses.empty()) {
+            continue;
+        }
+        bool fits = true;
+        for (std::size_t other = 0; other < edge_count && fits; ++other) {
+            if (own[other] || !bounds[other].meets(area)) {
+                continue;
+            }
+            const std::vector<Vec2>& line = current[other];
+            for (std::size_t c = 0; c < courses.size() && fits; ++c) {
+                const std::vector<Vec2>& course = courses[c].second;
+                for (std::size_t k = 0; k + 1 < course.size() && fits; ++k) {
+                    for (std::size_t m = 0; m + 1 < line.size(); ++m) {
+                        const auto at = proper_crossing(course[k], course[k + 1], line[m], line[m + 1]);
+                        if (at && !under_stroke(*strokes_of[c], *at)) {
+                            fits = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        for (std::size_t c = 0; c < courses.size() && fits; ++c) {
+            const auto& [edge, course] = courses[c];
+            // The area between the edge's old and new course holds no vertex.
+            std::vector<Vec2> polygon = course;
+            polygon.insert(polygon.end(), current[edge].rbegin() + 1, current[edge].rend() - 1);
+            Bounds swept;
+            for (const Vec2 p : polygon) {
+                swept.add(p);
+            }
+            const auto [a, b] = ends_of(edge);
+            for (const Vec2 v : vertices) {
+                if (v != a && v != b && swept.contains(v) && inside_polygon(polygon, v) &&
+                    !under_stroke(*strokes_of[c], v)) {
+                    fits = false;
+                    break;
+                }
+            }
+        }
+        if (!fits) {
+            reject_hint(stats, primitive.picture, primitive.id,
+                        "its faces would cross other edges: the faces keep the 3b boundary, the strokes are steered");
+            continue;
+        }
+        for (auto& [edge, course] : courses) {
+            current[edge] = course;
+            bounds[edge] = Bounds{};
+            for (const Vec2 p : course) {
+                bounds[edge].add(p);
+            }
+            steered[edge] = std::move(course);
+        }
+    }
+    return steered;
+}
+
 // The layers over the faces, in drawing order: visible lines as strokes,
 // solid brushes as shapes, textured brushes as blocks.
 std::vector<Layer> build_layers(const pic::DrawTrace& trace, const PlaneView& view, Plane plane,
@@ -1559,12 +1828,13 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
     // The scene model changes the HD picture only, so the visual plane; the
     // faces keep the fit above.
-    SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
+    SceneModelFits model{
+        .steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}, .applied = {}};
     if (plane == Plane::Visual) {
         model = steer_by_scene_model(trace, lines, view, hints, curves, built.stats);
     }
     record_fits(parts.arrangement, curves, lines, plane_hints, model, built.stats);
-    scene.edges = scan_edges(parts.arrangement, curves.fitted);
+    scene.edges = scan_edges(parts.arrangement, curves.fitted, steer_faces(parts.arrangement, curves, model, built.stats));
     scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
     square_step_ends(scene.layers, lines, model);
     // Stroke integrity and occlusion (spec section 6.10) change the HD
