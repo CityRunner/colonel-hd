@@ -341,28 +341,27 @@ private:
     void close_joints() {
         for (std::size_t i = 0; i < lines_.size(); ++i) {
             for (const std::size_t end : {lines_[i].first(), lines_[i].last()}) {
-                if (!seen(end, i)) {
+                // A step corner of the scene model is drawn as it is.
+                if (!seen(end, i) || lines_[i].is_fixed(end)) {
                     continue;
                 }
-                if (lines_[i].is_fixed(end)) {
-                    continue; // A step corner of the scene model is drawn as it is.
-                }
-                neighbours(end, [&](std::size_t q) {
-                    lines_at(q, [&](std::size_t j) {
-                        if (j == i || !seen(q, j) || lines_[j].fixed_near(end)) {
-                            return;
-                        }
-                        if (lines_[j].is_end(q)) {
-                            if (j > i) {
-                                close_joint(i, end, j, q);
-                            }
-                        } else if (touching(lines_[j].first(), end) || touching(lines_[j].last(), end) ||
-                                   lines_[j].is_end(end)) {
-                            join_near_end(i, end, j);
-                        }
-                    });
-                });
+                neighbours(end,
+                           [&](std::size_t q) { lines_at(q, [&](std::size_t j) { close_joint_at(i, end, j, q); }); });
             }
+        }
+    }
+
+    // The joint of line i's end with line j, which drew the touching pixel q.
+    void close_joint_at(std::size_t i, std::size_t end, std::size_t j, std::size_t q) {
+        if (j == i || !seen(q, j) || lines_[j].fixed_near(end)) {
+            return;
+        }
+        if (lines_[j].is_end(q)) {
+            if (j > i) {
+                close_joint(i, end, j, q);
+            }
+        } else if (touching(lines_[j].first(), end) || touching(lines_[j].last(), end) || lines_[j].is_end(end)) {
+            join_near_end(i, end, j);
         }
     }
 

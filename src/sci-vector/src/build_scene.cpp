@@ -1207,8 +1207,8 @@ Curves fit_with_hints(const detail::Arrangement& arrangement, const std::vector<
 // lines of the primitives of decided and certain objects, as one path,
 // follow the primitive's shape where the round trip allows it.
 struct SceneModelFits {
-    std::vector<bool> steered;                            // Per line.
-    std::vector<FittedChain> records;                     // One per steered primitive.
+    std::vector<bool> steered;                                        // Per line.
+    std::vector<FittedChain> records;                                 // One per steered primitive.
     std::vector<std::pair<std::size_t, detail::StepCut>> square_ends; // Lines' ends at step corners.
 };
 
@@ -1260,9 +1260,10 @@ const Hypothesis* followed_hypothesis(const ObjectHint& object) {
 
 // The input of one primitive, with the plane's line of each command;
 // nothing if a command draws no line here, or only a dot.
-std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>>
-steer_input(const HintLines& find, std::size_t picture, const std::vector<DrawnLine>& lines,
-            const PrimitiveHint& primitive) {
+std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>> steer_input(const HintLines& find,
+                                                                                   std::size_t picture,
+                                                                                   const std::vector<DrawnLine>& lines,
+                                                                                   const PrimitiveHint& primitive) {
     detail::SteerInput input{.kind = primitive.kind, .lines = {}, .points = {}, .corner = {}};
     std::vector<std::size_t> line_of;
     for (const LineRef ref : primitive.commands) {
@@ -1327,6 +1328,29 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
     });
 }
 
+// The primitives of the hypothesis an object follows (A.7), if it is not
+// organic (A.4).
+void steer_object(const HintLines& find, std::size_t p, const PictureHints& picture, const ObjectHint& object,
+                  const std::vector<DrawnLine>& lines, Curves& curves, SceneModelFits& model, SceneStats& stats) {
+    const Hypothesis* hypothesis = followed_hypothesis(object);
+    if (hypothesis == nullptr || is_organic(hypothesis->type)) {
+        return;
+    }
+    for (const PartHint& part : hypothesis->parts) {
+        for (const PrimitiveHint& primitive : part.primitives) {
+            const auto found = steer_input(find, p, lines, primitive);
+            if (!found) {
+                continue;
+            }
+            const auto& [input, line_of] = *found;
+            for (const detail::StepCut& cut : detail::step_cuts(input)) {
+                model.square_ends.emplace_back(line_of[cut.line], cut);
+            }
+            steer_primitive(input, line_of, picture.picture, primitive, lines, curves, model, stats);
+        }
+    }
+}
+
 SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vector<DrawnLine>& lines,
                                     std::span<const PictureHints* const> hints, Curves& curves, SceneStats& stats) {
     SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
@@ -1336,26 +1360,54 @@ SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vect
             continue;
         }
         for (const ObjectHint& object : hints[p]->objects) {
-            const Hypothesis* hypothesis = followed_hypothesis(object);
-            if (hypothesis == nullptr || is_organic(hypothesis->type)) {
+            steer_object(find, p, *hints[p], object, lines, curves, model, stats);
+        }
+    }
+    return model;
+}
+
+// The step corners: each stroke runs on to its end pixel's outer edge and
+// is cut there.
+void square_step_ends(std::vector<Layer>& layers, const std::vector<DrawnLine>& lines, const SceneModelFits& model) {
+    for (const auto& [line, step] : model.square_ends) {
+        for (Layer& layer : layers) {
+            auto* stroke = std::get_if<Stroke>(&layer);
+            if (stroke == nullptr || !std::cmp_equal(stroke->source, lines[line].primitive)) {
                 continue;
             }
-            for (const PartHint& part : hypothesis->parts) {
-                for (const PrimitiveHint& primitive : part.primitives) {
-                    const auto found = steer_input(find, p, lines, primitive);
-                    if (!found) {
-                        continue;
-                    }
-                    const auto& [input, line_of] = *found;
-                    for (const detail::StepCut& cut : detail::step_cuts(input)) {
-                        model.square_ends.emplace_back(line_of[cut.line], cut);
-                    }
-                    steer_primitive(input, line_of, hints[p]->picture, primitive, lines, curves, model, stats);
+            for (Vec2* end : {&stroke->points.front(), &stroke->points.back()}) {
+                if (*end == step.end) {
+                    *end = step.edge;
+                    stroke->cuts.push_back(step.cut);
+                    break;
                 }
             }
         }
     }
-    return model;
+}
+
+// The lines as the stroke integrity pass sees them: the pixels each drew,
+// and the ends the scene model fixed.
+std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& lines, const SceneModelFits& model) {
+    std::vector<detail::StrokeLine> stroke_lines;
+    stroke_lines.reserve(lines.size());
+    for (const DrawnLine& line : lines) {
+        detail::StrokeLine stroke_line{
+            .primitive = static_cast<std::int32_t>(line.primitive),
+            .path = {},
+            .fixed = {},
+        };
+        pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) {
+            if (y >= picture_top && y < picture_top + picture_height) {
+                stroke_line.path.push_back(picture_index(x, y - picture_top));
+            }
+        });
+        stroke_lines.push_back(std::move(stroke_line));
+    }
+    for (const auto& [line, step] : model.square_ends) {
+        stroke_lines[line].fixed.push_back(picture_index(static_cast<int>(step.end.x), static_cast<int>(step.end.y)));
+    }
+    return stroke_lines;
 }
 
 FittedKind fitted_kind(detail::CurveKind kind) {
@@ -1513,45 +1565,13 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     record_fits(parts.arrangement, curves, lines, plane_hints, model, built.stats);
     scene.edges = scan_edges(parts.arrangement, curves.fitted);
     scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
-    for (const auto& [line, step] : model.square_ends) {
-        for (Layer& layer : scene.layers) {
-            auto* stroke = std::get_if<Stroke>(&layer);
-            if (stroke == nullptr || !std::cmp_equal(stroke->source, lines[line].primitive)) {
-                continue;
-            }
-            for (Vec2* end : {&stroke->points.front(), &stroke->points.back()}) {
-                if (*end == step.end) {
-                    *end = step.edge;
-                    stroke->cuts.push_back(step.cut);
-                    break;
-                }
-            }
-        }
-    }
+    square_step_ends(scene.layers, lines, model);
     // Stroke integrity and occlusion (spec section 6.10) change the HD
     // picture only, so the visual plane.
     // The baseline of milestone 3b's report is measured without the pass
     // (development option SCI_WITHOUT_STROKE_INTEGRITY).
     if (plane == Plane::Visual && !without_stroke_integrity) {
-        std::vector<detail::StrokeLine> stroke_lines;
-        stroke_lines.reserve(lines.size());
-        for (std::size_t i = 0; i < lines.size(); ++i) {
-            const DrawnLine& line = lines[i];
-            detail::StrokeLine stroke_line{
-                .primitive = static_cast<std::int32_t>(line.primitive), .path = {}, .fixed = {}};
-            pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) {
-                if (y >= picture_top && y < picture_top + picture_height) {
-                    stroke_line.path.push_back(picture_index(x, y - picture_top));
-                }
-            });
-            for (const auto& [square, step] : model.square_ends) {
-                if (square == i) {
-                    stroke_line.fixed.push_back(
-                        picture_index(static_cast<int>(step.end.x), static_cast<int>(step.end.y)));
-                }
-            }
-            stroke_lines.push_back(std::move(stroke_line));
-        }
+        const std::vector<detail::StrokeLine> stroke_lines = stroke_lines_of(lines, model);
         detail::apply_stroke_integrity(scene.layers, stroke_lines, view.owners, built.stats);
     }
     return built;

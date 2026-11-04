@@ -808,7 +808,7 @@ RepetitionHint read_repetition(Reader& in, const JsonValue& value, const std::st
         Decision d = read_decision(in, *decision, at);
         if (in.ok() && d.hypothesis != repetition_repeat && d.hypothesis != repetition_as_drawn) {
             in.fail(at + ".hypothesis",
-                    std::format("\"{}\" or \"{}\" expected", repetition_repeat, repetition_as_drawn));
+                    std::format(R"("{}" or "{}" expected)", repetition_repeat, repetition_as_drawn));
         }
         repetition.decision = std::move(d);
     }

@@ -59,12 +59,14 @@ SCI_TEST(step_corners_reproduce_a_pixel_staircase_exactly) {
     };
     const auto cuts = sci::vector::detail::step_cuts(input);
     SCI_CHECK(cuts.size() == 3);
+
     // Each stroke as build_scene makes it: run on to the pixel's edge, cut there.
     struct Stroke {
         Vec2 a;
         Vec2 b;
         std::vector<Cut> cuts;
     };
+
     std::vector<Stroke> strokes;
     for (std::size_t i = 0; i < input.lines.size(); ++i) {
         const SteerLine& l = input.lines[i];
@@ -116,13 +118,21 @@ SCI_TEST(only_axis_lines_at_step_corners_are_squared) {
 // within the tolerance, cut where the lines meet.
 SCI_TEST(half_ellipse_fits_within_the_tolerance) {
     constexpr std::array<Vec2, 9> half{
-        Vec2{.x = -1, .y = 0},           Vec2{.x = -0.92388, .y = 0.38268}, Vec2{.x = -0.70711, .y = 0.70711},
-        Vec2{.x = -0.38268, .y = 0.92388}, Vec2{.x = 0, .y = 1},              Vec2{.x = 0.38268, .y = 0.92388},
-        Vec2{.x = 0.70711, .y = 0.70711},  Vec2{.x = 0.92388, .y = 0.38268},  Vec2{.x = 1, .y = 0},
+        Vec2{.x = -1, .y = 0},
+        Vec2{.x = -0.92388, .y = 0.38268},
+        Vec2{.x = -0.70711, .y = 0.70711},
+        Vec2{.x = -0.38268, .y = 0.92388},
+        Vec2{.x = 0, .y = 1},
+        Vec2{.x = 0.38268, .y = 0.92388},
+        Vec2{.x = 0.70711, .y = 0.70711},
+        Vec2{.x = 0.92388, .y = 0.38268},
+        Vec2{.x = 1, .y = 0},
     };
     std::vector<std::array<int, 2>> knots;
+    knots.reserve(half.size());
     for (const Vec2 u : half) {
-        knots.push_back({static_cast<int>(std::lround(100 + (20 * u.x))), static_cast<int>(std::lround(60 - (12 * u.y)))});
+        knots.push_back(
+            {static_cast<int>(std::lround(100 + (20 * u.x))), static_cast<int>(std::lround(60 - (12 * u.y)))});
     }
     SteerInput input{.kind = PrimitiveKind::Ellipse, .lines = {}, .points = {}, .corner = {}};
     std::vector<Vec2> drawn;
@@ -192,7 +202,7 @@ SCI_TEST(a_fit_that_fails_the_round_trip_is_not_used) {
     const auto steered = sci::vector::detail::steer(input);
     SCI_CHECK(steered.applicable && steered.pieces.empty());
     SCI_CHECK(steered.deviation > sci::vector::detail::round_trip_limit);
-    SCI_CHECK(steered.reason.find("round trip") != std::string::npos);
+    SCI_CHECK(steered.reason.contains("round trip"));
 }
 
 // Lines side by side (a bar drawn two lines wide) are no path.
@@ -209,8 +219,8 @@ SCI_TEST(lines_side_by_side_are_not_steered) {
 SCI_TEST(round_trip_raster_of_a_straight_stroke_is_path_1s_line) {
     const std::array<Vec2, 2> stroke{centre(3, 4), centre(17, 9)};
     const auto back = sci::vector::rasterize_1x(stroke);
-    const auto drawn =
-        sci::vector::line_pixels_1x(ScreenPoint{.x = 3, .y = 4 + picture_top}, ScreenPoint{.x = 17, .y = 9 + picture_top});
+    const auto drawn = sci::vector::line_pixels_1x(ScreenPoint{.x = 3, .y = 4 + picture_top},
+                                                   ScreenPoint{.x = 17, .y = 9 + picture_top});
     SCI_CHECK(back == drawn);
     SCI_CHECK(sci::vector::raster_deviation(back, drawn) == 0);
 }

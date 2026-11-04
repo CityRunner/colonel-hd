@@ -60,10 +60,11 @@ bool alongside(const SteerLine& a, const SteerLine& b) {
     for (const std::uint32_t q : pb) {
         const auto qx = static_cast<int>(q % picture_width);
         const auto qy = static_cast<int>(q / picture_width);
-        near += std::ranges::any_of(pa, [&](std::uint32_t p) {
-                    return std::abs(static_cast<int>(p % picture_width) - qx) <= 1 &&
-                           std::abs(static_cast<int>(p / picture_width) - qy) <= 1;
-                })
+        near += std::ranges::any_of(pa,
+                                    [&](std::uint32_t p) {
+                                        return std::abs(static_cast<int>(p % picture_width) - qx) <= 1 &&
+                                               std::abs(static_cast<int>(p / picture_width) - qy) <= 1;
+                                    })
                     ? 1
                     : 0;
     }
@@ -167,9 +168,7 @@ std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::spa
         side = side + (input.points[k] - middle);
     }
     for (const SteerLine& line : path) {
-        pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) {
-            add(centre({.x = x, .y = y}), 1);
-        });
+        pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) { add(centre({.x = x, .y = y}), 1); });
     }
     // Cramer's rule.
     const auto det3 = [](const std::array<std::array<double, 4>, 3>& a, std::size_t replace) {
@@ -188,7 +187,9 @@ std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::spa
     if (!(a > 0) || !(((4 * a * c) - (b * b)) > 0)) {
         return std::nullopt;
     }
-    const auto form = [&](Vec2 p, Vec2 q) { return (a * p.x * q.x) + (b * 0.5 * ((p.x * q.y) + (p.y * q.x))) + (c * p.y * q.y); };
+    const auto form = [&](Vec2 p, Vec2 q) {
+        return (a * p.x * q.x) + (b * 0.5 * ((p.x * q.y) + (p.y * q.x))) + (c * p.y * q.y);
+    };
     const double scale = form(u, u);
     if (!(scale > 0)) {
         return std::nullopt;
@@ -272,65 +273,55 @@ std::vector<std::vector<Vec2>> split(const std::vector<Vec2>& shape, std::span<c
     return pieces;
 }
 
-} // namespace
-
-Steered steer(const SteerInput& input) {
-    Steered result;
-    if (input.kind != PrimitiveKind::Line && input.kind != PrimitiveKind::Polyline &&
-        input.kind != PrimitiveKind::Ellipse) {
-        return result;
-    }
-    const std::optional<std::vector<SteerLine>> path = as_path(input.lines);
-    if (!path) {
-        return result;
-    }
-    std::optional<std::vector<Vec2>> shape;
+// The shape a primitive asks for, along the path; nothing if the kind is
+// not steered here, or (with a reason) if no shape of that kind fits.
+std::optional<std::vector<Vec2>> shape_of(const SteerInput& input, std::span<const SteerLine> path,
+                                          std::string& reason) {
     switch (input.kind) {
     case PrimitiveKind::Line:
-        shape = std::vector<Vec2>{centre(path->front().from), centre(path->back().to)};
-        break;
+        return std::vector<Vec2>{centre(path.front().from), centre(path.back().to)};
     case PrimitiveKind::Polyline:
-        shape = polyline_shape(input, *path);
-        break;
-    case PrimitiveKind::Ellipse:
+        return polyline_shape(input, path);
+    case PrimitiveKind::Ellipse: {
         if (input.points.size() < 3 || input.points.front() == input.points.back()) {
-            return result; // A closed ellipse is fitted as a chain (section 6).
+            return std::nullopt; // A closed ellipse is fitted as a chain (section 6).
         }
-        shape = ellipse_shape(input, *path);
+        auto shape = ellipse_shape(input, path);
         if (!shape) {
-            result.applicable = true;
-            result.reason = "no ellipse fits the lines";
-            return result;
+            reason = "no ellipse fits the lines";
         }
-        break;
+        return shape;
+    }
     default:
-        break;
+        return std::nullopt;
     }
-    if (!shape) {
-        return result;
-    }
-    result.applicable = true;
+}
+
+// Where consecutive lines of the path meet: halfway between their end
+// pixels, or at a polyline's corner within one pixel of that.
+std::vector<Vec2> joints_of(const SteerInput& input, std::span<const SteerLine> path, const std::vector<Vec2>& shape) {
     std::vector<Vec2> joints;
-    for (std::size_t i = 0; i + 1 < path->size(); ++i) {
-        Vec2 joint = (centre((*path)[i].to) + centre((*path)[i + 1].from)) * 0.5;
-        // Lines that meet at a polyline's corner meet exactly there.
+    for (std::size_t i = 0; i + 1 < path.size(); ++i) {
+        Vec2 joint = (centre(path[i].to) + centre(path[i + 1].from)) * 0.5;
         if (input.kind == PrimitiveKind::Polyline) {
-            for (std::size_t k = 1; k + 1 < shape->size(); ++k) {
-                const Vec2 corner = (*shape)[k];
-                if (std::abs(corner.x - joint.x) <= 1 && std::abs(corner.y - joint.y) <= 1) {
-                    joint = corner;
-                    break;
-                }
+            const auto corner = std::ranges::find_if(shape.begin() + 1, shape.end() - 1, [&](Vec2 c) {
+                return std::abs(c.x - joint.x) <= 1 && std::abs(c.y - joint.y) <= 1;
+            });
+            if (corner != shape.end() - 1) {
+                joint = *corner;
             }
         }
         joints.push_back(joint);
     }
-    std::vector<std::vector<Vec2>> pieces = split(*shape, joints);
-    // The round trip (A4 A.6) over the whole primitive.
+    return joints;
+}
+
+// The round trip (A4 A.6) of the pieces against the path's lines.
+int round_trip_of(std::span<const SteerLine> path, const std::vector<std::vector<Vec2>>& pieces) {
     std::vector<std::uint32_t> original;
     std::vector<std::uint32_t> reconstructed;
-    for (std::size_t i = 0; i < path->size(); ++i) {
-        const std::vector<std::uint32_t> drawn = line_pixels_1x((*path)[i].from, (*path)[i].to);
+    for (std::size_t i = 0; i < path.size(); ++i) {
+        const std::vector<std::uint32_t> drawn = line_pixels_1x(path[i].from, path[i].to);
         original.insert(original.end(), drawn.begin(), drawn.end());
         const std::vector<std::uint32_t> back = rasterize_1x(pieces[i]);
         reconstructed.insert(reconstructed.end(), back.begin(), back.end());
@@ -340,7 +331,52 @@ Steered steer(const SteerInput& input) {
         const auto [first, last] = std::ranges::unique(*pixels);
         pixels->erase(first, last);
     }
-    result.deviation = raster_deviation(original, reconstructed);
+    return raster_deviation(original, reconstructed);
+}
+
+bool is_step_corner(const SteerInput& input, Vec2 point) {
+    for (std::size_t k = 0; k < input.points.size(); ++k) {
+        if (input.corner[k] == CornerKind::Step && input.points[k] == point) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// The square end at `end` of a horizontal or vertical line whose other end
+// is `other`.
+StepCut square_end(std::size_t line, pic::ScreenPoint end, pic::ScreenPoint other, bool horizontal) {
+    const Vec2 c = centre(end);
+    const auto x = static_cast<double>(end.x);
+    const auto y = static_cast<double>(end.y - pic::picture_top);
+    Cut cut;
+    if (horizontal) {
+        cut = end.x < other.x ? Cut{.point = {.x = x, .y = y}, .normal = {.x = -1, .y = 0}}
+                              : Cut{.point = {.x = x + 1, .y = y}, .normal = {.x = 1, .y = 0}};
+    } else {
+        cut = end.y < other.y ? Cut{.point = {.x = x, .y = y}, .normal = {.x = 0, .y = -1}}
+                              : Cut{.point = {.x = x, .y = y + 1}, .normal = {.x = 0, .y = 1}};
+    }
+    const Vec2 edge = horizontal ? Vec2{.x = cut.point.x, .y = c.y} : Vec2{.x = c.x, .y = cut.point.y};
+    return StepCut{.line = line, .end = c, .edge = edge, .cut = cut};
+}
+
+} // namespace
+
+Steered steer(const SteerInput& input) {
+    Steered result;
+    const std::optional<std::vector<SteerLine>> path = as_path(input.lines);
+    if (!path) {
+        return result;
+    }
+    const std::optional<std::vector<Vec2>> shape = shape_of(input, *path, result.reason);
+    if (!shape) {
+        result.applicable = !result.reason.empty();
+        return result;
+    }
+    result.applicable = true;
+    std::vector<std::vector<Vec2>> pieces = split(*shape, joints_of(input, *path, *shape));
+    result.deviation = round_trip_of(*path, pieces);
     if (result.deviation > round_trip_limit) {
         result.reason = std::format("round trip deviation {}", result.deviation);
         return result;
@@ -367,26 +403,11 @@ std::vector<StepCut> step_cuts(const SteerInput& input) {
         if (!horizontal && !vertical) {
             continue;
         }
-        for (const auto& [end, other] : {std::pair{line.from, line.to}, std::pair{line.to, line.from}}) {
-            const Vec2 c = centre(end);
-            bool step = false;
-            for (std::size_t k = 0; k < input.points.size(); ++k) {
-                step = step || (input.corner[k] == CornerKind::Step && input.points[k] == c);
-            }
-            if (!step) {
-                continue;
-            }
-            const double y = end.y - pic::picture_top;
-            Cut cut;
-            if (horizontal) {
-                cut = end.x < other.x ? Cut{.point = {.x = static_cast<double>(end.x), .y = y}, .normal = {.x = -1, .y = 0}}
-                                      : Cut{.point = {.x = end.x + 1.0, .y = y}, .normal = {.x = 1, .y = 0}};
-            } else {
-                cut = end.y < other.y ? Cut{.point = {.x = static_cast<double>(end.x), .y = y}, .normal = {.x = 0, .y = -1}}
-                                      : Cut{.point = {.x = static_cast<double>(end.x), .y = y + 1}, .normal = {.x = 0, .y = 1}};
-            }
-            const Vec2 edge = horizontal ? Vec2{.x = cut.point.x, .y = c.y} : Vec2{.x = c.x, .y = cut.point.y};
-            cuts.push_back(StepCut{.line = i, .end = c, .edge = edge, .cut = cut});
+        if (is_step_corner(input, centre(line.from))) {
+            cuts.push_back(square_end(i, line.from, line.to, horizontal));
+        }
+        if (is_step_corner(input, centre(line.to))) {
+            cuts.push_back(square_end(i, line.to, line.from, horizontal));
         }
     }
     return cuts;
