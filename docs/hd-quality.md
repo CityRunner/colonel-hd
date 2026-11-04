@@ -123,6 +123,30 @@ Measured the same way on branch `m10-shared-boundary` (`docs/hd-pipeline.md`,
   the deviation lets through; 6 curtain rings): 44 share their boundary,
   14 keep 3b faces (see `docs/ASSUMPTIONS.md`).
 
+## After relation solving (2026-11-04)
+
+Measured on branch `m10-relations` (`docs/hd-pipeline.md`, "Relation
+solving"; picture 42's rhombus added) against the `milestone-10` build:
+
+- Round trip: 13208 chains, 13191 pass, 17 fail (was 13202 / 13185 / 17;
+  the same 17 fail). New chains: picture 42's two rhombus polylines,
+  picture 12's riser feet and fence rails (now steered through solved
+  points).
+- Acceptance (section 6.4): unchanged; 0 untouched line pixels; the same
+  12 pixels taken within the A.6 tolerance (the rhombus needs none).
+- A1 residuals, only pictures 12 and 42 change: picture 12 overshoots 177
+  -> 178, breaks 235 -> 237; picture 42 fragments 74 -> 75, breaks 132 ->
+  134 (the rhombus corners, where the two halves now meet at one point).
+- Smoothing suspects: identical (`--smoothing-suspects` output equal).
+- Relations: solved in picture 12 (`front-steps` 0.31 px, `picket-fence`
+  0.16 px) and 42 (`cabinet-rhombus`, 1.00 px); `cellar-bulkhead` solved
+  but steered unsolved (the solved leaf edge lost its shared boundary and
+  showed slivers); not solved by rule in 12 `window-left-tall` and 74
+  `attic-stairs` (decided over alternatives, as drawn); not solvable
+  (items not steered lines) in 12 `window-upper-left`, `-mid`, 58
+  `back-window-left`, `-right`; picture 174 and 58's `rose-window` hold as
+  drawn.
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted
