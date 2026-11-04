@@ -88,13 +88,15 @@ contain nothing derived from the game art beyond a description.
 Milestone 10 (addendum A4, part A, in `docs/SPEC_ADDENDA.md`) describes
 each picture as objects made of parts, and parts made of primitives. Two
 optional members hold this: `objects` and `repetitions`. From milestone
-10 the vector path uses the `line`, `polyline` and open `ellipse`
+10 the vector path uses the `line`, `polyline`, `arc` and open `ellipse`
 primitives of decided and certain objects to steer the fit
 (`docs/hd-pipeline.md`, section 6): an open object (alternatives, no
 decision) and an object decided `keep` keep their milestone 3b
 reconstruction, and repetitions are not rendered yet. An `ellipse` whose first and last points differ is half of
 an ellipse, those two points being the ends of a diameter (a round arch
-seen in perspective); `step` corners of a polyline square the ends of its
+seen in perspective); an `arc` is one circular arc from its first line's
+start to its last line's end, in the direction the first line leaves the
+start, and may turn by more than half a circle (a hook); `step` corners of a polyline square the ends of its
 horizontal and vertical lines there.
 
 **Versions.** Files with the scene model say `"version": 2`. A version 1

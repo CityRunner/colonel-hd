@@ -181,12 +181,12 @@ with `src/sci-vector/src/scene_model.cpp`:
   one; the main one of an object without alternatives (certain). An open
   object (alternatives, no decision) keeps the reconstruction above.
   Organic objects (A.4) are never steered. Repetitions are not rendered.
-- **Which primitives.** `line`, `polyline` and open `ellipse`, whose
+- **Which primitives.** `line`, `polyline`, `arc` and open `ellipse`, whose
   commands draw lines in this plane that form one path in the
   primitive's order: each starts on or next to the pixel where the
   previous one ends (either direction), and no two consecutive lines run
   side by side (more than two pixels next to each other: a bar drawn two
-  lines wide, stacked treads). Arcs and splines keep the fit above.
+  lines wide, stacked treads). Splines keep the fit above.
 - **The shape.** `line`: one straight segment between the path's ends.
   `polyline`: straight segments meeting at its inner points, each at the
   nearest line end within one pixel (a `rounded` corner leaves the
@@ -194,7 +194,12 @@ with `src/sci-vector/src/scene_model.cpp`:
   path's ends as a diameter, the conic about their midpoint fitted by
   weighted least squares to the ends, the anchor points and the lines'
   pixel centres, and drawn through its conjugate diameters (+, -, *, /
-  and sqrt only; chords of at most 0.25 pixel).
+  and sqrt only; chords of at most 0.25 pixel). `arc` (batch 2): a
+  circle x^2 + y^2 + Dx + Ey + F = 0 fitted by weighted least squares to
+  the path's ends (strongly), the anchor points and the lines' pixel
+  centres, followed from the start in the direction the first line
+  leaves it to the end, through quarter turns, so it may turn by more
+  than half a circle (a hook), and flattened the same way.
 - **The strokes.** The shape is cut where consecutive lines meet (halfway
   between their end pixels, or at a polyline corner within one pixel of
   that), and each line's stroke becomes its piece. The faces keep the
@@ -204,9 +209,12 @@ with `src/sci-vector/src/scene_model.cpp`:
   `sci/render/round_trip.hpp`), must lie within 1 original pixel of the
   lines' pixels (A.6). Otherwise nothing changes, and the replacement
   report lists the primitive with the deviation ("the 3b reconstruction
-  stays"). A primitive that changes nothing is not recorded; one that
+  stays"). As for a chain hint, every pixel each line owns at 1x must
+  still be touched by its piece (the line check of section 8); otherwise
+  the 3b reconstruction stays too ("the shape misses pixels its lines
+  own"). A primitive that changes nothing is not recorded; one that
   does is listed as applied, and is a chain of the round-trip check of
-  kind `line`, `polyline` or `ellipse`, named after the primitive.
+  kind `line`, `polyline`, `arc` or `ellipse`, named after the primitive.
 - **Step corners** (`step` in a polyline's `corners`): the end of a
   horizontal or vertical line of the primitive at that pixel runs on to
   the pixel's outer edge and is cut there, square to the line. Stacked

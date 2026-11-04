@@ -3431,3 +3431,67 @@ files as a decision with its cell reference (A4 A.7, B.4).
   be fixed like batch 1 unless you object"; no objection): each arch is
   half of an ellipse through the drawn springers and crown, with the bars
   meeting it. **Decided (customer, by not objecting).**
+
+## Milestone 10: batch 2 applied (2026-11-04)
+
+The customer's answers to batch 2 (above) in the hint files and the
+rendering (branch `m10-batch2-fixes`).
+
+- **Decisions written** (`by: "customer"`, 2026-11-04, with the cell;
+  files at version 2): picture 37 `stair-railing` (B5.3) and picture 61
+  `sofa-cushion` (B3.2-B4.1) decided `keep`, their HD pixel-identical
+  (0 changed pixels in the crops, golden hashes unchanged); picture 20
+  `window-eaves` (A2.3-B2.2), picture 57 `stained-glass-panel` (A2),
+  picture 71 `curtain-rail-hook` (A4), picture 15 `window-plant`
+  (A2.1-A2.2), picture 10 `window-shutters-left` and `-right`
+  (A3.1-A4.3), picture 42 `window-curtain-left` and `-right`
+  (A3.1-A4.2), picture 44 `window-curtain` (A3.2) decided as their main
+  (only) hypothesis. **Decided (customer).**
+- **What the objects hold.** Arched windows: the inner arch as an open
+  `ellipse` from springer to springer through the crown, the outer edge
+  of the frame as a second `ellipse` where it ends on the springing line,
+  the springers and the bars as `line` primitives (a bar drawn two lines
+  wide is one primitive per line, which keeps its fit and still meets the
+  arch through the stroke integrity pass). The cyan bead of the curtained
+  windows of pictures 42 and 44 runs only from the left springer to the
+  crown, so it is an `arc`, not a half ellipse. Picture 57: the four
+  rounded edges of the two medallions as half ellipses. Picture 71: the
+  red rail's inner line (commands 89-94) and outer line (96-101) as
+  `arc`s. **Assumed** (the analyser's reading of the answers).
+- **Arc steering.** The hook of picture 71 turns by about 195 degrees on
+  the inner line and the customer asked for a circular bend, which a half
+  ellipse does not give, so `arc` primitives are steered: a circle fitted
+  by least squares, followed the way the first line leaves the start, with
+  the same round trip; unit tests on a three-quarter hook, the direction
+  and a contradicted arc. This also steers the two decided `arc`s of
+  picture 12 (the shutter tops of `window-left-tall`; deviation 1), which
+  were not in batch 2: they are smooth arcs now (crop
+  `pic-012-crop-A1-changed-before-after.png`). **Assumed**; the customer
+  may want to look at it.
+- **Command 104 and 102 left out of the hook.** With 104 (the arrow tip's
+  down-stroke) the inner circle fails the round trip (deviation 2), and
+  so does the outer one with 102 (where the rail runs straight down);
+  without them both pass with deviation 1. **Assumed.**
+- **The line check for steered shapes.** The first run left 4 and 3 line
+  pixels untouched in pictures 20 and 42 (spec 6.4 needs 0). A steered
+  shape must now touch every pixel its lines own at 1x, as a chain hint
+  must; otherwise the 3b reconstruction stays. Fallbacks: picture 20's
+  outer arch edge, picture 42's right outer arch and right cyan bead,
+  picture 57's lower edge of the upper medallion. **Decided** (A.8: the
+  result obeys section 6.4).
+- **Checks.** Round trip, acceptance, A1 counts and smoothing suspects in
+  `docs/hd-quality.md`, "After batch 2". Golden hashes differ from the
+  committed file in 60 entries: the 28 of batch 1 and pictures 10, 15,
+  20, 42, 44, 57, 71 and the stack 42+162 (all four HD scales each);
+  pictures 37 and 61 and every original-mode hash are unchanged. Not
+  regenerated (milestone 10 gate). **Finding.**
+- **Seen in the review images** (`reports/images/milestone-10/batch-2-fixes/`,
+  git ignored): the arches of pictures 10, 15 and 44 and the left window
+  of 42 are smooth curves; picture 20's inner arch is smooth, its outer
+  edge still faceted (fallback); picture 57's medallion ends are smooth
+  except the upper medallion's lower edge (fallback), with small light
+  slivers where the faces keep their old fit; picture 71's red outline
+  lines are a smooth bend, but the yellow highlight and the grey line
+  along the hook (other commands, not in the decision's list) still show
+  their joints, so at review size the hook looks much as before.
+  **Finding; picture 71 open for a follow-up.**

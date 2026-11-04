@@ -35,6 +35,49 @@ changed:
 - No steered primitive was rejected by the round trip.
 - Pixels: 163981 original (was 163572), 17329 added, 17119 missed.
 
+## After batch 2 (2026-11-04)
+
+Measured the same way after the customer's batch 2 answers
+(`docs/ASSUMPTIONS.md`, "Milestone 10: batch 2 applied"), with arc
+steering and the line check for steered shapes:
+
+| Picture | Chains before | Chains now | Fail | Worst |
+|---|---|---|---|---|
+| 10 | 181 | 181 | 0 | 1 px |
+| 15 | 176 | 177 | 0 | 1 px |
+| 20 | 245 | 247 | 1 | 2 px, the same hinted spline (`vine-on-wall-9`) |
+| 42 | 79 | 78 | 0 | 1 px |
+| 57 | 147 | 146 | 1 | 2 px, the same chain (command 670) |
+| 71 | 66 | 65 | 0 | 1 px |
+
+- All: 13212 chains, 13195 pass, 17 fail (the same 17). Pictures 37 and
+  61 (decided `keep`) and every other picture are unchanged.
+- 26 primitives of batch 2 change the HD and pass the round trip
+  (deviation 0 or 1): 14 ellipses, 4 arcs, 8 lines; the other line
+  primitives (most bars) are their lines already. 4 fall back to
+  the 3b reconstruction because the shape would leave pixels their lines
+  own untouched: picture 20 `window-eaves-arch-outer-curve`, picture 42
+  `window-curtain-right-arch-outer` and `window-curtain-right-arch-lit`,
+  picture 57 `medallion-top-lower`. Two more were tried and dropped
+  before commit because the round trip rejected them (deviation 2): the
+  red rail's inner line of picture 71 with its tip (command 104) and its
+  outer line with its straight tail (command 102).
+- Arc steering also applies the two `arc` primitives of picture 12's
+  decided tall window (`wl-shl-top`, `wl-shr-top`, the shutter tops;
+  deviation 1).
+- Acceptance (section 6.4): 88 pictures, worst agreement 99.993%, 0
+  below 99%, 0 swaps, 0 untouched line pixels.
+- A1 residual totals (sums of the report's columns), before / now:
+  overshoots 7071 / 7075, doubled boundaries 2859 / 2859, fragments
+  6439 / 6452, breaks 10661 / 10670. The changes are in pictures 10, 15,
+  20, 42, 44, 57 and 71 only.
+- Smoothing suspects: 3041 / 207 / 311 before, 3038 step / 206 corner /
+  299 curve now. Of the batch 2 places only the two `keep` places
+  (picture 61 B4.1, rank 1; picture 37 B5.3) and the fallbacks (picture
+  57 A2.1, commands 556-561; picture 20 A2.3, the outer arch) are still
+  flagged; picture 15's outer arch (commands 1412-1417, A2.2) was not
+  part of the batch and stays flagged.
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted
