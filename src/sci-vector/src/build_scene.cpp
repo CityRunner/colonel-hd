@@ -1426,8 +1426,20 @@ std::optional<StraightShape> straight_shape(const PendingShape& shape) {
         }
         return IntPoint{.x = static_cast<std::int64_t>(x), .y = static_cast<std::int64_t>(y)};
     };
-    const auto a = on_grid(shape.result.pieces.front().front());
-    const auto b = on_grid(shape.result.pieces.back().back());
+    // The path's ends: of the first and the last piece, the end away from
+    // the piece next to it (a line may run against the path).
+    const auto& pieces = shape.result.pieces;
+    const auto outer_end = [](const std::vector<Vec2>& piece, const std::vector<Vec2>& next) {
+        const auto gap = [&](Vec2 p) {
+            const auto d = [&](Vec2 q) { return ((p.x - q.x) * (p.x - q.x)) + ((p.y - q.y) * (p.y - q.y)); };
+            return std::min(d(next.front()), d(next.back()));
+        };
+        return gap(piece.front()) >= gap(piece.back()) ? piece.front() : piece.back();
+    };
+    const Vec2 first = pieces.size() == 1 ? pieces.front().front() : outer_end(pieces.front(), pieces[1]);
+    const Vec2 last = pieces.size() == 1 ? pieces.front().back() : outer_end(pieces.back(), pieces[pieces.size() - 2]);
+    const auto a = on_grid(first);
+    const auto b = on_grid(last);
     if (!a || !b || *a == *b) {
         return std::nullopt;
     }
@@ -1567,7 +1579,8 @@ bool enter_straight_shapes(std::vector<TopoSegment>& topology, const std::vector
             }
         }
         candidate.push_back(detail::make_segment(shape.a, shape.b));
-        if (Partition with = partition(candidate, view, trace); no_worse(with, current)) {
+        Partition with = partition(candidate, view, trace);
+        if (no_worse(with, current)) {
             topology = std::move(candidate);
             current = std::move(with);
             for (const std::size_t line : shape.lines) {
