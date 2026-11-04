@@ -404,7 +404,7 @@ SCI_TEST(closed_ellipse_puts_every_line_on_one_ellipse) {
     // halfway between the ends of the lines on either side.
     for (const auto& piece : steered.pieces) {
         for (const Vec2 p : piece) {
-            SCI_CHECK(std::hypot(p.x - 111.6, p.y - 90.5) > 2);
+            SCI_CHECK(((p.x - 111.6) * (p.x - 111.6)) + ((p.y - 90.5) * (p.y - 90.5)) > 4);
         }
     }
 }

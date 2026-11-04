@@ -347,8 +347,10 @@ std::optional<EllipseFrame> fit_closed_ellipse(const SteerInput& input) {
 std::optional<Vec2> on_unit_circle(const EllipseFrame& frame, Vec2 p) {
     const Vec2 q = p - frame.centre;
     const double det = (frame.u.x * frame.w.y) - (frame.u.y * frame.w.x);
-    const Vec2 s{.x = ((q.x * frame.w.y) - (q.y * frame.w.x)) / det,
-                 .y = ((frame.u.x * q.y) - (frame.u.y * q.x)) / det};
+    const Vec2 s{
+        .x = ((q.x * frame.w.y) - (q.y * frame.w.x)) / det,
+        .y = ((frame.u.x * q.y) - (frame.u.y * q.x)) / det,
+    };
     const double r = length(s);
     if (!(r > 0) || !std::isfinite(r)) {
         return std::nullopt;
