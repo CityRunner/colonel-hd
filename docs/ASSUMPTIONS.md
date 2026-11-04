@@ -3767,3 +3767,17 @@ boundary, second stage").
   stacks 74+174, 174+74, 74.palette1+174.palette1, 174.palette1+74,
   42+162; hd1/2/5/10), all with new values; all `original1` entries and
   pictures 37 and 61 unchanged. Not regenerated. **Finding.**
+
+## Milestone 10: the customer's finding on picture 42's rhombus (2026-11-04)
+
+- **Picture 42, A3.2** ("rhombus must be symmetrical"): the diamond on
+  the cabinet door (upper half dark, lower half light, the same in the
+  original) is lopsided in HD: its left corner sits off the line of the
+  right corner and the upper left side bends. It is a rhombus, symmetric
+  about its vertical and its horizontal diagonal, with straight sides and
+  sharp corners; its two colours stay. **Decided (customer).**
+- **What it needs:** the relations of A4 A.3 (here two symmetries) solved
+  jointly for the object. The hint files can hold relations since the
+  scene model, but nothing solves them yet; this is the first case. The
+  solved shape is held to the same checks (round trip, 1 original pixel
+  per the customer's 1a decision, 6.4, A1). **Finding.**
