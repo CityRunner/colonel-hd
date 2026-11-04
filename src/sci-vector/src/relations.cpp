@@ -106,19 +106,6 @@ void add_centre(Linear& row, const RelationProblem& problem, const Vertices& ver
     }
 }
 
-Vec2 centre_of(const RelationProblem& problem, const std::vector<std::size_t>& item) {
-    Vec2 sum;
-    double count = 0;
-    for (const std::size_t p : item) {
-        for (const Vec2 a : problem.primitives[p].anchors) {
-            sum.x += a.x;
-            sum.y += a.y;
-            count += 1;
-        }
-    }
-    return {.x = sum.x / count, .y = sum.y / count};
-}
-
 // Mirror pairs about the axis (a vertical axis mirrors x): each group is
 // paired with the group nearest to its mirror image about the groups' mean,
 // and the pairing must be mutual; a group paired with itself lies on the
