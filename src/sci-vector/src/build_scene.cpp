@@ -1342,11 +1342,10 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
             .piece = result.pieces[i],
         });
     }
-    if (const std::string why = boundary.apply(shared); !why.empty()) {
-        reject_hint(stats, picture, primitive.id,
-                    std::format("the shared boundary fails ({}): the 3b reconstruction stays", why));
-        return;
-    }
+    // Where the partition cannot take it, the stroke is still steered (the
+    // state before the shared boundary) and the faces keep the 3b fit; the
+    // report says so.
+    const std::string why = boundary.apply(shared);
     FittedChain record{.kind = fitted_kind(primitive.kind), .hint = primitive.id, .lines = {}};
     for (std::size_t i = 0; i < line_of.size(); ++i) {
         curves.strokes[line_of[i]] = std::move(result.pieces[i]);
@@ -1361,7 +1360,11 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
     stats.applied_hints.push_back(HintOutcome{
         .picture = picture,
         .id = primitive.id,
-        .detail = std::format("drawn as its {} (round trip {})", primitive_name(primitive.kind), result.deviation),
+        .detail = why.empty() ? std::format("drawn as its {} (round trip {}), shared by the faces",
+                                            primitive_name(primitive.kind), result.deviation)
+                              : std::format("drawn as its {} (round trip {}); the faces keep the 3b fit: the shared "
+                                            "boundary fails ({})",
+                                            primitive_name(primitive.kind), result.deviation, why),
     });
 }
 

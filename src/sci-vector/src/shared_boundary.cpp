@@ -381,10 +381,22 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
             }
             const std::size_t e = h / 2;
             auto [it, fresh] = new_course.try_emplace(e, course_[e]);
-            if (h % 2 == 0) {
-                it->second.front() = q;
-            } else {
-                it->second.back() = q;
+            std::vector<Vec2>& course = it->second;
+            if (h % 2 != 0) {
+                std::ranges::reverse(course);
+            }
+            // A fitted course drops its points near the old vertex, so that
+            // it runs straight to the new one.
+            const Vec2 old = course.front();
+            const double reach = distance(old, q) + max_off_piece;
+            std::size_t keep = 1;
+            while (keep + 1 < course.size() && distance(course[keep], old) <= reach) {
+                ++keep;
+            }
+            course.erase(course.begin() + 1, course.begin() + static_cast<std::ptrdiff_t>(keep));
+            course.front() = q;
+            if (h % 2 != 0) {
+                std::ranges::reverse(course);
             }
         }
     }
