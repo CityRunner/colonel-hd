@@ -1244,20 +1244,6 @@ FittedKind fitted_kind(PrimitiveKind kind) {
     return FittedKind::Spline;
 }
 
-// The hypothesis the HD picture follows (A.7): the decided one; the main
-// one of an object without alternatives (certain); none for an open
-// object, whose milestone 3b reconstruction stays.
-const Hypothesis* followed_hypothesis(const ObjectHint& object) {
-    if (object.decision) {
-        if (object.decision->hypothesis == object.main.id) {
-            return &object.main;
-        }
-        const auto it = std::ranges::find(object.alternatives, object.decision->hypothesis, &Hypothesis::id);
-        return it == object.alternatives.end() ? nullptr : &*it;
-    }
-    return object.alternatives.empty() ? &object.main : nullptr;
-}
-
 // The input of one primitive, with the plane's line of each command;
 // nothing if a command draws no line here, or only a dot.
 std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>> steer_input(const HintLines& find,
@@ -1329,7 +1315,7 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
 }
 
 // The primitives of the hypothesis an object follows (A.7), if it is not
-// organic (A.4).
+// organic (A.4). An open object, or one decided "keep", steers nothing.
 void steer_object(const HintLines& find, std::size_t p, const PictureHints& picture, const ObjectHint& object,
                   const std::vector<DrawnLine>& lines, Curves& curves, SceneModelFits& model, SceneStats& stats) {
     const Hypothesis* hypothesis = followed_hypothesis(object);

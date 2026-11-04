@@ -150,6 +150,38 @@
           ]
         }
       ]
+    },
+    {
+      "id": "transom",
+      "type": "window",
+      "cell": "C3",
+      "confidence": 500,
+      "parts": [
+        {
+          "id": "transom-head",
+          "role": "frame",
+          "primitives": [
+            {"id": "transom-arc", "kind": "arc", "commands": [60, 61], "points": [[200, 150], [210, 145], [220, 150]]}
+          ]
+        }
+      ],
+      "alternatives": [
+        {
+          "id": "transom-flat",
+          "type": "window",
+          "confidence": 500,
+          "parts": [
+            {
+              "id": "transom-flat-head",
+              "role": "frame",
+              "primitives": [
+                {"id": "transom-flat-line", "kind": "line", "commands": [60, 61], "points": [[200, 150], [220, 150]]}
+              ]
+            }
+          ]
+        }
+      ],
+      "decision": {"hypothesis": "keep", "by": "customer", "date": "2026-11-04", "cell": "C3", "note": "leave it"}
     }
   ],
   "repetitions": [

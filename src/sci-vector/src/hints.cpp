@@ -654,6 +654,9 @@ GeometricRelation read_geometric(Reader& in, const JsonValue& value, const std::
 Hypothesis read_hypothesis(Reader& in, const JsonValue& value, const std::string& where) {
     Hypothesis hypothesis;
     hypothesis.id = in.identifier(*value.member("id"), where + ".id");
+    if (in.ok() && hypothesis.id == decision_keep) {
+        in.fail(where + ".id", std::format("\"{}\" is reserved for a decision", decision_keep));
+    }
     hypothesis.type = in.choice(*value.member("type"), where + ".type", object_type_names);
     hypothesis.confidence =
         static_cast<int>(in.integer(*value.member("confidence"), where + ".confidence", 0, max_confidence));
@@ -714,7 +717,7 @@ ObjectHint read_object(Reader& in, const JsonValue& value, const std::string& wh
     if (const JsonValue* decision = value.member("decision"); decision != nullptr && in.ok()) {
         const std::string at = where + ".decision";
         Decision d = read_decision(in, *decision, at);
-        if (in.ok() && d.hypothesis != object.id &&
+        if (in.ok() && d.hypothesis != decision_keep && d.hypothesis != object.id &&
             std::ranges::none_of(object.alternatives, [&](const Hypothesis& h) { return h.id == d.hypothesis; })) {
             in.fail(at + ".hypothesis", std::format("no hypothesis \"{}\" of this object", d.hypothesis));
         }
@@ -928,6 +931,26 @@ bool is_organic(ObjectType type) noexcept {
         ObjectType::Water,   ObjectType::Terrain, ObjectType::Figure,
     };
     return std::ranges::find(organic, type) != organic.end();
+}
+
+bool keeps_reconstruction(const ObjectHint& object) noexcept {
+    return object.decision && object.decision->hypothesis == decision_keep;
+}
+
+bool is_open(const ObjectHint& object) noexcept {
+    return !object.decision && !object.alternatives.empty();
+}
+
+const Hypothesis* followed_hypothesis(const ObjectHint& object) noexcept {
+    if (object.decision) {
+        if (object.decision->hypothesis == object.main.id) {
+            return &object.main;
+        }
+        // decision_keep is never a hypothesis id, so it finds none here.
+        const auto it = std::ranges::find(object.alternatives, object.decision->hypothesis, &Hypothesis::id);
+        return it == object.alternatives.end() ? nullptr : &*it;
+    }
+    return object.alternatives.empty() ? &object.main : nullptr;
 }
 
 bool is_open(const RepetitionHint& repetition) noexcept {

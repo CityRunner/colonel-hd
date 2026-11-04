@@ -3,6 +3,7 @@
 #include "sci/vector/hints.hpp"
 #include "sci_test.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -11,6 +12,7 @@
 #include <ios>
 #include <iterator>
 #include <string>
+#include <string_view>
 #include <tuple>
 
 using sci::vector::HintPrimitive;
@@ -156,7 +158,7 @@ SCI_TEST(hints_read_the_scene_model) {
         return;
     }
     SCI_CHECK(hints->version == 2 && hints->picture == 900);
-    SCI_CHECK(hints->objects.size() == 4 && hints->chains.size() == 1);
+    SCI_CHECK(hints->objects.size() == 5 && hints->chains.size() == 1);
     const ObjectHint& window = hints->objects[0];
     SCI_CHECK(window.id == "window-left" && window.main.id == "window-left" && window.cell == "B2.1");
     SCI_CHECK(window.main.type == ObjectType::Window && window.main.confidence == 900);
@@ -188,6 +190,60 @@ SCI_TEST(hints_read_the_scene_model) {
     SCI_CHECK(row.cell == "B2" && row.confidence == 650 && row.note == "same window twice");
     SCI_CHECK(row.decision && row.decision->hypothesis == "repeat" && row.decision->cell == "B2.1-B3.2");
     SCI_CHECK(!is_open(row) && reconstructs_identically(row));
+}
+
+// A.7: the customer may keep the 3b reconstruction ("leave the arch"). The
+// object is decided, and no hypothesis of it is followed.
+SCI_TEST(hints_read_keep_decisions) {
+    using namespace sci::vector;
+    const std::string scene = scene_example();
+    const auto object = [](const std::string& text, std::string_view id) {
+        const auto hints = parse_hints(text);
+        SCI_CHECK(hints.has_value());
+        if (!hints) {
+            return ObjectHint{};
+        }
+        const auto it = std::ranges::find(hints->objects, id, &ObjectHint::id);
+        SCI_CHECK(it != hints->objects.end());
+        return it == hints->objects.end() ? ObjectHint{} : *it;
+    };
+    // The example's transom is decided "keep".
+    const ObjectHint transom = object(scene, "transom");
+    SCI_CHECK(transom.decision && transom.decision->hypothesis == decision_keep);
+    SCI_CHECK(transom.decision && transom.decision->cell == "C3" && transom.decision->note == "leave it");
+    SCI_CHECK(keeps_reconstruction(transom) && !is_open(transom) && followed_hypothesis(transom) == nullptr);
+    // Without the decision it is open, and follows nothing either.
+    const std::string keep =
+        R"(, "decision": {"hypothesis": "keep", "by": "customer", "date": "2026-11-04", "cell": "C3", "note": "leave it"})";
+    const ObjectHint open = object(replaced(scene, keep, ""), "transom");
+    SCI_CHECK(!open.decision && is_open(open) && !keeps_reconstruction(open) && followed_hypothesis(open) == nullptr);
+    // Decided for a hypothesis, it follows that one.
+    const ObjectHint main = object(replaced(scene, R"("hypothesis": "keep")", R"("hypothesis": "transom")"), "transom");
+    SCI_CHECK(!is_open(main) && !keeps_reconstruction(main) && followed_hypothesis(main) == &main.main);
+    const ObjectHint flat =
+        object(replaced(scene, R"("hypothesis": "keep")", R"("hypothesis": "transom-flat")"), "transom");
+    SCI_CHECK(followed_hypothesis(flat) == &flat.alternatives[0]);
+    // The decided and certain objects of the example.
+    const ObjectHint door = object(scene, "door");
+    SCI_CHECK(!is_open(door) && !keeps_reconstruction(door) && followed_hypothesis(door) == &door.main);
+    const ObjectHint window = object(scene, "window-left");
+    SCI_CHECK(!is_open(window) && followed_hypothesis(window) == &window.main);
+    // "keep" may also override a certain object.
+    const ObjectHint kept_window = object(
+        replaced(scene, R"("label": "left window",)",
+                 R"("label": "left window", "decision": {"hypothesis": "keep", "by": "customer", "date": "2026-11-04", "cell": "B2"},)"),
+        "window-left");
+    SCI_CHECK(keeps_reconstruction(kept_window) && followed_hypothesis(kept_window) == nullptr);
+    // "keep" is reserved: no object or alternative is named so.
+    SCI_CHECK(rejection(replaced(replaced(scene, R"("id": "transom-flat")", R"("id": "keep")"), keep, ""))
+                  .contains("reserved"));
+    SCI_CHECK(rejection(replaced(replaced(scene, R"("id": "transom",)", R"("id": "keep",)"), keep, ""))
+                  .contains("reserved"));
+    // Other names are still checked; a repetition is decided "repeat" or
+    // "as-drawn", never "keep".
+    SCI_CHECK(rejection(replaced(scene, R"("hypothesis": "keep")", R"("hypothesis": "kept")")).contains("no hypothesis"));
+    SCI_CHECK(rejection(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "keep")"))
+                  .contains("\"repeat\" or \"as-drawn\" expected"));
 }
 
 // A.5 with A.7: a repetition the analyser is unsure of is open until the

@@ -108,7 +108,7 @@
         "additionalProperties": false,
         "required": ["id", "type", "cell", "confidence", "parts"],
         "properties": {
-          "id": {"$ref": "#/$defs/id"},
+          "id": {"$ref": "#/$defs/hypothesis-id"},
           "type": {"$ref": "#/$defs/object-type"},
           "cell": {"$ref": "#/$defs/cell"},
           "confidence": {"$ref": "#/$defs/confidence"},
@@ -123,7 +123,7 @@
               "additionalProperties": false,
               "required": ["id", "type", "confidence", "parts"],
               "properties": {
-                "id": {"$ref": "#/$defs/id"},
+                "id": {"$ref": "#/$defs/hypothesis-id"},
                 "type": {"$ref": "#/$defs/object-type"},
                 "confidence": {"$ref": "#/$defs/confidence"},
                 "note": {"$ref": "#/$defs/text"},
@@ -133,7 +133,7 @@
             }
           },
           "decision": {
-            "description": "A.7: the customer's choice between the hypotheses (the object's id for the main one), with the cell reference of the answer. Once present, the object is never asked again.",
+            "description": "A.7: the customer's choice between the hypotheses (the object's id for the main one), with the cell reference of the answer. Once present, the object is never asked again. The reserved hypothesis keep means that no hypothesis is applied: the milestone 3b reconstruction stays.",
             "type": "object",
             "additionalProperties": false,
             "required": ["hypothesis", "by", "date", "cell"],
@@ -181,6 +181,11 @@
   },
   "$defs": {
     "id": {"type": "string", "pattern": "^[a-z0-9-]{1,32}$"},
+    "hypothesis-id": {
+      "description": "The id of an object or alternative: an id other than keep, which a decision reserves.",
+      "type": "string",
+      "pattern": "^(?!keep$)[a-z0-9-]{1,32}$"
+    },
     "text": {"type": "string", "maxLength": 200, "pattern": "^[ -~]*$"},
     "line": {"type": "integer", "minimum": 0, "maximum": 1000000},
     "point": {

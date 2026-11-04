@@ -249,7 +249,7 @@ struct Hypothesis {
 // A.7: the customer's choice, with the cell reference of the answer. Once
 // present, the object is never asked again.
 struct Decision {
-    std::string hypothesis; // The id of one of the object's hypotheses.
+    std::string hypothesis; // The id of one of the object's hypotheses, or decision_keep.
     std::string date;       // "YYYY-MM-DD".
     std::string cell;       // "B3", "B3.2" or "A2-A4" (A4 part B).
     std::string note;
@@ -263,6 +263,23 @@ struct ObjectHint {
     std::vector<Hypothesis> alternatives;
     std::optional<Decision> decision;
 };
+
+// The reserved hypothesis of an object's decision: the customer decided to
+// keep the milestone 3b reconstruction, so that no hypothesis of the object
+// steers the fit. It is never the id of a hypothesis.
+inline constexpr std::string_view decision_keep = "keep";
+
+// Whether the customer decided to keep the 3b reconstruction (decision_keep).
+[[nodiscard]] bool keeps_reconstruction(const ObjectHint& object) noexcept;
+
+// Whether the object is still a question for the customer: it has
+// alternatives and no decision.
+[[nodiscard]] bool is_open(const ObjectHint& object) noexcept;
+
+// The hypothesis the HD picture follows (A.7): the decided one; the main
+// one of an object without alternatives (certain). None for an open object
+// or one decided "keep": its milestone 3b reconstruction stays.
+[[nodiscard]] const Hypothesis* followed_hypothesis(const ObjectHint& object) noexcept;
 
 // A.5: objects of one type, or parts of one role, reconstructed identically.
 // The analyser may be unsure (A.6, A.7): then the repetition has a

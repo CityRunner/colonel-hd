@@ -10,8 +10,9 @@ across the whole file, version 1 files have no objects or repetitions,
 primitives have the points their kind needs and corners at their points,
 geometric relations name parts or primitives of their own hypothesis,
 organic objects get no idealisation, repetitions are objects of one type or
-parts of one role, a decision names a hypothesis of its object, and
-decision dates are dates. (A repetition's decision is `repeat` or
+parts of one role, a decision names a hypothesis of its object or is
+`keep` (no hypothesis applied, the 3b reconstruction stays), and decision
+dates are dates. (No hypothesis is named `keep`, which the schema checks.) (A repetition's decision is `repeat` or
 `as-drawn`, which the schema checks.) The
 program's reader (sci-vector, parse_hints) applies the same rules; whether
 the lines and commands exist in the picture is checked with the game files
@@ -146,6 +147,7 @@ POINTS = {"line": (2, 2), "arc": (3, 3), "ellipse": (3, 512), "spline": (2, 512)
 MIN_ITEMS = {"parallel": 2, "perpendicular": 2, "equal-spacing": 3, "symmetry": 2, "tangent": 2, "aligned": 2}
 PAIRS = {"perpendicular", "tangent"}
 WITH_AXIS = {"symmetry", "aligned"}
+KEEP = "keep"  # The reserved decision: keep the 3b reconstruction, apply no hypothesis.
 
 
 def valid_date(text):
@@ -216,7 +218,7 @@ def check_scene(hints, name):
             errors += check_hypothesis(hypothesis, f"{name}: object {obj['id']!r}")
         decision = obj.get("decision")
         if decision:
-            if decision["hypothesis"] not in [h["id"] for h in hypotheses(obj)]:
+            if decision["hypothesis"] not in [KEEP] + [h["id"] for h in hypotheses(obj)]:
                 errors.append(f"{name}: object {obj['id']!r}: the decision names no hypothesis of the object")
             if not valid_date(decision["date"]):
                 errors.append(f"{name}: object {obj['id']!r}: the decision's date is not a date")
