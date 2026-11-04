@@ -20,6 +20,11 @@ constexpr double same_point = 1e-6;
 // A vertex where one other straight line meets moves along that line at
 // most this far (original pixels); otherwise to the nearest point.
 constexpr double max_slide = 1.5;
+// A point another line or shape fixed may lie this far off a piece
+// (original pixels).
+constexpr double max_off_piece = 0.25;
+// Orientations this small count as collinear (rounding of moved points).
+constexpr double collinear = 1e-9;
 
 double cross(Vec2 a, Vec2 b, Vec2 c) {
     return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x));
@@ -53,6 +58,26 @@ OnPiece nearest_on(const std::vector<Vec2>& piece, Vec2 p) {
         }
     }
     return best;
+}
+
+// The point at fraction t (0 to 1) of the piece's length.
+OnPiece at_fraction(const std::vector<Vec2>& piece, double t) {
+    double total = 0.0;
+    for (std::size_t k = 0; k + 1 < piece.size(); ++k) {
+        total += distance(piece[k], piece[k + 1]);
+    }
+    double left = std::clamp(t, 0.0, 1.0) * total;
+    for (std::size_t k = 0; k + 1 < piece.size(); ++k) {
+        const double len = distance(piece[k], piece[k + 1]);
+        if (left <= len && len > 0.0) {
+            const double f = left / len;
+            return OnPiece{.point = {.x = piece[k].x + (f * (piece[k + 1].x - piece[k].x)),
+                                     .y = piece[k].y + (f * (piece[k + 1].y - piece[k].y))},
+                           .param = static_cast<double>(k) + f};
+        }
+        left -= len;
+    }
+    return OnPiece{.point = piece.back(), .param = static_cast<double>(piece.size() - 1)};
 }
 
 // Where the line through p in direction d meets the piece, nearest to p,
@@ -112,7 +137,8 @@ bool chords_cross(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
     const double o2 = cross(a, b, d);
     const double o3 = cross(c, d, a);
     const double o4 = cross(c, d, b);
-    return ((o1 < 0.0 && o2 > 0.0) || (o1 > 0.0 && o2 < 0.0)) && ((o3 < 0.0 && o4 > 0.0) || (o3 > 0.0 && o4 < 0.0));
+    return ((o1 < -collinear && o2 > collinear) || (o1 > collinear && o2 < -collinear)) &&
+           ((o3 < -collinear && o4 > collinear) || (o3 > collinear && o4 < -collinear));
 }
 
 bool courses_cross(const std::vector<Vec2>& s, const std::vector<Vec2>& t) {
@@ -188,6 +214,24 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
     std::map<std::size_t, std::vector<Vec2>> new_course; // Edge -> its new course (this shape).
     std::set<std::size_t> own_edges;                     // Edges of the shape's lines.
 
+    // The line ends of the shape go to their pieces' ends, also where the
+    // vertex lies on another of its lines (consecutive lines that overlap).
+    std::map<std::size_t, Vec2> ends;
+    for (const BoundaryLine& line : lines) {
+        if (line.piece.size() < 2) {
+            continue;
+        }
+        const bool reversed = distance(line.piece.back(), line.from) < distance(line.piece.front(), line.from);
+        for (std::size_t v = 0; v < arr.vertices.size(); ++v) {
+            const Vec2 p = to_picture(arr.vertices[v]);
+            if (distance(p, line.from) < same_point) {
+                ends.try_emplace(v, reversed ? line.piece.back() : line.piece.front());
+            } else if (distance(p, line.to) < same_point) {
+                ends.try_emplace(v, reversed ? line.piece.front() : line.piece.back());
+            }
+        }
+    }
+
     for (const BoundaryLine& line : lines) {
         std::vector<Vec2> piece = line.piece;
         if (piece.size() < 2) {
@@ -221,23 +265,38 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
             vertices.insert(origin((2 * e) + 1));
         }
         const std::set<std::size_t> line_edges(edges.begin(), edges.end());
-        // Each vertex's new point and its position along the piece.
-        std::map<std::size_t, double> param;
-        std::vector<std::pair<double, std::size_t>> by_t;
-        for (const std::size_t v : vertices) {
+        // Each vertex's new point and its position along the piece. A
+        // point already set (a line end of the shape, a crossing with an
+        // earlier line, an earlier shape) is kept if it lies on the piece.
+        const auto place = [&](std::size_t v, bool allow_slide) -> std::optional<OnPiece> {
             const Vec2 p = to_picture(arr.vertices[v]);
             const double t = along(p);
-            by_t.emplace_back(t, v);
-            OnPiece q{.point = p, .param = 0.0};
+            std::optional<Vec2> fixed = moved_[v];
+            if (const auto found = placed.find(v); found != placed.end()) {
+                fixed = found->second;
+            } else if (const auto end = ends.find(v); end != ends.end()) {
+                fixed = end->second;
+            }
             if (distance(p, a) < same_point) {
-                q = OnPiece{.point = piece.front(), .param = 0.0};
-            } else if (distance(p, b) < same_point) {
-                q = OnPiece{.point = piece.back(), .param = static_cast<double>(piece.size() - 1)};
-            } else if (t < 0.0 || t > 1.0) {
+                return OnPiece{.point = fixed.value_or(piece.front()), .param = 0.0};
+            }
+            if (distance(p, b) < same_point) {
+                return OnPiece{.point = fixed.value_or(piece.back()), .param = static_cast<double>(piece.size() - 1)};
+            }
+            if (t < 0.0 || t > 1.0) {
                 // On an extension that closes a gap: it stays.
-                q.param = t < 0.0 ? -std::numeric_limits<double>::infinity()
-                                  : std::numeric_limits<double>::infinity();
-            } else {
+                return OnPiece{.point = fixed.value_or(p),
+                               .param = t < 0.0 ? -std::numeric_limits<double>::infinity()
+                                                : std::numeric_limits<double>::infinity()};
+            }
+            if (fixed) {
+                const OnPiece q = nearest_on(piece, *fixed);
+                if (distance(q.point, *fixed) > max_off_piece) {
+                    return std::nullopt;
+                }
+                return OnPiece{.point = *fixed, .param = q.param};
+            }
+            if (allow_slide) {
                 // The directions of the other edges here.
                 std::vector<Vec2> others;
                 for (std::size_t h = 0; h < arr.half_edges.size(); ++h) {
@@ -249,29 +308,45 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
                 const bool one_line = !others.empty() && std::ranges::all_of(others, [&](Vec2 d) {
                     return (d.x * others.front().y) - (d.y * others.front().x) == 0.0;
                 });
-                std::optional<OnPiece> slid;
                 if (one_line) {
-                    slid = slide_onto(piece, p, others.front());
+                    if (const auto slid = slide_onto(piece, p, others.front())) {
+                        return slid;
+                    }
                 }
-                q = slid ? *slid : nearest_on(piece, p);
             }
-            if (moved_[v] && distance(*moved_[v], q.point) > same_point) {
-                return "it meets another steered shape at a vertex off that shape";
-            }
-            if (const auto found = placed.find(v); found != placed.end()) {
-                if (distance(found->second, q.point) > same_point) {
-                    return "two of its lines move a vertex to different places";
-                }
-            } else {
-                placed.emplace(v, q.point);
-            }
-            param[v] = q.param;
+            return at_fraction(piece, t);
+        };
+        std::vector<std::pair<double, std::size_t>> by_t;
+        for (const std::size_t v : vertices) {
+            by_t.emplace_back(along(to_picture(arr.vertices[v])), v);
         }
         std::ranges::sort(by_t);
-        for (std::size_t k = 1; k < by_t.size(); ++k) {
-            if (param[by_t[k].second] < param[by_t[k - 1].second]) {
-                return "the vertices along a line change their order";
+        std::map<std::size_t, OnPiece> found_at;
+        bool ordered = false;
+        for (const bool allow_slide : {true, false}) {
+            found_at.clear();
+            for (const auto& [t, v] : by_t) {
+                const auto q = place(v, allow_slide);
+                if (!q) {
+                    return "it meets another steered shape or line at a vertex off its curve";
+                }
+                found_at.emplace(v, *q);
             }
+            ordered = true;
+            for (std::size_t k = 1; k < by_t.size(); ++k) {
+                ordered = ordered && found_at.at(by_t[k].second).param >= found_at.at(by_t[k - 1].second).param;
+            }
+            if (ordered) {
+                break;
+            }
+        }
+        if (!ordered) {
+            return "the vertices along a line change their order";
+        }
+        std::map<std::size_t, double> param;
+        for (const auto& [v, q] : found_at) {
+            placed.try_emplace(v, q.point);
+            param[v] = q.param;
         }
         for (const std::size_t e : edges) {
             std::size_t lo = origin(2 * e);
@@ -345,7 +420,7 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         swept.insert(swept.end(), course.rbegin(), course.rend());
         const Bounds area = box_of(swept);
         for (std::size_t v = 0; v < arr.vertices.size(); ++v) {
-            if (v == origin(2 * e) || v == origin((2 * e) + 1)) {
+            if (v == origin(2 * e) || v == origin((2 * e) + 1) || placed.contains(v)) {
                 continue;
             }
             const Vec2 p = vertex_now(v);
