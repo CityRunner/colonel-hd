@@ -1271,8 +1271,9 @@ std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>> steer_inp
 // Applies one primitive's shape to its lines' strokes, if it passes the
 // round trip and changes them.
 void steer_primitive(const detail::SteerInput& input, const std::vector<std::size_t>& line_of, int picture,
-                     const PrimitiveHint& primitive, const std::vector<DrawnLine>& lines, Curves& curves,
-                     SceneModelFits& model, SceneStats& stats) {
+                     const PrimitiveHint& primitive, const std::vector<DrawnLine>& lines,
+                     const std::vector<std::vector<std::size_t>>& pixels, Curves& curves, SceneModelFits& model,
+                     SceneStats& stats) {
     // A line in two primitives follows the first.
     if (std::ranges::any_of(line_of, [&](std::size_t line) { return model.steered[line]; })) {
         return;
@@ -1284,6 +1285,15 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
     if (result.pieces.empty()) {
         reject_hint(stats, picture, primitive.id, std::format("{}: the 3b reconstruction stays", result.reason));
         return;
+    }
+    // As for a chain hint (spec section 6.4): every pixel the lines own at
+    // 1x is still touched by its stroke.
+    for (std::size_t i = 0; i < line_of.size(); ++i) {
+        if (!keeps_line_pixels(pixels[line_of[i]], result.pieces[i])) {
+            reject_hint(stats, picture, primitive.id,
+                        "the shape misses pixels its lines own: the 3b reconstruction stays");
+            return;
+        }
     }
     bool changed = false;
     for (std::size_t i = 0; i < line_of.size(); ++i) {
@@ -1317,7 +1327,8 @@ void steer_primitive(const detail::SteerInput& input, const std::vector<std::siz
 // The primitives of the hypothesis an object follows (A.7), if it is not
 // organic (A.4). An open object, or one decided "keep", steers nothing.
 void steer_object(const HintLines& find, std::size_t p, const PictureHints& picture, const ObjectHint& object,
-                  const std::vector<DrawnLine>& lines, Curves& curves, SceneModelFits& model, SceneStats& stats) {
+                  const std::vector<DrawnLine>& lines, const std::vector<std::vector<std::size_t>>& pixels,
+                  Curves& curves, SceneModelFits& model, SceneStats& stats) {
     const Hypothesis* hypothesis = followed_hypothesis(object);
     if (hypothesis == nullptr || is_organic(hypothesis->type)) {
         return;
@@ -1332,21 +1343,25 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
             for (const detail::StepCut& cut : detail::step_cuts(input)) {
                 model.square_ends.emplace_back(line_of[cut.line], cut);
             }
-            steer_primitive(input, line_of, picture.picture, primitive, lines, curves, model, stats);
+            steer_primitive(input, line_of, picture.picture, primitive, lines, pixels, curves, model, stats);
         }
     }
 }
 
 SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vector<DrawnLine>& lines,
-                                    std::span<const PictureHints* const> hints, Curves& curves, SceneStats& stats) {
+                                    const PlaneView& view, std::span<const PictureHints* const> hints, Curves& curves,
+                                    SceneStats& stats) {
     SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
     const HintLines find(trace, lines);
+    // The pixels each line owns at 1x (every line counts).
+    const std::vector<std::vector<std::size_t>> pixels =
+        hinted_line_pixels(lines, std::vector<std::int32_t>(lines.size(), 0), view);
     for (std::size_t p = 0; p < hints.size() && p < trace.pictures; ++p) {
         if (hints[p] == nullptr) {
             continue;
         }
         for (const ObjectHint& object : hints[p]->objects) {
-            steer_object(find, p, *hints[p], object, lines, curves, model, stats);
+            steer_object(find, p, *hints[p], object, lines, pixels, curves, model, stats);
         }
     }
     return model;
@@ -1546,7 +1561,7 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     // faces keep the fit above.
     SceneModelFits model{.steered = std::vector<bool>(lines.size(), false), .records = {}, .square_ends = {}};
     if (plane == Plane::Visual) {
-        model = steer_by_scene_model(trace, lines, hints, curves, built.stats);
+        model = steer_by_scene_model(trace, lines, view, hints, curves, built.stats);
     }
     record_fits(parts.arrangement, curves, lines, plane_hints, model, built.stats);
     scene.edges = scan_edges(parts.arrangement, curves.fitted);
