@@ -8,4 +8,5 @@ sci_add_library(NAME sci-render
         src/rasterize.cpp
         src/reference.cpp
         src/round_trip.cpp
+        src/smoothing.cpp
     DEPENDS sci-core sci-pic sci-vector sci-view)

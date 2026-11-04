@@ -56,7 +56,7 @@ sci_add_unit_test(NAME sci-audio-tests
     DEPENDS sci-audio)
 
 sci_add_unit_test(NAME sci-render-tests
-    SOURCES render/compose_test.cpp render/render_test.cpp render/round_trip_test.cpp
+    SOURCES render/compose_test.cpp render/render_test.cpp render/round_trip_test.cpp render/smoothing_test.cpp
     DEPENDS sci-render sci-vector sci-pic)
 target_include_directories(sci-render-tests PRIVATE pic render)
 
