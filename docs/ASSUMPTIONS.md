@@ -3781,3 +3781,14 @@ boundary, second stage").
   scene model, but nothing solves them yet; this is the first case. The
   solved shape is held to the same checks (round trip, 1 original pixel
   per the customer's 1a decision, 6.4, A1). **Finding.**
+
+## Milestone 10: curved shapes in the arrangement come next (2026-11-04)
+
+- **The customer's answer** ("Answer yes") to "after this, should I do the
+  step that makes the coloured areas follow curves too, which finishes the
+  halo and the remaining edges? Or batch 3 from the automatic search
+  first?": the curved-areas step comes next, after relation solving, then
+  batch 3. It lets the arrangement take curved shapes, so that the 14
+  steered shapes whose areas keep the 3b fit (the halo's chips, picture
+  20's sliver, picture 57's notch, picture 71's hook edge, among others)
+  share their curve with both areas. **Decided (customer).**
