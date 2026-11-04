@@ -206,10 +206,10 @@ SCI_TEST(hints_read_uncertain_repetitions) {
     const RepetitionHint open = read(replaced(scene, decision, ""));
     SCI_CHECK(open.confidence == 650 && !open.decision && is_open(open) && !reconstructs_identically(open));
     // Certain: no confidence in the file, or 1000.
-    const RepetitionHint certain =
-        read(replaced(replaced(scene, decision, ""), R"("confidence": 650,)", ""));
+    const RepetitionHint certain = read(replaced(replaced(scene, decision, ""), R"("confidence": 650,)", ""));
     SCI_CHECK(certain.confidence == 1000 && !is_open(certain) && reconstructs_identically(certain));
-    const RepetitionHint sure = read(replaced(replaced(scene, decision, ""), R"("confidence": 650)", R"("confidence": 1000)"));
+    const RepetitionHint sure =
+        read(replaced(replaced(scene, decision, ""), R"("confidence": 650)", R"("confidence": 1000)"));
     SCI_CHECK(!is_open(sure) && reconstructs_identically(sure));
     // Decided as drawn.
     const RepetitionHint as_drawn = read(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "as-drawn")"));
@@ -221,8 +221,8 @@ SCI_TEST(hints_read_uncertain_repetitions) {
     // Invalid.
     SCI_CHECK(rejection(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "window-left")"))
                   .contains("\"repeat\" or \"as-drawn\" expected"));
-    SCI_CHECK(rejection(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "identical")"))
-                  .contains("expected"));
+    SCI_CHECK(
+        rejection(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "identical")")).contains("expected"));
     SCI_CHECK(rejection(replaced(scene, R"("confidence": 650)", R"("confidence": 1001)")).contains("not in 0..1000"));
     SCI_CHECK(rejection(replaced(scene, R"("date": "2026-11-04")", R"("date": "2026-11-31")")).contains("date"));
     SCI_CHECK(rejection(replaced(scene, R"("cell": "B2.1-B3.2")", R"("cell": "B6")")).contains("review grid"));
