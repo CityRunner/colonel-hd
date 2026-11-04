@@ -90,12 +90,12 @@ std::vector<int> owned_pixels(const pic::DrawTrace& trace) {
 // --- Organic lines ---------------------------------------------------------
 
 constexpr std::array organic_words{
-    "tree",   "trees",   "branch",  "branches", "foliage", "leaf",    "leaves",  "shrub",   "bush",   "bushes",
-    "hedge",  "vine",    "vines",   "root",     "roots",   "twig",    "twigs",   "sapling", "trunk",  "canopy",
-    "oak",    "grass",   "lawn",    "weed",     "weeds",   "moss",    "mossy",   "flower",  "plant",  "rock",
-    "rocks",  "boulder", "cloud",   "clouds",   "water",   "ripple",  "shore",   "shoreline", "lake", "pond",
-    "swamp",  "bayou",   "river",   "mud",      "dirt",    "ground",  "terrain", "hill",    "mound",  "bank",
-    "figure", "person",  "man",     "woman",    "coat",    "collar",  "lapel",   "clothing", "fold",  "hair",
+    "tree",   "trees",   "branch", "branches", "foliage", "leaf",   "leaves",  "shrub",     "bush",  "bushes",
+    "hedge",  "vine",    "vines",  "root",     "roots",   "twig",   "twigs",   "sapling",   "trunk", "canopy",
+    "oak",    "grass",   "lawn",   "weed",     "weeds",   "moss",   "mossy",   "flower",    "plant", "rock",
+    "rocks",  "boulder", "cloud",  "clouds",   "water",   "ripple", "shore",   "shoreline", "lake",  "pond",
+    "swamp",  "bayou",   "river",  "mud",      "dirt",    "ground", "terrain", "hill",      "mound", "bank",
+    "figure", "person",  "man",    "woman",    "coat",    "collar", "lapel",   "clothing",  "fold",  "hair",
 };
 
 bool is_word_char(char c) {
@@ -120,7 +120,7 @@ void fill_region(const pic::PictureMaps& maps, Pixel seed, std::vector<std::uint
         if (p.x < 0 || p.x >= picture_width || p.y < 0 || p.y >= picture_height) {
             continue;
         }
-        auto& m = mask[static_cast<std::size_t>((p.y * picture_width) + p.x)];
+        auto& m = mask[(static_cast<std::size_t>(p.y) * picture_width) + static_cast<std::size_t>(p.x)];
         if (m != 0 || pair_at(p) != pair) {
             continue;
         }
@@ -138,7 +138,7 @@ bool in_or_next_to(const std::vector<std::uint8_t>& mask, Pixel p) {
             const int x = p.x + dx;
             const int y = p.y + dy;
             if (x >= 0 && x < picture_width && y >= 0 && y < picture_height &&
-                mask[static_cast<std::size_t>((y * picture_width) + x)] != 0) {
+                mask[(static_cast<std::size_t>(y) * picture_width) + static_cast<std::size_t>(x)] != 0) {
                 return true;
             }
         }
@@ -153,6 +153,20 @@ struct SceneModelLines {
     std::set<std::string> primitive_ids;
 };
 
+void add_hypothesis(const vector::Hypothesis& hypothesis, std::uint16_t picture, SceneModelLines& result) {
+    for (const auto& part : hypothesis.parts) {
+        for (const auto& primitive : part.primitives) {
+            result.primitive_ids.insert(primitive.id);
+            if (!vector::is_organic(hypothesis.type)) {
+                continue;
+            }
+            for (const vector::LineRef command : primitive.commands) {
+                result.organic.emplace(picture, command);
+            }
+        }
+    }
+}
+
 SceneModelLines scene_model_lines(std::span<const vector::PictureHints* const> hints) {
     SceneModelLines result;
     for (std::size_t p = 0; p < hints.size(); ++p) {
@@ -160,22 +174,9 @@ SceneModelLines scene_model_lines(std::span<const vector::PictureHints* const> h
             continue;
         }
         for (const auto& object : hints[p]->objects) {
-            std::vector<const vector::Hypothesis*> hypotheses{&object.main};
+            add_hypothesis(object.main, static_cast<std::uint16_t>(p), result);
             for (const auto& alternative : object.alternatives) {
-                hypotheses.push_back(&alternative);
-            }
-            for (const vector::Hypothesis* hypothesis : hypotheses) {
-                for (const auto& part : hypothesis->parts) {
-                    for (const auto& primitive : part.primitives) {
-                        result.primitive_ids.insert(primitive.id);
-                        if (!vector::is_organic(hypothesis->type)) {
-                            continue;
-                        }
-                        for (const vector::LineRef command : primitive.commands) {
-                            result.organic.emplace(static_cast<std::uint16_t>(p), command);
-                        }
-                    }
-                }
+                add_hypothesis(alternative, static_cast<std::uint16_t>(p), result);
             }
         }
     }
@@ -289,12 +290,14 @@ std::optional<StepHit> step_hit(const pic::PictureMaps& maps, const pic::DrawTra
     if (!shows(maps, trace, change.primitive, end_a, target)) {
         return std::nullopt;
     }
-    return StepHit{.at = end_a,
-                   .a = change.primitive,
-                   .b = change.other,
-                   .weight = joint ? 100 : 60,
-                   .perpendicular = perpendicular,
-                   .along = along};
+    return StepHit{
+        .at = end_a,
+        .a = change.primitive,
+        .b = change.other,
+        .weight = joint ? 100 : 60,
+        .perpendicular = perpendicular,
+        .along = along,
+    };
 }
 
 struct Box {
@@ -330,7 +333,7 @@ bool any_marked(const std::vector<std::uint8_t>& marks, std::span<const std::int
 }
 
 void sort_unique(std::vector<std::int32_t>& lines) {
-    std::ranges::sort(lines);
+    std::ranges::stable_sort(lines);
     const auto [first, last] = std::ranges::unique(lines);
     lines.erase(first, last);
 }
@@ -351,7 +354,7 @@ std::vector<SmoothingSuspect> step_suspects(const pic::PictureMaps& maps, const 
     // One hit per line end and other line (the pass may record a joint
     // twice, with two pieces of evidence).
     const auto key = [](const StepHit& h) { return std::tuple(h.at.y, h.at.x, h.a, h.b, -h.weight); };
-    std::ranges::sort(hits, {}, key);
+    std::ranges::stable_sort(hits, {}, key);
     const auto [first, last] = std::ranges::unique(
         hits, [](const StepHit& x, const StepHit& y) { return x.at == y.at && x.a == y.a && x.b == y.b; });
     hits.erase(first, last);
@@ -450,7 +453,7 @@ double bend_between(Pixel u, Pixel v) {
     if (lu == 0 || lv == 0) {
         return 0;
     }
-    return 1 - ((static_cast<double>(u.x) * v.x) + (static_cast<double>(u.y) * v.y)) / (lu * lv);
+    return 1 - (((static_cast<double>(u.x) * v.x) + (static_cast<double>(u.y) * v.y)) / (lu * lv));
 }
 
 Pixel minus(Pixel a, Pixel b) {
@@ -517,7 +520,7 @@ std::optional<SmoothingSuspect> corner_at(const std::map<std::int32_t, Ends>& li
     s.count = 1;
     s.bend = static_cast<int>(std::lround(bend * 1000));
     s.deviation = static_cast<int>(std::lround(distance * 1000));
-    const int legs = std::min(std::min(ea.span(), eb.span()), 6);
+    const int legs = std::min({ea.span(), eb.span(), 6});
     s.score = static_cast<int>(std::lround(bend * 100 * std::min(distance, 1.5) / cut_distance * legs / 3));
     s.lines = {std::min(a, b), std::max(a, b)};
     Box box;
@@ -567,7 +570,7 @@ std::optional<SmoothingSuspect> bevel_at(const pic::PictureMaps& maps, const pic
     s.count = 1;
     s.bend = static_cast<int>(std::lround(bend * 1000));
     s.deviation = static_cast<int>(std::lround(cut_distance * 1000));
-    const int legs = std::min(std::min(ea.span(), eb.span()), 6);
+    const int legs = std::min({ea.span(), eb.span(), 6});
     s.score = static_cast<int>(std::lround(bend * 100 * legs / 3));
     s.lines = {std::min(change.primitive, change.other), std::max(change.primitive, change.other)};
     Box box;
@@ -577,6 +580,32 @@ std::optional<SmoothingSuspect> bevel_at(const pic::PictureMaps& maps, const pic
     return s;
 }
 
+// The corners an automatic curve cuts: every vertex two of its lines share.
+void chain_corners(const pic::DrawTrace& trace, const vector::FittedChain& chain,
+                   const std::map<std::int32_t, const std::vector<Vec2>*>& fitted,
+                   const std::vector<std::uint8_t>& excluded, std::vector<SmoothingSuspect>& out) {
+    std::map<std::int32_t, Ends> lines;
+    for (const std::int32_t l : chain.lines) {
+        if (const pic::Line* line = visual_line(trace, l); line != nullptr && line->from != line->to) {
+            lines.emplace(l, Ends{.from = point_of(line->from), .to = point_of(line->to)});
+        }
+    }
+    for (auto a = lines.begin(); a != lines.end(); ++a) {
+        for (auto b = std::next(a); b != lines.end(); ++b) {
+            const std::array pair{a->first, b->first};
+            if (any_marked(excluded, pair)) {
+                continue;
+            }
+            for (const Pixel vertex : {a->second.from, a->second.to}) {
+                const bool shared = vertex == b->second.from || vertex == b->second.to;
+                if (auto s = shared ? corner_at(lines, a->first, b->first, vertex, fitted) : std::nullopt) {
+                    out.push_back(std::move(*s));
+                }
+            }
+        }
+    }
+}
+
 std::vector<SmoothingSuspect> corner_suspects(const pic::PictureMaps& maps, const pic::DrawTrace& trace,
                                               const vector::SceneStats& stats,
                                               const std::vector<std::uint8_t>& excluded) {
@@ -584,39 +613,16 @@ std::vector<SmoothingSuspect> corner_suspects(const pic::PictureMaps& maps, cons
     std::vector<SmoothingSuspect> result;
     std::set<std::pair<std::int32_t, std::int32_t>> bevelled;
     for (const auto& change : stats.integrity_changes) {
-        if (auto s = bevel_at(maps, trace, change)) {
-            if (!any_marked(excluded, s->lines) && bevelled.emplace(s->lines[0], s->lines[1]).second) {
-                result.push_back(std::move(*s));
-            }
+        auto s = bevel_at(maps, trace, change);
+        if (s && !any_marked(excluded, s->lines) && bevelled.emplace(s->lines[0], s->lines[1]).second) {
+            result.push_back(std::move(*s));
         }
     }
     for (const auto& chain : stats.fitted_chains) {
         const bool curve = chain.kind == vector::FittedKind::Arc || chain.kind == vector::FittedKind::Spline ||
                            chain.kind == vector::FittedKind::Ellipse;
-        if (!chain.hint.empty() || !curve) {
-            continue;
-        }
-        std::map<std::int32_t, Ends> lines;
-        for (const std::int32_t l : chain.lines) {
-            if (const pic::Line* line = visual_line(trace, l); line != nullptr && line->from != line->to) {
-                lines.emplace(l, Ends{.from = point_of(line->from), .to = point_of(line->to)});
-            }
-        }
-        for (auto a = lines.begin(); a != lines.end(); ++a) {
-            for (auto b = std::next(a); b != lines.end(); ++b) {
-                for (const Pixel vertex : {a->second.from, a->second.to}) {
-                    if (vertex != b->second.from && vertex != b->second.to) {
-                        continue;
-                    }
-                    const std::array pair{a->first, b->first};
-                    if (any_marked(excluded, pair)) {
-                        continue;
-                    }
-                    if (auto s = corner_at(lines, a->first, b->first, vertex, fitted)) {
-                        result.push_back(std::move(*s));
-                    }
-                }
-            }
+        if (chain.hint.empty() && curve) {
+            chain_corners(trace, chain, fitted, excluded, result);
         }
     }
     return result;
@@ -722,14 +728,16 @@ std::optional<Conic> fit_conic(const std::vector<Weighted>& points, Vec2 origin,
     if (!x) {
         return std::nullopt;
     }
-    return Conic{.a = (*x)[0],
-                 .b = (*x)[1],
-                 .c = 1 - (*x)[0],
-                 .d = (*x)[2],
-                 .e = (*x)[3],
-                 .f = (*x)[4],
-                 .origin = origin,
-                 .scale = scale};
+    return Conic{
+        .a = (*x)[0],
+        .b = (*x)[1],
+        .c = 1 - (*x)[0],
+        .d = (*x)[2],
+        .e = (*x)[3],
+        .f = (*x)[4],
+        .origin = origin,
+        .scale = scale,
+    };
 }
 
 // The semi-axes of an ellipse, in pixels, or nullopt if it is none.
@@ -769,66 +777,93 @@ struct LineEnd {
 // line there that turns least (at most 60 degrees), when each is the
 // other's choice, whatever else meets there (bars, pins) and in whatever
 // order the commands drew them.
-std::vector<Path> paths(const pic::DrawTrace& trace, const std::vector<int>& owned) {
-    std::map<std::pair<int, int>, std::vector<LineEnd>> at;
-    for (std::size_t i = 0; i < trace.primitives.size(); ++i) {
-        const pic::Line* line = visual_line(trace, static_cast<std::int32_t>(i));
-        if (line == nullptr || line->from == line->to || owned[i] == 0) {
-            continue;
+class PathFinder {
+public:
+    PathFinder(const pic::DrawTrace& trace, const std::vector<int>& owned)
+        : trace_(&trace), used_(trace.primitives.size(), 0) {
+        for (std::size_t i = 0; i < trace.primitives.size(); ++i) {
+            const pic::Line* line = visual_line(trace, static_cast<std::int32_t>(i));
+            if (line == nullptr || line->from == line->to || owned[i] == 0) {
+                continue;
+            }
+            const auto index = static_cast<std::int32_t>(i);
+            at_[{line->from.x, line->from.y}].push_back({.line = index, .at_from = true});
+            at_[{line->to.x, line->to.y}].push_back({.line = index, .at_from = false});
         }
-        at[{line->from.x, line->from.y}].push_back({.line = static_cast<std::int32_t>(i), .at_from = true});
-        at[{line->to.x, line->to.y}].push_back({.line = static_cast<std::int32_t>(i), .at_from = false});
+        for (const auto& [vertex, list] : at_) {
+            for (const LineEnd& e : list) {
+                if (const auto pick = best_continuation(e, list)) {
+                    choice_.emplace(std::pair{e.line, e.at_from}, *pick);
+                }
+            }
+        }
     }
-    const auto ends = [&](std::int32_t l) {
-        const pic::Line& line = *visual_line(trace, l);
-        return std::pair{point_of(line.from), point_of(line.to)};
-    };
-    // Direction into the vertex along a line, and out of it.
-    const auto into = [&](LineEnd e) {
+
+    // Open paths first, from an end without a continuation; then cycles.
+    std::vector<Path> find() {
+        std::vector<Path> result;
+        for (const bool open : {true, false}) {
+            for (const auto& [vertex, list] : at_) {
+                for (const LineEnd& e : list) {
+                    if (used_[static_cast<std::size_t>(e.line)] != 0 || (open && next(e))) {
+                        continue;
+                    }
+                    Path path = walk(e);
+                    if (path.lines.size() >= 4) {
+                        result.push_back(std::move(path));
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+private:
+    [[nodiscard]] std::pair<Pixel, Pixel> ends(std::int32_t l) const {
+        const pic::Line& line = *visual_line(*trace_, l);
+        return {point_of(line.from), point_of(line.to)};
+    }
+
+    // The direction along a line into the vertex at its end.
+    [[nodiscard]] Pixel into(LineEnd e) const {
         const auto [from, to] = ends(e.line);
         return e.at_from ? minus(from, to) : minus(to, from);
-    };
-    // The chosen continuation of every line end: key (line, at_from).
-    std::map<std::pair<std::int32_t, bool>, LineEnd> choice;
-    constexpr double most_bend = 0.5; // 60 degrees.
-    for (const auto& [vertex, list] : at) {
-        for (const LineEnd& e : list) {
-            double best = most_bend;
-            std::optional<LineEnd> pick;
-            for (const LineEnd& f : list) {
-                if (f.line == e.line) {
-                    continue;
-                }
-                const Pixel out = minus(Pixel{} , into(f));
-                if (const double bend = bend_between(into(e), out); bend <= best) {
-                    best = bend;
-                    pick = f;
-                }
-            }
-            if (pick) {
-                choice.emplace(std::pair{e.line, e.at_from}, *pick);
+    }
+
+    // The other line end at the vertex that turns least, at most 60 degrees.
+    [[nodiscard]] std::optional<LineEnd> best_continuation(LineEnd e, const std::vector<LineEnd>& list) const {
+        constexpr double most_bend = 0.5;
+        double best = most_bend;
+        std::optional<LineEnd> pick;
+        for (const LineEnd& f : list) {
+            const Pixel out = minus(Pixel{.x = 0, .y = 0}, into(f));
+            if (const double bend = bend_between(into(e), out); f.line != e.line && bend <= best) {
+                best = bend;
+                pick = f;
             }
         }
+        return pick;
     }
-    const auto next = [&](LineEnd e) -> std::optional<LineEnd> {
-        const auto it = choice.find({e.line, e.at_from});
-        if (it == choice.end()) {
+
+    // The continuation of a line end when both ends chose each other.
+    [[nodiscard]] std::optional<LineEnd> next(LineEnd e) const {
+        const auto it = choice_.find({e.line, e.at_from});
+        if (it == choice_.end()) {
             return std::nullopt;
         }
-        const auto back = choice.find({it->second.line, it->second.at_from});
-        if (back == choice.end() || back->second.line != e.line || back->second.at_from != e.at_from) {
+        const auto back = choice_.find({it->second.line, it->second.at_from});
+        if (back == choice_.end() || back->second.line != e.line || back->second.at_from != e.at_from) {
             return std::nullopt;
         }
         return it->second;
-    };
-    std::vector<std::uint8_t> used(trace.primitives.size(), 0);
-    std::vector<Path> result;
-    // Walks from a line forwards (leaving it at `to` when !at_from... i.e.
-    // entering at `entry`), appending until the path ends or closes.
-    const auto walk = [&](LineEnd entry, Path& path) {
+    }
+
+    // From a line entered at `entry` on, until the path ends or closes.
+    Path walk(LineEnd entry) {
+        Path path;
         std::optional<LineEnd> e = entry;
-        while (e && used[static_cast<std::size_t>(e->line)] == 0) {
-            used[static_cast<std::size_t>(e->line)] = 1;
+        while (e && used_[static_cast<std::size_t>(e->line)] == 0) {
+            used_[static_cast<std::size_t>(e->line)] = 1;
             const auto [from, to] = ends(e->line);
             if (path.points.empty()) {
                 path.points.push_back(e->at_from ? from : to);
@@ -837,23 +872,17 @@ std::vector<Path> paths(const pic::DrawTrace& trace, const std::vector<int>& own
             path.points.push_back(e->at_from ? to : from);
             e = next({.line = e->line, .at_from = !e->at_from});
         }
-    };
-    // Open paths first, from an end without a continuation; then cycles.
-    for (const bool open : {true, false}) {
-        for (const auto& [vertex, list] : at) {
-            for (const LineEnd& e : list) {
-                if (used[static_cast<std::size_t>(e.line)] != 0 || (open && next(e))) {
-                    continue;
-                }
-                Path path;
-                walk(e, path);
-                if (path.lines.size() >= 4) {
-                    result.push_back(std::move(path));
-                }
-            }
-        }
+        return path;
     }
-    return result;
+
+    const pic::DrawTrace* trace_;
+    std::map<std::pair<int, int>, std::vector<LineEnd>> at_;
+    std::map<std::pair<std::int32_t, bool>, LineEnd> choice_;
+    std::vector<std::uint8_t> used_;
+};
+
+std::vector<Path> paths(const pic::DrawTrace& trace, const std::vector<int>& owned) {
+    return PathFinder(trace, owned).find();
 }
 
 // The HD stroke of a line: its fitted stroke, or the line between its end
@@ -987,7 +1016,10 @@ void curve_runs(const pic::DrawTrace& trace, const Path& path,
     };
     for (std::size_t i = 1; i < directions.size(); ++i) {
         const double t = turn_between(directions[i - 1], directions[i]);
-        const int s = std::abs(t) < CurveLimits::neutral_turn ? 0 : (t > 0 ? 1 : -1);
+        int s = 0;
+        if (std::abs(t) >= CurveLimits::neutral_turn) {
+            s = t > 0 ? 1 : -1;
+        }
         if (std::abs(t) > CurveLimits::max_vertex_turn) {
             close(i);
             start = i;
@@ -1010,8 +1042,7 @@ void curve_runs(const pic::DrawTrace& trace, const Path& path,
 }
 
 std::vector<SmoothingSuspect> curve_suspects(const pic::DrawTrace& trace, const vector::SceneStats& stats,
-                                             const std::vector<int>& owned,
-                                             const std::vector<std::uint8_t>& excluded) {
+                                             const std::vector<int>& owned, const std::vector<std::uint8_t>& excluded) {
     const auto fitted = fitted_points(stats);
     std::vector<SmoothingSuspect> result;
     for (const Path& path : paths(trace, owned)) {
@@ -1074,7 +1105,8 @@ std::vector<std::uint8_t> organic_lines(const pic::PictureMaps& maps, const pic:
             continue;
         }
         const auto pixels = pixels_of(*line);
-        const auto near = std::ranges::count_if(pixels, [&](std::uint32_t p) { return in_or_next_to(mask, pixel_of(p)); });
+        const auto near =
+            std::ranges::count_if(pixels, [&](std::uint32_t p) { return in_or_next_to(mask, pixel_of(p)); });
         if (!pixels.empty() && 2 * near >= static_cast<std::ptrdiff_t>(pixels.size())) {
             organic[i] = 1;
         }

@@ -94,8 +94,8 @@ struct SmoothingSuspect {
 
 // Every suspect of a picture's visual scene, highest score first (then
 // kind, y, x).
-[[nodiscard]] std::vector<SmoothingSuspect> find_smoothing_suspects(
-    const pic::PictureMaps& maps, const pic::DrawTrace& trace, const vector::SceneStats& visual,
-    std::span<const vector::PictureHints* const> hints = {});
+[[nodiscard]] std::vector<SmoothingSuspect>
+find_smoothing_suspects(const pic::PictureMaps& maps, const pic::DrawTrace& trace, const vector::SceneStats& visual,
+                        std::span<const vector::PictureHints* const> hints = {});
 
 } // namespace sci::render

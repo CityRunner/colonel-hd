@@ -41,8 +41,7 @@ struct Synthetic {
         const auto index = static_cast<std::int32_t>(trace.primitives.size());
         trace.primitives.push_back(primitive);
         sci::pic::for_each_line_pixel({.x = x0, .y = y0 + sci::pic::picture_top},
-                                      {.x = x1, .y = y1 + sci::pic::picture_top},
-                                      [&](int x, int y) {
+                                      {.x = x1, .y = y1 + sci::pic::picture_top}, [&](int x, int y) {
                                           trace.visual_owner[sci::pic::PictureMaps::index(x, y)] = index;
                                           maps.pairs[sci::pic::PictureMaps::index(x, y)] = pair;
                                       });
@@ -64,12 +63,14 @@ std::size_t count_kind(const std::vector<sci::render::SmoothingSuspect>& suspect
 }
 
 sci::vector::IntegrityChange joint(std::int32_t a, std::int32_t b, int x, int y) {
-    return {.kind = sci::vector::IntegrityChangeKind::ClosedJoint,
-            .primitive = a,
-            .other = b,
-            .x = x,
-            .y = y,
-            .evidence = "test"};
+    return {
+        .kind = sci::vector::IntegrityChangeKind::ClosedJoint,
+        .primitive = a,
+        .other = b,
+        .x = x,
+        .y = y,
+        .evidence = "test",
+    };
 }
 
 Vec2 centre(int x, int y) {
@@ -161,8 +162,7 @@ SCI_TEST(smoothing_corner_needs_a_concentrated_turn) {
         const auto l = s.line(points[i - 1].first, points[i - 1].second, points[i].first, points[i].second);
         chain.lines.push_back(l);
         // A stroke well off every vertex.
-        s.stats.fitted_strokes.push_back(
-            {.primitive = l, .points = {{.x = 0, .y = 100}, {.x = 1, .y = 100}}});
+        s.stats.fitted_strokes.push_back({.primitive = l, .points = {{.x = 0, .y = 100}, {.x = 1, .y = 100}}});
     }
     s.stats.fitted_chains.push_back(chain);
     SCI_CHECK(count_kind(s.suspects(), SmoothingKind::Corner) == std::size_t{0});
@@ -171,7 +171,8 @@ SCI_TEST(smoothing_corner_needs_a_concentrated_turn) {
 // The vertices of a half circle of radius 13 about pixel (100, 80), exactly
 // on it (Pythagorean triples).
 constexpr std::array<std::pair<int, int>, 6> half_circle{
-    {{87, 80}, {88, 75}, {95, 68}, {105, 68}, {112, 75}, {113, 80}}};
+    {{87, 80}, {88, 75}, {95, 68}, {105, 68}, {112, 75}, {113, 80}},
+};
 
 // Kind 3: a half circle drawn as five lines (vertices on the circle) is a
 // curve suspect while the HD strokes are the lines (a polygon); when the
@@ -245,7 +246,7 @@ SCI_TEST(smoothing_leaves_out_organic_lines) {
     sci::vector::PrimitiveHint primitive;
     primitive.id = "crown-outline";
     primitive.kind = sci::vector::PrimitiveKind::Spline;
-    primitive.commands = commands;
+    primitive.commands = std::move(commands);
     part.primitives.push_back(primitive);
     object.main.parts.push_back(part);
     model.objects.push_back(object);

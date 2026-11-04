@@ -307,11 +307,10 @@ std::string smoothing_measures(const sci::render::SmoothingSuspect& s) {
         return std::format("{} joints or clips across stacked lines up to {} px apart, ends offset up to {} px",
                            s.count, s.bend, s.deviation);
     case sci::render::SmoothingKind::Corner:
-        return std::format("turn 1-cos {}, HD passes {} px from the corner pixel", milli(s.bend),
-                           milli(s.deviation));
+        return std::format("turn 1-cos {}, HD passes {} px from the corner pixel", milli(s.bend), milli(s.deviation));
     case sci::render::SmoothingKind::Curve:
-        return std::format("{} lines turning about {} degrees; HD up to {} px off the ellipse, 1x up to {} px",
-                           s.count, s.bend, milli(s.deviation), milli(s.residual));
+        return std::format("{} lines turning about {} degrees; HD up to {} px off the ellipse, 1x up to {} px", s.count,
+                           s.bend, milli(s.deviation), milli(s.residual));
     }
     return {};
 }
@@ -354,8 +353,8 @@ std::string smoothing_report(const std::vector<Row>& rows) {
             totals.at(k) += counts.at(k);
         }
         if (!row.smoothing.empty()) {
-            text += std::format("pic {}: {} step / {} corner / {} curve\n", row.number, counts[0], counts[1],
-                                counts[2]);
+            text +=
+                std::format("pic {}: {} step / {} corner / {} curve\n", row.number, counts[0], counts[1], counts[2]);
         }
     }
     text += std::format("\nAll: {} step / {} corner / {} curve\n\nRanked:\n", totals[0], totals[1], totals[2]);
@@ -465,8 +464,7 @@ std::optional<Row> analyse(const sci::resource::ResourceManager& manager, std::u
     row.round_trip = sci::render::check_round_trip(drawn->trace, row.visual);
     row.round_trip_lines = describe_round_trip(row.round_trip, row.visual, drawn->trace);
     if (options.smoothing) {
-        row.smoothing =
-            sci::render::find_smoothing_suspects(drawn->maps, drawn->trace, row.visual, hints.pointers());
+        row.smoothing = sci::render::find_smoothing_suspects(drawn->maps, drawn->trace, row.visual, hints.pointers());
         row.smoothing_lines = describe_smoothing(row.smoothing, drawn->trace);
     }
     (void)frame;
