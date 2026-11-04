@@ -112,7 +112,10 @@ first gains objects. The committed files stay at version 1 until then.
        "points": [[140, 110], [150, 100], [160, 110]], "corners": [{"point": 1, "kind": "sharp"}]}]}]}],
   "decision": {"hypothesis": "door", "by": "customer", "date": "2026-10-30", "cell": "B3.3"}
 }],
-"repetitions": [{"id": "windows-row", "items": ["window-left", "window-right"]}]
+"repetitions": [
+  {"id": "windows-row", "items": ["window-left", "window-right"]},
+  {"id": "shutters", "items": ["shutter-left", "shutter-right"], "cell": "B2", "confidence": 600,
+   "decision": {"hypothesis": "as-drawn", "by": "customer", "date": "2026-11-04", "cell": "B2"}}]
 ```
 
 `tests/hints/pic.900.json` is a complete synthetic example. It is checked
@@ -133,6 +136,8 @@ together with this directory.
 | `alternatives` | A.6: up to 8 other hypotheses for the object. Each has an `id`, `type`, `confidence`, `parts` and `relations`. The object's own members are its main hypothesis, named by the object's id. |
 | `decision` | A.7: the customer's choice of a hypothesis (`by` is always `customer`), with the date and the cell of the answer. An object with a decision is never asked again. Without one, an object with alternatives is still open. |
 | `repetitions` | A.5: objects of one type, or parts of one role, that are reconstructed identically. An item is in at most one repetition. |
+| repetition `cell`, `confidence` | Optional: where the items are on the review grid, and how sure the analyser is that they are identical. Without a confidence, the repetition is certain (1000). |
+| repetition `decision` | A.7, as for an object, but the `hypothesis` is `repeat` (reconstruct the items identically) or `as-drawn` (no repetition: each item as its pixels show it). A repetition with a confidence below 1000 and no decision is open, a question for the customer, and is drawn as drawn until it is decided: the 3b reconstruction stays. A decision on a certain repetition is allowed and overrides it. |
 
 All ids are unique in the file, across every kind of item. Command indices
 are checked against the picture with the game files by `sci-hint-tool

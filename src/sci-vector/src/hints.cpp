@@ -672,6 +672,23 @@ Hypothesis read_hypothesis(Reader& in, const JsonValue& value, const std::string
     return hypothesis;
 }
 
+// A.7: the customer's choice, on an object or a repetition. The caller checks
+// that it names a hypothesis of its item.
+Decision read_decision(Reader& in, const JsonValue& value, const std::string& where) {
+    Decision decision;
+    if (!in.members(value, where, {"hypothesis", "by", "date", "cell"}, {"note"})) {
+        return decision;
+    }
+    decision.hypothesis = in.identifier(*value.member("hypothesis"), where + ".hypothesis");
+    if (in.text(value.member("by"), where + ".by") != "customer") {
+        in.fail(where + ".by", "\"customer\" expected");
+    }
+    decision.date = in.date(*value.member("date"), where + ".date");
+    decision.cell = in.cell(*value.member("cell"), where + ".cell");
+    decision.note = in.text(value.member("note"), where + ".note");
+    return decision;
+}
+
 ObjectHint read_object(Reader& in, const JsonValue& value, const std::string& where) {
     ObjectHint object;
     if (!in.members(value, where, {"id", "type", "cell", "confidence", "parts"},
@@ -695,21 +712,12 @@ ObjectHint read_object(Reader& in, const JsonValue& value, const std::string& wh
     }
     if (const JsonValue* decision = value.member("decision"); decision != nullptr && in.ok()) {
         const std::string at = where + ".decision";
-        if (in.members(*decision, at, {"hypothesis", "by", "date", "cell"}, {"note"})) {
-            Decision d;
-            d.hypothesis = in.identifier(*decision->member("hypothesis"), at + ".hypothesis");
-            if (in.text(decision->member("by"), at + ".by") != "customer") {
-                in.fail(at + ".by", "\"customer\" expected");
-            }
-            d.date = in.date(*decision->member("date"), at + ".date");
-            d.cell = in.cell(*decision->member("cell"), at + ".cell");
-            d.note = in.text(decision->member("note"), at + ".note");
-            if (in.ok() && d.hypothesis != object.id &&
-                std::ranges::none_of(object.alternatives, [&](const Hypothesis& h) { return h.id == d.hypothesis; })) {
-                in.fail(at + ".hypothesis", std::format("no hypothesis \"{}\" of this object", d.hypothesis));
-            }
-            object.decision = std::move(d);
+        Decision d = read_decision(in, *decision, at);
+        if (in.ok() && d.hypothesis != object.id &&
+            std::ranges::none_of(object.alternatives, [&](const Hypothesis& h) { return h.id == d.hypothesis; })) {
+            in.fail(at + ".hypothesis", std::format("no hypothesis \"{}\" of this object", d.hypothesis));
         }
+        object.decision = std::move(d);
     }
     return object;
 }
@@ -756,7 +764,7 @@ std::optional<RepeatedItem> find_repeated(const std::vector<ObjectHint>& objects
 RepetitionHint read_repetition(Reader& in, const JsonValue& value, const std::string& where,
                                const std::vector<ObjectHint>& objects) {
     RepetitionHint repetition;
-    if (!in.members(value, where, {"id", "items"}, {"note"})) {
+    if (!in.members(value, where, {"id", "items"}, {"cell", "confidence", "note", "decision"})) {
         return repetition;
     }
     repetition.id = in.identifier(*value.member("id"), where + ".id");
@@ -787,7 +795,22 @@ RepetitionHint read_repetition(Reader& in, const JsonValue& value, const std::st
     } else if (std::ranges::any_of(found, &RepeatedItem::organic)) {
         in.fail(where + ".items", "organic shapes are not repeated identically (A4 A.4)");
     }
+    if (const JsonValue* cell = value.member("cell"); cell != nullptr) {
+        repetition.cell = in.cell(*cell, where + ".cell");
+    }
+    if (const JsonValue* confidence = value.member("confidence"); confidence != nullptr) {
+        repetition.confidence = static_cast<int>(in.integer(*confidence, where + ".confidence", 0, max_confidence));
+    }
     repetition.note = in.text(value.member("note"), where + ".note");
+    if (const JsonValue* decision = value.member("decision"); decision != nullptr && in.ok()) {
+        const std::string at = where + ".decision";
+        Decision d = read_decision(in, *decision, at);
+        if (in.ok() && d.hypothesis != repetition_repeat && d.hypothesis != repetition_as_drawn) {
+            in.fail(at + ".hypothesis",
+                    std::format("\"{}\" or \"{}\" expected", repetition_repeat, repetition_as_drawn));
+        }
+        repetition.decision = std::move(d);
+    }
     return repetition;
 }
 
@@ -904,6 +927,17 @@ bool is_organic(ObjectType type) noexcept {
         ObjectType::Water,   ObjectType::Terrain, ObjectType::Figure,
     };
     return std::ranges::find(organic, type) != organic.end();
+}
+
+bool is_open(const RepetitionHint& repetition) noexcept {
+    return !repetition.decision && repetition.confidence < max_confidence;
+}
+
+bool reconstructs_identically(const RepetitionHint& repetition) noexcept {
+    if (repetition.decision) {
+        return repetition.decision->hypothesis == repetition_repeat;
+    }
+    return !is_open(repetition);
 }
 
 bool hints_match(const PictureHints& hints, std::span<const std::uint8_t> pic_data) {

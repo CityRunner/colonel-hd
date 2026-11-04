@@ -182,5 +182,14 @@
       ],
       "relations": [{"kind": "parallel", "items": ["rose-cross-left", "rose-cross-right"]}]
     }
+  ],
+  "repetitions": [
+    {
+      "id": "back-windows",
+      "items": ["back-window-left", "back-window-right"],
+      "cell": "A3.2-B4.2",
+      "confidence": 450,
+      "note": "batch 1 case 4: frames 29 / 27 px wide, cross bar 14 / 13 px from the left jamb; open"
+    }
   ]
 }

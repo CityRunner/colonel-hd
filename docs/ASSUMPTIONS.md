@@ -3206,3 +3206,47 @@ files as a decision with its cell reference (A4 A.7, B.4).
   smoothed into a slope, a bend or a lumpy curve. The reconstruction step
   of milestone 10 handles these first, and the next batches look for the
   same pattern in other rooms. **Finding.**
+
+## Milestone 10: uncertain repetitions (2026-11-04)
+
+Closes the schema gap of "the pilot scene models" above: an uncertain
+repetition can now be written, and batch 1 case 4 is in `pic.058.json`.
+The format is in `hints/README.md` and `hints/schema.json`, checked by
+`scripts/check-hints.py` and `parse_hints`, with unit tests.
+
+- **A repetition has two fixed hypotheses**, `repeat` (A.5: reconstruct
+  the items identically) and `as-drawn` (no repetition). A repetition gains
+  an optional `confidence` (per mille, that the items are identical) and an
+  optional `decision` of the same shape as an object's, whose `hypothesis`
+  is one of the two. No `alternatives` member: "as drawn" is the objects
+  themselves, so nothing has to be copied. **Assumed.**
+- **Open repetitions.** Without a confidence, a repetition is certain
+  (1000), so the existing repetition of picture 174 means what it did. A
+  confidence below 1000 and no decision make it open: a question for the
+  customer. Until it is decided, the renderer is to treat it as `as-drawn`,
+  so the 3b reconstruction stays (A.7). `is_open` and
+  `reconstructs_identically` in sci-vector state the rule; nothing renders
+  repetitions yet. **Decided** (A.7).
+- **A decision on a certain repetition is allowed** and overrides the
+  analyser, as the customer may reject a repetition he spot-checks; a
+  decision always wins. **Assumed.**
+- **An optional `cell`** on a repetition (review-grid syntax, as on an
+  object) says where the question is; the items' own cells need not form
+  one range. **Assumed.**
+- **The invariants stay:** objects of one type or parts of one role, no
+  organic items, and an item in at most one repetition, open or not, so a
+  later decision never has to resolve two repetitions. **Decided.**
+- **No version bump.** The members are optional and additive within
+  version 2: every existing file stays valid and means the same, as with a
+  new type or role (above). A reader older than this change rejects a file
+  that uses them with "unknown member", not silently, and the hint files
+  are not frozen during milestone 10 (A4). **Decided.**
+- **Case 4 in the file.** `pic.058.json` gains `back-windows` (the two
+  back windows, cell `A3.2-B4.2`, open). `batch-1.md` gives no number for
+  case 4; the confidence is 450, as for the idealised alternative of the
+  other close calls of batch 1 (cases 1 and 3: "as drawn" 550 or more,
+  the equalised reading 450). **Assumed.**
+- **Validation.** `scripts/check-hints.py`: 87 files, 0 problems.
+  `sci-hint-tool check hints`: passes. `sci-golden-hashes --check --hints
+  hints`: all golden hashes match (the vector path does not read
+  repetitions). Release workflow: all tests pass. **Finding.**

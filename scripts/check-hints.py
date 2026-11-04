@@ -10,7 +10,9 @@ across the whole file, version 1 files have no objects or repetitions,
 primitives have the points their kind needs and corners at their points,
 geometric relations name parts or primitives of their own hypothesis,
 organic objects get no idealisation, repetitions are objects of one type or
-parts of one role, and a decision names a hypothesis of its object. The
+parts of one role, a decision names a hypothesis of its object, and
+decision dates are dates. (A repetition's decision is `repeat` or
+`as-drawn`, which the schema checks.) The
 program's reader (sci-vector, parse_hints) applies the same rules; whether
 the lines and commands exist in the picture is checked with the game files
 by sci-hint-tool check.
@@ -237,6 +239,9 @@ def check_scene(hints, name):
             errors.append(f"{here}: the items are of one type or of one role")
         if organic:
             errors.append(f"{here}: organic shapes are not repeated identically")
+        decision = repetition.get("decision")
+        if decision and not valid_date(decision["date"]):
+            errors.append(f"{here}: the decision's date is not a date")
     errors += [f"{name}: {i!r} is in two repetitions" for i in sorted({i for i in repeated if repeated.count(i) > 1})]
     return errors
 

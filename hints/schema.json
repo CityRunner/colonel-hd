@@ -149,7 +149,7 @@
       }
     },
     "repetitions": {
-      "description": "Version 2. A.5: objects, or parts, that are reconstructed identically. All items are objects of one type, or parts of one role.",
+      "description": "Version 2. A.5: objects, or parts, that are reconstructed identically. All items are objects of one type, or parts of one role. An item is in at most one repetition. The optional cell says where the items are on the review grid, for the question. A repetition without a confidence is certain (1000). One with a confidence below 1000 and no decision is open: a question for the customer, drawn as drawn until it is decided (A.7).",
       "type": "array",
       "maxItems": 4096,
       "items": {
@@ -159,7 +159,22 @@
         "properties": {
           "id": {"$ref": "#/$defs/id"},
           "items": {"type": "array", "minItems": 2, "maxItems": 512, "items": {"$ref": "#/$defs/id"}},
-          "note": {"$ref": "#/$defs/text"}
+          "cell": {"$ref": "#/$defs/cell"},
+          "confidence": {"$ref": "#/$defs/confidence"},
+          "note": {"$ref": "#/$defs/text"},
+          "decision": {
+            "description": "A.7: the customer's choice, as for an object, between the two fixed hypotheses of a repetition: repeat (reconstruct the items identically) or as-drawn (no repetition). Allowed on a certain repetition too, where it overrides the analyser.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hypothesis", "by", "date", "cell"],
+            "properties": {
+              "hypothesis": {"enum": ["repeat", "as-drawn"]},
+              "by": {"const": "customer"},
+              "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+              "cell": {"$ref": "#/$defs/cell"},
+              "note": {"$ref": "#/$defs/text"}
+            }
+          }
         }
       }
     }
