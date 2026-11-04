@@ -3509,3 +3509,77 @@ rendering (branch `m10-batch2-fixes`).
 - **No objection to the shutter tops** of picture 12 A1 becoming smooth
   arcs (a side effect of batch 2, shown to the customer). **Assumed
   accepted; the customer can still object.**
+
+## Milestone 10: halo, highlight and hook (2026-11-04)
+
+The customer's findings after batch 2 (above), applied on branch
+`m10-halo-highlight`.
+
+- **Picture 71, B4.4-C4.2, the tube highlights.** New object
+  `tube-highlights` (type `other`, part role `highlight`, decided by the
+  customer with the cell): three `line` primitives, each a run of short
+  stepped lines drawn as one straight light: commands 150-154 (along the
+  brown pipe, (243, 118)-(239, 137)), 162, 160, 161 (its lower leg) and
+  163-166 (along the red tube, (242, 135)-(245, 150)). All three pass the
+  round trip (deviation 1) and the line check; they are straight in the
+  crop. Command 167 and the dot 168 are separate dashes, already straight;
+  the dashes 196-198 higher up the red tube were not crooked and are left
+  out. No corner was needed: each run is one straight line. **Decided
+  (customer); the commands are assumed** (the analyser's reading).
+- **Picture 71, A4, the hook.** Part `curtain-rail-hook-light` in the
+  decided `curtain-rail-hook`: the yellow highlight (192, 190, 191, 193,
+  194) and the grey line, in two arcs (180, 179 and 188, 187, 186: the
+  grey line has a gap at (233, 31), so it is not one path), each an `arc`.
+  All pass (deviation 1, 0, 0). The arcs are fitted each on its own, not
+  constrained to the red outline's centre: the vocabulary has no
+  `concentric` relation, and adding one was not needed for the round
+  trip. The hook now bends smoothly in all its lines. **Assumed.**
+- **The ragged red edge under the dark line (A4) is not fixed.** Cause,
+  found: (1) the scene model steers strokes only, the faces keep their
+  automatic fit (section 6), so between the joints of the steered inner
+  arc the old straight face boundary shows beside the new stroke; and
+  (2) where the grey line covers the red inner line at 1x, the stroke
+  integrity pass removes the red stroke along the covered run and leaves
+  a round blob at each red pixel still seen. A general fix was tried:
+  every arrangement edge of a steered curve runs from its vertex onto
+  the stroke, along it and back (vertices fixed), unless it would cross
+  another edge or sweep over a vertex outside the stroke. It changed the
+  same 60 golden entries, but drew a thin dark seam under the springing
+  line of picture 42's left arch (a scan-edge inconsistency not found in
+  the time), and the hook's inner arc itself failed its crossing check
+  at the arrow tip (the face edge there meets the tip's line off the
+  stroke). It was taken out (commit "faces do not follow steered
+  strokes"). Making faces share a steered boundary (spec 6.6) needs the
+  steered shape in the arrangement itself (moving vertices, re-labelling
+  faces), which the current design does not do. **Open; stopped here.**
+- **Picture 12, A2.4-B3.1, the halo, falls back.** Whole-ellipse steering
+  was added (`ellipse` with equal first and last point; the halo lines,
+  commands 7-30, do not form one path, because the shutter bounds the
+  halo on the right where no line is drawn, between (136, 67) and
+  (136, 84)). The halo is an outline of 19 `ee` lines around the fill
+  1520; its face boundary is those lines' arrangement edges, not a
+  dithered region edge. The fitted ellipse (centre about (123.5, 74.1),
+  semi-axes 22.5 and 15.0) passes the round trip (deviation 1), but three
+  owned pixels lie farther than half a pixel from it: (135, 58) and
+  (136, 67) of command 19 (the flattened top right, beside the shutter)
+  and (111, 89) of command 28. The line check of batch 2 therefore keeps
+  the 3b reconstruction; weighting the anchors differently does not help
+  (anchoring the gap ends moves the misses to commands 14 and 19). Even a
+  passing stroke would leave the face boundary polygonal (point above).
+  Object `door-lamp-halo` (type `other`, part role `highlight`: no new
+  type or role was needed) is in the hint file, decided by the customer
+  with the cells; the HD is unchanged (0 changed pixels in the crop).
+  **Fell back; the customer may accept the oval missing three pixels by
+  a fraction of a pixel, which would need a decision on the line rule.**
+- **Checks.** Release tests pass (two new unit tests: a whole ellipse
+  with a gap; a square rejected); `scripts/check-hints.py` and
+  `sci-hint-tool check hints` clean apart from the halo fallback;
+  round trip, acceptance, A1 and suspects in `docs/hd-quality.md`.
+  Golden hashes differ from the committed file in exactly the 60 entries
+  known after batch 2 (pictures 10, 12, 15, 20, 42, 44, 57, 58, 71, 74
+  and the stacks 74+174, 174+74, 74.palette1+174.palette1,
+  174.palette1+74, 42+162, all four HD scales); nothing else. Not
+  regenerated. **Finding.**
+- **Review images** in `reports/images/milestone-10/after-batch-2-findings/`
+  (git ignored): crops, `-changed-before-after` crops, sheets and plain
+  pairs of pictures 12 and 71. **Finding.**

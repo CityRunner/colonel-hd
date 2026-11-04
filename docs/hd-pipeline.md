@@ -181,7 +181,8 @@ with `src/sci-vector/src/scene_model.cpp`:
   one; the main one of an object without alternatives (certain). An open
   object (alternatives, no decision) keeps the reconstruction above.
   Organic objects (A.4) are never steered. Repetitions are not rendered.
-- **Which primitives.** `line`, `polyline`, `arc` and open `ellipse`, whose
+- **Which primitives.** `line`, `polyline`, `arc`, open `ellipse` and
+  whole `ellipse` (below), whose
   commands draw lines in this plane that form one path in the
   primitive's order: each starts on or next to the pixel where the
   previous one ends (either direction), and no two consecutive lines run
@@ -199,11 +200,22 @@ with `src/sci-vector/src/scene_model.cpp`:
   the path's ends (strongly), the anchor points and the lines' pixel
   centres, followed from the start in the direction the first line
   leaves it to the end, through quarter turns, so it may turn by more
-  than half a circle (a hook), and flattened the same way.
+  than half a circle (a hook), and flattened the same way. Whole
+  `ellipse` (first and last point equal; after batch 2): the conic
+  A x^2 + B xy + C y^2 + D x + E y = 1 about the centroid of the lines'
+  pixel centres, fitted by weighted least squares to the anchor points
+  and those pixel centres (5 x 5 normal equations, Gaussian elimination),
+  must be an ellipse; each line's piece is the part of it between the
+  line's ends projected radially onto it, the shorter way round, two ends
+  on touching pixels meeting halfway. The lines need not form one path:
+  where they leave a gap (another object bounds the area there) the gap
+  stays. The round trip and the line check below apply unchanged.
 - **The strokes.** The shape is cut where consecutive lines meet (halfway
   between their end pixels, or at a polyline corner within one pixel of
   that), and each line's stroke becomes its piece. The faces keep the
-  fit above.
+  fit above (a face beside a steered curve therefore keeps its old
+  boundary, which can show beside the stroke; see `docs/ASSUMPTIONS.md`,
+  "Milestone 10: halo, highlight and hook").
 - **Acceptance.** The pieces, rasterised back to 1x as the round-trip
   check does (`sci/vector/raster_1x.hpp`, shared with
   `sci/render/round_trip.hpp`), must lie within 1 original pixel of the

@@ -14,12 +14,16 @@
 // - `ellipse` (open: first and last point differ): half of an ellipse, the
 //   segment between the line ends being a diameter, fitted to the anchor
 //   points and the lines' pixels (a circle seen in perspective).
+// - `ellipse` (whole: first and last point equal): one ellipse fitted to
+//   the anchor points and all the lines' pixels; each line's piece is the
+//   part between its ends projected onto it. The lines need not form one
+//   path (a gap stays open).
 // - `arc`: a circular arc from the first line's start to the last line's
 //   end, the circle fitted to the ends, the anchor points and the lines'
 //   pixels, in the direction the first line leaves the start; it may turn
 //   by more than half a circle (a hook).
 //
-// The lines must form one path in the primitive's order (each one starts
+// Otherwise the lines must form one path in the primitive's order (each one starts
 // on or next to the pixel where the previous one ends, in either
 // direction); the shape is then cut where they meet, one piece per line.
 // It is used only if, rasterised back to 1x, the pieces lie within

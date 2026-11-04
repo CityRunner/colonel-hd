@@ -94,7 +94,9 @@ primitives of decided and certain objects to steer the fit
 decision) and an object decided `keep` keep their milestone 3b
 reconstruction, and repetitions are not rendered yet. An `ellipse` whose first and last points differ is half of
 an ellipse, those two points being the ends of a diameter (a round arch
-seen in perspective); an `arc` is one circular arc from its first line's
+seen in perspective); one whose first and last points are equal is a
+whole ellipse, fitted to all its lines, which need not join (a gap where
+another object bounds the area stays open); an `arc` is one circular arc from its first line's
 start to its last line's end, in the direction the first line leaves the
 start, and may turn by more than half a circle (a hook); `step` corners of a polyline square the ends of its
 horizontal and vertical lines there.

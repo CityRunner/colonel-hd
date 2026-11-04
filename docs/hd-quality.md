@@ -78,6 +78,27 @@ steering and the line check for steered shapes:
   flagged; picture 15's outer arch (commands 1412-1417, A2.2) was not
   part of the batch and stays flagged.
 
+## After the findings after batch 2 (2026-11-04)
+
+Measured the same way after picture 71's tube highlights and hook lines
+and picture 12's halo (`docs/ASSUMPTIONS.md`, "Milestone 10: halo,
+highlight and hook"):
+
+- Round trip: 13208 chains, 13191 pass, 17 fail (the same 17). Picture
+  71: 61 chains (was 65; the newly steered lines left their automatic
+  chains), 0 fail, worst 1 px. Picture 12 unchanged (231, 0 fail).
+- 8 primitives of picture 71 change the HD: 3 lines (deviation 1) and 5
+  arcs (deviation 0 or 1). Picture 12's whole ellipse `halo-oval` falls
+  back: round trip within 1 px, but the oval leaves three pixels its
+  lines own untouched.
+- Acceptance (section 6.4): 88 pictures, worst agreement 99.993%, 0
+  below 99%, 0 swaps, 0 untouched line pixels.
+- A1 residual totals, before / now: overshoots 7075 / 7075, doubled
+  boundaries 2859 / 2859, fragments 6452 / 6451, breaks 10670 / 10672;
+  the changes are in picture 71 only (now 22 / 8 / 26 / 34).
+- Smoothing suspects: 3038 step / 206 corner / 299 curve before, 3035 /
+  206 / 299 now (picture 71: 18 step suspects).
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted
