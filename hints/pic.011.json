@@ -36,8 +36,8 @@
           "role": "frame",
           "label": "the arch of the frame and the half-round hub where the bars meet",
           "primitives": [
-            {"id": "cf-centre-frame", "kind": "ellipse", "commands": [15, 21, 30, 32, 33, 36, 35, 34, 31, 29, 22, 16], "points": [[108, 40], [159, 23], [211, 40]]},
-            {"id": "cf-centre-outline", "kind": "ellipse", "commands": [335, 336, 338, 343, 345, 348, 349, 347, 346, 344, 342, 337, 340], "points": [[105, 39], [160, 20], [214, 39]]},
+            {"id": "cf-centre-frame", "kind": "ellipse", "commands": [15, 21, 30, 32, 33, 36, 35, 34, 31, 29, 22, 16], "points": [[108, 40], [159, 23], [211, 40]], "tolerance": 1500},
+            {"id": "cf-centre-outline", "kind": "ellipse", "commands": [335, 336, 338, 343, 345, 348, 349, 347, 346, 344, 342, 337, 340], "points": [[105, 39], [160, 20], [214, 39]], "tolerance": 1500},
             {"id": "cf-centre-hub", "kind": "ellipse", "commands": [940, 941, 942, 945, 939, 938, 937], "points": [[150, 47], [159, 38], [169, 47]]}
           ]
         }
@@ -47,7 +47,7 @@
         "by": "customer",
         "date": "2026-11-05",
         "cell": "A3.1-A4.2",
-        "note": "batch 3 case 5: the wide fanlight half of an ellipse through the drawn springers and crown, the bars meeting it, the hub smooth (no objection)"
+        "note": "batch 3 case 5, and answer (a) after group A: the wide fanlight a half ellipse through its springers, up to 1.5 px off, the bars meeting it, the hub smooth"
       }
     },
     {
