@@ -4221,3 +4221,91 @@ its cell), files 3, 11, 16, 17 and 85 now at version 2.
 - **Images** in `reports/images/milestone-10/batch-3-fixes-a/` (git
   ignored): per place a crop and its `-changed-before-after`, per picture
   the sheet and plain image. **Finding.**
+
+## Milestone 10: batch 3 fixes, group C (2026-11-05)
+
+The customer's answers to batch 3 (above), questions 10a to 15a, for
+pictures 14, 63, 59, 43, 46, 24 and 66, on branch `m10-b3-group-c`. Hint
+data only (no code change); every object is decided by the customer
+(2026-11-05, with its cell), files 14, 24, 43, 59, 63 and 66 now at
+version 2.
+
+- **Pictures 63 and 14, case 10a, the cottage's round windows**
+  (63: B3.2-B4.2, A2.2-A3.1; 14: B3.2-B4.2). Each rim is drawn as two
+  rings of short lines, one inside the other, so each window is an object
+  with two whole `ellipse`s, the outer and the inner ring, chosen by the
+  drawing order of the commands (63) or by the ring the lines lie on (14).
+  63: all three windows pass (the right one's inner ring without command
+  265, a level piece at its top that keeps the ring at round trip 2).
+  14: the two front windows and the gable window pass (the gable's inner
+  ring without 1546); the front-left inner ring falls back (round trip 2,
+  no single line to leave out); the two side-wall windows (the left one
+  broken, as drawn) pass but stay uneven, as their rings are. The bars are
+  lines already and stay. In the crops the outlines are ovals now; thin
+  dark seams show inside the rims where the two rings' strokes do not
+  quite cover the band between them, and the panes keep small notches.
+  **Partly fixed** (outer shapes oval; the rims' inside not clean; 14's
+  side-wall windows still uneven).
+- **Picture 59, case 11a, the round table top** (C4.1): object
+  `round-table-top`: the rim (red top edge and black front edge, 17
+  lines, with 254 that closes it at the right) as a whole ellipse, and
+  the two lower edges of the top's thickness (red 262-272, black 84-96) as
+  half ellipses on the same left and right ends. All pass. A smooth
+  ellipse in the crop. **Fixed.**
+- **Picture 43, case 12a, the rug medallion** (C3.1-C3.2): the five pink
+  shapes as whole ellipses over their grey outlines. Top, bottom and left
+  pass; the right one passes without its tip line 762 (with it, round
+  trip 2), so a short straight stub stays at its right tip; the middle
+  one (four lines, a trapezoid) falls back: no ellipse fits. The left and
+  right ovals are fitted each to its own lines, so they are mirror images
+  only as far as the drawing is: relation solving takes line and polyline
+  points only, and an ellipse `symmetry` would need a code change.
+  **Partly fixed** (four smooth ovals; the middle one as before; the
+  symmetry not enforced).
+- **Picture 46, case 13a, the rug triangles** (B3.3-B4.3): **not fixed.**
+  The green triangles are not drawn by lines of their own: they are fills
+  (commands 862-867) bounded by two long zig-zag lines (850-854) and the
+  rug's inner border. In the original the fills stop at the dithered
+  pixels short of those lines, which makes the symmetric triangles with
+  flat tops; the HD faces follow the lines, so they are as wide as the
+  zig-zag. Symmetric triangles would need faces that do not follow any
+  drawn line (new geometry, A.6), so nothing is in the hint file. A
+  question for the customer: may the triangles' sides be invented from
+  the fill's pixel edge?
+- **Picture 24, case 14a/a, the gazebo steps and newel knobs** (C3.2):
+  object `gazebo-stairs`: the four short diagonals at the treads' left ends
+  (820-823) as `polyline`s down, then out, with a sharp corner (as
+  picture 16's steps); object `newel-knobs`: each knob's five outline
+  lines as a whole ellipse. All pass. Square tread ends and round knobs
+  in the crop. **Fixed.**
+- **Picture 66, case 15a "handle too"** (B2.3-B3.3, A2.1-A2.4): object
+  `lever-box-dial`: the dial's outer outline (45-55 without 47, a line
+  that owns no pixel; with it round trip 2) and the orange face edge
+  (67-79) as half ellipses on the dial's base line, and the orange edge
+  inside the black band (82-88) as an `arc`; the 3a chain hint
+  `dome-face-of-lever-box` is superseded by the steered shape. Object
+  `lever-grip`: the grip's round end face (866-878, whole ellipse), the
+  rim around it (219-224) and its far end (234-238) as arcs; its straight
+  sides are lines already. All pass. **Not fixed: the dark inner rim**
+  (271-277, 759-773), where the customer saw the kink: its lines do not
+  form one path (they jog by a pixel where the spokes meet it, between
+  764 and 766), and a half ellipse over a path with gaps is not steered,
+  as for picture 16's inner fanlight arches (group A); split into two
+  arcs, the parts fail the round trip (2 and 5). The spokes are lines and
+  meet it as before. **Partly fixed** (outer rim and grip smooth; the
+  kink in the dark inner rim remains; needs the code change of group A's
+  note).
+- **Checks** (numbers in `docs/hd-quality.md`, "After batch 3, group C"):
+  release tests pass; `check-hints.py`, `sci-hint-tool check hints` (the
+  fallbacks above) and `check-repo-policy.py` clean; acceptance unchanged
+  (worst 99.993%, 0 failing, 0 untouched line pixels); golden hashes
+  against the same build with the `milestone-10` hints differ in exactly
+  the 24 HD entries of pictures 14, 24, 43, 59, 63 and 66; picture 46 and
+  every `original1` entry are unchanged. A1 breaks grow in 14 (216 ->
+  325) and 63 (63 -> 177): the two rings of each rim are now separate
+  curves, and the checker counts where their strokes no longer meet the
+  short lines between them; the seams above are the visible part.
+  **Finding.**
+- **Images** in `reports/images/milestone-10/batch-3-fixes-c/` (git
+  ignored): per place a crop and its `-changed-before-after` (picture 46:
+  unchanged), per changed picture the sheet and plain image. **Finding.**

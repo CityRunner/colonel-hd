@@ -245,6 +245,35 @@ A") against the `milestone-10` build with its hint files:
   `sci-golden-hashes --reference`: the fast analysis matches the
   reference in every picture.
 
+## After batch 3, group C (2026-11-05)
+
+Measured on branch `m10-b3-group-c` (hint data for pictures 14, 24, 43,
+59, 63 and 66; `docs/ASSUMPTIONS.md`, "Milestone 10: batch 3 fixes, group
+C") against the same build with the `milestone-10` hint files (group A's
+numbers above):
+
+- Round trip: 13186 chains, 13169 pass, 17 fail (was 13208 / 13191 / 17;
+  the same 17 fail; 22 automatic fits are now steered shapes). Hinted
+  ellipses 41 -> 61, arcs 86 -> 86 (one more at deviation 1), polylines
+  14 -> 17, all at deviation 0 or 1. Primitives that fall back: picture
+  14's front-left window inner ring (deviation 2) and picture 43's middle
+  medallion oval (no ellipse fits).
+- Acceptance (section 6.4): 88 pictures, worst agreement 99.993%, 0
+  failing, 0 swaps, 0 untouched line pixels. Line pixels taken within the
+  A.6 tolerance: 161 -> 202.
+- A1 residuals (overshoots / fragments / breaks): 7117 / 6512 / 10880 ->
+  7105 / 6521 / 11154. Per picture: 14: 242 -> 237 / 182 -> 197 / 216 ->
+  325; 24: 160 -> 159 / 150 -> 145 / 218 -> 220; 43: 18 / 38 -> 39 / 57 ->
+  56; 59: 45 -> 46 / 49 -> 50 / 134 -> 167; 63: 54 -> 43 / 39 -> 31 / 63
+  -> 177; 66: 43 -> 47 / 103 -> 108 / 138 -> 155. The breaks of 14 and 63
+  are the windows' two rings, now separate curves.
+- Smoothing suspects: 3027 / 200 / 290 -> 3024 / 198 / 277 (step / corner
+  / curve; pictures 14, 59, 63 and 66).
+- Golden hashes: the 24 HD entries of pictures 14, 24, 43, 59, 63 and 66
+  differ; every other entry (picture 46 included), and every `original1`
+  entry, is unchanged. `sci-golden-hashes --reference`: the fast analysis
+  matches the reference in every picture.
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted
