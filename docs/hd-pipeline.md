@@ -320,6 +320,56 @@ only the strokes; the faces kept the 3b fit (`docs/ASSUMPTIONS.md`,
   "Milestone 10: the shared boundary, second stage"); curved shapes do not
   enter the arrangement (its segments have integer end points).
 
+### Curved shapes in the arrangement (milestone 10, design)
+
+The third stage of the shared boundary. A curved steered shape that passes
+its round trip and line check but whose faces cannot follow by moving
+vertices (the course crosses a connector at a springer, changes the order
+at a vertex, passes over a nearby line end) enters the arrangement itself,
+as the straight shapes of the second stage do, and the plane is built
+again. The exact arrangement then resolves the new topology: it splits
+edges at the new crossings, orders the edges at every vertex again, and
+the faces take their values from the 1x pixels they contain (section 4),
+so each face keeps its colour.
+
+- **Fixed point, no float in topology.** The arrangement takes a scale
+  `K` (a power of two): coordinates are picture coordinates times `2K`.
+  `K = 1` is the doubled grid of section 2 and is used for every plane
+  without such a shape, so those are built exactly as before. With a
+  curved shape the plane is built at `K = 8` (1/16 original pixel, finer
+  than the 0.25 px chords; at N = 10 one unit is 0.625 HD pixel, within
+  one HD pixel of the 16 x 16 sample grid). Every existing segment is
+  scaled exactly (integers times K), so all its vertices are K times the
+  old ones and, K being a power of two, convert to the same picture
+  coordinates bit for bit: faces away from the shape, the 3b fits and the
+  shared boundary of other shapes come out as before. Ranges at K = 8:
+  coordinates below 2^14, directions below 2^15, cross products below
+  2^31, intersection numerators below 2^47; comparing two rational points
+  needs 2^78, so point comparison and the orientation of a rational
+  point use 128-bit products (`sci/core/exact.hpp`); everything else
+  stays in checked `int64_t`.
+- **The shape's segments.** Its lines' segments are replaced by the
+  chords of its pieces, each chord end rounded to the K grid (the path's
+  ends are pixel centres and stay exact; the end shared by two lines is
+  one point). Where the gap closer extended a line of the shape at a path
+  end, the extension stays, from the pixel centre along the line. The
+  connectors between the shape's own inner ends go. Every other segment
+  or connector that ended on one of the shape's old segments (a T joint,
+  an extension, a join to an inner end) is moved along its own line to
+  the nearest crossing with the chords within 2 original pixels (exact,
+  `line_meets_segment`); where it reaches over the curve the crossing
+  splits it and the part beyond is a dangling edge with one face on both
+  sides. Without such a crossing the shape is not entered.
+- **Acceptance.** As for gap hints and straight shapes: the shape is kept
+  only if the partition gets no more mixed faces and 1x-block pixels.
+  Thin slivers between the chords and nearby line ends lie under the
+  shape's stroke. The round trip, the 6.4 line rule (with the customer's
+  1a exception), the 6.4 acceptance and A1 are measured on the result as
+  before. A shape that is not entered keeps its steered stroke and 3b
+  faces, reported with the reason ("the faces keep the 3b fit: ...").
+- **Strokes** stay the unrounded pieces (at most 1/32 px from the chords,
+  under the stroke).
+
 ### Relation solving (milestone 10, A4 A.3)
 
 `solve_object` in `build_scene.cpp` with `src/sci-vector/src/relations.*`,
