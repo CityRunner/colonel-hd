@@ -247,6 +247,27 @@ SCI_TEST(half_ellipse_does_not_steer_over_wider_gaps) {
     SCI_CHECK(!steered.applicable);
 }
 
+// A dot of the primitive (a one-pixel command) in a wider gap bridges it:
+// the shape is steered, and the gap stays open (the dot keeps its stroke).
+SCI_TEST(half_ellipse_steers_over_a_gap_its_dot_bridges) {
+    const std::array<std::size_t, 1> cut{3};
+    SteerInput input = gapped_fanlight(cut, 3);
+    std::vector<ScreenPoint> pixels;
+    sci::pic::for_each_line_pixel(input.lines[3].from, input.lines[4].from,
+                                  [&](int x, int y) { pixels.push_back({.x = x, .y = y}); });
+    // The line ends three pixels short; the dot is the first missing pixel.
+    std::size_t at = 0;
+    while (at < pixels.size() && pixels[at] != input.lines[3].to) {
+        ++at;
+    }
+    SCI_CHECK(at + 3 < pixels.size() + 1);
+    input.dots.push_back(pixels[at + 1]);
+    const auto steered = sci::vector::detail::steer(input);
+    SCI_CHECK(steered.applicable && steered.pieces.size() == input.lines.size());
+    SCI_CHECK(steered.deviation <= sci::vector::detail::round_trip_limit);
+    SCI_CHECK(steered.pieces[3].back() != steered.pieces[4].front());
+}
+
 namespace {
 
 // The pieces of a steered primitive joined into one curve; empty if they

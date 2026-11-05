@@ -23,6 +23,10 @@
 //   pixels, in the direction the first line leaves the start; it may turn
 //   by more than half a circle (a hook).
 //
+// An open ellipse or an arc may leave gaps of one pixel between its lines,
+// or gaps its one-pixel commands (dots, which keep their own stroke)
+// bridge; the shape is cut at both ends of a gap, which stays open.
+//
 // Otherwise the lines must form one path in the primitive's order (each one starts
 // on or next to the pixel where the previous one ends, in either
 // direction); the shape is then cut where they meet, one piece per line.
@@ -72,6 +76,7 @@ struct SteerInput {
     std::vector<Vec2> points;                      // The anchors' pixel centres, picture coordinates.
     std::vector<std::optional<CornerKind>> corner; // Per point.
     int tolerance = tolerance_unit;                // Thousandths of a pixel; above 1000 only by the customer.
+    std::vector<pic::ScreenPoint> dots{};          // The primitive's one-pixel commands (open ellipse, arc).
 };
 
 struct Steered {

@@ -1392,10 +1392,21 @@ std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>> steer_inp
                              .lines = {},
                              .points = {},
                              .corner = {},
-                             .tolerance = primitive.tolerance != 0 ? primitive.tolerance : detail::tolerance_unit};
+                             .tolerance = primitive.tolerance != 0 ? primitive.tolerance : detail::tolerance_unit,
+                             .dots = {}};
     std::vector<std::size_t> line_of;
+    // A dot of an open ellipse or an arc keeps its stroke and bridges the
+    // gap it fills (scene_model.hpp).
+    const bool open_curve =
+        primitive.kind == PrimitiveKind::Arc ||
+        (primitive.kind == PrimitiveKind::Ellipse && primitive.points.size() >= 3 &&
+         primitive.points.front() != primitive.points.back());
     for (const LineRef ref : primitive.commands) {
         const auto line = find.line(picture, ref);
+        if (line && lines[*line].is_dot() && open_curve) {
+            input.dots.push_back(lines[*line].from);
+            continue;
+        }
         if (!line || lines[*line].is_dot()) {
             return std::nullopt;
         }

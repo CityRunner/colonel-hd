@@ -73,15 +73,43 @@ bool alongside(const SteerLine& a, const SteerLine& b) {
     return near > 2;
 }
 
-// Whether two end pixels are at most `reach` pixels apart (Chebyshev).
-bool within(pic::ScreenPoint a, pic::ScreenPoint b, int reach) {
-    return std::abs(a.x - b.x) <= reach && std::abs(a.y - b.y) <= reach;
+// Whether two end pixels meet: they touch, or, with `reach` 2, they are
+// at most two pixels apart (Chebyshev) or joined by a run of the bridge
+// pixels (dots of the primitive), each at most two pixels from the next.
+bool within(pic::ScreenPoint a, pic::ScreenPoint b, int reach, std::span<const pic::ScreenPoint> bridges) {
+    const auto near = [&](pic::ScreenPoint p, pic::ScreenPoint q) {
+        return std::abs(p.x - q.x) <= reach && std::abs(p.y - q.y) <= reach;
+    };
+    if (near(a, b)) {
+        return true;
+    }
+    if (reach < 2) {
+        return false;
+    }
+    std::vector<bool> used(bridges.size(), false);
+    std::vector<pic::ScreenPoint> pending{a};
+    while (!pending.empty()) {
+        const pic::ScreenPoint p = pending.back();
+        pending.pop_back();
+        if (p != a && near(p, b)) {
+            return true;
+        }
+        for (std::size_t i = 0; i < bridges.size(); ++i) {
+            if (!used[i] && near(p, bridges[i])) {
+                used[i] = true;
+                pending.push_back(bridges[i]);
+            }
+        }
+    }
+    return false;
 }
 
 // The lines oriented along one path, or nothing if they do not form one.
 // With `reach` 2, consecutive lines may leave a gap of one pixel between
-// their ends (a pixel another line drew over).
-std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines, int reach = 1) {
+// their ends (a pixel another line drew over), or a gap the primitive's
+// dots bridge.
+std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines, int reach = 1,
+                                              std::span<const pic::ScreenPoint> bridges = {}) {
     if (lines.empty()) {
         return std::nullopt;
     }
@@ -94,7 +122,7 @@ std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines, 
     if (path.size() >= 2) {
         const SteerLine& next = path[1];
         const auto meets_next = [&](pic::ScreenPoint p) {
-            return within(p, next.from, reach) || within(p, next.to, reach);
+            return within(p, next.from, reach, bridges) || within(p, next.to, reach, bridges);
         };
         if (!meets_next(path[0].to)) {
             if (!meets_next(path[0].from)) {
@@ -104,8 +132,8 @@ std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines, 
         }
     }
     for (std::size_t i = 1; i < path.size(); ++i) {
-        if (!within(path[i - 1].to, path[i].from, reach)) {
-            if (!within(path[i - 1].to, path[i].to, reach)) {
+        if (!within(path[i - 1].to, path[i].from, reach, bridges)) {
+            if (!within(path[i - 1].to, path[i].to, reach, bridges)) {
                 return std::nullopt;
             }
             std::swap(path[i].from, path[i].to);
@@ -770,7 +798,7 @@ Steered steer(const SteerInput& input, const std::vector<Vec2>* solved) {
     }
     std::optional<std::vector<SteerLine>> path = as_path(input.lines);
     if (!path && spans_gaps(input)) {
-        path = as_path(input.lines, 2);
+        path = as_path(input.lines, 2, input.dots);
     }
     if (!path) {
         return result;
