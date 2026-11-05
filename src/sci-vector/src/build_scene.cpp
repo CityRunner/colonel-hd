@@ -665,12 +665,27 @@ std::optional<Layer> brush_layer(const pic::Pattern& pattern, std::uint8_t value
     if (pic::pattern_is_rectangle(pattern.code)) {
         return Box{.source = source, .left = left, .top = top, .right = right, .bottom = bottom, .value = value};
     }
+    // The size 1 circle draws a plus of 5 pixels in the left 3 x 3 pixels
+    // of its 4 x 3 box: at 1x a small diamond (picture 45's wallpaper
+    // ornament). It is that diamond, corners at the plus's outer pixel
+    // edges, not the larger oval inscribed in the box.
+    if (size == 1) {
+        return Ellipse{
+            .source = source,
+            .centre = {.x = left + 1.5, .y = top + 1.5},
+            .radius_x = 1.5,
+            .radius_y = 1.5,
+            .value = value,
+            .diamond = true,
+        };
+    }
     return Ellipse{
         .source = source,
         .centre = {.x = (left + right) / 2, .y = (top + bottom) / 2},
         .radius_x = (right - left) / 2,
         .radius_y = (bottom - top) / 2,
         .value = value,
+        .diamond = false,
     };
 }
 

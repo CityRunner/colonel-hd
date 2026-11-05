@@ -4,6 +4,7 @@
 #include "sci/pic/draw_pic.hpp"
 #include "sci/pic/parse_pic.hpp"
 #include "sci/render/rasterize.hpp"
+#include "sci/render/reference.hpp"
 #include "sci/vector/build_scene.hpp"
 #include "sci_test.hpp"
 
@@ -185,6 +186,32 @@ SCI_TEST(brushes_become_shapes_or_blocks) {
         }
     }
     SCI_CHECK(agrees_outside_band(drawn));
+}
+
+SCI_TEST(the_smallest_circle_brush_is_a_diamond) {
+    // Size 1 draws a plus of 5 pixels around (60, 60) in a 4 x 3 box; it
+    // is the diamond through the plus's outer pixel edges (picture 45's
+    // wallpaper ornament), not the larger oval inscribed in the box.
+    const Drawn drawn = build(PicBuilder().color(red).pattern_code(0x01).pattern(60, 60).end());
+    const auto& layers = drawn.built.scene.layers;
+    SCI_CHECK(layers.size() == 1);
+    const auto* diamond = layers.empty() ? nullptr : std::get_if<sci::vector::Ellipse>(layers.data());
+    SCI_CHECK(diamond != nullptr);
+    if (diamond != nullptr) {
+        SCI_CHECK(diamond->diamond);
+        SCI_CHECK(diamond->centre == sci::vector::Vec2{.x = 60.5, .y = 60.5});
+        SCI_CHECK(diamond->radius_x == 1.5 && diamond->radius_y == 1.5);
+    }
+    SCI_CHECK(agrees_outside_band(drawn));
+    // The plus at 1x: its 5 pixels, not the box's corners or its fourth column.
+    const auto reduced = sci::render::reduce_to_1x(drawn.built.scene);
+    const auto at = [&](int x, int y) { return reduced[(static_cast<std::size_t>(y) * 320) + static_cast<std::size_t>(x)]; };
+    SCI_CHECK(at(60, 60) == at(59, 60) && at(60, 60) == at(61, 60) && at(60, 59) == at(60, 60));
+    SCI_CHECK(at(60, 61) == at(60, 60) && at(60, 60) != at(62, 60) && at(59, 59) != at(60, 60));
+    SCI_CHECK(at(61, 61) != at(60, 60));
+    // Straight sides: the reference evaluator follows |u| + |v| <= 1.
+    SCI_CHECK(sci::render::reference_value(drawn.built.scene, {.x = 60.5, .y = 59.1}) == at(60, 60));
+    SCI_CHECK(sci::render::reference_value(drawn.built.scene, {.x = 61.3, .y = 59.6}) != at(60, 60));
 }
 
 SCI_TEST(priority_scenes_use_the_priority_map) {

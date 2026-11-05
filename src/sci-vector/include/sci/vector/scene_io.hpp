@@ -16,7 +16,7 @@
 namespace sci::vector {
 
 // Bumped when the encoding changes.
-inline constexpr std::uint16_t scene_format_version = 1;
+inline constexpr std::uint16_t scene_format_version = 2;
 
 [[nodiscard]] std::vector<std::uint8_t> write_scene(const Scene& scene);
 

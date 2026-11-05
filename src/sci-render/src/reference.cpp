@@ -42,7 +42,8 @@ std::optional<std::uint8_t> layer_value(const vector::Layer& layer, Vec2 p) {
     if (const auto* ellipse = std::get_if<vector::Ellipse>(&layer)) {
         const double u = (p.x - ellipse->centre.x) / ellipse->radius_x;
         const double v = (p.y - ellipse->centre.y) / ellipse->radius_y;
-        return (u * u) + (v * v) <= 1 ? std::optional(ellipse->value) : std::nullopt;
+        const bool inside = ellipse->diamond ? std::abs(u) + std::abs(v) <= 1 : (u * u) + (v * v) <= 1;
+        return inside ? std::optional(ellipse->value) : std::nullopt;
     }
     if (const auto* box = std::get_if<vector::Box>(&layer)) {
         const bool inside = p.x >= box->left && p.x < box->right && p.y >= box->top && p.y < box->bottom;

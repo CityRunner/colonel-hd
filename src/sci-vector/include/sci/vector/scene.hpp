@@ -78,13 +78,16 @@ struct Stroke {
     }
 };
 
-// A solid circle brush, drawn as the ellipse inscribed in its box.
+// A solid circle brush, drawn as the ellipse inscribed in its box; or, for
+// the smallest brushes, whose bitmap is a plus of 5 pixels, as the diamond
+// |u| + |v| <= 1 (u, v the offsets from the centre over the radii).
 struct Ellipse {
     std::int32_t source = -1; // Index of the primitive in the draw trace (the first, for a chain).
     Vec2 centre;
     double radius_x = 0;
     double radius_y = 0;
     std::uint8_t value = 0;
+    bool diamond = false;
 };
 
 // A solid rectangle brush: [left, right) x [top, bottom).

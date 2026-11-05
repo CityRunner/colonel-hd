@@ -157,7 +157,7 @@ void layer_spans(const vector::Layer& layer, double y, Emit emit) {
     } else if (const auto* ellipse = std::get_if<vector::Ellipse>(&layer)) {
         const double t = (y - ellipse->centre.y) / ellipse->radius_y;
         if (t >= -1 && t <= 1) {
-            const double w = ellipse->radius_x * std::sqrt(1 - (t * t));
+            const double w = ellipse->radius_x * (ellipse->diamond ? 1 - std::abs(t) : std::sqrt(1 - (t * t)));
             emit(Span{.left = ellipse->centre.x - w, .right = ellipse->centre.x + w}, ellipse->value);
         }
     } else if (const auto* box = std::get_if<vector::Box>(&layer)) {
