@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 11,
   "pic_sha256": "c11e8005ee3bff5f47dfadb7dd1bfae259b82f0279124d9ee495d2d952397d9f",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -22,5 +22,83 @@
   ],
   "symmetry": [
     {"kind": "mirror", "chains": ["left-fanlight-pane-curve-3", "right-fanlight-pane-curve"], "note": "matching fanlight panes of the side windows"}
+  ],
+  "objects": [
+    {
+      "id": "fanlight-centre",
+      "type": "window",
+      "cell": "A3.1-A4.2",
+      "confidence": 900,
+      "label": "the large centre fanlight of the conservatory windows",
+      "parts": [
+        {
+          "id": "fanlight-centre-arch",
+          "role": "frame",
+          "label": "the arch of the frame and the half-round hub where the bars meet",
+          "primitives": [
+            {"id": "cf-centre-frame", "kind": "ellipse", "commands": [15, 21, 30, 32, 33, 36, 35, 34, 31, 29, 22, 16], "points": [[108, 40], [159, 23], [211, 40]]},
+            {"id": "cf-centre-outline", "kind": "ellipse", "commands": [335, 336, 338, 343, 345, 348, 349, 347, 346, 344, 342, 337, 340], "points": [[105, 39], [160, 20], [214, 39]]},
+            {"id": "cf-centre-hub", "kind": "ellipse", "commands": [940, 941, 942, 945, 939, 938, 937], "points": [[150, 47], [159, 38], [169, 47]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "fanlight-centre",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A3.1-A4.2",
+        "note": "batch 3 case 5: the wide fanlight half of an ellipse through the drawn springers and crown, the bars meeting it, the hub smooth (no objection)"
+      }
+    },
+    {
+      "id": "fanlight-left",
+      "type": "window",
+      "cell": "A1.1",
+      "confidence": 900,
+      "label": "the side fanlight at the left",
+      "parts": [
+        {
+          "id": "fanlight-left-arch",
+          "role": "frame",
+          "label": "the arch of the frame and the half-round hub where the bars meet",
+          "primitives": [
+            {"id": "cf-left-frame", "kind": "ellipse", "commands": [14, 20, 25, 26, 19, 13], "points": [[2, 36], [20, 25], [39, 36]]},
+            {"id": "cf-left-hub", "kind": "ellipse", "commands": [374, 372, 366, 365, 371, 373], "points": [[14, 43], [20, 38], [27, 43]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "fanlight-left",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A1.1",
+        "note": "batch 3 case 5: the wide fanlight half of an ellipse through the drawn springers and crown, the bars meeting it, the hub smooth (no objection)"
+      }
+    },
+    {
+      "id": "fanlight-right",
+      "type": "window",
+      "cell": "A5.1",
+      "confidence": 900,
+      "label": "the side fanlight at the right",
+      "parts": [
+        {
+          "id": "fanlight-right-arch",
+          "role": "frame",
+          "label": "the arch of the frame and the half-round hub where the bars meet",
+          "primitives": [
+            {"id": "cf-right-frame", "kind": "ellipse", "commands": [17, 23, 27, 28, 24, 18], "points": [[280, 36], [298, 25], [317, 36]]},
+            {"id": "cf-right-hub", "kind": "ellipse", "commands": [375, 370, 367, 368, 369, 377], "points": [[292, 43], [298, 38], [305, 43]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "fanlight-right",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A5.1",
+        "note": "batch 3 case 5: the wide fanlight half of an ellipse through the drawn springers and crown, the bars meeting it, the hub smooth (no objection)"
+      }
+    }
   ]
 }

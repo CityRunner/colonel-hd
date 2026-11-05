@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 3,
   "pic_sha256": "e29a2777e6f386efa79fd784eda9696910c80a8be453bc701c8a576de1670734",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -58,5 +58,45 @@
     {"id": "cloud-edge", "lines": [1491, 1492, 1493], "primitive": "spline", "label": "cloud edge", "uncertain": true},
     {"id": "cloud-edge-2", "lines": [1505, 1506, 1507], "primitive": "spline", "label": "cloud edge", "uncertain": true},
     {"id": "cloud-outline", "lines": [1550, 1551, 1552, 1553, 1555, 1556, 1558, 1559, 1560, 1561, 1562, 1563, 1565, 1566], "primitive": "spline", "label": "cloud outline"}
+  ],
+  "objects": [
+    {
+      "id": "bell-opening",
+      "type": "arch",
+      "cell": "A2.1",
+      "confidence": 900,
+      "label": "the round-topped front opening of the bell tower",
+      "parts": [
+        {
+          "id": "bell-opening-jambs",
+          "role": "jamb",
+          "primitives": [
+            {"id": "bell-jamb-left", "kind": "line", "commands": [1906], "points": [[67, 11], [67, 30]]},
+            {"id": "bell-jamb-right", "kind": "line", "commands": [1899], "points": [[87, 32], [87, 12]]}
+          ]
+        },
+        {
+          "id": "bell-opening-top",
+          "role": "lintel",
+          "label": "half of an ellipse from springer to springer through the crown",
+          "primitives": [
+            {"id": "bell-arch", "kind": "ellipse", "commands": [1904, 1903, 1902, 1901, 1900], "points": [[68, 10], [77, 5], [87, 12]]}
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "kind": "parallel",
+          "items": ["bell-jamb-left", "bell-jamb-right"]
+        }
+      ],
+      "decision": {
+        "hypothesis": "bell-opening",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A2.1",
+        "note": "batch 3 case 7: a symmetric round arch, half of an ellipse through the springers and crown, jambs straight (no objection)"
+      }
+    }
   ]
 }
