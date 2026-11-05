@@ -4549,3 +4549,24 @@ left), per changed picture the sheet and plain image.
   `scene_model.*`, `build_scene.cpp` (steer input, line check, report),
   `hints.*`, `raster_1x.*`, `acceptance.*` (an optional `widened` list),
   `tools/hd-report`. **Finding.**
+
+## Milestone 10 paused (2026-11-05)
+
+- **The customer's instruction:** "Skip milestone 10 for now and move to
+  the next one. Show your place on roadmap. Wait for instructions."
+  Milestone 10 is paused, not finished: no report, no gate, no golden
+  hashes regenerated, hint files not frozen. `milestone-10` holds
+  everything merged so far (pushed). Two groups were stopped by a usage
+  limit with their work on local branches, not merged:
+  - `m10-b3-group-b`: the smallest-brush rule (diamond, dot, round dot),
+    picture 41's windows and wall glows, picture 20's door arches,
+    picture 42's carpet light, picture 57's tomb (22's pink line and 57's
+    letters and mirrored windows not done);
+  - `m10-b3-group-d2`: depth between objects and invented arrowheads for
+    picture 31's spears (picture 71's pipe not done).
+  Open customer questions: picture 46's rug triangles (a/b), picture
+  17's column (a/b). Not started: picture 17 C3.2 (stair outline above
+  the floor). **Decided (customer).**
+- **Next:** milestone 11 (optional: ScummVM-compatible saves, spec
+  section 9) waits for the customer's approval or decline, and nothing
+  starts until the customer's instructions. **Decided (customer).**
