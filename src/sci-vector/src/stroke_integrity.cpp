@@ -572,6 +572,19 @@ private:
         return cut.keeps(centre_of(end) + (towards * (end_pixel_inset / length(towards))));
     }
 
+    // Adds the cut to the stroke if nothing but its end (its front or its
+    // back point) lies past it.
+    static void cut_if_only_end(Stroke& stroke, bool front, const Cut& cut) {
+        bool only_end = true;
+        for (std::size_t k = 0; k < stroke.points.size(); ++k) {
+            const bool is_end = front ? k == 0 : k + 1 == stroke.points.size();
+            only_end = only_end && (is_end || cut.keeps(stroke.points[k]));
+        }
+        if (only_end) {
+            stroke.cuts.push_back(cut);
+        }
+    }
+
     // The unit normal of the segment a-b on the side of `side`.
     static Vec2 across_towards(Vec2 a, Vec2 b, Vec2 side) {
         const Vec2 s = (b - a) * (1 / length(b - a));
@@ -637,14 +650,7 @@ private:
         if (on_top) {
             drop_points_past(stroke.points, front, cut);
         }
-        bool only_end = true;
-        for (std::size_t k = 0; k < stroke.points.size(); ++k) {
-            const bool is_end = front ? k == 0 : k + 1 == stroke.points.size();
-            only_end = only_end && (is_end || cut.keeps(stroke.points[k]));
-        }
-        if (only_end) {
-            stroke.cuts.push_back(cut);
-        }
+        cut_if_only_end(stroke, front, cut);
         ++stats_->clipped_ends;
         record(IntegrityChangeKind::ClippedEnd, i, best_line, end, on_top ? decided_evidence : side_evidence);
     }

@@ -4146,10 +4146,10 @@ pictures 12, 31, 45 and 71, on branch `m10-b3-group-d`. Review images in
   line's end pixel centre lies under its stroke, the end is cut at the
   stroke's near edge (the shape stays on top), unless that would take the
   end pixel from the line's own stroke (6.4). Only those ends change: 14
-  in 9 pictures (10, 12 three, 15, 20 four, 31, 42 two, 45, 57). Each was
+  in 8 pictures (10, 12 three, 15, 20 four, 31, 42 two, 45, 57). Each was
   looked at in crops: a short end that poked onto a decided arch, oval or
   medallion edge now stops at it; none looks worse. A first version that
-  also clipped every end at such joints changed 21 more ends and made
+  also clipped every end at such joints changed more ends and made
   wallpaper stripes of pictures 31 and 45 lose their end pixels (6.4
   failed); it was narrowed. **Decided (customer); the rule is the
   agent's.**
