@@ -4128,3 +4128,96 @@ objection; all nine are fixed as listed in batch-3.md. **Decided
 manual playthrough is deferred. The milestone 9 pull request stays open
 until the customer approves it; nothing else changes. **Decided
 (customer).**
+
+## Milestone 10: batch 3 fixes, group A (2026-11-05)
+
+The customer's answers to batch 3 and new findings (above) for pictures
+16, 17, 3, 11, 85 and 10, on branch `m10-b3-group-a`. Hint data only (no
+code change); every object is decided by the customer (2026-11-05, with
+its cell), files 3, 11, 16, 17 and 85 now at version 2.
+
+- **Picture 16, case 1, the lamp halos** (A2.4-B2.2, A4.3-B4.1): objects
+  `lamp-halo-left` and `-right`, each a whole `ellipse` over its 18 yellow
+  outline lines (commands 1578-1607 and 1572-1605). Both pass (deviation
+  1) and share the boundary: smooth ovals, the yellow area included. **Fixed.**
+- **Picture 16, case 2, the fanlights** (A3.1-A3.2, A1.2, A5.1): the door
+  fanlight's outer arch (951-960) and its small hub (1009-1012) are half
+  ellipses, and the outer grey arches of both window fanlights (1192-1207,
+  1190-1206) with their springers. All pass. Not steered: the door's inner
+  frame edge either side of the centre bar (`arc`s over 972-997) and the
+  inner arch of each window (1241-1260, 1231-1256): their lines leave
+  one-pixel gaps where the outer arch covers the pixel, so they are not one
+  path and keep the 3b fit (the pane tops and the inner edge of the grey
+  band stay faceted). **Partly fixed**; steering an open ellipse over a
+  gapped path needs a code change (as the whole ellipse allows gaps), not
+  done here.
+- **Picture 16, case 8, the front steps** (C3.1-C3.2): the six short
+  diagonals that join each tread to the wider one below (commands 59-64)
+  as `polyline`s down, then out (a sharp corner): square tread ends.
+  The middle pixel of each diagonal is passed within one pixel (the
+  customer's 1a exception). **Fixed.**
+- **Picture 17, case 3, the fanlights** (A1.4, A2.4-A3.3, A3.2-A3.4,
+  A4.1, A5.1): the grey arch and its dark outline of each fanlight as half
+  ellipses; the one behind the porch column (A1.4), whose left springer is
+  hidden, as an `arc`. The grey springers 831 and 1607 (vertical) are left
+  out of the arches: with them the round trip is 2. All ten pass. **Fixed.**
+- **Picture 17, the porch column** (A1, C1; "column shapes is crooked"):
+  object `porch-column`: the shaft's sides (1269, 1271) and the four edges
+  of its shading bands as `line`s with `parallel` (all six) and vertical
+  `symmetry` (the sides), solved jointly with a largest move of 1.00 px:
+  the drawn taper (two pixels over the height) becomes straight parallel
+  sides. The collar where it passes the porch roof (two half ellipses), the
+  capital's lower edge (an `arc`; as a half ellipse the round trip is 2)
+  and the base's three rings (one half ellipse, two `arc`s) are smooth
+  curves. The right side and the right band edge keep 3b faces (their
+  boundary would cross another edge): a thin cyan sliver of the old light
+  band shows beside the top of the shaft. **Partly fixed** (shaft, capital
+  and base straight and symmetric; the sliver remains).
+- **Picture 17, C3.2, the grey lines on the stairs:** the light grey
+  lines of the steps are the short runs and upright ends 321-331 (colours
+  80 and 87), which bound the lighter parts of the step faces. Made level
+  and parallel with `perpendicular` and `parallel` relations they changed
+  almost nothing at review size and tilted the upright edge of the top
+  light patch, so they were taken out again. **Not fixed**: what the
+  customer sees as crooked was not identified with certainty (the light
+  patches' left edges and a short grey tick at about (200, 132) are the
+  candidates); a question for the customer with a crop.
+- **Picture 3, case 7, the bell opening** (A2.1): the arch (1900-1904) as
+  a half ellipse, the jambs as lines (`parallel`, already vertical). The
+  3a chain hint `bell-opening-arch` (a spline over the right jamb and the
+  arch) stays; the steered shape replaces its strokes. Passes; the opening
+  is a round arch over upright jambs. **Fixed.**
+- **Picture 11, case 5, the conservatory fanlights** (A3.1-A4.2, A1.1,
+  A5.1): the side fanlights' arches and the three hubs are smooth half
+  ellipses. The wide centre arch (grey 15-36, dark outline 335-349) falls
+  back: its sides are steeper and its top flatter than any half ellipse
+  through its springers (best fit 1.4 px off; also without the end pieces),
+  so it stays as drawn by 3b. **Partly fixed** (sides and hubs; the centre
+  arch is a question for the customer: a looser fit, or as now).
+- **Picture 85, case 9 and A1.2, the frame's corners:** at four inner
+  notches (20/21, 35/36, 111/88, 118/28) the frame's lines meet corner to
+  corner on diagonally touching pixels, which the stroke integrity pass
+  joined with a small diagonal tooth. Each line is a one-line `polyline`
+  with a `step` corner at that end: the strokes now end square and meet at
+  a point, as the original pixels do. **Fixed.**
+- **Picture 10, B3.3, the brown line on the upper step:** command 273
+  (153, 117)-(156, 117), a three-pixel brown stroke inside the brown
+  dithered light from the doorway, whose edge is command 271 (150, 115)-
+  (168, 122). In 1x it disappears in the dither; in HD it drew a level
+  brown tongue below the slanting edge. Object `threshold-light`: both as
+  `line`s, `parallel`, solved (0.50 px): the stroke lies along the edge.
+  **Fixed.** (Found with `sci-hint-tool commands 10` and the crop's 1x
+  pixels.)
+- **A slip, repaired.** The first commit of picture 10 lost its chain
+  hints (the tool that wrote the object cut the file after `objects`);
+  the next commit restores them. **Finding.**
+- **Checks** (numbers in `docs/hd-quality.md`, "After batch 3, group A"):
+  release tests pass; `check-hints.py`, `sci-hint-tool check hints` and
+  `check-repo-policy.py` clean; acceptance unchanged (worst 99.993%, 0
+  failing, 0 untouched line pixels); the fast analysis matches the
+  reference in every picture; golden hashes against the `milestone-10`
+  hints differ in exactly the 24 HD entries of pictures 3, 10, 11, 16, 17
+  and 85; every `original1` entry is unchanged. **Finding.**
+- **Images** in `reports/images/milestone-10/batch-3-fixes-a/` (git
+  ignored): per place a crop and its `-changed-before-after`, per picture
+  the sheet and plain image. **Finding.**

@@ -216,6 +216,35 @@ before (the arrangement and the shared boundary are faster everywhere).
   report (but the times), round trip, `--changes` and
   `--smoothing-suspects` byte for byte as before.
 
+## After batch 3, group A (2026-11-05)
+
+Measured on branch `m10-b3-group-a` (hint data for pictures 3, 10, 11,
+16, 17 and 85; `docs/ASSUMPTIONS.md`, "Milestone 10: batch 3 fixes, group
+A") against the `milestone-10` build with its hint files:
+
+- Round trip: 13208 chains, 13191 pass, 17 fail (was 13206 / 13189 / 17;
+  the same 17 fail). Hinted ellipses 18 -> 41, polylines 8 -> 14, lines
+  21 -> 33, arcs 85 -> 86, all at deviation 0 or 1; picture 17's two 3a
+  arch chains are now steered curves of the partition. Primitives that
+  fall back: picture 11's centre arch (frame and outline, deviation 2).
+- Acceptance (section 6.4): 88 pictures, worst agreement 99.993%, 0
+  failing, 0 swaps, 0 untouched line pixels. Line pixels taken within
+  the A.6 tolerance (the customer's 1a exception): 12 -> 161 (picture 16:
+  21, the halos, arches and step ends; picture 17: 128, mostly the column
+  shaft and band edges moved by up to 1 px to be parallel).
+- A1 residuals (overshoots / fragments / breaks): 7080 / 6461 / 10755 ->
+  7117 / 6512 / 10880, in five of the six pictures (3: fragments 84 -> 79,
+  breaks 131 -> 135; 11: 74 -> 78
+  / 46 -> 62 / 213 -> 229; 16: 90 -> 93 / 61 -> 82 / 83 -> 108; 17: 155 ->
+  185 / 120 -> 139 / 209 -> 281; 85: breaks 77 -> 85), where steered
+  curves now meet straight lines at new points.
+- Smoothing suspects: 3033 / 206 / 297 -> 3027 / 200 / 290 (step / corner
+  / curve; pictures 3, 11, 17 and 85).
+- Golden hashes: the 24 HD entries of pictures 3, 10, 11, 16, 17 and 85
+  differ; every other entry, and every `original1` entry, is unchanged.
+  `sci-golden-hashes --reference`: the fast analysis matches the
+  reference in every picture.
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted
