@@ -58,7 +58,7 @@ constexpr std::size_t max_alternatives = 8; // Per object.
 // than A.6's one pixel, at most two.
 constexpr std::int64_t min_tolerance = 1001;
 constexpr std::int64_t max_tolerance = 2000;
-constexpr std::size_t max_list = 512;       // Parts, primitives, commands, points, corners, items.
+constexpr std::size_t max_list = 512; // Parts, primitives, commands, points, corners, items.
 constexpr std::int64_t max_confidence = 1000;
 
 constexpr std::array object_type_names{

@@ -1397,10 +1397,9 @@ std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>> steer_inp
     std::vector<std::size_t> line_of;
     // A dot of an open ellipse or an arc keeps its stroke and bridges the
     // gap it fills (scene_model.hpp).
-    const bool open_curve =
-        primitive.kind == PrimitiveKind::Arc ||
-        (primitive.kind == PrimitiveKind::Ellipse && primitive.points.size() >= 3 &&
-         primitive.points.front() != primitive.points.back());
+    const bool open_curve = primitive.kind == PrimitiveKind::Arc ||
+                            (primitive.kind == PrimitiveKind::Ellipse && primitive.points.size() >= 3 &&
+                             primitive.points.front() != primitive.points.back());
     for (const LineRef ref : primitive.commands) {
         const auto line = find.line(picture, ref);
         if (line && lines[*line].is_dot() && open_curve) {

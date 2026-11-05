@@ -167,7 +167,6 @@ SCI_TEST(half_ellipse_fits_within_the_tolerance) {
     }
 }
 
-
 namespace {
 
 // The fanlight of half_ellipse_fits_within_the_tolerance, its lines ending

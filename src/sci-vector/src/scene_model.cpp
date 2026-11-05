@@ -748,7 +748,8 @@ int continuous_deviation(std::span<const SteerLine> path, const std::vector<std:
     std::vector<std::vector<Vec2>> drawn;
     for (const SteerLine& line : path) {
         std::vector<Vec2> centres;
-        pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) { centres.push_back(centre({.x = x, .y = y})); });
+        pic::for_each_line_pixel(line.from, line.to,
+                                 [&](int x, int y) { centres.push_back(centre({.x = x, .y = y})); });
         drawn.push_back(std::move(centres));
     }
     double worst = 0;
@@ -820,9 +821,8 @@ StepCut square_end(std::size_t line, pic::ScreenPoint end, pic::ScreenPoint othe
 // one pixel between them, as a whole ellipse may (a pixel of the outline
 // that another line drew over).
 bool spans_gaps(const SteerInput& input) {
-    return input.kind == PrimitiveKind::Arc ||
-           (input.kind == PrimitiveKind::Ellipse && input.points.size() >= 3 &&
-            input.points.front() != input.points.back());
+    return input.kind == PrimitiveKind::Arc || (input.kind == PrimitiveKind::Ellipse && input.points.size() >= 3 &&
+                                                input.points.front() != input.points.back());
 }
 
 bool is_closed_ellipse(const SteerInput& input) {
@@ -885,8 +885,7 @@ Steered steer(const SteerInput& input, const std::vector<Vec2>* solved) {
             return result;
         }
         constexpr int minimax_rounds = 40;
-        const std::optional<std::vector<Vec2>> minimax =
-            shape_of(input, *path, solved, result.reason, minimax_rounds);
+        const std::optional<std::vector<Vec2>> minimax = shape_of(input, *path, solved, result.reason, minimax_rounds);
         if (!minimax) {
             return result;
         }

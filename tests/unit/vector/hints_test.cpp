@@ -270,8 +270,9 @@ SCI_TEST(hints_read_a_wider_tolerance_only_where_the_customer_decided) {
     }
     // Without it, the default.
     const auto plain = parse_hints(decided);
-    SCI_CHECK(plain && std::ranges::find(plain->objects, "transom", &ObjectHint::id)->main.parts[0].primitives[0]
-                               .tolerance == 0);
+    SCI_CHECK(plain &&
+              std::ranges::find(plain->objects, "transom", &ObjectHint::id)->main.parts[0].primitives[0].tolerance ==
+                  0);
     // Out of range.
     SCI_CHECK(!rejection(with(decided, 1000)).empty());
     SCI_CHECK(!rejection(with(decided, 2001)).empty());

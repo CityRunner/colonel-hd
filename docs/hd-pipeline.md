@@ -216,7 +216,9 @@ with `src/sci-vector/src/scene_model.cpp`:
   is fitted as for one path, cut at both ends of such a gap (each
   projected onto it), and the part between stays open, as a whole
   ellipse leaves its gaps (group A follow-ups; picture 16's inner
-  fanlight edges).
+  fanlight edges). A one-pixel command (a dot) of such a primitive keeps
+  its own stroke and is not a line of the shape; a gap is also closed by
+  a run of the primitive's dots, each at most two pixels from the next.
 - **The strokes.** The shape is cut where consecutive lines meet (halfway
   between their end pixels, or at a polyline corner within one pixel of
   that), and each line's stroke becomes its piece. The faces keep the
@@ -237,10 +239,13 @@ with `src/sci-vector/src/scene_model.cpp`:
 - **A wider tolerance the customer approved** (`tolerance` of a
   primitive, `hints/README.md`; at most 2 pixels, only where the customer
   decided the hypothesis): the shape is also used if its 1x raster lies
-  within the tolerance rounded up (2) and, measured continuously, every
-  piece lies within the tolerance of its line's pixel centres (the
-  polyline through them) and they within it of the piece
-  (`polyline_distance`). The steering's line check and `check_acceptance`
+  within the tolerance rounded up (2) and, measured as A.6 measures
+  (Chebyshev distance), every pixel centre of its lines lies within the
+  tolerance of the shape and every point of the shape within it of the
+  lines (each line as the polyline through its pixel centres). A half
+  ellipse that the least-squares fit leaves outside is fitted once more
+  towards the smallest largest deviation (40 rounds of Lawson's
+  reweighting of the pixels; the ends stay). The steering's line check and `check_acceptance`
   then take a line pixel within 2 pixels (Chebyshev, of the shape's 1x
   raster) as tolerated (`SceneStats::widened_lines`), and every such pixel
   is listed as before; the replacement report says "within the customer's
