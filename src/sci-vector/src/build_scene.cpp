@@ -2382,8 +2382,10 @@ void square_step_ends(std::vector<Layer>& layers, const std::vector<DrawnLine>& 
 }
 
 // The lines as the stroke integrity pass sees them: the pixels each drew,
-// and the ends the scene model fixed.
-std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& lines, const SceneModelFits& model) {
+// and the ends the scene model fixed. `decided` holds the primitives of the
+// lines the customer's decisions steer.
+std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& lines, const SceneModelFits& model,
+                                                std::span<const std::int32_t> decided) {
     std::vector<detail::StrokeLine> stroke_lines;
     stroke_lines.reserve(lines.size());
     for (const DrawnLine& line : lines) {
@@ -2391,6 +2393,8 @@ std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& li
             .primitive = static_cast<std::int32_t>(line.primitive),
             .path = {},
             .fixed = {},
+            .inner = {},
+            .decided = false,
         };
         pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) {
             if (y >= picture_top && y < picture_top + picture_height) {
@@ -2404,6 +2408,11 @@ std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& li
     }
     for (const auto& [line, end] : model.inner_ends) {
         stroke_lines[line].fixed.push_back(picture_index(end.x, end.y - picture_top));
+        stroke_lines[line].inner.push_back(picture_index(end.x, end.y - picture_top));
+    }
+    for (std::size_t line = 0; line < lines.size(); ++line) {
+        stroke_lines[line].decided =
+            model.steered[line] && std::ranges::find(decided, stroke_lines[line].primitive) != decided.end();
     }
     return stroke_lines;
 }
@@ -2610,7 +2619,7 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
         // The baseline of milestone 3b's report is measured without the pass
         // (development option SCI_WITHOUT_STROKE_INTEGRITY).
         if (plane == Plane::Visual && !without_stroke_integrity) {
-            const std::vector<detail::StrokeLine> stroke_lines = stroke_lines_of(lines, model);
+            const std::vector<detail::StrokeLine> stroke_lines = stroke_lines_of(lines, model, built.stats.decided_lines);
             detail::apply_stroke_integrity(scene.layers, stroke_lines, view.owners, built.stats);
         }
         return built;

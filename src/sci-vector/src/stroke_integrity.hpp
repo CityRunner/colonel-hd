@@ -34,6 +34,13 @@ struct StrokeLine {
     // End pixels the scene model fixed: step corners (A4 A.4), squared and
     // drawn as they are, so no joint or contour clip changes them.
     std::vector<std::size_t> fixed;
+    // End pixels where the line runs on into the next line of a steered
+    // shape (the shape's inner joints; also in `fixed`).
+    std::vector<std::size_t> inner;
+    // A line of a steered shape the customer decided: its stroke stays on
+    // top of the lines that end on it, even where their end pixel was seen
+    // over it at 1x (picture 12's halo, B2.2: "halo must be on top").
+    bool decided = false;
 };
 
 // Changes the strokes of the lines (layers whose source is a line's

@@ -3,6 +3,7 @@
 #include "stroke_integrity.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iterator>
 #include <map>
@@ -41,6 +42,8 @@ constexpr const char* side_evidence = "1x: the line end lies beside the contour,
 constexpr const char* hidden_evidence = "1x: another object is seen on these pixels of the line";
 constexpr const char* no_crossing_evidence = "kept: the line does not reach the contour within 2 pixels across";
 constexpr const char* passes_evidence = "kept: the line crosses the contour's edge elsewhere";
+constexpr const char* decided_evidence =
+    "the line ends on a shape the customer decided, which stays on top (1x: the end touches its line)";
 constexpr const char* on_contour_evidence = "kept: the end pixel lies on the contour's stroke";
 
 Vec2 operator-(Vec2 a, Vec2 b) {
@@ -94,6 +97,8 @@ struct Line {
     std::vector<Stroke> strokes;
     std::vector<Stroke> connectors; // Added to join other lines; not the line's own geometry.
     std::vector<std::size_t> fixed; // End pixels the scene model fixed (step corners).
+    std::vector<std::size_t> inner; // Inner joints of a steered shape (no line ends).
+    bool decided = false;           // A line of a shape the customer decided.
 
     [[nodiscard]] bool is_fixed(std::size_t pixel) const { return std::ranges::find(fixed, pixel) != fixed.end(); }
 
@@ -105,7 +110,19 @@ struct Line {
     [[nodiscard]] std::size_t last() const { return path.back(); }
 
     [[nodiscard]] bool is_end(std::size_t pixel) const { return pixel == first() || pixel == last(); }
+
+    // Whether an end of the line other than an inner joint of a decided
+    // shape is at or next to the pixel. A decided shape's lines run on
+    // through their inner joints, so a line ending there ends on the shape.
+    [[nodiscard]] bool open_end_near(std::size_t pixel) const;
 };
+
+bool Line::open_end_near(std::size_t pixel) const {
+    return std::ranges::any_of(std::array{first(), last()}, [&](std::size_t end) {
+        const bool through = decided && std::ranges::find(inner, end) != inner.end();
+        return !through && (end == pixel || touching(end, pixel));
+    });
+}
 
 bool Line::fixed_near(std::size_t pixel) const {
     return std::ranges::any_of(fixed, [&](std::size_t end) { return end == pixel || touching(end, pixel); });
@@ -445,9 +462,7 @@ private:
                     return;
                 }
                 const Line& other = lines_[j];
-                const bool end_near = other.first() == end || other.last() == end || touching(other.first(), end) ||
-                                      touching(other.last(), end);
-                if (!end_near && !crosses_near_end(lines_[line], end, other)) {
+                if (!other.open_end_near(end) && !crosses_near_end(lines_[line], end, other)) {
                     found.push_back(j);
                 }
             });
@@ -512,7 +527,10 @@ private:
         }
         const double radius = lines_[best_line].strokes.front().radius;
         const Cut cut{.point = x + (u * radius), .normal = u * -1};
-        if (!cut.keeps(centre_of(end))) {
+        // A shape the customer decided stays on top: the end is cut at its
+        // near edge even where the end pixel lies under its stroke.
+        const bool on_top = lines_[best_line].decided;
+        if (!on_top && !cut.keeps(centre_of(end))) {
             ++stats_->kept_contacts;
             record(IntegrityChangeKind::KeptContact, i, best_line, end, on_contour_evidence);
             return;
@@ -529,7 +547,7 @@ private:
         (front ? points.front() : points.back()) = x;
         stroke.cuts.push_back(cut);
         ++stats_->clipped_ends;
-        record(IntegrityChangeKind::ClippedEnd, i, best_line, end, contact_evidence);
+        record(IntegrityChangeKind::ClippedEnd, i, best_line, end, on_top ? decided_evidence : contact_evidence);
     }
 
     // A line end beside a contour, pointing along or away from it: a
@@ -547,16 +565,32 @@ private:
             }
         }
         const double distance = best ? length(p - std::get<0>(*best)) : 1e300;
-        if (!best || distance > max_across || distance == 0) {
+        const bool on_top = best && lines_[best_line].decided;
+        if (!best || distance > max_across || (distance == 0 && !on_top)) {
             ++stats_->kept_contacts;
             record(IntegrityChangeKind::KeptContact, i, contours.front(), end, no_crossing_evidence);
             return;
         }
-        const Vec2 x = std::get<0>(*best);
-        const Vec2 u = (p - x) * (1 / distance);
+        const auto& [x, a, b] = *best;
+        // Across the contour towards the line's end point; on a decided
+        // shape, which the end may lie under, towards the line's other end.
+        Vec2 u = distance > 0 ? (p - x) * (1 / distance) : Vec2{};
+        if (on_top && length(b - a) > 0) {
+            const Vec2 s = (b - a) * (1 / length(b - a));
+            u = Vec2{.x = -s.y, .y = s.x};
+            const std::size_t far = end == lines_[i].first() ? lines_[i].last() : lines_[i].first();
+            if (dot(u, centre_of(far) - x) < 0) {
+                u = u * -1;
+            }
+        }
+        if (length(u) == 0) {
+            ++stats_->kept_contacts;
+            record(IntegrityChangeKind::KeptContact, i, best_line, end, no_crossing_evidence);
+            return;
+        }
         const double radius = lines_[best_line].strokes.front().radius;
         const Cut cut{.point = x + (u * radius), .normal = u * -1};
-        if (!cut.keeps(centre_of(end))) {
+        if (!on_top && !cut.keeps(centre_of(end))) {
             ++stats_->kept_contacts;
             record(IntegrityChangeKind::KeptContact, i, best_line, end, on_contour_evidence);
             return;
@@ -566,6 +600,15 @@ private:
         // edge.
         Stroke& stroke = lines_[i].strokes.front();
         const bool front = at_front(lines_[i], end);
+        // Under a decided shape, the points next to the end that lie past
+        // its near edge (a fitted edge running on to a junction on the
+        // shape) go with the end.
+        if (on_top) {
+            auto& points = stroke.points;
+            while (points.size() > 2 && !cut.keeps(front ? points[1] : points[points.size() - 2])) {
+                points.erase(front ? points.begin() + 1 : points.end() - 2);
+            }
+        }
         bool only_end = true;
         for (std::size_t k = 0; k < stroke.points.size(); ++k) {
             const bool is_end = front ? k == 0 : k + 1 == stroke.points.size();
@@ -575,7 +618,7 @@ private:
             stroke.cuts.push_back(cut);
         }
         ++stats_->clipped_ends;
-        record(IntegrityChangeKind::ClippedEnd, i, best_line, end, side_evidence);
+        record(IntegrityChangeKind::ClippedEnd, i, best_line, end, on_top ? decided_evidence : side_evidence);
     }
 
     // A line's stroke is removed along the pixels it drew that show
@@ -684,6 +727,8 @@ void apply_stroke_integrity(std::vector<Layer>& layers, std::span<const StrokeLi
             .strokes = {std::get<Stroke>(layers[it->second])},
             .connectors = {},
             .fixed = line.fixed,
+            .inner = line.inner,
+            .decided = line.decided,
         });
     }
     Pass pass(std::move(pass_lines), owners, stats);
