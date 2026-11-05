@@ -65,6 +65,14 @@ Scene sample() {
         Ellipse{.source = 5, .centre = {.x = 50.5, .y = 60.5}, .radius_x = 3, .radius_y = 2, .value = 9});
     scene.layers.emplace_back(Box{.source = -1, .left = 1, .top = 2, .right = 3, .bottom = 4, .value = 1});
     scene.layers.emplace_back(Blocks{.source = 8, .pixels = {5, 6, 400}, .values = {1, 2, 3}});
+    scene.layers.emplace_back(Ellipse{
+        .source = 6,
+        .centre = {.x = 21.5, .y = 31.5},
+        .radius_x = 1.5,
+        .radius_y = 1.5,
+        .value = 7,
+        .diamond = true,
+    });
     return scene;
 }
 
@@ -77,6 +85,16 @@ SCI_TEST(scene_round_trip_is_exact) {
     SCI_CHECK(read && same(*read, scene));
     const auto empty = read_scene(write_scene(Scene{}));
     SCI_CHECK(empty && same(*empty, Scene{}));
+}
+
+SCI_TEST(scene_round_trip_keeps_diamonds) {
+    const auto read = read_scene(write_scene(sample()));
+    SCI_CHECK(read && read->layers.size() == sample().layers.size());
+    if (read) {
+        const auto* round = std::get_if<Ellipse>(&read->layers[1]);
+        const auto* diamond = std::get_if<Ellipse>(&read->layers[4]);
+        SCI_CHECK(round != nullptr && !round->diamond && diamond != nullptr && diamond->diamond);
+    }
 }
 
 SCI_TEST(scene_reader_rejects_damaged_bytes) {

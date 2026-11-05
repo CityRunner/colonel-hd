@@ -131,6 +131,12 @@ std::optional<Span> apply_cuts(Span span, const std::vector<vector::Cut>& cuts, 
     return span;
 }
 
+// The half width of an ellipse brush at t (-1 to 1 from top to bottom),
+// over its radius_x: a diamond's sides are straight.
+double half_width(const vector::Ellipse& ellipse, double t) {
+    return ellipse.diamond ? 1 - std::abs(t) : std::sqrt(1 - (t * t));
+}
+
 // Spans of a layer on row y (in picture coordinates), passed to emit.
 template <typename Emit>
 void layer_spans(const vector::Layer& layer, double y, Emit emit) {
@@ -157,7 +163,7 @@ void layer_spans(const vector::Layer& layer, double y, Emit emit) {
     } else if (const auto* ellipse = std::get_if<vector::Ellipse>(&layer)) {
         const double t = (y - ellipse->centre.y) / ellipse->radius_y;
         if (t >= -1 && t <= 1) {
-            const double w = ellipse->radius_x * std::sqrt(1 - (t * t));
+            const double w = ellipse->radius_x * half_width(*ellipse, t);
             emit(Span{.left = ellipse->centre.x - w, .right = ellipse->centre.x + w}, ellipse->value);
         }
     } else if (const auto* box = std::get_if<vector::Box>(&layer)) {

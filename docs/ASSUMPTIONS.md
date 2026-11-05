@@ -4250,3 +4250,94 @@ its cell), files 3, 11, 16, 17 and 85 now at version 2.
   the steps. The black stair outline is drawn above the floor (drawing
   order, A1): the floor's area ends at the outline and never covers it.
   **Decided (customer).**
+
+## Milestone 10: batch 3 fixes, group D (2026-11-05)
+
+The customer's answers to batch 3 and new findings (2026-11-05) for
+pictures 12, 31, 45 and 71, on branch `m10-b3-group-d`. Review images in
+`reports/images/milestone-10/batch-3-fixes-d/` (git ignored).
+
+- **Picture 12, B2.2, "halo must be on top": fixed.** Cause: the grey
+  branch (command 872) ends on the pixel beside the joint of the halo's
+  lines 29 and 30. The stroke integrity pass treated the joint as two
+  line ends, so the halo was no contour there; the steered oval runs
+  outside the old chord, over the branch's end pixel, and the branch,
+  drawn later, put its round end on the yellow stroke. Rule, general
+  (`docs/hd-pipeline.md`, "Stroke integrity"): a line of a steered shape
+  the customer decided is a contour at its inner joints too, and where a
+  line's end pixel centre lies under its stroke, the end is cut at the
+  stroke's near edge (the shape stays on top), unless that would take the
+  end pixel from the line's own stroke (6.4). Only those ends change: 14
+  in 8 pictures (10, 12 three, 15, 20 four, 31, 42 two, 45, 57). Each was
+  looked at in crops: a short end that poked onto a decided arch, oval or
+  medallion edge now stops at it; none looks worse. A first version that
+  also clipped every end at such joints changed more ends and made
+  wallpaper stripes of pictures 31 and 45 lose their end pixels (6.4
+  failed); it was narrowed. **Decided (customer); the rule is the
+  agent's.**
+- **Picture 31, case 6: fixed.** Objects `window-curtain-left` (A3.1-A3.2)
+  and `window-curtain-right` (A4.2-A5.1), decided by the customer: inner
+  and outer arches as half ellipses (441-450, 491-499; 452-459, 506-513)
+  and the lit beads as arcs (769-770; 771-772), as pictures 42 and 44. All
+  six pass (round trip 1) and share their boundary; the bump at the right
+  shoulder is gone. The bars are straight lines already and were not
+  added. The windows on the side wall (471-478) are not done. **Decided
+  (customer, no objection); the commands are assumed.**
+- **Picture 31, A3-A4, the spears: partly.** Object `crossed-spears`
+  (decided, cell A3-A4) holds the heads as polylines with sharp corners
+  (1765-1767; 1770-1771; 1772-1773). They change nothing: the PIC lines
+  are already straight between those corners. The zig-zag is what the
+  lines draw: at 1x the short grey lines of each head fill a small
+  arrowhead, while in HD each is a 1-pixel stroke, so the left head shows
+  as a "Z" (its back, command 1769, is overdrawn at 1x and has no stroke)
+  and the right one as a hollow triangle. A clean pointed tip needs a
+  filled head that no command draws (A.6); to be asked. On the wallpaper:
+  in the crops the stripes (1383-1390) lie under the shafts at every
+  pixel centre; what reads as "covered" is the stroke integrity pass
+  clipping the spear ends that touch a stripe (the right tip at (229, 30),
+  the shaft end at (229, 47)) flat against the stripe at x = 230, as if
+  they went behind it. Not changed: a general rule needs depth evidence
+  (the hint files' `in-front-of` relations are not used by the vector
+  path yet), and a decided shape that changes nothing is not steered, so
+  the rule above does not reach it. **Open.**
+- **Picture 45, the wallpaper ornament: fixed, general.** The ornament is
+  a solid circle brush of size 1 (code 1, 96 of them), whose bitmap is a
+  plus of 5 pixels in the left 3 x 3 pixels of its 4 x 3 box. HD drew the
+  ellipse inscribed in the box: 4 x 3 pixels and half a pixel to the
+  right. Now every size 1 circle brush is the diamond through the plus's
+  outer pixel edges (`Ellipse::diamond`, scene format 2, unit tests in
+  sci-vector). Other pictures with such brushes, all looked at in crops:
+  4, 5, 10, 15, 78 (berries and flowers in bushes, now small diamonds, as
+  the 1x crosses; they were round dots a little larger than drawn), 23,
+  34, 37, 47, 73, 75 (rows of small ornaments on rails, fences, fabric),
+  41, 67 (the same wallpaper as 45), 79, 85 (glints and stars). None
+  looks wrong; the bushes' berries are the only place where the round
+  dots may have read better. **Decided (customer) for 45; the general
+  rule is the agent's; the customer may want the berries kept round.**
+- **Picture 45, case 6: fixed.** The same two objects as picture 31
+  (292-299, 340-347, 509-510; 281-290, 324-332, 507-508); all pass and
+  share. The side windows (308-314) are not done. **Decided (customer, no
+  objection); the commands are assumed.**
+- **Picture 71, "fix color fills on pipe": not fixed.** Looked at in
+  crops (B4.4-C4.4, A4.4-B4.4) and at 1x: every pixel centre agrees with
+  the original (agreement 100%). The pipe is drawn as 1-pixel lines of
+  three colours next to each other with small fills (125-130) between
+  them; at 1x the stepped lines fill the pipe, in HD the straight
+  1-pixel strokes and the faces between their centrelines leave thin
+  wedges of black and of the wrong colour where the lines step apart
+  (for example beside the bracket at about (238, 117) and along the lower
+  red tube). A fix needs the pipe as a scene-model object whose outlines
+  bound the colour areas (two parallel edges per tube); not started for
+  lack of time. **Open.**
+- **Checks.** Release workflow 27 of 27 (new unit tests: the diamond in
+  build_scene, scene_io and the reference evaluator; a decided shape on
+  top of a line ending under it, and nothing for an undecided one).
+  clang-format and clang-tidy clean on the changed files.
+  `scripts/check-hints.py`, `sci-hint-tool check hints`,
+  `scripts/check-repo-policy.py` clean. Round trip, 6.4, A1 in
+  `docs/hd-quality.md`. Golden hashes against the `milestone-10` build:
+  pictures 4, 5, 10, 12, 15, 20, 23, 31, 34, 37, 41, 42, 45, 47, 57, 67,
+  73, 75, 78, 79, 85 and the stack 42+162 differ (hd1/2/5/10, 88
+  entries); every `original1` entry and every other picture unchanged.
+  The analysis cache rebuilds through the scene format version (1 -> 2);
+  `analyser_version` is left at 2 for the gate. **Finding.**

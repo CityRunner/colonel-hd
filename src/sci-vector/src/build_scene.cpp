@@ -665,12 +665,27 @@ std::optional<Layer> brush_layer(const pic::Pattern& pattern, std::uint8_t value
     if (pic::pattern_is_rectangle(pattern.code)) {
         return Box{.source = source, .left = left, .top = top, .right = right, .bottom = bottom, .value = value};
     }
+    // The size 1 circle draws a plus of 5 pixels in the left 3 x 3 pixels
+    // of its 4 x 3 box: at 1x a small diamond (picture 45's wallpaper
+    // ornament). It is that diamond, corners at the plus's outer pixel
+    // edges, not the larger oval inscribed in the box.
+    if (size == 1) {
+        return Ellipse{
+            .source = source,
+            .centre = {.x = left + 1.5, .y = top + 1.5},
+            .radius_x = 1.5,
+            .radius_y = 1.5,
+            .value = value,
+            .diamond = true,
+        };
+    }
     return Ellipse{
         .source = source,
         .centre = {.x = (left + right) / 2, .y = (top + bottom) / 2},
         .radius_x = (right - left) / 2,
         .radius_y = (bottom - top) / 2,
         .value = value,
+        .diamond = false,
     };
 }
 
@@ -2382,8 +2397,10 @@ void square_step_ends(std::vector<Layer>& layers, const std::vector<DrawnLine>& 
 }
 
 // The lines as the stroke integrity pass sees them: the pixels each drew,
-// and the ends the scene model fixed.
-std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& lines, const SceneModelFits& model) {
+// and the ends the scene model fixed. `decided` holds the primitives of the
+// lines the customer's decisions steer.
+std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& lines, const SceneModelFits& model,
+                                                std::span<const std::int32_t> decided) {
     std::vector<detail::StrokeLine> stroke_lines;
     stroke_lines.reserve(lines.size());
     for (const DrawnLine& line : lines) {
@@ -2391,6 +2408,8 @@ std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& li
             .primitive = static_cast<std::int32_t>(line.primitive),
             .path = {},
             .fixed = {},
+            .inner = {},
+            .decided = false,
         };
         pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) {
             if (y >= picture_top && y < picture_top + picture_height) {
@@ -2404,6 +2423,11 @@ std::vector<detail::StrokeLine> stroke_lines_of(const std::vector<DrawnLine>& li
     }
     for (const auto& [line, end] : model.inner_ends) {
         stroke_lines[line].fixed.push_back(picture_index(end.x, end.y - picture_top));
+        stroke_lines[line].inner.push_back(picture_index(end.x, end.y - picture_top));
+    }
+    for (std::size_t line = 0; line < lines.size(); ++line) {
+        stroke_lines[line].decided =
+            model.steered[line] && std::ranges::find(decided, stroke_lines[line].primitive) != decided.end();
     }
     return stroke_lines;
 }
@@ -2610,7 +2634,8 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
         // The baseline of milestone 3b's report is measured without the pass
         // (development option SCI_WITHOUT_STROKE_INTEGRITY).
         if (plane == Plane::Visual && !without_stroke_integrity) {
-            const std::vector<detail::StrokeLine> stroke_lines = stroke_lines_of(lines, model);
+            const std::vector<detail::StrokeLine> stroke_lines =
+                stroke_lines_of(lines, model, built.stats.decided_lines);
             detail::apply_stroke_integrity(scene.layers, stroke_lines, view.owners, built.stats);
         }
         return built;

@@ -150,6 +150,7 @@ void write_layer(Writer& out, const Layer& layer) {
         out.f64(ellipse->radius_x);
         out.f64(ellipse->radius_y);
         out.u8(ellipse->value);
+        out.u8(ellipse->diamond ? 1 : 0);
     } else if (const auto* box = std::get_if<Box>(&layer)) {
         out.u8(static_cast<std::uint8_t>(LayerTag::Box));
         out.i32(box->source);
@@ -222,6 +223,7 @@ std::optional<Layer> read_layer(Reader& in) {
         ellipse.radius_x = in.f64();
         ellipse.radius_y = in.f64();
         ellipse.value = in.u8();
+        ellipse.diamond = in.u8() != 0;
         return Layer{ellipse};
     }
     case static_cast<std::uint8_t>(LayerTag::Box): {

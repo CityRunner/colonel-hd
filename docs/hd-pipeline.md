@@ -84,9 +84,16 @@ Above the faces, in drawing order:
 - **Strokes**: every visible line (one owning at least one pixel at the
   end) is a stroke 1 original pixel wide: all points within 0.5 of its
   centre line, with round ends. Lines that are fully overdrawn are left out.
-- **Brushes**: a solid circle pattern is the ellipse inscribed in its box, a
-  solid rectangle pattern the box itself (`sci/pic/geometry.hpp` gives the
-  box path 1 uses).
+- **Brushes**: a solid circle pattern is the ellipse inscribed in its box
+  (size 1: below), a solid rectangle pattern the box itself
+  (`sci/pic/geometry.hpp` gives the box path 1 uses).
+- **The smallest circle brush** (size 1, milestone 10, batch 3): its
+  bitmap is a plus of 5 pixels in the left 3 x 3 pixels of its 4 x 3 box,
+  a small diamond at 1x. It is drawn as that diamond, |u| + |v| <= 1 with
+  its corners at the plus's outer pixel edges (`Ellipse::diamond`), not as
+  the larger oval inscribed in the box (picture 45's wallpaper ornament;
+  the customer's finding of 2026-11-05). Larger circles keep the ellipse.
+  The scene format is version 2 (the flag is stored).
 - **Blocks**: a textured pattern is drawn as the 1x pixels it owns at the
   end, scaled N x N.
 
@@ -109,6 +116,18 @@ order:
    away from it, gets a short connector to the contour's nearest point
    instead, cut the same way. Ends that drew over the contour, or whose
    pixel lies on the contour's stroke, are kept as the player saw them.
+   A line of a steered shape the customer decided stays on top (milestone
+   10, picture 12's halo, "halo must be on top"): where a line's end
+   pixel touches such a shape next to one of its inner joints (where two
+   of its lines meet; the shape runs on there, so it is not a line end)
+   and the end pixel's centre lies under the shape's stroke, the shape is
+   the contour, and the end is cut at the stroke's near edge, on the side
+   of the line's other end, although the player saw the end pixel there;
+   points of a fitted end that run on past that edge go with it. Only
+   then: ends that the earlier rule clipped, joined or kept elsewhere are
+   unchanged. The report gives the evidence "the line ends on a shape the
+   customer decided, which stays on top".
+
 3. **Joints**: two seen line ends on touching pixels meet: the earlier line
    gets a connector to the later line's end (connectors are kept apart
    from the line's own strokes). An end next to the other line's end gets a
