@@ -212,6 +212,10 @@ struct PrimitiveHint {
     std::vector<LineRef> commands;
     std::vector<Point1x> points;
     std::vector<CornerHint> corners;
+    // The customer's approval of a wider round trip for this shape, in
+    // thousandths of an original pixel (1001 to 2000); 0: A4 A.6's one pixel.
+    // Only in the hypothesis the customer decided.
+    int tolerance = 0;
 };
 
 struct PartHint {

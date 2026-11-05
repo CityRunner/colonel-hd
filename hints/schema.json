@@ -246,6 +246,12 @@
         "kind": {"enum": ["line", "arc", "ellipse", "spline", "polyline"]},
         "commands": {"type": "array", "minItems": 1, "maxItems": 512, "items": {"$ref": "#/$defs/line"}},
         "points": {"type": "array", "minItems": 2, "maxItems": 512, "items": {"$ref": "#/$defs/point"}},
+        "tolerance": {
+          "description": "The customer's approval of a wider round trip for this one shape (A4 A.6 allows about 1 original pixel), in thousandths of an original pixel: more than 1000, at most 2000. Only in the hypothesis the customer decided.",
+          "type": "integer",
+          "minimum": 1001,
+          "maximum": 2000
+        },
         "corners": {
           "type": "array",
           "maxItems": 512,

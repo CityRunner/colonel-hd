@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <ios>
 #include <iterator>
@@ -247,6 +248,44 @@ SCI_TEST(hints_read_keep_decisions) {
         rejection(replaced(scene, R"("hypothesis": "keep")", R"("hypothesis": "kept")")).contains("no hypothesis"));
     SCI_CHECK(rejection(replaced(scene, R"("hypothesis": "repeat")", R"("hypothesis": "keep")"))
                   .contains("\"repeat\" or \"as-drawn\" expected"));
+}
+
+// A primitive's wider tolerance is the customer's approval for that one
+// shape: in thousandths of a pixel, 1001 to 2000, and only in the
+// hypothesis the customer decided.
+SCI_TEST(hints_read_a_wider_tolerance_only_where_the_customer_decided) {
+    using namespace sci::vector;
+    const std::string scene = scene_example();
+    const std::string arc = R"("points": [[200, 150], [210, 145], [220, 150]]})";
+    const auto with = [&](const std::string& text, int tolerance) {
+        return replaced(text, arc,
+                        std::format(R"("points": [[200, 150], [210, 145], [220, 150]], "tolerance": {}}})", tolerance));
+    };
+    const std::string decided = replaced(scene, R"("hypothesis": "keep")", R"("hypothesis": "transom")");
+    const auto hints = parse_hints(with(decided, 1500));
+    SCI_CHECK(hints.has_value());
+    if (hints) {
+        const auto it = std::ranges::find(hints->objects, "transom", &ObjectHint::id);
+        SCI_CHECK(it != hints->objects.end() && it->main.parts[0].primitives[0].tolerance == 1500);
+    }
+    // Without it, the default.
+    const auto plain = parse_hints(decided);
+    SCI_CHECK(plain &&
+              std::ranges::find(plain->objects, "transom", &ObjectHint::id)->main.parts[0].primitives[0].tolerance ==
+                  0);
+    // Out of range.
+    SCI_CHECK(!rejection(with(decided, 1000)).empty());
+    SCI_CHECK(!rejection(with(decided, 2001)).empty());
+    // Not decided for this hypothesis: kept, or open.
+    SCI_CHECK(rejection(with(scene, 1500)).contains("customer's decision"));
+    const std::string keep =
+        ",\n      "
+        R"("decision": {"hypothesis": "keep", "by": "customer", "date": "2026-11-04", "cell": "C3", "note": "leave it"})";
+    SCI_CHECK(rejection(with(replaced(scene, keep, ""), 1500)).contains("customer's decision"));
+    // In an alternative the customer did not choose.
+    const std::string flat = R"("points": [[200, 150], [220, 150]]})";
+    SCI_CHECK(rejection(replaced(decided, flat, R"("points": [[200, 150], [220, 150]], "tolerance": 1500})"))
+                  .contains("customer's decision"));
 }
 
 // A.5 with A.7: a repetition the analyser is unsure of is open until the

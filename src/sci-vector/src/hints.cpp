@@ -54,7 +54,11 @@ constexpr std::array symmetry_names{
 
 // The scene model (version 2).
 constexpr std::size_t max_alternatives = 8; // Per object.
-constexpr std::size_t max_list = 512;       // Parts, primitives, commands, points, corners, items.
+// A primitive's wider tolerance, in thousandths of an original pixel: more
+// than A.6's one pixel, at most two.
+constexpr std::int64_t min_tolerance = 1001;
+constexpr std::int64_t max_tolerance = 2000;
+constexpr std::size_t max_list = 512; // Parts, primitives, commands, points, corners, items.
 constexpr std::int64_t max_confidence = 1000;
 
 constexpr std::array object_type_names{
@@ -535,7 +539,7 @@ std::pair<std::size_t, std::size_t> point_range(PrimitiveKind kind) {
 
 PrimitiveHint read_primitive(Reader& in, const JsonValue& value, const std::string& where, bool organic) {
     PrimitiveHint primitive;
-    if (!in.members(value, where, {"id", "kind", "commands", "points"}, {"corners"})) {
+    if (!in.members(value, where, {"id", "kind", "commands", "points"}, {"corners", "tolerance"})) {
         return primitive;
     }
     primitive.id = in.identifier(*value.member("id"), where + ".id");
@@ -570,6 +574,10 @@ PrimitiveHint read_primitive(Reader& in, const JsonValue& value, const std::stri
             in.fail(where + ".corners", "a point has two corners");
         }
         primitive.corners.push_back(corner);
+    }
+    if (const JsonValue* tolerance = value.member("tolerance"); tolerance != nullptr) {
+        primitive.tolerance =
+            static_cast<int>(in.integer(*tolerance, where + ".tolerance", min_tolerance, max_tolerance));
     }
     return primitive;
 }
@@ -693,6 +701,14 @@ Decision read_decision(Reader& in, const JsonValue& value, const std::string& wh
     return decision;
 }
 
+std::vector<const Hypothesis*> hypotheses_of(const ObjectHint& object) {
+    std::vector<const Hypothesis*> all{&object.main};
+    for (const Hypothesis& alternative : object.alternatives) {
+        all.push_back(&alternative);
+    }
+    return all;
+}
+
 ObjectHint read_object(Reader& in, const JsonValue& value, const std::string& where) {
     ObjectHint object;
     if (!in.members(value, where, {"id", "type", "cell", "confidence", "parts"},
@@ -723,15 +739,20 @@ ObjectHint read_object(Reader& in, const JsonValue& value, const std::string& wh
         }
         object.decision = std::move(d);
     }
-    return object;
-}
-
-std::vector<const Hypothesis*> hypotheses_of(const ObjectHint& object) {
-    std::vector<const Hypothesis*> all{&object.main};
-    for (const Hypothesis& alternative : object.alternatives) {
-        all.push_back(&alternative);
+    // A wider tolerance is the customer's approval for that shape: only in
+    // the hypothesis the customer decided.
+    for (const Hypothesis* hypothesis : hypotheses_of(object)) {
+        for (const PartHint& part : hypothesis->parts) {
+            for (const PrimitiveHint& primitive : part.primitives) {
+                if (in.ok() && primitive.tolerance != 0 &&
+                    (!object.decision || object.decision->hypothesis != hypothesis->id)) {
+                    in.fail(std::format("{}: primitive \"{}\".tolerance", where, primitive.id),
+                            "a wider tolerance needs the customer's decision for its hypothesis");
+                }
+            }
+        }
     }
-    return all;
+    return object;
 }
 
 // A repetition's item: an object's type or a part's role, and whether it

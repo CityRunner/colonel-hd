@@ -4460,3 +4460,92 @@ version 2.
 - **Images** in `reports/images/milestone-10/batch-3-fixes-c/` (git
   ignored): per place a crop and its `-changed-before-after` (picture 46:
   unchanged), per changed picture the sheet and plain image. **Finding.**
+
+## Milestone 10: group A follow-ups (2026-11-05)
+
+The customer's findings after group A (above) for pictures 16, 17 and 11,
+on branch `m10-b3-group-a2`. Review images in
+`reports/images/milestone-10/batch-3-fixes-a2/` (git ignored): per place a
+crop and its `-changed-before-after` (HD only, the `milestone-10` build
+left), per changed picture the sheet and plain image.
+
+- **Picture 16, C3, the front steps: reverted. Fixed.** `front-stairs`
+  is decided `keep` (customer, 2026-11-05, C3.1-C3.2, "in perspective as
+  originally"). The HD crop is pixel for pixel the render before group A
+  (the left half of group A's before-after image), and the `milestone-10`
+  render is pixel for pixel group A's after.
+- **Picture 16, the inner fanlight edges: fixed (two small flaws left).**
+  Why they stayed faceted was not only the one-pixel gaps: the door's
+  inner edge (972-997) and the right window's inner arch (1231-1260)
+  contain one-pixel commands (dots: 977, 978-980, 1236), and a primitive
+  with a dot was not steered at all. General code change: an open
+  `ellipse` or an `arc` whose lines do not form one path is steered if
+  they do when consecutive ends may be two pixels apart, or joined by a
+  run of the primitive's dots (each at most two pixels from the next);
+  the shape is cut at both ends of a gap and the gap stays open, as a
+  whole ellipse leaves it; the dots keep their own strokes. Unit tests:
+  one-pixel gaps (as ellipse and arc), a wider gap refused, a gap a dot
+  bridges. Data: the right window's inner arch leaves out command 1232
+  (a two-pixel stroke beside 1231, which made the lines "side by side");
+  it keeps its 3b stroke. All four inner edges now pass (round trip 1)
+  and are curves of the partition. At crop size: the window pane tops
+  and the door's pane tops are smooth curves; a thin dark/teal sliver
+  remains here and there between the outer grey arch and the inner edge
+  (the two drawn lines touch at 1x; the faces between them are slivers),
+  and a small dark tick at the top of the door's left pane. **Decided
+  (agent; code change).**
+- **Picture 11, the wide centre fanlight: fixed.** The customer's
+  approval of 1.5 px for this one arch is data: an optional
+  `tolerance` of a primitive, in thousandths of an original pixel (1001
+  to 2000), allowed only in the hypothesis the customer decided (schema,
+  `check-hints.py`, `parse_hints`, unit test). `cf-centre-frame` and
+  `cf-centre-outline` have 1500. The shape is used if its 1x raster lies
+  within 2 pixels and, measured as A.6 measures (Chebyshev distance),
+  the lines' pixel centres lie within 1.5 px of the shape and the shape
+  within 1.5 px of the lines. A half ellipse that does not pass is
+  fitted once more towards the smallest largest deviation (Lawson's
+  reweighting, ends fixed); measured as Euclidean distance the arches
+  lie 1.80 / 1.74 px (least squares) and 1.71 / 1.63 px (refit) off. Both arches pass and share their curve with
+  the faces: a smooth half ellipse through the springers. **Assumed:**
+  the 1.5 px is read in the A.6 measure (Chebyshev, as the round trip
+  and the 1a exception); measured as Euclidean distance from pixel
+  centres it would not pass. The 6.4 line rule's exception reaches 2
+  pixels for these lines (`SceneStats::widened_lines`); the 33 line
+  pixels of picture 11 taken within the tolerance are listed by
+  `sci-hd-report` ("Line pixels within the A.6 tolerance"). The
+  round-trip report lists both arches as failing (deviation 2), as it
+  checks A.6's 1 pixel for every chain: 17 -> 19 failing, the two new
+  ones are this approved exception. **Decided (customer); measure
+  assumed.**
+- **Picture 17, A1.4, the column's colour on the window: not fixed.**
+  Cause, as far as found: not the fanlight arc (the same result without
+  its last line 1613 next to the column). The column's right side 1271 is
+  drawn in light cyan from (44, 152) to (42, 41); the relations
+  (parallel, vertical symmetry with the left side) make it vertical at x
+  = 43, so at the top its stroke lies one pixel further right, on the
+  window's pixel column (x 43-44), while its faces keep the 3b fit ("the
+  shared boundary fails: its boundary would cross another edge"; the same
+  for band 4): the light cyan stroke shows on the window, with a dark
+  sliver between it and the column's old face. A column with straight
+  parallel sides that ends at the drawn edge at the top would need the
+  bottom moved inward by 2 px, beyond the solver's 1 px. A question for
+  the customer: straight sides that keep the drawn top edge (the bottom
+  narrows by 2 px), or the right side as drawn (slightly tapered).
+  **Open.**
+- **Picture 17, C3.2, the stair outline under the floor: not done**
+  (time). **Open.**
+- **Picture 17, the cyan sliver beside the top of the shaft: not
+  fixed;** it is the same cause as A1.4 above. **Open.**
+- **Checks** (numbers in `docs/hd-quality.md`, "After the group A
+  follow-ups"): release workflow, 27 of 27 test programs pass (new unit
+  tests: open ellipse and arc over one-pixel gaps, a wider gap refused, a
+  gap a dot bridges, the tolerance member in the parser);
+  `check-hints.py`, `sci-hint-tool check hints`, `check-repo-policy.py`,
+  clang-format and clang-tidy on the changed files clean. Acceptance
+  unchanged (worst 99.993%, 0 failing, 0 untouched line pixels). Golden
+  hashes against a run of the `milestone-10` build (before group D): the
+  8 HD entries of pictures 11 and 16 differ; every other entry and every
+  `original1` entry is unchanged. Shared code changed (small):
+  `scene_model.*`, `build_scene.cpp` (steer input, line check, report),
+  `hints.*`, `raster_1x.*`, `acceptance.*` (an optional `widened` list),
+  `tools/hd-report`. **Finding.**

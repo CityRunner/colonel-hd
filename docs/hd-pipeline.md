@@ -229,6 +229,15 @@ with `src/sci-vector/src/scene_model.cpp`:
   on touching pixels meeting halfway. The lines need not form one path:
   where they leave a gap (another object bounds the area there) the gap
   stays. The round trip and the line check below apply unchanged.
+  An open `ellipse` or an `arc` whose lines do not form one path may
+  still be steered if they do once consecutive ends may be two pixels
+  apart (one pixel between them, which another line drew over): the shape
+  is fitted as for one path, cut at both ends of such a gap (each
+  projected onto it), and the part between stays open, as a whole
+  ellipse leaves its gaps (group A follow-ups; picture 16's inner
+  fanlight edges). A one-pixel command (a dot) of such a primitive keeps
+  its own stroke and is not a line of the shape; a gap is also closed by
+  a run of the primitive's dots, each at most two pixels from the next.
 - **The strokes.** The shape is cut where consecutive lines meet (halfway
   between their end pixels, or at a polyline corner within one pixel of
   that), and each line's stroke becomes its piece. The faces keep the
@@ -246,6 +255,20 @@ with `src/sci-vector/src/scene_model.cpp`:
   own"). A primitive that changes nothing is not recorded; one that
   does is listed as applied, and is a chain of the round-trip check of
   kind `line`, `polyline`, `arc` or `ellipse`, named after the primitive.
+- **A wider tolerance the customer approved** (`tolerance` of a
+  primitive, `hints/README.md`; at most 2 pixels, only where the customer
+  decided the hypothesis): the shape is also used if its 1x raster lies
+  within the tolerance rounded up (2) and, measured as A.6 measures
+  (Chebyshev distance), every pixel centre of its lines lies within the
+  tolerance of the shape and every point of the shape within it of the
+  lines (each line as the polyline through its pixel centres). A half
+  ellipse that the least-squares fit leaves outside is fitted once more
+  towards the smallest largest deviation (40 rounds of Lawson's
+  reweighting of the pixels; the ends stay). The steering's line check and `check_acceptance`
+  then take a line pixel within 2 pixels (Chebyshev, of the shape's 1x
+  raster) as tolerated (`SceneStats::widened_lines`), and every such pixel
+  is listed as before; the replacement report says "within the customer's
+  tolerance of 1.500 px".
 - **Step corners** (`step` in a polyline's `corners`): the end of a
   horizontal or vertical line of the primitive at that pixel runs on to
   the pixel's outer edge and is cut there, square to the line. Stacked

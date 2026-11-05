@@ -71,8 +71,43 @@ bool alongside(const SteerLine& a, const SteerLine& b) {
     return near > 2;
 }
 
+// Whether two end pixels meet: they touch, or, with `reach` 2, they are
+// at most two pixels apart (Chebyshev) or joined by a run of the bridge
+// pixels (dots of the primitive), each at most two pixels from the next.
+bool within(pic::ScreenPoint a, pic::ScreenPoint b, int reach, std::span<const pic::ScreenPoint> bridges) {
+    const auto near = [&](pic::ScreenPoint p, pic::ScreenPoint q) {
+        return std::abs(p.x - q.x) <= reach && std::abs(p.y - q.y) <= reach;
+    };
+    if (near(a, b)) {
+        return true;
+    }
+    if (reach < 2) {
+        return false;
+    }
+    std::vector<bool> used(bridges.size(), false);
+    std::vector<pic::ScreenPoint> pending{a};
+    while (!pending.empty()) {
+        const pic::ScreenPoint p = pending.back();
+        pending.pop_back();
+        if (p != a && near(p, b)) {
+            return true;
+        }
+        for (std::size_t i = 0; i < bridges.size(); ++i) {
+            if (!used[i] && near(p, bridges[i])) {
+                used[i] = true;
+                pending.push_back(bridges[i]);
+            }
+        }
+    }
+    return false;
+}
+
 // The lines oriented along one path, or nothing if they do not form one.
-std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines) {
+// With `reach` 2, consecutive lines may leave a gap of one pixel between
+// their ends (a pixel another line drew over), or a gap the primitive's
+// dots bridge.
+std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines, int reach = 1,
+                                              std::span<const pic::ScreenPoint> bridges = {}) {
     if (lines.empty()) {
         return std::nullopt;
     }
@@ -84,7 +119,9 @@ std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines) 
     std::vector<SteerLine> path(lines.begin(), lines.end());
     if (path.size() >= 2) {
         const SteerLine& next = path[1];
-        const auto meets_next = [&](pic::ScreenPoint p) { return touches(p, next.from) || touches(p, next.to); };
+        const auto meets_next = [&](pic::ScreenPoint p) {
+            return within(p, next.from, reach, bridges) || within(p, next.to, reach, bridges);
+        };
         if (!meets_next(path[0].to)) {
             if (!meets_next(path[0].from)) {
                 return std::nullopt;
@@ -93,8 +130,8 @@ std::optional<std::vector<SteerLine>> as_path(std::span<const SteerLine> lines) 
         }
     }
     for (std::size_t i = 1; i < path.size(); ++i) {
-        if (!touches(path[i - 1].to, path[i].from)) {
-            if (!touches(path[i - 1].to, path[i].to)) {
+        if (!within(path[i - 1].to, path[i].from, reach, bridges)) {
+            if (!within(path[i - 1].to, path[i].to, reach, bridges)) {
                 return std::nullopt;
             }
             std::swap(path[i].from, path[i].to);
@@ -158,12 +195,34 @@ std::optional<std::vector<Vec2>> polyline_shape(const SteerInput& input, std::sp
     return shape;
 }
 
+// Lawson's rule: each weight multiplied by its point's residual, then all
+// scaled to average 1; false if every residual is zero.
+template <typename Residual>
+bool reweight(std::vector<double>& weights, const std::vector<Vec2>& points, Residual residual) {
+    double total = 0;
+    for (std::size_t i = 0; i < points.size(); ++i) {
+        weights[i] *= residual(points[i]);
+        total += weights[i];
+    }
+    if (!(total > 0)) {
+        return false;
+    }
+    for (double& w : weights) {
+        w *= static_cast<double>(points.size()) / total;
+    }
+    return true;
+}
+
 // Half of an ellipse from the path's start to its end, which are the ends
 // of a diameter: the conic A x^2 + B xy + C y^2 = 1 about their midpoint,
 // fitted by weighted least squares to the end (strongly), the anchors and
 // the lines' pixel centres, then drawn through its conjugate diameters
 // (only +, -, *, / and sqrt).
-std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::span<const SteerLine> path) {
+// With `minimax_rounds` (a primitive with a wider tolerance), the pixels'
+// weights are then adjusted by Lawson's rule (each multiplied by its
+// residual) so that the fit tends to the smallest largest deviation.
+std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::span<const SteerLine> path,
+                                               int minimax_rounds = 0) {
     constexpr double end_weight = 1e4;
     constexpr double anchor_weight = 1e2;
     const Vec2 start = centre(path.front().from);
@@ -173,27 +232,44 @@ std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::spa
     if (length(u) == 0) {
         return std::nullopt;
     }
-    Normal3 m{};
     Vec2 side;
-    const auto add = [&](Vec2 p, double weight) {
-        const Vec2 q = p - middle;
-        add_row(m, {q.x * q.x, q.x * q.y, q.y * q.y}, 1, weight);
-    };
-    add(end, end_weight);
     for (std::size_t k = 1; k + 1 < input.points.size(); ++k) {
-        add(input.points[k], anchor_weight);
         side = side + (input.points[k] - middle);
     }
+    std::vector<Vec2> pixels;
     for (const SteerLine& line : path) {
-        pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) { add(centre({.x = x, .y = y}), 1); });
+        pic::for_each_line_pixel(line.from, line.to, [&](int x, int y) { pixels.push_back(centre({.x = x, .y = y})); });
     }
-    const double det = det3(m, 3);
-    if (std::abs(det) < 1e-300) {
-        return std::nullopt;
+    std::vector<double> weights(pixels.size(), 1.0);
+    const auto row = [&](Vec2 p) {
+        const Vec2 q = p - middle;
+        return std::array<double, 3>{q.x * q.x, q.x * q.y, q.y * q.y};
+    };
+    std::array<double, 3> conic{};
+    for (int round = 0; round <= minimax_rounds; ++round) {
+        Normal3 m{};
+        add_row(m, row(end), 1, end_weight);
+        for (std::size_t k = 1; k + 1 < input.points.size(); ++k) {
+            add_row(m, row(input.points[k]), 1, anchor_weight);
+        }
+        for (std::size_t i = 0; i < pixels.size(); ++i) {
+            add_row(m, row(pixels[i]), 1, weights[i]);
+        }
+        const double det = det3(m, 3);
+        if (std::abs(det) < 1e-300) {
+            return std::nullopt;
+        }
+        conic = {det3(m, 0) / det, det3(m, 1) / det, det3(m, 2) / det};
+        if (!reweight(weights, pixels, [&](Vec2 p) {
+                const std::array<double, 3> r = row(p);
+                return std::abs((conic[0] * r[0]) + (conic[1] * r[1]) + (conic[2] * r[2]) - 1);
+            })) {
+            break;
+        }
     }
-    double a = det3(m, 0) / det;
-    double b = det3(m, 1) / det;
-    double c = det3(m, 2) / det;
+    double a = conic[0];
+    double b = conic[1];
+    double c = conic[2];
     if (!(a > 0) || !(((4 * a * c) - (b * b)) > 0)) {
         return std::nullopt;
     }
@@ -537,7 +613,8 @@ std::vector<std::vector<Vec2>> split(const std::vector<Vec2>& shape, std::span<c
 // The shape a primitive asks for, along the path; nothing if the kind is
 // not steered here, or (with a reason) if no shape of that kind fits.
 std::optional<std::vector<Vec2>> shape_of(const SteerInput& input, std::span<const SteerLine> path,
-                                          const std::vector<Vec2>* solved, std::string& reason) {
+                                          const std::vector<Vec2>* solved, std::string& reason,
+                                          int minimax_rounds = 0) {
     if (solved != nullptr && (input.kind == PrimitiveKind::Line || input.kind == PrimitiveKind::Polyline)) {
         return *solved;
     }
@@ -550,7 +627,7 @@ std::optional<std::vector<Vec2>> shape_of(const SteerInput& input, std::span<con
         if (input.points.size() < 3 || input.points.front() == input.points.back()) {
             return std::nullopt; // A whole ellipse is steered by closed_ellipse_pieces.
         }
-        auto shape = ellipse_shape(input, path);
+        auto shape = ellipse_shape(input, path, minimax_rounds);
         if (!shape) {
             reason = "no ellipse fits the lines";
         }
@@ -593,6 +670,37 @@ std::vector<Vec2> joints_of(const SteerInput& input, std::span<const SteerLine> 
     return joints;
 }
 
+// The shape cut into one piece per line of the path. Where two lines leave
+// a gap between their ends, the shape is cut at both ends (each projected
+// onto it) and the part between stays open, as a whole ellipse leaves it.
+std::vector<std::vector<Vec2>> pieces_of(const SteerInput& input, std::span<const SteerLine> path,
+                                         const std::vector<Vec2>& shape, bool solved) {
+    const std::vector<Vec2> joints = joints_of(input, path, shape, solved);
+    std::vector<Vec2> cuts;
+    std::vector<bool> gap_after; // Per cut: whether the part after it lies in a gap.
+    for (std::size_t i = 0; i + 1 < path.size(); ++i) {
+        if (touches(path[i].to, path[i + 1].from)) {
+            cuts.push_back(joints[i]);
+            gap_after.push_back(false);
+        } else {
+            cuts.push_back(centre(path[i].to));
+            cuts.push_back(centre(path[i + 1].from));
+            gap_after.push_back(true);
+            gap_after.push_back(false);
+        }
+    }
+    std::vector<std::vector<Vec2>> split_pieces = split(shape, cuts);
+    std::vector<std::vector<Vec2>> pieces;
+    for (std::size_t k = 0; k < split_pieces.size(); ++k) {
+        // Piece k follows cut k - 1; it is a gap if that cut opened one.
+        if (k > 0 && gap_after[k - 1]) {
+            continue;
+        }
+        pieces.push_back(std::move(split_pieces[k]));
+    }
+    return pieces;
+}
+
 // The round trip (A4 A.6) of the pieces against the path's lines.
 int round_trip_of(std::span<const SteerLine> path, const std::vector<std::vector<Vec2>>& pieces) {
     std::vector<std::uint32_t> original;
@@ -609,6 +717,88 @@ int round_trip_of(std::span<const SteerLine> path, const std::vector<std::vector
         pixels->erase(first, last);
     }
     return raster_deviation(original, reconstructed);
+}
+
+// The Chebyshev distance (the measure of A4 A.6) from p to segment a-b:
+// the largest coordinate difference, minimised along the segment (a convex
+// function of the position, so a ternary search finds it).
+double chebyshev_to_segment(Vec2 p, Vec2 a, Vec2 b) {
+    const auto at = [&](double t) {
+        const Vec2 q = a + ((b - a) * t) - p;
+        return std::max(std::abs(q.x), std::abs(q.y));
+    };
+    double low = 0;
+    double high = 1;
+    for (int i = 0; i < 60; ++i) {
+        const double m1 = low + ((high - low) / 3);
+        const double m2 = high - ((high - low) / 3);
+        if (at(m1) <= at(m2)) {
+            high = m2;
+        } else {
+            low = m1;
+        }
+    }
+    return std::min({at(0), at(1), at((low + high) * 0.5)});
+}
+
+// The Chebyshev distance from p to the nearest of the polylines.
+double distance_to_any(Vec2 p, const std::vector<std::vector<Vec2>>& polylines) {
+    double best = 1e300;
+    for (const std::vector<Vec2>& line : polylines) {
+        for (std::size_t k = 0; k < line.size(); ++k) {
+            best = std::min(best, chebyshev_to_segment(p, line[k], k + 1 < line.size() ? line[k + 1] : line[k]));
+        }
+    }
+    return best;
+}
+
+// The largest Chebyshev distance (as A4 A.6 measures), both ways, between
+// the lines' pixel centres (each line as the polyline through them) and the
+// shape (all its pieces), in thousandths of a pixel, rounded up.
+int continuous_deviation(std::span<const SteerLine> path, const std::vector<std::vector<Vec2>>& pieces) {
+    std::vector<std::vector<Vec2>> drawn;
+    for (const SteerLine& line : path) {
+        std::vector<Vec2> centres;
+        pic::for_each_line_pixel(line.from, line.to,
+                                 [&](int x, int y) { centres.push_back(centre({.x = x, .y = y})); });
+        drawn.push_back(std::move(centres));
+    }
+    double worst = 0;
+    const std::vector<std::vector<Vec2>>& lines = drawn;
+    for (const auto& [from, to] : {std::pair{&lines, &pieces}, std::pair{&pieces, &lines}}) {
+        for (const std::vector<Vec2>& line : *from) {
+            for (const Vec2 p : line) {
+                worst = std::max(worst, distance_to_any(p, *to));
+            }
+        }
+    }
+    return static_cast<int>(std::ceil(worst * 1000));
+}
+
+// The round trip (A4 A.6): within round_trip_limit, or, for a primitive
+// with a wider tolerance the customer approved, within that tolerance
+// measured both on the 1x raster (rounded up to whole pixels) and between
+// the pieces and the lines' pixel centres. Sets the deviation and, on
+// failure, the reason.
+bool passes_round_trip(const SteerInput& input, std::span<const SteerLine> path,
+                       const std::vector<std::vector<Vec2>>& pieces, Steered& result) {
+    result.deviation = round_trip_of(path, pieces);
+    if (result.deviation <= round_trip_limit) {
+        return true;
+    }
+    if (input.tolerance > tolerance_unit && result.deviation <= raster_reach(input.tolerance)) {
+        const int continuous = continuous_deviation(path, pieces);
+        if (continuous <= input.tolerance) {
+            result.widened = true;
+            return true;
+        }
+        result.reason = std::format("round trip deviation {} ({}.{:03} px, beyond the approved {}.{:03})",
+                                    result.deviation, continuous / tolerance_unit, continuous % tolerance_unit,
+                                    input.tolerance / tolerance_unit, input.tolerance % tolerance_unit);
+        return false;
+    }
+    result.reason = std::format("round trip deviation {}", result.deviation);
+    return false;
 }
 
 bool is_step_corner(const SteerInput& input, Vec2 point) {
@@ -636,6 +826,14 @@ StepCut square_end(std::size_t line, pic::ScreenPoint end, pic::ScreenPoint othe
     }
     const Vec2 edge = horizontal ? Vec2{.x = cut.point.x, .y = c.y} : Vec2{.x = c.x, .y = cut.point.y};
     return StepCut{.line = line, .end = c, .edge = edge, .cut = cut};
+}
+
+// An open ellipse or an arc may be steered over lines that leave gaps of
+// one pixel between them, as a whole ellipse may (a pixel of the outline
+// that another line drew over).
+bool spans_gaps(const SteerInput& input) {
+    return input.kind == PrimitiveKind::Arc || (input.kind == PrimitiveKind::Ellipse && input.points.size() >= 3 &&
+                                                input.points.front() != input.points.back());
 }
 
 bool is_closed_ellipse(const SteerInput& input) {
@@ -671,15 +869,16 @@ Steered steer(const SteerInput& input, const std::vector<Vec2>* solved) {
             result.reason = "no ellipse fits the lines";
             return result;
         }
-        result.deviation = round_trip_of(input.lines, *pieces);
-        if (result.deviation > round_trip_limit) {
-            result.reason = std::format("round trip deviation {}", result.deviation);
+        if (!passes_round_trip(input, input.lines, *pieces, result)) {
             return result;
         }
         result.pieces = std::move(*pieces);
         return result;
     }
-    const std::optional<std::vector<SteerLine>> path = as_path(input.lines);
+    std::optional<std::vector<SteerLine>> path = as_path(input.lines);
+    if (!path && spans_gaps(input)) {
+        path = as_path(input.lines, 2, input.dots);
+    }
     if (!path) {
         return result;
     }
@@ -689,11 +888,22 @@ Steered steer(const SteerInput& input, const std::vector<Vec2>* solved) {
         return result;
     }
     result.applicable = true;
-    std::vector<std::vector<Vec2>> pieces = split(*shape, joints_of(input, *path, *shape, solved != nullptr));
-    result.deviation = round_trip_of(*path, pieces);
-    if (result.deviation > round_trip_limit) {
-        result.reason = std::format("round trip deviation {}", result.deviation);
-        return result;
+    std::vector<std::vector<Vec2>> pieces = pieces_of(input, *path, *shape, solved != nullptr);
+    if (!passes_round_trip(input, *path, pieces, result)) {
+        // A half ellipse with a wider tolerance: the fit nearest to minimax
+        // may still lie within it.
+        if (input.kind != PrimitiveKind::Ellipse || input.tolerance <= tolerance_unit) {
+            return result;
+        }
+        constexpr int minimax_rounds = 40;
+        const std::optional<std::vector<Vec2>> minimax = shape_of(input, *path, solved, result.reason, minimax_rounds);
+        if (!minimax) {
+            return result;
+        }
+        pieces = pieces_of(input, *path, *minimax, solved != nullptr);
+        if (!passes_round_trip(input, *path, pieces, result)) {
+            return result;
+        }
     }
     // The pieces follow the input's lines, not the path's orientation.
     for (std::size_t i = 0; i < pieces.size(); ++i) {

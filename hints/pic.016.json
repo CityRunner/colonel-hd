@@ -178,7 +178,7 @@
           "label": "outer and inner edge of the arched frame",
           "primitives": [
             {"id": "window-right-fanlight-outer", "kind": "ellipse", "commands": [1195, 1198, 1202, 1206, 1203, 1199, 1194], "points": [[254, 19], [270, 8], [287, 19]]},
-            {"id": "window-right-fanlight-inner", "kind": "ellipse", "commands": [1234, 1235, 1236, 1253, 1254, 1240, 1256, 1255, 1232, 1231], "points": [[255, 20], [270, 9], [286, 20]]}
+            {"id": "window-right-fanlight-inner", "kind": "ellipse", "commands": [1234, 1235, 1236, 1253, 1254, 1240, 1256, 1255, 1231], "points": [[255, 20], [270, 9], [286, 20]]}
           ]
         },
         {
@@ -220,11 +220,11 @@
         }
       ],
       "decision": {
-        "hypothesis": "front-stairs",
+        "hypothesis": "keep",
         "by": "customer",
         "date": "2026-11-05",
         "cell": "C3.1-C3.2",
-        "note": "batch 3 case 8: square tread ends as picture 74's stairs: treads horizontal, risers vertical, sharp corners, drawn heights kept (no objection)"
+        "note": "in perspective as originally: batch 3 case 8 reverted, the grey tread ends keep the sloping edge of the 3b reconstruction"
       }
     }
   ]

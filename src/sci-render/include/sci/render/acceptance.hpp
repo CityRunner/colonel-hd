@@ -59,8 +59,11 @@ struct Acceptance {
 
 // Checks a visual scene built from these maps and trace. `decided` holds
 // the trace indices of the lines whose pixels are taken within the A.6
-// tolerance (vector::SceneStats::decided_lines).
+// tolerance (vector::SceneStats::decided_lines); `widened` those of them
+// whose shape has a wider tolerance the customer approved, taken within 2
+// pixels (vector::SceneStats::widened_lines).
 [[nodiscard]] Acceptance check_acceptance(const vector::Scene& visual, const pic::PictureMaps& maps,
-                                          const pic::DrawTrace& trace, std::span<const std::int32_t> decided = {});
+                                          const pic::DrawTrace& trace, std::span<const std::int32_t> decided = {},
+                                          std::span<const std::int32_t> widened = {});
 
 } // namespace sci::render

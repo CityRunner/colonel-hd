@@ -9,7 +9,8 @@ chains of the file. For the scene model of version 2 (A4): ids are unique
 across the whole file, version 1 files have no objects or repetitions,
 primitives have the points their kind needs and corners at their points,
 geometric relations name parts or primitives of their own hypothesis,
-organic objects get no idealisation, repetitions are objects of one type or
+organic objects get no idealisation, a primitive's wider tolerance is
+only in the hypothesis the customer decided, repetitions are objects of one type or
 parts of one role, a decision names a hypothesis of its object or is
 `keep` (no hypothesis applied, the 3b reconstruction stays), and decision
 dates are dates. (No hypothesis is named `keep`, which the schema checks.) (A repetition's decision is `repeat` or
@@ -222,6 +223,12 @@ def check_scene(hints, name):
                 errors.append(f"{name}: object {obj['id']!r}: the decision names no hypothesis of the object")
             if not valid_date(decision["date"]):
                 errors.append(f"{name}: object {obj['id']!r}: the decision's date is not a date")
+        for hypothesis in hypotheses(obj):
+            for part in hypothesis["parts"]:
+                for primitive in part["primitives"]:
+                    if "tolerance" in primitive and (not decision or decision["hypothesis"] != hypothesis["id"]):
+                        errors.append(f"{name}: object {obj['id']!r}: primitive {primitive['id']!r}: a wider "
+                                      "tolerance needs the customer's decision for its hypothesis")
     errors += [f"{name}: id {i!r} is used twice" for i in sorted({i for i in ids if ids.count(i) > 1})]
     repeated = []
     for repetition in hints.get("repetitions", []):

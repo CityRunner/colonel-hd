@@ -96,7 +96,9 @@ reconstruction, and repetitions are not rendered yet. An `ellipse` whose first a
 an ellipse, those two points being the ends of a diameter (a round arch
 seen in perspective); one whose first and last points are equal is a
 whole ellipse, fitted to all its lines, which need not join (a gap where
-another object bounds the area stays open); an `arc` is one circular arc from its first line's
+another object bounds the area stays open); the lines of an open ellipse or an
+`arc` may leave gaps of one pixel between them (a pixel another line drew
+over), which stay open too; an `arc` is one circular arc from its first line's
 start to its last line's end, in the direction the first line leaves the
 start, and may turn by more than half a circle (a hook); `step` corners of a polyline square the ends of its
 horizontal and vertical lines there.
@@ -143,6 +145,7 @@ together with this directory.
 | `commands` | The PIC command indices of the lines the primitive replaces, as chains name them. They are never analyser ids. |
 | `points` | 1x pixels in stored coordinates, in order: the ends, corners and points the shape passes through. A line has 2, an arc 3 (start, a point on it, end), an ellipse at least 3, a spline or polyline at least 2. |
 | `corners` | `sharp`, `rounded` or `step` (an intentional step, kept by A.4) at a point, by its index in `points`. Each point has at most one. |
+| `tolerance` | Optional: the customer's approval of a wider round trip for this one shape, in thousandths of an original pixel (1001 to 2000; without it, A4 A.6's 1 pixel). Only in the hypothesis the customer decided (`schema.json`, `check-hints.py`, `parse_hints`). The shape is then used if its 1x raster lies within the tolerance rounded up (2 pixels) and the shape within the tolerance of its lines' pixel centres, both ways; the 6.4 line rule's exception reaches 2 pixels for its lines, and `sci-hd-report` lists every such pixel. First use: picture 11's wide centre fanlight, 1500. |
 | `relations` (in an object) | A.3, between parts or primitives of the same hypothesis: `parallel`, `perpendicular` (2 items), `equal-spacing` (3 or more), `symmetry` and `aligned` (these two with `axis` `horizontal` or `vertical`), and `tangent` (one arc or ellipse and one line primitive). They are not the depth relations of the file. |
 | relation solving | From milestone 10 the relations of a decided or certain object are solved before it is steered (`docs/hd-pipeline.md`, "Relation solving"): its line and polyline points move by at most 1 pixel so that the relations hold. `aligned` means the items' centres share one x (vertical) or y (horizontal); `equal-spacing` is measured across the first item's first line; `tangent` is not solved yet. Points given equal in two primitives of the object are one point (a shared corner). An object the customer decided over alternatives keeps its relations unsolved (chosen as drawn). |
 | `alternatives` | A.6: up to 8 other hypotheses for the object. Each has an `id`, `type`, `confidence`, `parts` and `relations`. The object's own members are its main hypothesis, named by the object's id. |

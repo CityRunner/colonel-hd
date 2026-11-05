@@ -302,6 +302,32 @@ numbers above):
   entry, is unchanged. `sci-golden-hashes --reference`: the fast analysis
   matches the reference in every picture.
 
+## After the group A follow-ups (2026-11-05)
+
+Measured on branch `m10-b3-group-a2` (`docs/ASSUMPTIONS.md`, "Milestone
+10: group A follow-ups") against the `milestone-10` build with its hint
+files (before group D was merged):
+
+- Round trip: 13199 chains, 13180 pass, 19 fail (the `milestone-10`
+  build: 17 fail, the same 17). The two new ones are picture 11's centre
+  arch (`cf-centre-frame`, `cf-centre-outline`, deviation 2), steered
+  within the 1.5 px the customer approved for it; the check measures
+  A.6's 1 pixel for every chain. Picture 16's four inner fanlight edges
+  are new steered chains at deviation 1; its six step ends are no longer
+  steered (kept).
+- Acceptance (section 6.4): 88 pictures, worst agreement 99.993%, 0
+  failing, 0 untouched line pixels. Line pixels taken within the
+  tolerance: 161 -> 188 (picture 11: 0 -> 33, the centre arch, within 2
+  px; picture 16: 21 -> 15, the step ends no longer steered, the inner
+  edges added).
+- A1 residuals (overshoots / fragments / breaks): 7117 / 6512 / 10880 ->
+  7119 / 6525 / 10923 (11: 78 -> 80 / 62 -> 72 / 229 -> 237; 16: 93 /
+  82 -> 85 / 108 -> 143), where the steered arches meet the bars at new
+  points.
+- Golden hashes against a run of the `milestone-10` build: the 8 HD
+  entries of pictures 11 and 16 differ; every other entry and every
+  `original1` entry is unchanged.
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted

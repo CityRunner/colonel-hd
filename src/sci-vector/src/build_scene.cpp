@@ -1403,10 +1403,26 @@ std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>> steer_inp
                                                                                    std::size_t picture,
                                                                                    const std::vector<DrawnLine>& lines,
                                                                                    const PrimitiveHint& primitive) {
-    detail::SteerInput input{.kind = primitive.kind, .lines = {}, .points = {}, .corner = {}};
+    detail::SteerInput input{
+        .kind = primitive.kind,
+        .lines = {},
+        .points = {},
+        .corner = {},
+        .tolerance = primitive.tolerance != 0 ? primitive.tolerance : detail::tolerance_unit,
+        .dots = {},
+    };
     std::vector<std::size_t> line_of;
+    // A dot of an open ellipse or an arc keeps its stroke and bridges the
+    // gap it fills (scene_model.hpp).
+    const bool open_curve = primitive.kind == PrimitiveKind::Arc ||
+                            (primitive.kind == PrimitiveKind::Ellipse && primitive.points.size() >= 3 &&
+                             primitive.points.front() != primitive.points.back());
     for (const LineRef ref : primitive.commands) {
         const auto line = find.line(picture, ref);
+        if (line && lines[*line].is_dot() && open_curve) {
+            input.dots.push_back(lines[*line].from);
+            continue;
+        }
         if (!line || lines[*line].is_dot()) {
             return std::nullopt;
         }
@@ -1474,7 +1490,8 @@ std::optional<PendingShape> steer_primitive(const detail::SteerInput& input, con
         const bool kept = std::ranges::all_of(pixels[line_of[i]], [&](std::size_t pixel) {
             const int x = static_cast<int>(pixel % picture_width);
             const int y = static_cast<int>(pixel / picture_width);
-            return stroke_touches(piece, x, y) || (decided && within_round_trip_tolerance(piece, x, y));
+            return stroke_touches(piece, x, y) ||
+                   (decided && within_round_trip_tolerance(piece, x, y, detail::raster_reach(input.tolerance)));
         });
         if (!kept) {
             fail("the shape misses pixels its lines own");
@@ -1538,6 +1555,9 @@ void apply_shape(PendingShape& shape, int picture, const std::string& why, std::
         if (shape.decided) {
             stats.decided_lines.push_back(static_cast<std::int32_t>(lines[shape.line_of[i]].primitive));
         }
+        if (shape.decided && primitive.tolerance > detail::tolerance_unit) {
+            stats.widened_lines.push_back(static_cast<std::int32_t>(lines[shape.line_of[i]].primitive));
+        }
     }
     std::ranges::stable_sort(record.lines);
     const auto [first, last] = std::ranges::unique(record.lines);
@@ -1547,11 +1567,15 @@ void apply_shape(PendingShape& shape, int picture, const std::string& why, std::
     stats.applied_hints.push_back(HintOutcome{
         .picture = picture,
         .id = primitive.id,
-        .detail = why.empty() ? std::format("drawn as its {} (round trip {}), shared by the faces{}",
-                                            primitive_name(primitive.kind), shape.result.deviation, entered)
-                              : std::format("drawn as its {} (round trip {}); the faces keep the 3b fit: the shared "
-                                            "boundary fails ({})",
-                                            primitive_name(primitive.kind), shape.result.deviation, why),
+        .detail = (why.empty() ? std::format("drawn as its {} (round trip {}), shared by the faces{}",
+                                             primitive_name(primitive.kind), shape.result.deviation, entered)
+                               : std::format("drawn as its {} (round trip {}); the faces keep the 3b fit: the shared "
+                                             "boundary fails ({})",
+                                             primitive_name(primitive.kind), shape.result.deviation, why)) +
+                  (shape.result.widened ? std::format(" (within the customer's tolerance of {}.{:03} px)",
+                                                      primitive.tolerance / detail::tolerance_unit,
+                                                      primitive.tolerance % detail::tolerance_unit)
+                                        : std::string{}),
     });
 }
 
