@@ -130,7 +130,10 @@ void intersect(const Prepared& s, const Prepared& t, std::vector<RationalPoint>&
             return;
         }
     }
-    const RationalPoint p = point_along(s.a, s.direction, along_s, denominator);
+    // At s's ends the point is an integer point (in lowest terms already).
+    const RationalPoint p = along_s == 0             ? RationalPoint(s.a)
+                            : along_s == denominator ? RationalPoint(IntPoint{.x = s.a.x + s.direction.x, .y = s.a.y + s.direction.y})
+                                                     : point_along(s.a, s.direction, along_s, denominator);
     if (contains(s, p) && contains(t, p)) {
         s_splits.push_back(p);
         t_splits.push_back(p);
@@ -177,20 +180,46 @@ std::vector<Edge> split_into_edges(std::span<const TopoSegment> segments, std::i
                 }
             }
         }
-    } else {
-        // The same pairs, found by sweeping the boxes from left to right.
-        // The split points are put in order below and are in lowest terms,
-        // so the order in which pairs are met changes nothing.
-        std::vector<std::size_t> by_left(prepared.size());
-        std::iota(by_left.begin(), by_left.end(), std::size_t{0});
-        std::ranges::stable_sort(by_left, {}, [&](std::size_t i) { return prepared[i].min_x; });
-        for (std::size_t k = 0; k < by_left.size(); ++k) {
-            const Prepared& s = prepared[by_left[k]];
-            for (std::size_t m = k + 1; m < by_left.size() && prepared[by_left[m]].min_x <= s.max_x; ++m) {
-                const std::size_t i = std::min(by_left[k], by_left[m]);
-                const std::size_t j = std::max(by_left[k], by_left[m]);
-                if (boxes_overlap(prepared[i], prepared[j])) {
-                    intersect(prepared[i], prepared[j], splits[i], splits[j]);
+    } else if (!prepared.empty()) {
+        // The same pairs, found in a grid of cells (16 pixels square): each
+        // segment is listed in the cells its box covers, and a pair whose
+        // boxes overlap is met in the cell of their overlap's top left
+        // corner only. The split points are put in order below and are in
+        // lowest terms, so the order in which pairs are met changes nothing.
+        const std::int64_t cell = core::checked_mul(32, scale);
+        std::int64_t left = prepared.front().min_x;
+        std::int64_t top = prepared.front().min_y;
+        std::int64_t right = prepared.front().max_x;
+        std::int64_t bottom = prepared.front().max_y;
+        for (const Prepared& p : prepared) {
+            left = std::min(left, p.min_x);
+            top = std::min(top, p.min_y);
+            right = std::max(right, p.max_x);
+            bottom = std::max(bottom, p.max_y);
+        }
+        const auto column = [&](std::int64_t x) { return static_cast<std::size_t>((x - left) / cell); };
+        const auto row = [&](std::int64_t y) { return static_cast<std::size_t>((y - top) / cell); };
+        const std::size_t columns = column(right) + 1;
+        std::vector<std::vector<std::size_t>> cells(columns * (row(bottom) + 1));
+        for (std::size_t i = 0; i < prepared.size(); ++i) {
+            for (std::size_t y = row(prepared[i].min_y); y <= row(prepared[i].max_y); ++y) {
+                for (std::size_t x = column(prepared[i].min_x); x <= column(prepared[i].max_x); ++x) {
+                    cells[(y * columns) + x].push_back(i);
+                }
+            }
+        }
+        for (std::size_t c = 0; c < cells.size(); ++c) {
+            const std::vector<std::size_t>& here = cells[c];
+            for (std::size_t k = 0; k < here.size(); ++k) {
+                for (std::size_t m = k + 1; m < here.size(); ++m) {
+                    const Prepared& first = prepared[here[k]];
+                    const Prepared& second = prepared[here[m]];
+                    if (!boxes_overlap(first, second) || (row(std::max(first.min_y, second.min_y)) * columns) +
+                                                        column(std::max(first.min_x, second.min_x)) !=
+                                                    c) {
+                        continue;
+                    }
+                    intersect(first, second, splits[here[k]], splits[here[m]]);
                 }
             }
         }
