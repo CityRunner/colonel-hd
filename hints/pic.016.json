@@ -197,6 +197,35 @@
         "cell": "A5.1",
         "note": "batch 3 case 2: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
       }
+    },
+    {
+      "id": "front-stairs",
+      "type": "staircase",
+      "cell": "C3.1-C3.2",
+      "confidence": 900,
+      "label": "the four front steps",
+      "parts": [
+        {
+          "id": "front-steps-ends",
+          "role": "riser",
+          "label": "where a tread ends and the wider one below begins: down, then out, square",
+          "primitives": [
+            {"id": "front-steps-end-62", "kind": "polyline", "commands": [62], "points": [[134, 144], [134, 146], [132, 146]], "corners": [{"point": 1, "kind": "sharp"}]},
+            {"id": "front-steps-end-63", "kind": "polyline", "commands": [63], "points": [[132, 152], [132, 154], [130, 154]], "corners": [{"point": 1, "kind": "sharp"}]},
+            {"id": "front-steps-end-64", "kind": "polyline", "commands": [64], "points": [[130, 160], [130, 162], [128, 162]], "corners": [{"point": 1, "kind": "sharp"}]},
+            {"id": "front-steps-end-59", "kind": "polyline", "commands": [59], "points": [[185, 144], [185, 146], [187, 146]], "corners": [{"point": 1, "kind": "sharp"}]},
+            {"id": "front-steps-end-60", "kind": "polyline", "commands": [60], "points": [[187, 152], [187, 154], [189, 154]], "corners": [{"point": 1, "kind": "sharp"}]},
+            {"id": "front-steps-end-61", "kind": "polyline", "commands": [61], "points": [[189, 160], [189, 162], [191, 162]], "corners": [{"point": 1, "kind": "sharp"}]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "front-stairs",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "C3.1-C3.2",
+        "note": "batch 3 case 8: square tread ends as picture 74's stairs: treads horizontal, risers vertical, sharp corners, drawn heights kept (no objection)"
+      }
     }
   ]
 }
