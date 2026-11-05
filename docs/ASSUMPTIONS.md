@@ -3871,3 +3871,77 @@ general, on branch `m10-relations` (design: `docs/hd-pipeline.md`,
   picture 74's stairs); when the customer chose an alternative, that
   alternative's relations are solved. To be built with the next step.
   **Decided.**
+
+## Milestone 10: curved shapes in the arrangement (2026-11-04)
+
+The customer's "curved shapes in the arrangement come next", on branch
+`m10-curved-arrangement` (design: `docs/hd-pipeline.md`, "Curved shapes
+in the arrangement").
+
+- **How.** A curved steered shape whose faces the shared boundary cannot
+  take enters the arrangement as the chords of its pieces, on a grid of
+  1/16 pixel, and the plane is built again; the exact arrangement splits
+  edges at the new crossings and orders the edges at every vertex, and
+  the faces take their values from the 1x pixels as always. Existing
+  segments are scaled exactly, so everything away from the shape is
+  bit for bit as before; planes without such a shape are built on the
+  doubled grid as before. Comparisons of points take portable 128-bit
+  products. No float. **Decided (agent).**
+- **Keep rule.** As for gap hints: a shape is kept only if the partition
+  gets no more mixed faces and 1x-block pixels; otherwise it keeps its
+  stroke and 3b faces, reported with the reason. Edges that ended on the
+  shape's old lines are moved along their own line onto the curve (within
+  2 px), or joined to it by a connector where they run along it; the
+  connectors at the shape's own inner ends go. Up to three rounds, as an
+  entered shape can push a neighbour off sharing. **Decided (agent).**
+- **3a chain hints superseded.** A chain hint on lines of a shape that
+  entered is left out ("its lines are a steered shape, a curve of the
+  partition"): pictures 20 (`left-window-arch`, `-outer`), 57
+  (`left-portrait-oval-side`), 71 (`shower-pipe-bend`). The steered shape
+  the customer decided replaces their fit. **Assumed.**
+- **Result.** All 14 shapes that kept 3b faces now share their curve with
+  both faces (10 `wsl-arch-inner`; 12 `halo-oval`; 20
+  `window-eaves-arch-inner`, `-arch-outer-curve`; 42
+  `window-curtain-left-arch-inner`, `-right-arch-inner`; 44
+  `window-curtain-arch-inner`; 57 `medallion-top-lower`; 58
+  `bwr-glint-top-left`, `-top-right`; 71 `rail-hook-outer`,
+  `rail-hook-highlight`, `ring-209`, `ring-216`), and three more enter the
+  same way (42's light rhombus half and the lit bands of 42's right arch
+  and 44's arch). 0 shapes keep 3b faces. **Finding.**
+- **Acceptance places, looked at in the crops**
+  (`reports/images/milestone-10/curved/`, git ignored): picture 12 halo
+  (A2.4-B3.1): the chips at the upper and lower left are gone, the yellow
+  area follows the oval. Picture 20 (A2.3-B2.2): the teal sliver outside
+  the outer arch at the top right is gone. Picture 57 (A2): the lower
+  edge of the upper medallion now shares its curve, but at crop size the
+  right end looks as before (a small grey wedge between the edge's end
+  and the vertical lead line, as in the original's pixels); not clearly
+  fixed. Picture 71 (A4): the outer red edge of the hook is smoother, the
+  short red dashes between the grey line and the black inside of the
+  hook remain: not fixed (they are drawn red pixels, not a face edge, as
+  far as seen). **Finding; 57 and 71 to be looked at by the customer.**
+- **Re-checks.** Picture 71 B4.4-C4.2 (pipe lights) and 58's glints:
+  pixel-identical crops (no teeth). Picture 42 A3.2 (rhombus): symmetric
+  as before (the crop changes only in the curtain arch beside it).
+  Pictures 37 and 61: golden hashes unchanged. **Finding.**
+- **The narrowed relation rule** ("the two choices in relation
+  solving") is built: the main hypothesis chosen over alternatives keeps
+  its relations unsolved; a chosen alternative has them solved. No hint
+  file has such an alternative yet, so nothing in the pictures changes.
+  **Decided (customer); built.**
+- **Checks.** Release workflow: 27 of 27 test programs pass (new unit
+  tests: segments scaled to the fine grid give the same vertices bit for
+  bit; a curve crossing a straight edge splits it and every pixel centre
+  keeps the face of its side; a curve passing over a line end leaves a
+  dangling edge with one face on both sides; 128-bit comparisons; the
+  relation rule). clang-format and clang-tidy clean on the changed files.
+  `scripts/check-hints.py`, `sci-hint-tool check hints` clean. Round trip,
+  6.4, A1, suspects in `docs/hd-quality.md`. Golden hashes against the
+  committed file: the same 60 entries as `milestone-10`; against the
+  `milestone-10` build: pictures 10, 12, 20, 42, 44, 57, 71 and the stack
+  42+162 (hd1/2/5/10) differ; 58 unchanged; every `original1` entry,
+  every picture without steered shapes, 37 and 61 unchanged. Not
+  regenerated. **Finding.**
+- **Cost.** Room entry of the changed pictures at N = 1 is 2 to 4 times
+  as long (picture 12: 279 -> 650 ms, 42: 103 -> 438 ms); each round
+  builds the plane again. Not optimised yet. **Open.**
