@@ -81,6 +81,21 @@ every stage so the work can resume in a new session.
      branches are removed (2026-11-05). The remote branch `milestone-10`
      is still the customer's to delete on GitHub. **Done.**
 
+- **Answers after stage 2 (2026-11-05)**, the customer's words:
+  1. "drop macOS completely": macOS is out of scope (G-07); iteration 2
+     removes the macOS build paths, CI job, release job and README steps.
+     **Decided (customer).**
+  2. "clean up history now": the §14 cleanup pass over the whole history
+     (no game resources, resource dumps or game-derived images) is done
+     now, outside the audit's read-only stages, as a check of every blob
+     ever committed. Any history rewrite it calls for (a force push of
+     `main`) is put to the customer before it is done. **Decided
+     (customer).**
+  3. "we'll publish releases later": releases (G-125) stay; publishing is
+     the customer's step later (tags cannot be pushed from this session).
+     **Decided (customer).**
+  4. "continue": stage 3 starts. **Decided (customer).**
+
 ## Open items
 
 - **Stage 2 results (`review/GAPS.md`):** 156 G-items (G-01 … G-156)
