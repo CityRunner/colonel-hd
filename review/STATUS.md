@@ -66,7 +66,9 @@ explicit "continue" before stage 1b (recover requirements,
 2. Read `review/TASK.md` (the brief), this file, then `review/MAP.md`.
 3. Continue with the next stage only after the customer's "continue".
 4. Scratch outputs go under `build/` (git-ignored). The coverage build of
-   stage 1a is in `build/audit-coverage/` (can be deleted; reproduce with
-   the commands in `review/MAP.md`, section 6.4). The toolchain image is
+   stage 1a was deleted to save disk; its logs and `llvm-cov` reports are
+   in `build/audit-coverage/` (`report-files.txt`: CI suite;
+   `report-play.txt`: playthrough). Reproduce with the commands in
+   `review/MAP.md`, section 6.4. The toolchain image is
    `sierra-hd-toolchain:fa237f3eeea06223` (`docker/image-tag.sh`); docker
    is shared, do not start or stop the daemon.

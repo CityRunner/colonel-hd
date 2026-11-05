@@ -473,6 +473,19 @@ llvm-cov warned "187 functions have mismatched data" (inline header
 functions compiled differently across binaries); the effect on the totals
 is small but not quantified.
 
+Commands (inside `docker/run.sh bash -c '...'`):
+
+    cmake -S . -B build/audit-coverage/b -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+      -DCMAKE_BUILD_TYPE=Debug -DSCI_BUILD_TOOLS=OFF -DSCI_BUILD_APP=OFF -DSCI_WARNINGS_AS_ERRORS=OFF \
+      "-DCMAKE_CXX_FLAGS=-fprofile-instr-generate -fcoverage-mapping" \
+      "-DCMAKE_C_FLAGS=-fprofile-instr-generate -fcoverage-mapping" \
+      "-DCMAKE_EXE_LINKER_FLAGS=-fprofile-instr-generate"
+    cmake --build build/audit-coverage/b -j4
+    LLVM_PROFILE_FILE=/work/build/audit-coverage/prof/%m-%p.profraw ctest --test-dir build/audit-coverage/b -j4
+    llvm-profdata merge -sparse prof/*.profraw -o all.profdata
+    llvm-cov report <first test binary> -object <each other test binary> ... -instr-profile=all.profdata \
+      -ignore-filename-regex="(third_party|tests/|/usr/)"
+
 **CI test suite (unit + golden + threads + fuzz corpus replays)**: lines
 58.7 % (24,362 / 10,066 missed), functions 66.1 %, branches 51.4 %.
 
@@ -508,7 +521,35 @@ interpreter) 2.5 % of 1,223; `gfx_menu.cpp` 0 % of 750;
 The interpreter itself is exercised only by the local, game-dependent
 checks of 6.3.
 
-PLAYTHROUGH_PLACEHOLDER
+**Local playthrough (one game-dependent check, measured for comparison).**
+`sci-vm-trace` built with the same coverage flags (`SCI_BUILD_TOOLS=ON`,
+target `sci-vm-trace` only) and run on the customer's game copy
+(`/home/user/game/colonels-bequest-gog`, mounted read-only at `/game`):
+
+    sci-vm-trace /game /dev/null --seed 0 --stop-tick 340000 --replay tests/playthrough/playthrough.txt
+
+It ended with "2448724 kernel calls in 337613 ticks", the same counts as
+`reports/milestone-9.md:72` and the end tick of `:85` (this corroborates
+the report's sci-vm side; the comparison with ScummVM was not re-run).
+5 min 37 s in the Debug coverage build. Coverage of this single run
+(`llvm-cov report` on that binary, tools excluded):
+
+| Module | Lines | Line cover | Branch cover |
+|---|---|---|---|
+| sci-vm | 14,406 | 56.8 % | 47.1 % |
+| sci-text | 1,032 | 81.9 % | 68.9 % |
+| sci-pic | 811 | 77.2 % | 75.1 % |
+| sci-view | 140 | 77.1 % | 62.9 % |
+| sci-resource | 669 | 75.6 % | 65.8 % |
+| sci-audio | 986 | 0 % (no `--opl`, so no AdLib device: silent driver, `tools/vm-trace/main.cpp:36-38`) | 0 % |
+
+In this run `machine.cpp` is 72.8 %, `gfx_animate.cpp` 90.6 %,
+`k_graphics.cpp` 75.7 %, `gfx_menu.cpp` 31.5 %, `interpreter.cpp` 49.2 %;
+saves are not exercised (`save_game.cpp`, `state.cpp`, `state_load.cpp`,
+`k_files.cpp` 0 %; those are covered by the CI unit tests and the local
+round trips). The two measurements were not merged (different binaries);
+the union of the CI suite and all local checks (scenarios with AdLib and
+MT-32, round trips, program run) was **not measured**.
 
 ---
 
@@ -537,8 +578,9 @@ the brief only where clearly warranted.
    correctness rests on the local, game-dependent checks of 6.3 (scenarios
    and playthrough against the patched reference ScummVM), which need the
    customer's game files, a ScummVM checkout at the pinned revision and
-   about 0.8 GB of reference build. A VM regression is not detectable in
-   CI. Severity: **High** (serious risk for any refactoring of sci-vm in
+   about 0.8 GB of reference build. For comparison, the local playthrough
+   alone covers 56.8 % of sci-vm's lines (`machine.cpp` 72.8 %). A VM
+   regression is not detectable in CI. Severity: **High** (serious risk for any refactoring of sci-vm in
    iteration 2; the brief's stage 5 safety net depends on these local
    checks).
 2. **The application layer is untested by CTest.** `main.cpp` (1,207
