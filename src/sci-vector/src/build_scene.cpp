@@ -2080,6 +2080,35 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
         }
         return best;
     };
+    // A connector from a grid point to the chords' nearest point, on the
+    // grid, within 2 original pixels; nothing if that is the point itself.
+    const auto to_nearest = [&](IntPoint p) -> std::optional<TopoSegment> {
+        const Vec2 from{.x = static_cast<double>(p.x), .y = static_cast<double>(p.y)};
+        std::optional<Vec2> best;
+        double best_distance = 0;
+        for (const TopoSegment& chord : chords) {
+            const Vec2 a{.x = static_cast<double>(chord.a.x), .y = static_cast<double>(chord.a.y)};
+            const Vec2 d{.x = static_cast<double>(chord.b.x) - a.x, .y = static_cast<double>(chord.b.y) - a.y};
+            const double t = std::clamp(((from.x - a.x) * d.x + (from.y - a.y) * d.y) / ((d.x * d.x) + (d.y * d.y)),
+                                        0.0, 1.0);
+            const Vec2 q{.x = a.x + (t * d.x), .y = a.y + (t * d.y)};
+            const double distance = ((q.x - from.x) * (q.x - from.x)) + ((q.y - from.y) * (q.y - from.y));
+            if (!best || distance < best_distance) {
+                best = q;
+                best_distance = distance;
+            }
+        }
+        // Fine units: 2 original pixels are 4 * curve_scale.
+        constexpr double limit = 4.0 * curve_scale;
+        if (!best || best_distance > limit * limit) {
+            return std::nullopt;
+        }
+        const IntPoint q{.x = core::round_half_up(best->x), .y = core::round_half_up(best->y)};
+        if (q == p) {
+            return std::nullopt;
+        }
+        return detail::make_segment(p, q);
+    };
     std::vector<TopoSegment> result;
     for (const TopoSegment& segment : topology) {
         const bool own_line =
@@ -2105,7 +2134,17 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
         const auto at_inner_end = [&](const RationalPoint& p) {
             return std::ranges::any_of(inner_ends, [&](pic::ScreenPoint e) { return RationalPoint(fine_end(e)) == p; });
         };
-        if (segment.source == detail::no_source && (at_inner_end(segment.from) || at_inner_end(segment.to))) {
+        // Those are the shape's own: between its lines, or extending one of
+        // them. A connector from another line's end to an inner end is moved
+        // onto the curve below, like a line ending on the shape.
+        const auto extends_own = [&](const TopoSegment& connector) {
+            return std::ranges::any_of(old, [&](const TopoSegment& own_segment) {
+                return core::orientation(own_segment.a, own_segment.b, connector.from) == 0 &&
+                       core::orientation(own_segment.a, own_segment.b, connector.to) == 0;
+            });
+        };
+        if (segment.source == detail::no_source && (at_inner_end(segment.from) || at_inner_end(segment.to)) &&
+            ((on_old(segment.from) && on_old(segment.to)) || extends_own(segment))) {
             continue;
         }
         const bool from_on = on_old(segment.from) && !is_outer(segment.from);
@@ -2120,6 +2159,26 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
         TopoSegment moved = segment;
         RationalPoint& end = from_on ? moved.from : moved.to;
         const auto crossing = to_curve(segment, end);
+        if (!crossing && !end.is_integer() && segment.source >= 0) {
+            // A line the gap closer extended onto the shape, running along
+            // the curve: back to its own end pixel, joined to the curve
+            // below.
+            const DrawnLine& line = lines[static_cast<std::size_t>(segment.source)];
+            const RationalPoint pixel_end(fine_end(from_on ? line.from : line.to));
+            if (pixel_end != (from_on ? moved.to : moved.from)) {
+                end = pixel_end;
+            }
+        }
+        if (!crossing && end.is_integer()) {
+            // An end on the grid (a pixel centre) running along the curve:
+            // it stays and a connector joins it to the curve's nearest
+            // point on the grid.
+            if (const auto connector = to_nearest(IntPoint{.x = end.x_num(), .y = end.y_num()})) {
+                result.push_back(moved);
+                result.push_back(*connector);
+                continue;
+            }
+        }
         if (!crossing) {
             const Vec2 at = detail::to_picture(end);
             return std::format("the {} ending on the shape at ({:.2f}, {:.2f}) does not reach its curve within 2 px",
@@ -2147,12 +2206,17 @@ bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale
                          const std::vector<DrawnLine>& lines, const std::vector<std::optional<TopoSegment>>& own,
                          const PlaneView& view, const pic::DrawTrace& trace, std::vector<Entered>& in_arrangement,
                          std::vector<CurveRefusal>& why) {
-    SCI_ASSERT(scale == 1);
     std::vector<TopoSegment> fine;
-    fine.reserve(topology.size());
-    for (const TopoSegment& segment : topology) {
-        fine.push_back(scaled(segment, curve_scale));
+    if (scale == curve_scale) {
+        fine = topology;
+    } else {
+        SCI_ASSERT(scale == 1);
+        fine.reserve(topology.size());
+        for (const TopoSegment& segment : topology) {
+            fine.push_back(scaled(segment, curve_scale));
+        }
     }
+    why.clear();
     Partition current = partition(fine, view, trace, curve_scale);
     bool entered = false;
     for (const CurvedShape& shape : shapes) {
@@ -2164,10 +2228,24 @@ bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale
         auto& segments = std::get<std::vector<TopoSegment>>(candidate);
         Partition with = partition(segments, view, trace, curve_scale);
         if (!no_worse(with, current)) {
-            why.push_back(CurveRefusal{.picture = shape.picture, .id = shape.id, .reason = std::format("the curve in the partition adds mixed faces or 1x blocks "
-                                                              "({} to {} mixed, {} to {} pixels)",
-                                                              current.stats.mixed_faces, with.stats.mixed_faces,
-                                                              current.stats.fallback_pixels, with.stats.fallback_pixels)});
+            std::string where;
+            for (const Fallback& fallback : with.stats.fallbacks) {
+                if (std::ranges::none_of(current.stats.fallbacks, [&](const Fallback& f) {
+                        return f.left == fallback.left && f.top == fallback.top && f.right == fallback.right &&
+                               f.bottom == fallback.bottom;
+                    })) {
+                    where += std::format(" ({}, {})-({}, {})", fallback.left, fallback.top, fallback.right,
+                                         fallback.bottom);
+                }
+            }
+            why.push_back(CurveRefusal{
+                .picture = shape.picture,
+                .id = shape.id,
+                .reason = std::format("the curve in the partition adds mixed faces or 1x blocks ({} to {} mixed, {} "
+                                      "to {} pixels; new at{})",
+                                      current.stats.mixed_faces, with.stats.mixed_faces,
+                                      current.stats.fallback_pixels, with.stats.fallback_pixels, where),
+            });
             continue;
         }
         fine = std::move(segments);
@@ -2386,12 +2464,17 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     const std::vector<int> owned = owned_pixels(trace, view);
     // A straight steered shape the partition cannot take by moving its
     // vertices enters the arrangement as one segment, and the plane is
-    // built again (docs/hd-pipeline.md, "The shared boundary").
+    // built again (docs/hd-pipeline.md, "The shared boundary"); a curved
+    // one enters as chords on the fine grid ("Curved shapes in the
+    // arrangement"). A shape entered can make a neighbour fail to share, so
+    // that one may enter in a later round; at most max_entry_rounds.
+    constexpr int max_entry_rounds = 3;
     const SceneStats before_steering = built.stats;
     std::vector<Entered> in_arrangement(lines.size(), Entered::No);
     std::int64_t scale = 1;
     std::vector<CurveRefusal> curve_why;
-    for (bool again = plane == Plane::Visual;; again = false) {
+    for (int round = 0;; ++round) {
+        const bool again = plane == Plane::Visual && round < max_entry_rounds;
         Partition parts = close_hinted_gaps(topology, scale, plane_hints, lines, view, trace, built.stats);
         Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
         // The scene model changes the HD picture only, so the visual plane;
@@ -2409,7 +2492,8 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
             model = steer_by_scene_model(trace, lines, view, hints, in_arrangement, curves, boundary, built.stats);
         }
         if (again) {
-            const bool straight = !model.straight.empty() &&
+            // Straight shapes enter the doubled grid, in the first round.
+            const bool straight = scale == 1 && !model.straight.empty() &&
                                   enter_straight_shapes(topology, model.straight, lines, view, trace, in_arrangement);
             const bool curved = !model.curved.empty() && enter_curved_shapes(topology, scale, model.curved, lines,
                                                                              segments, view, trace, in_arrangement,
