@@ -103,7 +103,7 @@ every stage so the work can resume in a new session.
     (ARCHITECTURE.md stale), G-48 (scripts, sound resources, patch banks,
     configuration not fuzzed), G-122 (AMB: files next to the executable),
     G-123 (performance never measured on reference-class hardware).
-  - The local golden-hash check of all pictures was re-run in stage 2
+  - The local golden-hash check of all pictures was re-run in stage 2 (x86-64): all match
     (`review/GAPS.md`, "Local check run in stage 2"; logs in
     `build/audit-stage2-golden-*.log`).
 

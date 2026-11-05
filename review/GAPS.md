@@ -124,7 +124,7 @@ with all references, so it is counted once.
 | G-51 | §5.3 Floating-point profile (double only, `-ffp-contract=off`, no fast-math, SSE2, no libm transcendentals in output code, no FTZ/DAZ asserted on every rendering and analysis thread) | R-52, R-53, R-144 | FULL | — | `src/sci-core/src/fp_profile.cpp:11-50`; `thread_executor.cpp:24`; `tests/unit/core/fp_profile_test.cpp:9-16` | The VM's sin/cos come from a table of glibc results (R-73) — game logic, not rendering; V-05 (comment) Low, counted in G-156. |
 | G-52 | §5.3 Colours, blending, palette indices and hashes stay integer | R-46 | FULL | — | `src/sci-render/include/sci/render/colors.hpp:43-66` | |
 | G-53 | §5.3 GPU only presents; all rasterisation on the CPU | R-91 | FULL | — | `src/app/platform/src/game_frame.cpp:34-60` | |
-| G-54 | §5.3 Golden SHA-256 of the background of every PIC (with overlays where rooms use them): HD RGBA at N ∈ {1, 2, 5, 10}, original palette-index frame at N = 1; equal on x86-64 and ARM64 | R-56, R-57 | FULL | — | `tools/golden-hashes/main.cpp:58`; `tests/golden/pictures.txt` (88 pictures, 440 `pic` + 35 `stack` lines) | local (claimed; ARM64 under qemu-user per `reports/milestone-3b.md`). What the spec does not ask for is also absent (HD priority map, N > 10, views, fonts, composed frames: V-04) — a stage 5 safety-net question, not a gap. |
+| G-54 | §5.3 Golden SHA-256 of the background of every PIC (with overlays where rooms use them): HD RGBA at N ∈ {1, 2, 5, 10}, original palette-index frame at N = 1; equal on x86-64 and ARM64 | R-56, R-57 | FULL | — | `tools/golden-hashes/main.cpp:58`; `tests/golden/pictures.txt` (88 pictures, 440 `pic` + 35 `stack` lines) | x86-64: re-run in stage 2, all match (see "Local check run in stage 2"). ARM64 under qemu-user claimed (`reports/milestone-3b.md`), not re-run. What the spec does not ask for is also absent (HD priority map, N > 10, views, fonts, composed frames: V-04) — a stage 5 safety-net question, not a gap. |
 | G-55 | §5.3 Rules enforced by clang-tidy and by cross-architecture golden tests | R-54, R-55 | FULL | — | `.clang-tidy`; `tests/golden/synthetic_test.cpp` | |
 
 ## §6 Graphics
@@ -320,7 +320,8 @@ G-01 … G-156).
 No Critical item: nothing found breaks core functionality, loses data or
 blocks iteration 2 by itself. "FULL" for game-dependent behaviour mostly
 rests on local checks claimed by the milestone reports (column "Note":
-"local (claimed)"); stage 2 re-ran one of them (golden hashes, below).
+"local (claimed)"); stage 2 re-ran one of them (picture golden hashes,
+all match; below).
 
 ### Items with a severity, highest first
 
@@ -369,4 +370,16 @@ only safety net for refactoring sci-vm (G-03, G-121).
 
 ### Local check run in stage 2
 
-(running; result added when it finishes)
+The picture golden hashes (G-54) on the customer's game copy, x86-64
+release build of the audited tree (`build/release`, rebuilt for the target
+`sci-golden-hashes` from `a0422d6`; `audit` differs from it only in
+`review/`):
+
+    SIERRA_HD_MOUNTS=/home/user/game/colonels-bequest-gog:/game docker/run.sh \
+        build/release/tools/golden-hashes/sci-golden-hashes /game tests/golden/pictures.txt --check --hints hints
+
+Result: "all golden hashes match", exit 0 (2026-11-05; logs
+`build/audit-stage2-golden-build.log`, `build/audit-stage2-golden-check.log`,
+git-ignored). So G-54 is a FACT on x86-64 for `main`; the ARM64 (qemu-user)
+run and the other local checks (scenarios, round trips, ScummVM
+comparisons) were not re-run in stage 2 and stay "claimed".
