@@ -4241,3 +4241,12 @@ its cell), files 3, 11, 16, 17 and 85 now at version 2.
   ellipse. A further, single-shape exception to A4 A.6's "about 1
   original pixel", approved by the customer and listed in the report.
   **Decided (customer).**
+
+## Milestone 10: the customer's answer on picture 17, C3.2 (2026-11-05)
+
+- "lower part of stairs is covered by gray vector from floor - black
+  stairs contour must be on higher layer": in HD the grey floor shape is
+  drawn over the lower part of the stairs, hiding the black outline of
+  the steps. The black stair outline is drawn above the floor (drawing
+  order, A1): the floor's area ends at the outline and never covers it.
+  **Decided (customer).**
