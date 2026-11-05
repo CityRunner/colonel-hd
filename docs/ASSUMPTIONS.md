@@ -3945,3 +3945,8 @@ in the arrangement").
 - **Cost.** Room entry of the changed pictures at N = 1 is 2 to 4 times
   as long (picture 12: 279 -> 650 ms, 42: 103 -> 438 ms); each round
   builds the plane again. Not optimised yet. **Open.**
+
+## Milestone 10: batch 3 (2026-11-05)
+
+Review batch 3 (A4 A.7, part B), on branch `m10-batch3`; no rendering
+change. In progress: the places are being chosen.
