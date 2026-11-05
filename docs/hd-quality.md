@@ -480,3 +480,18 @@ cushion, 20 window arch, 57 stained-glass medallions, 71 curved rail) and
 fanlight of batch 1 unless the customer objects (pictures 10, 15, 42, 44).
 The batch is `reports/images/milestone-10/batch-2/batch-2.md` (git
 ignored, with the crops, sheets and plain images).
+
+**Batch 3 (2026-11-05).** Counts on the current build: 3033 step / 206
+corner / 297 curve, unchanged since "After the shared boundary, second
+stage" (relation solving and curved shapes in the arrangement left the
+list equal). The detector's list was used together with the overview
+sheets of 33 pictures not reviewed before, scanned by eye; about 25
+places were looked at in crops, 7 dropped as false positives, 15 kept (9
+that follow an earlier decision, 6 questions). Four of the 15 places
+(picture 16's lamp halos and steps, picture 43's and 46's rug patterns)
+were found on the sheets, not from the list: the halos and rug shapes are
+not flagged at all or only by unrelated low-score clips nearby (a lumpy
+filled oval or a lopsided filled shape need not be a run of lines the
+curve signal follows), and the steps only by score-60 clips. The batch is
+`reports/images/milestone-10/batch-3/batch-3.md` (git ignored);
+`docs/ASSUMPTIONS.md`, "Milestone 10: batch 3".

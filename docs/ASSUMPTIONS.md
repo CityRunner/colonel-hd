@@ -3948,5 +3948,51 @@ in the arrangement").
 
 ## Milestone 10: batch 3 (2026-11-05)
 
-Review batch 3 (A4 A.7, part B), on branch `m10-batch3`; no rendering
-change. In progress: the places are being chosen.
+Review batch 3 (A4 A.7, part B), on branch `m10-batch3`. No rendering
+change; nothing goes into the hint files until the customer answers.
+
+- **How the places were chosen.** The smoothing detector on the current
+  build (3033 step / 206 corner / 297 curve suspects, the same as after
+  curved shapes in the arrangement), and, beyond it, the overview sheets
+  (HD half, N = 2) of 33 pictures not reviewed before, scanned by eye for
+  the classes the customer has asked about: round-topped windows and
+  fanlights, intended steps, straight lights and sharp corners, shapes
+  meant to be symmetric (as picture 42's rhombus) and ovals or circles
+  drawn lumpy (as picture 12's halo). Pictures 10, 12, 15, 20, 37, 42, 44,
+  57, 58, 61, 71 and 74/174 (batches 1 and 2) were left out. Different
+  rooms were preferred; one case covers pictures 31, 41 and 45 (the same
+  room in three states) and one pictures 14 and 63 (the cottage outside
+  and inside). **Assumed.**
+- **Counts.** About 25 places looked at in crops; 7 dropped as false
+  positives (pictures 33 C3, 70 A2.3 and 2 C1-C2 look right at review
+  size; 4 A3, 49 B3 and 67 B2 are foliage or figures; 28 A3 is the house
+  of case 4 seen from far away); 15 cases kept. Four places were found by
+  eye, not by the detector: picture 16's lamp halos and steps, 43's rug
+  medallion and 46's rug triangles. **Finding.**
+- **"Will be fixed like an earlier decision unless you object"** (9
+  cases): picture 16's two lamp halos (as picture 12's halo: a smooth oval,
+  its yellow area included); the fanlights and round-topped windows of
+  pictures 16, 17, 22, 11 and 31/41/45 and the bell opening of picture 3
+  (as the batch 1 fanlight and the batch 2 arched windows: half ellipses
+  through the drawn springers and crown, the bars meeting them); picture
+  16's front steps (as picture 74's stairs; no railing runs over the tread
+  ends, unlike picture 37); the square inner corners of picture 85's white
+  frame (as picture 58's glints: sharp corners, as drawn). **Assumed** (the
+  analyser's reading of which decision applies; the customer may object).
+- **Questions with alternatives** (6 cases): the cottage's round windows
+  (pictures 14 and 63: ovals in both, in 63 only, or as drawn, since the
+  cottage is drawn crooked on purpose), picture 59's round table top
+  (ellipse or as drawn), picture 43's rug medallion (smooth
+  mirror-symmetric ovals or as now), picture 46's rug triangles (symmetric
+  or as now), picture 24's gazebo steps (square ends, or a sloping string
+  kept as picture 37's railing was) and newel knobs (round or as now),
+  picture 66's half-round dial (half ellipse or as now). **Open
+  (customer).**
+- **Material** in `reports/images/milestone-10/batch-3/` (git ignored):
+  `batch-3.md`, 24 crops (N = 8, or 12 for small things), and the overview
+  sheet and plain pair of each of the 16 pictures (N = 4), as the
+  customer's rule asks. **Finding.**
+- **Seen, not asked:** the light slats of the blinds in picture 45 are
+  tilted in HD where the original draws them level (a straight-line
+  defect of the kind of picture 71's tube lights); noted in `batch-3.md`
+  for a later batch. **Finding.**
