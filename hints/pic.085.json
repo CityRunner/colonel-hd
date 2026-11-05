@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 85,
   "pic_sha256": "555d741900b89be5d37d97a60bb6f92ba4098bc61be83afa4907ea3692d4cc19",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -40,5 +40,38 @@
     {"id": "ground-streak-left", "lines": [942, 943, 944, 945], "primitive": "spline", "label": "ground streak, left", "uncertain": true},
     {"id": "ground-streak-left-2", "lines": [956, 957, 958], "primitive": "spline", "label": "ground streak, left", "uncertain": true},
     {"id": "garment-edge-far-right", "lines": [964, 965, 966], "primitive": "spline", "label": "garment edge, far right", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "white-frame",
+      "type": "painting",
+      "cell": "A1.2-C5.1",
+      "confidence": 900,
+      "label": "the white double frame of the close-up",
+      "parts": [
+        {
+          "id": "white-frame-notch",
+          "role": "frame",
+          "label": "where the frame's lines turn at the inner notch: they meet corner to corner, square, as drawn",
+          "primitives": [
+            {"id": "frame-20", "kind": "polyline", "commands": [20], "points": [[44, 22], [59, 22]], "corners": [{"point": 1, "kind": "step"}]},
+            {"id": "frame-21", "kind": "polyline", "commands": [21], "points": [[60, 21], [60, 9]], "corners": [{"point": 0, "kind": "step"}]},
+            {"id": "frame-35", "kind": "polyline", "commands": [35], "points": [[277, 22], [263, 22]], "corners": [{"point": 1, "kind": "step"}]},
+            {"id": "frame-36", "kind": "polyline", "commands": [36], "points": [[262, 21], [262, 9]], "corners": [{"point": 0, "kind": "step"}]},
+            {"id": "frame-111", "kind": "polyline", "commands": [111], "points": [[43, 138], [59, 138]], "corners": [{"point": 1, "kind": "step"}]},
+            {"id": "frame-88", "kind": "polyline", "commands": [88], "points": [[60, 139], [60, 151]], "corners": [{"point": 0, "kind": "step"}]},
+            {"id": "frame-118", "kind": "polyline", "commands": [118], "points": [[234, 139], [262, 139]], "corners": [{"point": 1, "kind": "step"}]},
+            {"id": "frame-28", "kind": "polyline", "commands": [28], "points": [[263, 138], [277, 138]], "corners": [{"point": 0, "kind": "step"}]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "white-frame",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A1.2",
+        "note": "batch 3 case 9 and findings after batch 3, A1.2: make frame look sharp as in original: sharp corners, as picture 58's glints"
+      }
+    }
   ]
 }
