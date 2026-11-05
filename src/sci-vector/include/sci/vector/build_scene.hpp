@@ -102,6 +102,9 @@ struct SceneStats {
     // the 6.4 line check takes their pixels within the A.6 tolerance
     // (sci/vector/raster_1x.hpp, decided_line_tolerance).
     std::vector<std::int32_t> decided_lines;
+    // Of those, the lines of shapes with a wider tolerance the customer
+    // approved (PrimitiveHint::tolerance): the 6.4 exception reaches 2 px.
+    std::vector<std::int32_t> widened_lines;
     std::vector<Fallback> fallbacks; // The mixed faces.
     // Hints (spec section 6.7).
     int hint_chains = 0;                     // Chain hints fitted as they ask.

@@ -28,6 +28,10 @@
 // direction); the shape is then cut where they meet, one piece per line.
 // It is used only if, rasterised back to 1x, the pieces lie within
 // `round_trip_limit` of the lines' pixels (A.6); otherwise nothing changes.
+// A primitive with a wider `tolerance` (the customer's approval for that
+// shape, at most 2 pixels) may lie farther: the 1x raster within the
+// tolerance rounded up, and the pieces within the tolerance of the lines'
+// pixel centres, both ways.
 //
 // Separately, `step_cuts` squares the ends of horizontal and vertical lines
 // at the step corners of a polyline, so that stacked strokes tile the pixel
@@ -48,6 +52,15 @@ namespace sci::vector::detail {
 // A4 A.6, as in sci/render/round_trip.hpp.
 inline constexpr int round_trip_limit = 1;
 
+// A primitive's tolerance is in thousandths of an original pixel
+// (PrimitiveHint::tolerance); the default is A.6's one pixel.
+inline constexpr int tolerance_unit = 1000;
+
+// The whole pixels a tolerance reaches on the 1x raster: rounded up.
+[[nodiscard]] constexpr int raster_reach(int tolerance) {
+    return (tolerance + tolerance_unit - 1) / tolerance_unit;
+}
+
 struct SteerLine {
     pic::ScreenPoint from;
     pic::ScreenPoint to;
@@ -58,6 +71,7 @@ struct SteerInput {
     std::vector<SteerLine> lines;                  // In the primitive's order.
     std::vector<Vec2> points;                      // The anchors' pixel centres, picture coordinates.
     std::vector<std::optional<CornerKind>> corner; // Per point.
+    int tolerance = tolerance_unit;                // Thousandths of a pixel; above 1000 only by the customer.
 };
 
 struct Steered {
@@ -65,6 +79,7 @@ struct Steered {
     std::vector<std::vector<Vec2>> pieces; // Per line, its stroke; empty unless used.
     int deviation = 0;                     // Round trip, in original pixels (when applicable).
     std::string reason;                    // Why it was not used, when applicable.
+    bool widened = false;                  // Used only by the primitive's wider tolerance.
 };
 
 // With `solved` (the relation solver's anchors, relations.hpp), a line or

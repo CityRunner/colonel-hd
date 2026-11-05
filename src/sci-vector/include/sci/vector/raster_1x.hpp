@@ -37,6 +37,6 @@ namespace sci::vector {
 // pixel of it in the sense of A4 A.6: the polyline, rasterised back to 1x
 // as the round-trip check does, has a pixel at Chebyshev distance at most
 // 1 from pixel (x, y) (picture coordinates).
-[[nodiscard]] bool within_round_trip_tolerance(std::span<const Vec2> points, int x, int y);
+[[nodiscard]] bool within_round_trip_tolerance(std::span<const Vec2> points, int x, int y, int reach = 1);
 
 } // namespace sci::vector

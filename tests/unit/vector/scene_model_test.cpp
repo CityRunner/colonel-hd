@@ -167,6 +167,86 @@ SCI_TEST(half_ellipse_fits_within_the_tolerance) {
     }
 }
 
+
+namespace {
+
+// The fanlight of half_ellipse_fits_within_the_tolerance, its lines ending
+// `short_by` pixels early after the lines in `cut`: a gap where another
+// line drew over the outline (picture 16's inner fanlight edges).
+SteerInput gapped_fanlight(std::span<const std::size_t> cut, int short_by) {
+    constexpr std::array<Vec2, 9> half{
+        Vec2{.x = -1, .y = 0},
+        Vec2{.x = -0.92388, .y = 0.38268},
+        Vec2{.x = -0.70711, .y = 0.70711},
+        Vec2{.x = -0.38268, .y = 0.92388},
+        Vec2{.x = 0, .y = 1},
+        Vec2{.x = 0.38268, .y = 0.92388},
+        Vec2{.x = 0.70711, .y = 0.70711},
+        Vec2{.x = 0.92388, .y = 0.38268},
+        Vec2{.x = 1, .y = 0},
+    };
+    std::vector<std::array<int, 2>> knots;
+    knots.reserve(half.size());
+    for (const Vec2 u : half) {
+        knots.push_back(
+            {static_cast<int>(std::lround(100 + (20 * u.x))), static_cast<int>(std::lround(60 - (12 * u.y)))});
+    }
+    SteerInput input{.kind = PrimitiveKind::Ellipse, .lines = {}, .points = {}, .corner = {}};
+    for (std::size_t i = 0; i + 1 < knots.size(); ++i) {
+        SteerLine l = line(knots[i][0], knots[i][1], knots[i + 1][0], knots[i + 1][1]);
+        if (std::ranges::find(cut, i) != cut.end()) {
+            std::vector<ScreenPoint> pixels;
+            sci::pic::for_each_line_pixel(l.from, l.to, [&](int x, int y) { pixels.push_back({.x = x, .y = y}); });
+            l.to = pixels[pixels.size() - 1 - static_cast<std::size_t>(short_by)];
+        }
+        input.lines.push_back(l);
+    }
+    input.points = {centre(knots.front()[0], knots.front()[1]), centre(100, 48),
+                    centre(knots.back()[0], knots.back()[1])};
+    input.corner = {std::nullopt, std::nullopt, std::nullopt};
+    return input;
+}
+
+} // namespace
+
+// An open ellipse steers over one-pixel gaps between its lines, as a whole
+// ellipse does: every line gets its piece of one half ellipse, and the gap
+// stays open.
+SCI_TEST(half_ellipse_steers_over_one_pixel_gaps) {
+    const std::array<std::size_t, 2> cut{2, 5};
+    const SteerInput input = gapped_fanlight(cut, 2);
+    SCI_CHECK(std::max(std::abs(input.lines[2].to.x - input.lines[3].from.x),
+                       std::abs(input.lines[2].to.y - input.lines[3].from.y)) == 2);
+    const auto steered = sci::vector::detail::steer(input);
+    SCI_CHECK(steered.applicable && steered.pieces.size() == input.lines.size());
+    SCI_CHECK(steered.deviation <= sci::vector::detail::round_trip_limit);
+    for (std::size_t i = 0; i < steered.pieces.size(); ++i) {
+        const auto& piece = steered.pieces[i];
+        SCI_CHECK(piece.size() >= 2);
+        for (const Vec2 p : piece) {
+            const double dx = (p.x - 100.5) / 20;
+            const double dy = (p.y - 60.5) / 12;
+            SCI_CHECK(std::abs(std::sqrt((dx * dx) + (dy * dy)) - 1) < 0.1);
+        }
+        if (i + 1 < steered.pieces.size()) {
+            const bool gap = std::ranges::find(cut, i) != cut.end();
+            SCI_CHECK((piece.back() == steered.pieces[i + 1].front()) != gap); // Joined, or the gap stays.
+        }
+    }
+    // The same lines as an arc.
+    SteerInput as_arc = input;
+    as_arc.kind = PrimitiveKind::Arc;
+    const auto arc = sci::vector::detail::steer(as_arc);
+    SCI_CHECK(arc.applicable && arc.pieces.size() == input.lines.size());
+}
+
+// A gap of two pixels or more is no path: nothing is steered.
+SCI_TEST(half_ellipse_does_not_steer_over_wider_gaps) {
+    const std::array<std::size_t, 1> cut{3};
+    const auto steered = sci::vector::detail::steer(gapped_fanlight(cut, 3));
+    SCI_CHECK(!steered.applicable);
+}
+
 namespace {
 
 // The pieces of a steered primitive joined into one curve; empty if they

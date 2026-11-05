@@ -450,7 +450,8 @@ std::optional<Row> analyse(const sci::resource::ResourceManager& manager, std::u
         .visual = visual.stats,
         .priority = priority.stats,
         .acceptance =
-            sci::render::check_acceptance(visual.scene, drawn->maps, drawn->trace, visual.stats.decided_lines),
+            sci::render::check_acceptance(visual.scene, drawn->maps, drawn->trace, visual.stats.decided_lines,
+                                          visual.stats.widened_lines),
         .integrity = sci::render::check_integrity(visual.scene, drawn->maps, drawn->trace, executor),
         .integrity_cases = {},
         .integrity_changes = {},
