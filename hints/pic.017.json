@@ -225,7 +225,8 @@
           "label": "the rings of the base, the front half of each",
           "primitives": [
             {"id": "column-base-ring-1", "kind": "ellipse", "commands": [1273, 1277, 1276, 1274], "points": [[18, 153], [30, 157], [43, 153]]},
-            {"id": "column-base-ring-2", "kind": "arc", "commands": [1282, 1285, 1284, 1283], "points": [[19, 157], [30, 160], [42, 156]]}
+            {"id": "column-base-ring-2", "kind": "arc", "commands": [1282, 1285, 1284, 1283], "points": [[19, 157], [30, 160], [42, 156]]},
+            {"id": "column-base-ring-3", "kind": "arc", "commands": [1320, 1321, 1326, 1325], "points": [[15, 160], [30, 164], [43, 161]]}
           ]
         }
       ],
