@@ -200,8 +200,11 @@ SteerInput gapped_fanlight(std::span<const std::size_t> cut, int short_by) {
         }
         input.lines.push_back(l);
     }
-    input.points = {centre(knots.front()[0], knots.front()[1]), centre(100, 48),
-                    centre(knots.back()[0], knots.back()[1])};
+    input.points = {
+        centre(knots.front()[0], knots.front()[1]),
+        centre(100, 48),
+        centre(knots.back()[0], knots.back()[1]),
+    };
     input.corner = {std::nullopt, std::nullopt, std::nullopt};
     return input;
 }

@@ -1388,12 +1388,14 @@ std::optional<std::pair<detail::SteerInput, std::vector<std::size_t>>> steer_inp
                                                                                    std::size_t picture,
                                                                                    const std::vector<DrawnLine>& lines,
                                                                                    const PrimitiveHint& primitive) {
-    detail::SteerInput input{.kind = primitive.kind,
-                             .lines = {},
-                             .points = {},
-                             .corner = {},
-                             .tolerance = primitive.tolerance != 0 ? primitive.tolerance : detail::tolerance_unit,
-                             .dots = {}};
+    detail::SteerInput input{
+        .kind = primitive.kind,
+        .lines = {},
+        .points = {},
+        .corner = {},
+        .tolerance = primitive.tolerance != 0 ? primitive.tolerance : detail::tolerance_unit,
+        .dots = {},
+    };
     std::vector<std::size_t> line_of;
     // A dot of an open ellipse or an arc keeps its stroke and bridges the
     // gap it fills (scene_model.hpp).

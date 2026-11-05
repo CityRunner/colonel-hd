@@ -76,7 +76,9 @@ struct SteerInput {
     std::vector<Vec2> points;                      // The anchors' pixel centres, picture coordinates.
     std::vector<std::optional<CornerKind>> corner; // Per point.
     int tolerance = tolerance_unit;                // Thousandths of a pixel; above 1000 only by the customer.
-    std::vector<pic::ScreenPoint> dots{};          // The primitive's one-pixel commands (open ellipse, arc).
+    // The primitive's one-pixel commands (open ellipse, arc). The initialiser
+    // lets designated initialisers leave it out.
+    std::vector<pic::ScreenPoint> dots{}; // NOLINT(readability-redundant-member-init)
 };
 
 struct Steered {

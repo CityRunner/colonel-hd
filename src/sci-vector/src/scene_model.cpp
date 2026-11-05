@@ -195,6 +195,24 @@ std::optional<std::vector<Vec2>> polyline_shape(const SteerInput& input, std::sp
     return shape;
 }
 
+// Lawson's rule: each weight multiplied by its point's residual, then all
+// scaled to average 1; false if every residual is zero.
+template <typename Residual>
+bool reweight(std::vector<double>& weights, const std::vector<Vec2>& points, Residual residual) {
+    double total = 0;
+    for (std::size_t i = 0; i < points.size(); ++i) {
+        weights[i] *= residual(points[i]);
+        total += weights[i];
+    }
+    if (!(total > 0)) {
+        return false;
+    }
+    for (double& w : weights) {
+        w *= static_cast<double>(points.size()) / total;
+    }
+    return true;
+}
+
 // Half of an ellipse from the path's start to its end, which are the ends
 // of a diameter: the conic A x^2 + B xy + C y^2 = 1 about their midpoint,
 // fitted by weighted least squares to the end (strongly), the anchors and
@@ -242,18 +260,11 @@ std::optional<std::vector<Vec2>> ellipse_shape(const SteerInput& input, std::spa
             return std::nullopt;
         }
         conic = {det3(m, 0) / det, det3(m, 1) / det, det3(m, 2) / det};
-        double total = 0;
-        for (std::size_t i = 0; i < pixels.size(); ++i) {
-            const std::array<double, 3> r = row(pixels[i]);
-            const double residual = std::abs((conic[0] * r[0]) + (conic[1] * r[1]) + (conic[2] * r[2]) - 1);
-            weights[i] *= residual;
-            total += weights[i];
-        }
-        if (!(total > 0)) {
+        if (!reweight(weights, pixels, [&](Vec2 p) {
+                const std::array<double, 3> r = row(p);
+                return std::abs((conic[0] * r[0]) + (conic[1] * r[1]) + (conic[2] * r[2]) - 1);
+            })) {
             break;
-        }
-        for (double& w : weights) {
-            w *= static_cast<double>(pixels.size()) / total;
         }
     }
     double a = conic[0];
