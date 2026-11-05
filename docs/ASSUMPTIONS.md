@@ -4221,3 +4221,23 @@ its cell), files 3, 11, 16, 17 and 85 now at version 2.
 - **Images** in `reports/images/milestone-10/batch-3-fixes-a/` (git
   ignored): per place a crop and its `-changed-before-after`, per picture
   the sheet and plain image. **Finding.**
+
+## Milestone 10: the customer's findings after group A (2026-11-05)
+
+- **"15 C3 revert gray parts of steps, they must be in perspective as
+  originally was"**: read as picture 16, C3 (the front steps changed by
+  batch 3 case 8; picture 15 has no changed steps there). Case 8 is
+  reverted: the steps' grey tread ends keep the sloping perspective edge
+  of the 3b reconstruction (decision `keep`), as the original draws them.
+  **Decided (customer); the picture number is an assumed reading.**
+- **17, A1.4** "color from column now appears on window - must be fixed":
+  the column's colour shows on the window behind it next to the fanlight
+  steered at A1.4. The window keeps its own colours; the column's area
+  ends at the column's edge. **Decided (customer).**
+- **11, the wide centre fanlight** "big window arch must not be crooked
+  in hd, needed to be fixed as well": answer (a) to the question after
+  group A. This arch may deviate up to 1.5 original pixels (the closest
+  half ellipse through its springers), so it becomes a smooth half
+  ellipse. A further, single-shape exception to A4 A.6's "about 1
+  original pixel", approved by the customer and listed in the report.
+  **Decided (customer).**
