@@ -70,6 +70,17 @@ for the customer's "continue" before stage 2.
      refactoring plan (stage 4) and is done at stage 5 after the plan is
      approved. **Decided (customer); its timing follows the brief.**
 
+- **Answers after stage 1b (2026-11-05)**, the customer's words:
+  1. "continue": stage 2 starts. **Decided (customer).**
+  2. 5.25" release: "have no copy, mark untested": acceptance of the
+     5.25" release is untested scope (V-01, R-04, R-06). **Decided
+     (customer).**
+  3. "confirmed": the A1 depth and containment relation hints are dropped
+     under answer 4 ("not implemented → dropped"). **Decided (customer).**
+  4. "remove the m10 worktrees": the 21 local `m10-*` worktrees and
+     branches are removed (2026-11-05). The remote branch `milestone-10`
+     is still the customer's to delete on GitHub. **Done.**
+
 ## Open items
 
 - Stage 1b results (`review/REQUIREMENTS_RECOVERED.md`): 144 R-items
