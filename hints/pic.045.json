@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 45,
   "pic_sha256": "7421550ddae3b74401326bce82e3b207facac063678824a868a8699997979300",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -10,6 +10,241 @@
     {"id": "left-back-window", "at": [60, 50], "label": "left back window"},
     {"id": "side-wall", "at": [270, 70], "label": "side wall"},
     {"id": "wainscot-panelling", "at": [150, 70], "label": "wainscot panelling"}
+  ],
+  "objects": [
+    {
+      "id": "window-curtain-left",
+      "type": "window",
+      "cell": "A1.2-A2.1",
+      "confidence": 900,
+      "label": "round-topped window with curtain, left",
+      "parts": [
+        {
+          "id": "window-curtain-left-arch",
+          "role": "frame",
+          "label": "inner edge of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-left-arch-inner",
+              "kind": "ellipse",
+              "commands": [
+                292,
+                293,
+                294,
+                295,
+                296,
+                297,
+                298,
+                299
+              ],
+              "points": [
+                [
+                  47,
+                  19
+                ],
+                [
+                  60,
+                  10
+                ],
+                [
+                  74,
+                  19
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "window-curtain-left-outer",
+          "role": "frame",
+          "label": "outer edge of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-left-arch-outer",
+              "kind": "ellipse",
+              "commands": [
+                340,
+                341,
+                342,
+                343,
+                344,
+                345,
+                346,
+                347
+              ],
+              "points": [
+                [
+                  77,
+                  19
+                ],
+                [
+                  58,
+                  7
+                ],
+                [
+                  43,
+                  19
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "window-curtain-left-glazing",
+          "role": "glazing-bar",
+          "label": "lit bead of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-left-arch-lit",
+              "kind": "arc",
+              "commands": [
+                509,
+                510
+              ],
+              "points": [
+                [
+                  67,
+                  11
+                ],
+                [
+                  70,
+                  14
+                ],
+                [
+                  72,
+                  20
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-curtain-left",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A2.1-A3.1",
+        "note": "batch 3 case 6: round-topped curtained window, as batch 2 (pictures 42, 44): the arch half of an ellipse through the drawn springers and crown (no objection)"
+      }
+    },
+    {
+      "id": "window-curtain-right",
+      "type": "window",
+      "cell": "A3.1",
+      "confidence": 900,
+      "label": "round-topped window with curtain, right",
+      "parts": [
+        {
+          "id": "window-curtain-right-arch",
+          "role": "frame",
+          "label": "inner edge of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-right-arch-inner",
+              "kind": "ellipse",
+              "commands": [
+                281,
+                282,
+                283,
+                284,
+                285,
+                286,
+                287,
+                288,
+                289,
+                290
+              ],
+              "points": [
+                [
+                  146,
+                  19
+                ],
+                [
+                  157,
+                  10
+                ],
+                [
+                  170,
+                  19
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "window-curtain-right-outer",
+          "role": "frame",
+          "label": "outer edge of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-right-arch-outer",
+              "kind": "ellipse",
+              "commands": [
+                324,
+                325,
+                326,
+                327,
+                328,
+                329,
+                330,
+                331,
+                332
+              ],
+              "points": [
+                [
+                  142,
+                  19
+                ],
+                [
+                  159,
+                  7
+                ],
+                [
+                  174,
+                  20
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "window-curtain-right-glazing",
+          "role": "glazing-bar",
+          "label": "lit bead of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-right-arch-lit",
+              "kind": "arc",
+              "commands": [
+                507,
+                508
+              ],
+              "points": [
+                [
+                  164,
+                  11
+                ],
+                [
+                  168,
+                  14
+                ],
+                [
+                  170,
+                  19
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-curtain-right",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A2.1-A3.1",
+        "note": "batch 3 case 6: round-topped curtained window, as batch 2 (pictures 42, 44): the arch half of an ellipse through the drawn springers and crown (no objection)"
+      }
+    }
   ],
   "chains": [
     {"id": "left-back-window-arch", "lines": [292, 293, 294, 295, 296, 297, 298, 299], "primitive": "arc", "label": "left back window arch"},
