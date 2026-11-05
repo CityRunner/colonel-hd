@@ -10,7 +10,6 @@
 #include <limits>
 #include <map>
 #include <memory>
-#include <numeric>
 #include <optional>
 #include <set>
 #include <string>
@@ -235,6 +234,35 @@ std::optional<std::vector<Vec2>> push_off(const std::vector<Vec2>& course, const
 
 } // namespace
 
+std::shared_ptr<const SharedBoundary::Index> SharedBoundary::make_index(const Arrangement& arrangement) {
+    auto index = std::make_shared<Index>();
+    index->points.reserve(arrangement.vertices.size());
+    for (const core::RationalPoint& vertex : arrangement.vertices) {
+        index->points.push_back(to_picture(vertex));
+    }
+    for (std::size_t v = 0; v < index->points.size(); ++v) {
+        index->by_x.push_back(v);
+    }
+    std::ranges::stable_sort(index->by_x, {}, [&](std::size_t v) { return index->points[v].x; });
+    index->leaving.resize(arrangement.vertices.size());
+    for (std::size_t h = 0; h < arrangement.half_edges.size(); ++h) {
+        index->leaving[static_cast<std::size_t>(arrangement.half_edges[h].origin)].push_back(h);
+    }
+    for (std::size_t e = 0; e < arrangement.sources.size(); ++e) {
+        const std::int32_t source = arrangement.sources[e];
+        if (source >= 0) {
+            const auto s = static_cast<std::size_t>(source);
+            if (index->of_source.size() <= s) {
+                index->of_source.resize(s + 1);
+            }
+            index->of_source[s].push_back(e);
+        } else if (source == shared_source) {
+            index->shared.push_back(e);
+        }
+    }
+    return index;
+}
+
 SharedBoundary::SharedBoundary(const Arrangement& arrangement, const std::vector<FittedChain>& fitted,
                                Analysis analysis)
     : arrangement_(&arrangement), analysis_(analysis), base_(arrangement.sources.size()),
@@ -258,31 +286,7 @@ SharedBoundary::SharedBoundary(const Arrangement& arrangement, const std::vector
     }
     course_ = base_;
     if (analysis_ == Analysis::Fast) {
-        auto index = std::make_shared<Index>();
-        index->points.reserve(arrangement.vertices.size());
-        for (const core::RationalPoint& vertex : arrangement.vertices) {
-            index->points.push_back(to_picture(vertex));
-        }
-        index->by_x.resize(index->points.size());
-        std::iota(index->by_x.begin(), index->by_x.end(), std::size_t{0});
-        std::ranges::stable_sort(index->by_x, {}, [&](std::size_t v) { return index->points[v].x; });
-        index->leaving.resize(arrangement.vertices.size());
-        for (std::size_t h = 0; h < arrangement.half_edges.size(); ++h) {
-            index->leaving[static_cast<std::size_t>(arrangement.half_edges[h].origin)].push_back(h);
-        }
-        for (std::size_t e = 0; e < arrangement.sources.size(); ++e) {
-            const std::int32_t source = arrangement.sources[e];
-            if (source >= 0) {
-                const auto s = static_cast<std::size_t>(source);
-                if (index->of_source.size() <= s) {
-                    index->of_source.resize(s + 1);
-                }
-                index->of_source[s].push_back(e);
-            } else if (source == shared_source) {
-                index->shared.push_back(e);
-            }
-        }
-        index_ = std::move(index);
+        index_ = make_index(arrangement);
         boxes_.reserve(course_.size());
         for (const std::vector<Vec2>& course : course_) {
             boxes_.push_back(box_of(course));
@@ -299,7 +303,9 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
     // reference scans every vertex and half-edge. Both visit the same
     // vertices and half-edges in the same (ascending) order.
     const Index* index = index_.get();
-    const auto point_of = [&](std::size_t v) { return index != nullptr ? index->points[v] : to_picture(arr.vertices[v]); };
+    const auto point_of = [&](std::size_t v) {
+        return index != nullptr ? index->points[v] : to_picture(arr.vertices[v]);
+    };
     const auto position = [&](std::size_t v) { return moved_[v] ? *moved_[v] : point_of(v); };
     // The half-edges leaving a vertex.
     const auto leaving_from = [&](std::size_t v) {
@@ -319,8 +325,9 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
     const auto vertices_near = [&](Vec2 p) {
         std::vector<std::size_t> found;
         if (index == nullptr) {
-            found.resize(arr.vertices.size());
-            std::iota(found.begin(), found.end(), std::size_t{0});
+            for (std::size_t v = 0; v < arr.vertices.size(); ++v) {
+                found.push_back(v);
+            }
             return found;
         }
         const auto first = std::ranges::lower_bound(index->by_x, p.x - same_point, {},
@@ -345,7 +352,7 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         const bool reversed = distance(line.piece.back(), line.from) < distance(line.piece.front(), line.from);
         std::vector<std::size_t> near = vertices_near(line.from);
         std::ranges::move(vertices_near(line.to), std::back_inserter(near));
-        std::ranges::sort(near);
+        std::ranges::stable_sort(near);
         const auto [last, end] = std::ranges::unique(near);
         near.erase(last, end);
         for (const std::size_t v : near) {
@@ -383,7 +390,7 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
                 edges = index->of_source[static_cast<std::size_t>(line.source)];
             }
             std::ranges::copy_if(index->shared, std::back_inserter(edges), is_line_edge);
-            std::ranges::sort(edges);
+            std::ranges::stable_sort(edges);
         } else {
             for (std::size_t e = 0; e < edge_count; ++e) {
                 if (is_line_edge(e)) {
@@ -554,9 +561,7 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
     for (const auto& entry : new_course) {
         is_new[entry.first] = true;
     }
-    const auto box_now = [&](std::size_t e) {
-        return index != nullptr && !is_new[e] ? boxes_[e] : box_of(now(e));
-    };
+    const auto box_now = [&](std::size_t e) { return index != nullptr && !is_new[e] ? boxes_[e] : box_of(now(e)); };
     std::vector<bool> is_placed(arr.vertices.size(), false);
     for (const auto& entry : placed) {
         is_placed[entry.first] = true;

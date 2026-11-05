@@ -38,3 +38,13 @@ Without `--check` it writes the file. On ARM64 under qemu-user:
 
 Regenerate the file only for an intended change of the output, and say why
 in the commit.
+
+With `--reference` it writes no hashes: it builds both planes of every
+picture with the fast analysis and with the simple reference
+(`sci::vector::Analysis`, `docs/hd-pipeline.md`, "Room entry: the fast
+analysis and the reference") and compares the scenes byte for byte and the
+hints' outcomes, one line per picture and plane with both times, into the
+file; it fails on any difference.
+
+    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+        build/release/tools/golden-hashes/sci-golden-hashes /game build/reference.txt --reference --hints hints

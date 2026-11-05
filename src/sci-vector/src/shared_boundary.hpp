@@ -74,10 +74,12 @@ private:
         std::vector<std::size_t> shared;                 // The edges of several segments, in order.
     };
 
+    [[nodiscard]] static std::shared_ptr<const Index> make_index(const Arrangement& arrangement);
+
     const Arrangement* arrangement_;
     Analysis analysis_;
-    std::shared_ptr<const Index> index_; // Fast analysis only.
-    std::vector<CourseBox> boxes_;       // Per edge, the box of its current course (fast analysis only).
+    std::shared_ptr<const Index> index_;     // Fast analysis only.
+    std::vector<CourseBox> boxes_;           // Per edge, the box of its current course (fast analysis only).
     std::vector<std::vector<Vec2>> base_;    // Per edge, the 3b course.
     std::vector<std::vector<Vec2>> course_;  // Per edge, the current course.
     std::vector<std::optional<Vec2>> moved_; // Per vertex, where steering put it.

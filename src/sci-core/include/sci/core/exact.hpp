@@ -82,7 +82,7 @@ struct WideProduct {
 // below 2^31 in magnitude (the products then fit), else with wide_mul.
 [[nodiscard]] constexpr std::strong_ordering compare_products(std::int64_t a, std::int64_t b, std::int64_t c,
                                                               std::int64_t d) noexcept {
-    constexpr std::int64_t small = std::int64_t{1} << 31;
+    constexpr std::int64_t small = 2147483648; // 2^31
     const auto fits = [](std::int64_t v) { return v > -small && v < small; };
     if (fits(a) && fits(b) && fits(c) && fits(d)) {
         return (a * b) <=> (c * d);

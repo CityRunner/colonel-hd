@@ -910,11 +910,8 @@ public:
                 }
             }
         }
-        Partition result{
-            .arrangement = detail::build_arrangement(topology, scale, analysis_),
-            .faces = {},
-            .stats = {},
-        };
+        detail::Arrangement arrangement = detail::build_arrangement(topology, scale, analysis_);
+        Partition result{.arrangement = std::move(arrangement), .faces = {}, .stats = {}};
         result.faces.resize(static_cast<std::size_t>(result.arrangement.face_count));
         const std::vector<std::int32_t> labels =
             detail::label_pixel_centres(result.arrangement, picture_width, picture_height);
@@ -2264,8 +2261,7 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
 bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale,
                          const std::vector<CurvedShape>& shapes, const std::vector<DrawnLine>& lines,
                          const std::vector<std::optional<TopoSegment>>& own, Partitioner& partition,
-                         std::vector<Entered>& in_arrangement,
-                         std::vector<CurveRefusal>& why) {
+                         std::vector<Entered>& in_arrangement, std::vector<CurveRefusal>& why) {
     std::vector<TopoSegment> fine;
     if (scale == curve_scale) {
         fine = topology;
@@ -2280,8 +2276,8 @@ bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale
     // Segments scaled exactly give the same arrangement, so the fast
     // analysis takes the partition of the doubled grid it made already; the
     // reference makes the one of the fine grid.
-    Partition current = partition.analysis() == Analysis::Fast ? partition(topology, scale)
-                                                                : partition(fine, curve_scale);
+    Partition current =
+        partition.analysis() == Analysis::Fast ? partition(topology, scale) : partition(fine, curve_scale);
     // All together first (one partition), then one by one.
     if (shapes.size() > 1) {
         std::vector<TopoSegment> all = fine;

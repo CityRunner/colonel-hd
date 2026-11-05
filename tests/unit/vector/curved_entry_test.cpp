@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -98,32 +99,41 @@ Drawn oval_picture(bool with_line_end) {
 // The oval as a decided scene-model object: one closed ellipse.
 sci::vector::PictureHints oval_hints(const Drawn& drawn) {
     using namespace sci::vector;
+    const auto first = drawn.lines.begin() + static_cast<std::ptrdiff_t>(drawn.oval);
+    const auto last = first + static_cast<std::ptrdiff_t>(oval_points.size());
     PrimitiveHint oval{
         .id = "oval",
         .kind = PrimitiveKind::Ellipse,
-        .commands = {drawn.lines.begin() + static_cast<std::ptrdiff_t>(drawn.oval), drawn.lines.begin() + static_cast<std::ptrdiff_t>(drawn.oval + oval_points.size())},
-        .points = {{.x = 120, .y = 80}, {.x = 100, .y = 92}, {.x = 80, .y = 80}, {.x = 100, .y = 68},
-                   {.x = 120, .y = 80}},
+        .commands = {first, last},
+        .points = {},
         .corners = {},
     };
-    PictureHints hints;
-    hints.version = 2;
-    hints.objects.push_back(ObjectHint{
+    oval.points = {
+        {.x = 120, .y = 80}, {.x = 100, .y = 92}, {.x = 80, .y = 80}, {.x = 100, .y = 68}, {.x = 120, .y = 80},
+    };
+    PartHint outline{.id = "outline", .role = PartRole::Outline, .label = {}, .primitives = {}};
+    outline.primitives.push_back(oval);
+    Hypothesis medallion{
+        .id = "medallion",
+        .type = ObjectType::Other,
+        .confidence = 1000,
+        .note = {},
+        .parts = {},
+        .relations = {},
+    };
+    medallion.parts.push_back(outline);
+    ObjectHint object{
         .id = "medallion",
         .cell = "B2",
         .label = "an oval medallion",
-        .main = Hypothesis{.id = "medallion",
-                           .type = ObjectType::Other,
-                           .confidence = 1000,
-                           .note = {},
-                           .parts = {PartHint{.id = "outline",
-                                              .role = PartRole::Outline,
-                                              .label = {},
-                                              .primitives = {oval}}},
-                           .relations = {}},
+        .main = medallion,
         .alternatives = {},
-        .decision = Decision{.hypothesis = "medallion", .date = "2026-11-05", .cell = "B2", .note = {}},
-    });
+        .decision = std::nullopt,
+    };
+    object.decision = Decision{.hypothesis = "medallion", .date = "2026-11-05", .cell = "B2", .note = {}};
+    PictureHints hints;
+    hints.version = 2;
+    hints.objects.push_back(object);
     return hints;
 }
 
@@ -148,7 +158,8 @@ std::vector<Vec2> oval_stroke(const Drawn& drawn, const sci::vector::Scene& scen
         if (const auto* stroke = std::get_if<sci::vector::Stroke>(&layer);
             stroke != nullptr && std::ranges::find(drawn.oval_sources, stroke->source) != drawn.oval_sources.end()) {
             for (const Vec2 p : stroke->points) {
-                if (points.empty() || std::abs(points.back().x - p.x) > 1e-9 || std::abs(points.back().y - p.y) > 1e-9) {
+                if (points.empty() || std::abs(points.back().x - p.x) > 1e-9 ||
+                    std::abs(points.back().y - p.y) > 1e-9) {
                     points.push_back(p);
                 }
             }
@@ -163,13 +174,78 @@ double distance_to(const std::vector<Vec2>& polyline, Vec2 p) {
         const Vec2 a = polyline[k];
         const Vec2 d{.x = polyline[k + 1].x - a.x, .y = polyline[k + 1].y - a.y};
         const double len2 = (d.x * d.x) + (d.y * d.y);
-        const double t =
-            len2 > 0 ? std::clamp((((p.x - a.x) * d.x) + ((p.y - a.y) * d.y)) / len2, 0.0, 1.0) : 0.0;
+        const double t = len2 > 0 ? std::clamp((((p.x - a.x) * d.x) + ((p.y - a.y) * d.y)) / len2, 0.0, 1.0) : 0.0;
         const double dx = a.x + (t * d.x) - p.x;
         const double dy = a.y + (t * d.y) - p.y;
         best = std::min(best, std::sqrt((dx * dx) + (dy * dy)));
     }
     return best;
+}
+
+bool inside(const std::vector<Vec2>& polygon, Vec2 p);
+
+// What the samples of the pixels the curve passes through show (N = 1,
+// 16 x 16 samples per pixel).
+struct Coverage {
+    int pixels = 0;     // Pixels the curve passes through.
+    int wrong = 0;      // Samples farther than 1/32 pixel from it in the other side's face.
+    int incomplete = 0; // Pixels with samples in neither the inside nor the outside face.
+    int one_sided = 0;  // Pixels the curve passes near the centre of with samples of one face only.
+};
+
+constexpr std::size_t density = 16;
+
+// The value of a face, -1 for none.
+int value_of(const sci::vector::Scene& scene, std::int32_t face) {
+    return face < 0 ? -1 : static_cast<int>(scene.faces[static_cast<std::size_t>(face)].value);
+}
+
+// One pixel's samples (rows: the 16 rows of samples of its pixel row).
+void cover_pixel(const sci::vector::Scene& scene, const std::vector<Vec2>& stroke,
+                 const std::vector<std::vector<std::int32_t>>& rows, int x, int y, std::array<int, 2> values,
+                 Coverage& coverage) {
+    constexpr double off_curve = (1.0 / 32) + 1e-6;
+    std::array<int, 2> count{};
+    for (std::size_t sy = 0; sy < density; ++sy) {
+        for (std::size_t sx = 0; sx < density; ++sx) {
+            const int value = value_of(scene, rows[sy][(static_cast<std::size_t>(x) * density) + sx]);
+            count[0] += value == values[0] ? 1 : 0;
+            count[1] += value == values[1] ? 1 : 0;
+            const Vec2 p{
+                .x = x + ((static_cast<double>(sx) + 0.5) / density),
+                .y = y + ((static_cast<double>(sy) + 0.5) / density),
+            };
+            if (distance_to(stroke, p) > off_curve && value != values[inside(stroke, p) ? 0 : 1]) {
+                ++coverage.wrong;
+            }
+        }
+    }
+    coverage.incomplete += std::cmp_equal(count[0] + count[1], density * density) ? 0 : 1;
+    if (distance_to(stroke, {.x = x + 0.5, .y = y + 0.5}) < 0.25 && (count[0] == 0 || count[1] == 0)) {
+        ++coverage.one_sided;
+    }
+}
+
+// The samples of every pixel the curve passes through; values: the
+// inside's, the outside's.
+Coverage cover(const sci::vector::Scene& scene, const std::vector<Vec2>& stroke, std::array<int, 2> values) {
+    const sci::render::SceneSampler sampler(scene);
+    Coverage coverage;
+    std::vector<std::int32_t> row(static_cast<std::size_t>(sci::vector::picture_width) * density);
+    for (int y = 64; y < 97; ++y) {
+        std::vector<std::vector<std::int32_t>> rows;
+        for (std::size_t s = 0; s < density; ++s) {
+            sampler.sample_faces(y + ((static_cast<double>(s) + 0.5) / density), density, row);
+            rows.push_back(row);
+        }
+        for (int x = 76; x < 125; ++x) {
+            if (distance_to(stroke, {.x = x + 0.5, .y = y + 0.5}) <= 0.75) {
+                ++coverage.pixels;
+                cover_pixel(scene, stroke, rows, x, y, values, coverage);
+            }
+        }
+    }
+    return coverage;
 }
 
 bool inside(const std::vector<Vec2>& polygon, Vec2 p) {
@@ -210,7 +286,7 @@ SCI_TEST(the_oval_s_stroke_and_faces_share_its_curve) {
     const auto built = build(drawn, oval_hints(drawn), Analysis::Fast);
     SCI_CHECK(outcome(built).contains("shared by the faces"));
     const sci::vector::Scene& scene = built.scene;
-    std::vector<Vec2> stroke = oval_stroke(drawn, scene);
+    const std::vector<Vec2> stroke = oval_stroke(drawn, scene);
     SCI_CHECK(stroke.size() > oval_points.size());
     if (stroke.size() <= oval_points.size()) {
         return;
@@ -221,52 +297,15 @@ SCI_TEST(the_oval_s_stroke_and_faces_share_its_curve) {
         const double dy = (p.y - 80.5) / 12;
         SCI_CHECK(std::abs(std::sqrt((dx * dx) + (dy * dy)) - 1) < 0.08);
     }
-    constexpr int density = 16;
-    constexpr double off_curve = (1.0 / 32) + 1e-6;
     const sci::render::SceneSampler sampler(scene);
-    std::vector<std::int32_t> row(static_cast<std::size_t>(sci::vector::picture_width * density));
+    std::vector<std::int32_t> row(static_cast<std::size_t>(sci::vector::picture_width) * density);
     sampler.sample_faces(80.5, density, row);
-    const auto value_at = [&](std::int32_t face) { return face < 0 ? -1 : static_cast<int>(scene.faces[static_cast<std::size_t>(face)].value); };
-    const int inner = value_at(row[static_cast<std::size_t>((100 * density) + (density / 2))]);
-    const int outer = value_at(row[static_cast<std::size_t>((50 * density) + (density / 2))]);
+    const int inner = value_of(scene, row[(100 * density) + (density / 2)]);
+    const int outer = value_of(scene, row[(50 * density) + (density / 2)]);
     SCI_CHECK(inner != outer && inner >= 0 && outer >= 0);
-    int pixels = 0;
-    int wrong = 0;
-    int incomplete = 0;
-    int one_sided = 0;
-    for (int y = 64; y < 97; ++y) {
-        std::vector<std::vector<std::int32_t>> rows;
-        for (int s = 0; s < density; ++s) {
-            sampler.sample_faces(y + ((s + 0.5) / density), density, row);
-            rows.push_back(row);
-        }
-        for (int x = 76; x < 125; ++x) {
-            const Vec2 centre{.x = x + 0.5, .y = y + 0.5};
-            if (distance_to(stroke, centre) > 0.75) {
-                continue; // The curve does not pass through the pixel.
-            }
-            ++pixels;
-            int in_inner = 0;
-            int in_outer = 0;
-            for (int sy = 0; sy < density; ++sy) {
-                for (int sx = 0; sx < density; ++sx) {
-                    const int face = value_at(rows[static_cast<std::size_t>(sy)][static_cast<std::size_t>((x * density) + sx)]);
-                    in_inner += face == inner ? 1 : 0;
-                    in_outer += face == outer ? 1 : 0;
-                    const Vec2 p{.x = x + ((sx + 0.5) / density), .y = y + ((sy + 0.5) / density)};
-                    if (distance_to(stroke, p) > off_curve && face != (inside(stroke, p) ? inner : outer)) {
-                        ++wrong;
-                    }
-                }
-            }
-            incomplete += in_inner + in_outer == density * density ? 0 : 1;
-            if (distance_to(stroke, centre) < 0.25 && (in_inner == 0 || in_outer == 0)) {
-                ++one_sided;
-            }
-        }
-    }
-    SCI_CHECK(pixels > 100);
-    SCI_CHECK(incomplete == 0);
-    SCI_CHECK(wrong == 0);
-    SCI_CHECK(one_sided == 0);
+    const Coverage coverage = cover(scene, stroke, {inner, outer});
+    SCI_CHECK(coverage.pixels > 100);
+    SCI_CHECK(coverage.incomplete == 0);
+    SCI_CHECK(coverage.wrong == 0);
+    SCI_CHECK(coverage.one_sided == 0);
 }

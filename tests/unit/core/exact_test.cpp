@@ -84,10 +84,10 @@ SCI_TEST(wide_products_compare_exactly) {
 SCI_TEST(compared_products_agree_with_wide_products) {
     using sci::core::compare_products;
     using sci::core::wide_mul;
-    constexpr std::int64_t border = std::int64_t{1} << 31;
-    const std::array<std::int64_t, 13> values{0,          1,          -1,         7,          -7,
-                                              border - 1, -border + 1, border,     -border,    border + 1,
-                                              46340,      -46341,      std::int64_t{1} << 46};
+    constexpr std::int64_t border = 2147483648; // 2^31
+    const std::array<std::int64_t, 13> values{
+        0, 1, -1, 7, -7, border - 1, -border + 1, border, -border, border + 1, 46340, -46341, 70368744177664, // 2^46
+    };
     int disagree = 0;
     for (const std::int64_t a : values) {
         for (const std::int64_t b : values) {
