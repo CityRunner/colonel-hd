@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 17,
   "pic_sha256": "a6bf4a4fa052445a1d18181aae83c20b93aeb2c59ea4534d6522c060479e3841",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -56,5 +56,131 @@
   ],
   "symmetry": [
     {"kind": "repeat", "chains": ["middle-window-arch", "right-window-arch"], "note": "arched window tops"}
+  ],
+  "objects": [
+    {
+      "id": "fanlight-1",
+      "type": "window",
+      "cell": "A1.4",
+      "confidence": 900,
+      "label": "round-headed fanlight of a tall shuttered window, behind the porch column, its left springer hidden",
+      "parts": [
+        {
+          "id": "fanlight-1-arch",
+          "role": "frame",
+          "label": "the grey frame's arch and its dark outline",
+          "primitives": [
+            {"id": "fanlight-1-frame", "kind": "arc", "commands": [1608, 1609, 1610, 1611, 1612, 1613], "points": [[70, 47], [56, 38], [43, 41]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "fanlight-1",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A1.4",
+        "note": "batch 3 case 3: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    },
+    {
+      "id": "fanlight-2",
+      "type": "window",
+      "cell": "A2.4-A3.3",
+      "confidence": 900,
+      "label": "round-headed fanlight of a tall shuttered window, over the window left of the door",
+      "parts": [
+        {
+          "id": "fanlight-2-arch",
+          "role": "frame",
+          "label": "the grey frame's arch and its dark outline",
+          "primitives": [
+            {"id": "fanlight-2-frame", "kind": "ellipse", "commands": [818, 819, 820, 821, 822, 823], "points": [[119, 42], [132, 31], [144, 43]]},
+            {"id": "fanlight-2-outline", "kind": "ellipse", "commands": [1227, 1228, 1229, 1230, 1231, 1232, 1233], "points": [[118, 40], [131, 30], [145, 36]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "fanlight-2",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A2.4-A3.3",
+        "note": "batch 3 case 3: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    },
+    {
+      "id": "fanlight-3",
+      "type": "window",
+      "cell": "A3.2-A3.4",
+      "confidence": 900,
+      "label": "round-headed fanlight of a tall shuttered window, over the window right of the door",
+      "parts": [
+        {
+          "id": "fanlight-3-arch",
+          "role": "frame",
+          "label": "the grey frame's arch and its dark outline",
+          "primitives": [
+            {"id": "fanlight-3-frame", "kind": "ellipse", "commands": [825, 826, 827, 828, 830, 829], "points": [[171, 30], [184, 18], [194, 30]]},
+            {"id": "fanlight-3-outline", "kind": "ellipse", "commands": [1234, 1235, 1236, 1237, 1238, 1239, 1240, 1241], "points": [[170, 26], [186, 16], [194, 22]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "fanlight-3",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A3.2-A3.4",
+        "note": "batch 3 case 3: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    },
+    {
+      "id": "fanlight-4",
+      "type": "window",
+      "cell": "A4.1",
+      "confidence": 900,
+      "label": "round-headed fanlight of a tall shuttered window, over the tall window in A4",
+      "parts": [
+        {
+          "id": "fanlight-4-arch",
+          "role": "frame",
+          "label": "the grey frame's arch and its dark outline",
+          "primitives": [
+            {"id": "fanlight-4-frame", "kind": "ellipse", "commands": [832, 833, 834, 835, 836, 837], "points": [[216, 19], [229, 9], [236, 19]]},
+            {"id": "fanlight-4-outline", "kind": "ellipse", "commands": [1242, 1243, 1244, 1245, 1246, 1247, 1248, 1249], "points": [[214, 17], [229, 7], [236, 12]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "fanlight-4",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A4.1",
+        "note": "batch 3 case 3: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    },
+    {
+      "id": "fanlight-5",
+      "type": "window",
+      "cell": "A5.1",
+      "confidence": 900,
+      "label": "round-headed fanlight of a tall shuttered window, over the tall window in A5",
+      "parts": [
+        {
+          "id": "fanlight-5-arch",
+          "role": "frame",
+          "label": "the grey frame's arch and its dark outline",
+          "primitives": [
+            {"id": "fanlight-5-frame", "kind": "ellipse", "commands": [26, 27, 28, 29, 30, 31, 32], "points": [[279, 15], [290, 3], [303, 17]]},
+            {"id": "fanlight-5-outline", "kind": "ellipse", "commands": [763, 762, 761, 760, 759, 758, 757, 756, 755], "points": [[278, 9], [291, 1], [304, 9]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "fanlight-5",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A5.1",
+        "note": "batch 3 case 3: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    }
   ]
 }
