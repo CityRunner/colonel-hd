@@ -4350,3 +4350,25 @@ pictures 12, 31, 45 and 71, on branch `m10-b3-group-d`. Review images in
   wallpaper has both: diamonds stay diamonds, and dots stay dots (small
   round dots of their drawn size). The rule must tell the two apart from
   what the original pixels show. **Decided (customer).**
+
+## Milestone 10: the customer's answers after group D (2026-11-05)
+
+- **Picture 31, spear tips (a)**: a clean, filled arrowhead is drawn at
+  each spear end, within the outline the original's short grey lines
+  give. A further exception to A4 A.6 "never invent", approved by the
+  customer for these tips only, and listed in the report. **Decided
+  (customer).**
+- **Berries in bushes, e.g. picture 4 (b)**: they stay small round dots,
+  no larger than the diamonds would be (the same size or smaller), not
+  diamonds. Together with picture 41's finding: the smallest brush marks
+  are drawn as the original shows them (diamonds where diamonds, dots
+  where dots, berries as dots). **Decided (customer).**
+- **Picture 31, spear and wallpaper (yes)**: the depth step is built: the
+  spear is in front of the wallpaper, so its shaft and tips are never cut
+  against or covered by the stripes (A1 depth order, using the 3a
+  `in-front-of` evidence or the scene model). **Decided (customer).**
+- **Picture 41** "light halos on wall must be ovals": the lamp halos on
+  the wall are smooth ovals with their areas, like pictures 12 and 16.
+  **Decided (customer).**
+- "Once done move to the next group": after the running groups, the next
+  groups start without waiting. **Decided (customer).**
