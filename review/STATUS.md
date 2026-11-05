@@ -5,15 +5,16 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Stage 2, reconcile with the original requirements: done → at STOP**
-(2026-11-05). Waiting for the customer's "continue" before stage 3.
+**Stage 3, grilling session: batch 1 asked → at STOP** (2026-11-05).
+Ten questions Q-01 … Q-10 in `review/QUESTIONS.md` (4 High, 6 Medium).
+Waiting for the customer's answers to batch 1.
 
 | Stage | File | State |
 |---|---|---|
 | 1a Codebase map | `review/MAP.md` | done |
 | 1b Recover requirements | `review/REQUIREMENTS_RECOVERED.md` | done |
-| 2 Reconcile | `review/GAPS.md` | done (at STOP) |
-| 3 Grilling | `review/QUESTIONS.md` | not started |
+| 2 Reconcile | `review/GAPS.md` | done |
+| 3 Grilling | `review/QUESTIONS.md` | batch 1 asked (Q-01 … Q-10), at STOP |
 | 4 Backlog and plan | `review/BACKLOG_V2.md`, `review/REFACTOR_PLAN.md` | not started |
 | 5 Refactoring | `review/REFACTOR_REPORT.md` | only after the customer approves the plan |
 
@@ -98,6 +99,31 @@ every stage so the work can resume in a new session.
 
 ## Open items
 
+- **Stage 3, batch 1 (`review/QUESTIONS.md`), all open:**
+  - High: Q-01 interpreter safety net (CI cannot run the game; default:
+    hashes of our own VM's outputs locally per commit, ScummVM at start and
+    end, synthetic bytecode CI suite as backlog); Q-02 scope of "render ALL
+    resources" (default: every picture incl. HD priority map at N = 1-16,
+    every view cel, glyph, cursor, scenario/playthrough screen; hashes
+    committed, images local); Q-03 hint licensing / model terms (G-24; item
+    1 only the customer can answer) and keeping the parser word files and
+    the old `.pyc` (default keep, no rewrite); Q-04 measurable goals for
+    "optimising" (default: baselines in stage 5, iteration 2 fixes only
+    measured misses, one reference-laptop run).
+  - Medium: Q-05 edges of answer 4 (G-150; default: PART remainders become
+    backlog items, no A4 grid tooling); Q-06 where run-time files live
+    (G-122; default: one data folder, `--data` > portable > per-user);
+    Q-07 repository layout (default: minimal moves plus git-ignored
+    `local/{game,rom,saves}`); Q-08 milestone 9 HD quality final? (default
+    yes); Q-09 four missing fuzz targets (default: add in stage 5 step 1);
+    Q-10 ini rewrite drops comments (default: fix in iteration 2).
+  - Blocking: Q-01, Q-02, Q-09 → stage 5 step 1; Q-04, Q-05, Q-08 → stage 4
+    backlog/plan; Q-06, Q-07 → the iteration-2 folder requirement; Q-03 →
+    publishing anything new. Stage 3 continues with batch 2 until every
+    High question is closed.
+  - R-65 (`kDoAvoider`) was not asked: the tested release does not
+    reference it (`docs/ASSUMPTIONS.md:1205-1208`).
+
 - **Stage 2 results (`review/GAPS.md`):** 156 G-items (G-01 … G-156)
   covering spec v15 §1-§15 section by section, A1, A2 (withdrawn), A4 and
   the customer's decisions. Classes: FULL 114 (one of them untested
@@ -162,7 +188,10 @@ every stage so the work can resume in a new session.
 3. Continue with the next stage only after the customer's "continue".
    Stage 3 asks questions (Q-xx) in batches of 5-10, highest severity
    first, from `review/GAPS.md` (G-xx; its "Items with a severity"
-   table), recording answers in `review/QUESTIONS.md`. The original spec
+   table), recording answers in `review/QUESTIONS.md` (its "Answers"
+   table; "you decide" → the question's default, marked ASSUMED). Batch 2
+   starts after the answers to batch 1; its candidates are listed in
+   QUESTIONS.md, "Considered for batch 1 and not asked". The original spec
    v15 is not committed; it is in the customer's context.
 4. Scratch outputs go under `build/` (git-ignored). The coverage build of
    stage 1a was deleted to save disk; its logs and `llvm-cov` reports are
