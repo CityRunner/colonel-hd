@@ -206,8 +206,8 @@ bool segments_touch(const TopoSegment& s, const TopoSegment& t) {
     return !s_splits.empty() || !t_splits.empty();
 }
 
-std::optional<RationalPoint> line_meets_segment(IntPoint a, IntPoint b, const TopoSegment& segment) {
-    const Prepared t = prepare(segment);
+std::optional<RationalPoint> line_meets_segment(IntPoint a, IntPoint b, const TopoSegment& segment, std::int64_t scale) {
+    const Prepared t = prepare(segment, scale);
     const IntPoint direction = b - a;
     const std::int64_t denominator = core::cross(direction, t.direction);
     if (denominator == 0) {

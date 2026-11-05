@@ -1629,9 +1629,10 @@ std::size_t hint_point_of(const PrimitiveHint& hint, const std::vector<Vec2>& an
 // A4 A.3: the relations of the followed hypothesis, solved jointly over
 // the anchors of its line and polyline primitives (relations.hpp). Per
 // primitive, its solved anchors, or nothing (not in a solved relation, or
-// nothing solved). An object the customer decided over alternatives keeps
-// its relations unsolved: the customer chose that hypothesis as it was
-// shown, as drawn (picture 12's tall window: "keep as drawn").
+// nothing solved). An object whose main hypothesis the customer chose over
+// alternatives keeps its relations unsolved: that is the "as drawn"
+// reading (picture 12's tall window: "keep as drawn"); a chosen
+// alternative has its relations solved (keeps_relations_as_drawn).
 // NOLINTNEXTLINE(readability-function-cognitive-complexity): resolving the items and ties shares the problem.
 std::vector<std::optional<std::vector<Vec2>>> solve_object(const ObjectHint& object, const Hypothesis& hypothesis,
                                                            const std::vector<ObjectPrimitive>& found, int picture,
@@ -1640,9 +1641,9 @@ std::vector<std::optional<std::vector<Vec2>>> solve_object(const ObjectHint& obj
     if (hypothesis.relations.empty()) {
         return solved;
     }
-    if (object.decision && !object.alternatives.empty()) {
+    if (keeps_relations_as_drawn(object)) {
         reject_hint(stats, picture, object.id,
-                    "relations not solved: the customer chose this hypothesis over its alternatives, as drawn");
+                    "relations not solved: the customer chose the main hypothesis over its alternatives, as drawn");
         return solved;
     }
     detail::RelationProblem problem;
@@ -2066,7 +2067,7 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
         double best_distance = 0;
         const Vec2 from = detail::to_picture(p);
         for (const TopoSegment& chord : chords) {
-            const auto crossing = detail::line_meets_segment(segment.a, segment.b, chord);
+            const auto crossing = detail::line_meets_segment(segment.a, segment.b, chord, curve_scale);
             if (!crossing) {
                 continue;
             }

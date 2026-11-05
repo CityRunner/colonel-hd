@@ -953,6 +953,10 @@ const Hypothesis* followed_hypothesis(const ObjectHint& object) noexcept {
     return object.alternatives.empty() ? &object.main : nullptr;
 }
 
+bool keeps_relations_as_drawn(const ObjectHint& object) noexcept {
+    return object.decision && !object.alternatives.empty() && object.decision->hypothesis == object.main.id;
+}
+
 bool is_open(const RepetitionHint& repetition) noexcept {
     return !repetition.decision && repetition.confidence < max_confidence;
 }

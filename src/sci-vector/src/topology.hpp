@@ -52,7 +52,8 @@ struct TopoSegment {
 // Where the line through a and b crosses the segment, if it does in a
 // single point.
 [[nodiscard]] std::optional<core::RationalPoint> line_meets_segment(core::IntPoint a, core::IntPoint b,
-                                                                    const TopoSegment& segment);
+                                                                    const TopoSegment& segment,
+                                                                    std::int64_t scale = 1);
 
 // The foot of the perpendicular from p to the segment's line, if it lies on
 // the segment.

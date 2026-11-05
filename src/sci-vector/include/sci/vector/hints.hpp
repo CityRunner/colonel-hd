@@ -281,6 +281,13 @@ inline constexpr std::string_view decision_keep = "keep";
 // or one decided "keep": its milestone 3b reconstruction stays.
 [[nodiscard]] const Hypothesis* followed_hypothesis(const ObjectHint& object) noexcept;
 
+// Whether the followed hypothesis keeps its relations unsolved (A.3;
+// docs/ASSUMPTIONS.md, "the two choices in relation solving"): the
+// customer chose the object's main hypothesis over alternatives, its "as
+// drawn" reading. An alternative the customer chose has its relations
+// solved.
+[[nodiscard]] bool keeps_relations_as_drawn(const ObjectHint& object) noexcept;
+
 // A.5: objects of one type, or parts of one role, reconstructed identically.
 // The analyser may be unsure (A.6, A.7): then the repetition has a
 // confidence below 1000 and is put to the customer. A repetition has two
