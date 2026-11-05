@@ -2580,7 +2580,7 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
             .square_ends = {},
             .inner_ends = {},
         };
-        detail::SharedBoundary boundary(parts.arrangement, curves.fitted);
+        detail::SharedBoundary boundary(parts.arrangement, curves.fitted, analysis);
         if (plane == Plane::Visual) {
             model = steer_by_scene_model(trace, lines, view, hints, in_arrangement, curves, boundary, built.stats);
         }
