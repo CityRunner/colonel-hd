@@ -5,13 +5,13 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Stage 1b, recover requirements: in progress** (the customer said
-"continue" after stage 1a on 2026-11-05).
+**Stage 1b, recover requirements: done → at STOP** (2026-11-05). Waiting
+for the customer's "continue" before stage 2.
 
 | Stage | File | State |
 |---|---|---|
 | 1a Codebase map | `review/MAP.md` | done |
-| 1b Recover requirements | `review/REQUIREMENTS_RECOVERED.md` | in progress |
+| 1b Recover requirements | `review/REQUIREMENTS_RECOVERED.md` | done (at STOP) |
 | 2 Reconcile | `review/GAPS.md` | not started |
 | 3 Grilling | `review/QUESTIONS.md` | not started |
 | 4 Backlog and plan | `review/BACKLOG_V2.md`, `review/REFACTOR_PLAN.md` | not started |
@@ -72,6 +72,31 @@ every stage so the work can resume in a new session.
 
 ## Open items
 
+- Stage 1b results (`review/REQUIREMENTS_RECOVERED.md`): 144 R-items
+  (FACT 135, HYPOTHESIS 6, mixed 3; tested CI 95, local only 27,
+  untested 15, none/n.a. 7), observations V-01 … V-15. To carry into
+  stage 2 (GAPS.md) and stage 3 (questions):
+  - V-01: the 5.25" release is said to run without hints, but nothing in
+    the code enforces it (only the PIC hash in each hint file); whether
+    its PIC data differs is unverified (no 5.25" copy).
+  - V-02 / R-36 / R-44: relation (depth/containment) hints of addendum A1
+    are parsed but used by no code and present in no hint file; a header
+    comment claims they are used.
+  - V-04 / R-57: golden hashes miss the HD priority map, N > 10 (and
+    3, 4, 6-9), views, fonts, cursors and composed frames; all
+    game-dependent goldens are local only.
+  - V-06: the repository policy script does not catch SCI0 patch files
+    (`SCRIPT.052`, `PATCH.001`, ...) as game data.
+  - V-08 (HYP): the program writes ini, cache, files and saves next to the
+    executable; a failed ini write is silent.
+  - R-65/R-66: `kDoAvoider` is a stub that stops the game; assumed unused
+    by the tested game (playthrough ran without it).
+  - R-114: the ini is rewritten at exit, dropping unknown keys and user
+    comments, persisting a command-line folder.
+  - Minor: V-03 (N = 10 in a comment, N goes to 16), V-05 (trigonometry
+    comment), V-07, V-10 (no way to see Vm/Resources logs), V-11, V-12,
+    V-13 (MAP.md said 87 hint files; 86).
+
 - Stage 1a observations to carry into stages 1b-4 (`review/MAP.md`,
   section 8): CI coverage of sci-vm (38 % lines) and of the app layer;
   the local-only game-dependent checks being the VM's real safety net;
@@ -85,6 +110,10 @@ every stage so the work can resume in a new session.
 1. `cd /home/user/sierra-hd && git checkout audit && git log --oneline -5`.
 2. Read `review/TASK.md` (the brief), this file, then `review/MAP.md`.
 3. Continue with the next stage only after the customer's "continue".
+   Stage 2 compares `review/REQUIREMENTS_RECOVERED.md` (R-xx) with the
+   original spec v15 (not committed; in the customer's context) and
+   `docs/SPEC_ADDENDA.md`, applying answer 4 (unimplemented = dropped,
+   ASSUMED reading).
 4. Scratch outputs go under `build/` (git-ignored). The coverage build of
    stage 1a was deleted to save disk; its logs and `llvm-cov` reports are
    in `build/audit-coverage/` (`report-files.txt`: CI suite;
