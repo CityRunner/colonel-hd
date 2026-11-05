@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 43,
   "pic_sha256": "f932fa72d377cac7ae782328bffe59e9b785bba99bdb79efd8cb52a921b66e79",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -28,5 +28,35 @@
     {"kind": "mirror", "chains": ["left-alcove-inner-arch", "right-alcove-inner-edge"], "note": "inner arches of the two alcoves"},
     {"kind": "mirror", "chains": ["left-alcove-outer-arch", "right-alcove-outer-arch"], "note": "outer arches of the two alcoves"},
     {"kind": "repeat", "chains": ["left-alcove-arch-edge", "right-alcove-arch-edge"], "note": "arch edges of the two alcoves"}
+  ],
+  "objects": [
+    {
+      "id": "rug-medallion",
+      "type": "other",
+      "cell": "C3.1-C3.2",
+      "confidence": 900,
+      "label": "the five pink ovals of the rug's centre medallion",
+      "parts": [
+        {
+          "id": "rug-medallion-ovals",
+          "role": "other",
+          "label": "each pink shape a whole oval in its grey outline",
+          "primitives": [
+            {"id": "rug-medallion-top", "kind": "ellipse", "commands": [741, 742, 743, 744, 745, 746, 747, 748], "points": [[152, 138], [169, 142], [151, 145], [147, 142], [152, 138]]},
+            {"id": "rug-medallion-centre", "kind": "ellipse", "commands": [749, 750, 751, 752], "points": [[151, 147], [166, 153], [150, 153], [150, 152], [151, 147]]},
+            {"id": "rug-medallion-bottom", "kind": "ellipse", "commands": [753, 754, 755, 756, 757, 758], "points": [[149, 155], [173, 158], [149, 162], [143, 158], [149, 155]]},
+            {"id": "rug-medallion-left", "kind": "ellipse", "commands": [765, 766, 767, 768, 769, 770], "points": [[144, 145], [149, 147], [140, 155], [134, 153], [144, 145]]},
+            {"id": "rug-medallion-right", "kind": "ellipse", "commands": [759, 760, 761, 763, 764], "points": [[173, 145], [184, 153], [177, 156], [168, 147], [173, 145]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "rug-medallion",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "C3.1-C3.2",
+        "note": "batch 3 case 12a: smooth ovals, the left and right pair mirror-symmetric"
+      }
+    }
   ]
 }

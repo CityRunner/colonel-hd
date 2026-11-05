@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 59,
   "pic_sha256": "e81d3b2246727c3af0675bd4e94e7dd182c021540567ded2f33649ba25603569",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -15,5 +15,33 @@
   ],
   "chains": [
     {"id": "round-object-on-floor", "lines": [169, 170, 171, 172, 173, 174, 175], "primitive": "spline", "label": "round object on floor", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "round-table-top",
+      "type": "furniture",
+      "cell": "C4.1",
+      "confidence": 900,
+      "label": "the red top of the round table, seen in perspective",
+      "parts": [
+        {
+          "id": "round-table-top-edge",
+          "role": "other",
+          "label": "the rim of the top, a whole oval, and the lower edges of its thickness, half ovals",
+          "primitives": [
+            {"id": "round-table-top-oval", "kind": "ellipse", "commands": [254, 260, 305, 308, 309, 310, 311, 312, 313, 314, 317, 318, 319, 320, 321, 322, 323, 324], "points": [[213, 122], [242, 128], [215, 139], [191, 132], [213, 122]]},
+            {"id": "round-table-band-red", "kind": "ellipse", "commands": [269, 268, 271, 270, 262, 272, 263, 264, 265, 266, 267], "points": [[192, 135], [216, 140], [241, 133]]},
+            {"id": "round-table-band-under", "kind": "ellipse", "commands": [96, 95, 93, 92, 84, 85, 86, 88, 89, 90], "points": [[191, 134], [216, 141], [242, 131]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "round-table-top",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "C4.1",
+        "note": "batch 3 case 11a: the round table top is an ellipse"
+      }
+    }
   ]
 }

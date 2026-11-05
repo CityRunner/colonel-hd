@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 24,
   "pic_sha256": "64d38d5d2647fd26708d966a28c5d45b3e9ca8f5c997791825e2f13c8bc643aa",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -51,5 +51,59 @@
     {"id": "lawn-edge-right", "lines": [1571, 1572, 1573], "primitive": "spline", "label": "lawn edge, right", "uncertain": true},
     {"id": "lawn-edge-right-2", "lines": [1652, 1653, 1654], "primitive": "spline", "label": "lawn edge, right", "uncertain": true},
     {"id": "grass-tuft-right", "lines": [1644, 1645, 1646], "primitive": "spline", "label": "grass tuft, right", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "gazebo-stairs",
+      "type": "staircase",
+      "cell": "C3.2",
+      "confidence": 900,
+      "label": "the gazebo steps, the left ends of the treads",
+      "parts": [
+        {
+          "id": "gazebo-steps-ends",
+          "role": "riser",
+          "label": "where a tread ends and the wider one below begins: down, then out, square",
+          "primitives": [
+            {"id": "gazebo-step-end-820", "kind": "polyline", "commands": [820], "points": [[181, 134], [184, 134], [184, 132]], "corners": [{"point": 1, "kind": "sharp"}]},
+            {"id": "gazebo-step-end-821", "kind": "polyline", "commands": [821], "points": [[179, 142], [181, 142], [181, 140]], "corners": [{"point": 1, "kind": "sharp"}]},
+            {"id": "gazebo-step-end-822", "kind": "polyline", "commands": [822], "points": [[177, 150], [178, 150], [178, 148]], "corners": [{"point": 1, "kind": "sharp"}]},
+            {"id": "gazebo-step-end-823", "kind": "polyline", "commands": [823], "points": [[174, 158], [176, 158], [176, 156]], "corners": [{"point": 1, "kind": "sharp"}]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "gazebo-stairs",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "C3.2",
+        "note": "batch 3 case 14a/1: square tread ends, as picture 74 in batch 1"
+      }
+    },
+    {
+      "id": "newel-knobs",
+      "type": "railing",
+      "cell": "C3.2",
+      "confidence": 900,
+      "label": "the blue knobs on the two newel posts at the foot of the steps",
+      "parts": [
+        {
+          "id": "newel-knobs-outline",
+          "role": "other",
+          "label": "each knob a small whole oval",
+          "primitives": [
+            {"id": "newel-knob-left-oval", "kind": "ellipse", "commands": [169, 170, 168, 161, 782], "points": [[165, 135], [170, 138], [164, 141], [162, 138], [165, 135]]},
+            {"id": "newel-knob-right-oval", "kind": "ellipse", "commands": [177, 178, 176, 174, 175], "points": [[210, 135], [215, 138], [209, 141], [207, 138], [210, 135]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "newel-knobs",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "C3.2",
+        "note": "batch 3 case 14a/2: the newel knobs are round"
+      }
+    }
   ]
 }

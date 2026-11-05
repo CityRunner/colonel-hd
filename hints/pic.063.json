@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 63,
   "pic_sha256": "f1a5c20a0df7f4b467b08acebfb99e8f5def740ffd8eedddacd1fc3ea06ee411",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -18,5 +18,82 @@
     {"id": "floor-patch-edge", "lines": [445, 446, 447, 448, 449, 450, 451, 452], "primitive": "spline", "label": "floor patch edge", "uncertain": true},
     {"id": "branch-shadow-on-roof", "lines": [388, 389, 390, 391, 392, 393], "primitive": "spline", "label": "branch shadow on roof", "uncertain": true},
     {"id": "branch-shadow-on-roof-2", "lines": [430, 431, 432], "primitive": "spline", "label": "branch shadow on roof", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "round-window-gable",
+      "type": "window",
+      "cell": "A2.4-A3.1",
+      "confidence": 900,
+      "label": "the round window in the gable, a ring drawn two lines thick",
+      "parts": [
+        {
+          "id": "round-window-gable-rim",
+          "role": "frame",
+          "label": "the outer and inner line of the rim, whole ovals",
+          "primitives": [
+            {"id": "round-window-gable-outer", "kind": "ellipse", "commands": [97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 109, 110, 111, 113, 115], "points": [[126, 36], [137, 42], [126, 52], [119, 42], [126, 36]]},
+            {"id": "round-window-gable-inner", "kind": "ellipse", "commands": [86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 104, 108, 112, 114, 117, 119], "points": [[126, 37], [136, 42], [125, 51], [119, 45], [126, 37]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "round-window-gable",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A2.4-A3.1",
+        "note": "batch 3 case 10a: the round windows are smooth ovals in pictures 14 and 63, the bars straight"
+      }
+    },
+    {
+      "id": "round-window-left",
+      "type": "window",
+      "cell": "B3.4-B4.1",
+      "confidence": 900,
+      "label": "the round window left of the corner post, a ring drawn two lines thick",
+      "parts": [
+        {
+          "id": "round-window-left-rim",
+          "role": "frame",
+          "label": "the outer and inner line of the rim, whole ovals",
+          "primitives": [
+            {"id": "round-window-left-outer", "kind": "ellipse", "commands": [213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226], "points": [[184, 83], [197, 94], [187, 102], [178, 88], [184, 83]]},
+            {"id": "round-window-left-inner", "kind": "ellipse", "commands": [229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 267, 306, 307, 308], "points": [[183, 84], [196, 93], [186, 101], [179, 88], [183, 84]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "round-window-left",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "B3.4-B4.1",
+        "note": "batch 3 case 10a: the round windows are smooth ovals in pictures 14 and 63, the bars straight"
+      }
+    },
+    {
+      "id": "round-window-right",
+      "type": "window",
+      "cell": "B4.2",
+      "confidence": 900,
+      "label": "the round window right of the corner post, a ring drawn two lines thick",
+      "parts": [
+        {
+          "id": "round-window-right-rim",
+          "role": "frame",
+          "label": "the outer and inner line of the rim, whole ovals",
+          "primitives": [
+            {"id": "round-window-right-outer", "kind": "ellipse", "commands": [196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 193, 305], "points": [[228, 93], [242, 104], [232, 113], [223, 100], [228, 93]]},
+            {"id": "round-window-right-inner", "kind": "ellipse", "commands": [247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 266], "points": [[233, 95], [241, 103], [231, 112], [224, 103], [233, 95]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "round-window-right",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "B4.2",
+        "note": "batch 3 case 10a: the round windows are smooth ovals in pictures 14 and 63, the bars straight"
+      }
+    }
   ]
 }
