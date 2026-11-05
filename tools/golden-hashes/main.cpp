@@ -23,6 +23,14 @@
 // and ".palette<n>" for its kDrawPic options as the analysis cache names
 // its entries ("174.palette1+74"). The HD frames of a stack come from the
 // analysis cache's variant of the stack, as the program draws them.
+//
+//   sci-golden-hashes <game> <file> --reference [--hints <directory>]
+//
+// builds both planes of every picture with the fast analysis and with the
+// simple reference (sci::vector::Analysis, docs/hd-pipeline.md, "Room
+// entry") and compares them: the scenes byte for byte (write_scene) and the
+// hints' outcomes. Writes one line per picture and plane with both times to
+// the file; fails on any difference.
 
 #include "game_folder.hpp"
 #include "picture.hpp"
@@ -34,6 +42,7 @@
 #include "sci/render/original.hpp"
 #include "sci/render/rasterize.hpp"
 #include "sci/vector/build_scene.hpp"
+#include "sci/vector/scene_io.hpp"
 
 #include <array>
 #include <chrono>
@@ -96,6 +105,68 @@ std::string picture_hashes(const sci::resource::ResourceManager& manager, std::u
             sci::vector::build_scene(drawn->maps, drawn->trace, sci::vector::Plane::Visual, hints.pointers()).scene;
     }
     return frame_hashes(std::format("pic {}", number), visual, drawn->maps, executor);
+}
+
+// What a built scene must agree in: its bytes and the hints' outcomes.
+std::string outcome_of(const sci::vector::BuiltScene& built) {
+    const auto bytes = sci::vector::write_scene(built.scene);
+    std::string outcome = hash(bytes);
+    for (const auto* list : {&built.stats.applied_hints, &built.stats.rejected_hints}) {
+        for (const sci::vector::HintOutcome& hint : *list) {
+            outcome += std::format("\n{} {} {}", hint.picture, hint.id, hint.detail);
+        }
+        outcome += "\n--";
+    }
+    return outcome;
+}
+
+// The fast analysis against the reference, both planes of one picture: a
+// line each, and whether they agree.
+bool compare_with_reference(const sci::resource::ResourceManager& manager, std::uint16_t number,
+                            const std::optional<std::filesystem::path>& hint_directory, std::string& lines) {
+    const std::array numbers{number};
+    const auto drawn = sci::tools::draw_pictures(manager, numbers);
+    if (!drawn) {
+        lines += std::format("pic {} error\n", number);
+        return false;
+    }
+    const sci::platform::PictureHintSet hints(hint_directory, manager, numbers);
+    bool same = true;
+    for (const auto plane : {sci::vector::Plane::Visual, sci::vector::Plane::Priority}) {
+        const auto build = [&](sci::vector::Analysis analysis, double& ms) {
+            const auto start = Clock::now();
+            const auto built = sci::vector::build_scene(drawn->maps, drawn->trace, plane, hints.pointers(), analysis);
+            ms = std::chrono::duration<double, std::milli>(Clock::now() - start).count();
+            return outcome_of(built);
+        };
+        double fast_ms = 0;
+        double reference_ms = 0;
+        const std::string fast = build(sci::vector::Analysis::Fast, fast_ms);
+        const std::string reference = build(sci::vector::Analysis::Reference, reference_ms);
+        const bool agree = fast == reference;
+        same = same && agree;
+        lines += std::format("pic {} {} {} (fast {:.0f} ms, reference {:.0f} ms)\n", number,
+                             plane == sci::vector::Plane::Visual ? "visual" : "priority",
+                             agree ? "identical" : "DIFFERS", fast_ms, reference_ms);
+    }
+    return same;
+}
+
+// Every picture with both analyses; the lines into the file. Whether all
+// agree.
+bool compare_all_with_reference(const sci::resource::ResourceManager& manager,
+                                const std::optional<std::filesystem::path>& hint_directory,
+                                const std::filesystem::path& path) {
+    std::string lines;
+    int differences = 0;
+    for (const std::uint16_t number : sci::tools::numbers_of(manager, sci::resource::ResourceType::Pic)) {
+        differences += compare_with_reference(manager, number, hint_directory, lines) ? 0 : 1;
+    }
+    std::ofstream out(path);
+    out << lines;
+    std::println("{}", differences == 0 ? "the fast analysis matches the reference in every picture"
+                                        : std::format("{} pictures differ from the reference", differences));
+    return differences == 0 && static_cast<bool>(out);
 }
 
 using sci::platform::PictureOverlay;
@@ -185,6 +256,7 @@ struct Options {
     std::optional<std::filesystem::path> hint_directory;
     std::optional<std::filesystem::path> cache_directory;
     bool prepare = false;
+    bool reference = false;
 };
 
 Options parse_options(std::span<char*> args) {
@@ -200,6 +272,8 @@ Options parse_options(std::span<char*> args) {
             options.cache_directory = std::filesystem::path(args[++i]);
         } else if (arg == "--prepare") {
             options.prepare = true;
+        } else if (arg == "--reference") {
+            options.reference = true;
         } else {
             options.usage = true;
         }
@@ -207,21 +281,45 @@ Options parse_options(std::span<char*> args) {
     return options;
 }
 
+// Compares the hashes with the file, line by line, and prints each
+// difference. Whether all match.
+bool matches_file(const std::filesystem::path& path, const std::string& hashes) {
+    std::ifstream in(path);
+    const std::string expected{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+    std::istringstream want(expected);
+    std::istringstream got(hashes);
+    int differences = 0;
+    while (want || got) {
+        std::string a;
+        std::string b;
+        const bool more_wanted = static_cast<bool>(std::getline(want, a));
+        const bool more_got = static_cast<bool>(std::getline(got, b));
+        if ((more_wanted || more_got) && a != b) {
+            std::println("expected: {}\n     got: {}", a, b);
+            ++differences;
+        }
+    }
+    std::println("{}", differences == 0 ? "all golden hashes match" : std::format("{} differences", differences));
+    return differences == 0;
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
     const std::span<char*> args(argv, static_cast<std::size_t>(argc));
-    const auto [check, usage, hint_directory, cache_directory, prepare] = parse_options(args);
+    const auto [check, usage, hint_directory, cache_directory, prepare, reference] = parse_options(args);
     if (usage) {
-        std::println(
-            stderr,
-            "usage: sci-golden-hashes <game> <file> [--check] [--hints <directory>] [--cache <directory> [--prepare]]");
+        std::println(stderr, "usage: sci-golden-hashes <game> <file> [--check | --reference] [--hints <directory>] "
+                             "[--cache <directory> [--prepare]]");
         return 2;
     }
     sci::tools::install_stderr_log();
     const auto manager = sci::tools::open_game(args[1]);
     if (!manager) {
         return 1;
+    }
+    if (reference) {
+        return compare_all_with_reference(*manager, hint_directory, args[2]) ? 0 : 1;
     }
     sci::platform::ThreadExecutor executor;
     std::optional<sci::platform::AnalysisCache> cache;
@@ -251,21 +349,5 @@ int main(int argc, char** argv) {
         out << hashes;
         return out ? 0 : 1;
     }
-    std::ifstream in(path);
-    const std::string expected{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
-    std::istringstream want(expected);
-    std::istringstream got(hashes);
-    int differences = 0;
-    while (want || got) {
-        std::string a;
-        std::string b;
-        const bool more_wanted = static_cast<bool>(std::getline(want, a));
-        const bool more_got = static_cast<bool>(std::getline(got, b));
-        if ((more_wanted || more_got) && a != b) {
-            std::println("expected: {}\n     got: {}", a, b);
-            ++differences;
-        }
-    }
-    std::println("{}", differences == 0 ? "all golden hashes match" : std::format("{} differences", differences));
-    return differences == 0 ? 0 : 1;
+    return matches_file(path, hashes) ? 0 : 1;
 }

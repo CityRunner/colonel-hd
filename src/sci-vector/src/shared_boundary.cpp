@@ -6,10 +6,15 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <map>
+#include <memory>
+#include <optional>
 #include <set>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace sci::vector::detail {
 
@@ -121,11 +126,7 @@ double pseudo_angle(Vec2 d) {
     return d.y < 0.0 ? 4.0 + p : p;
 }
 
-struct Bounds {
-    double x0, y0, x1, y1;
-
-    [[nodiscard]] bool meets(const Bounds& o) const { return x0 <= o.x1 && o.x0 <= x1 && y0 <= o.y1 && o.y0 <= y1; }
-};
+using Bounds = CourseBox;
 
 Bounds box_of(const std::vector<Vec2>& points) {
     Bounds b{.x0 = points.front().x, .y0 = points.front().y, .x1 = points.front().x, .y1 = points.front().y};
@@ -233,9 +234,39 @@ std::optional<std::vector<Vec2>> push_off(const std::vector<Vec2>& course, const
 
 } // namespace
 
-SharedBoundary::SharedBoundary(const Arrangement& arrangement, const std::vector<FittedChain>& fitted)
-    : arrangement_(&arrangement), base_(arrangement.sources.size()), moved_(arrangement.vertices.size()),
-      overrides_(arrangement.sources.size()) {
+std::shared_ptr<const SharedBoundary::Index> SharedBoundary::make_index(const Arrangement& arrangement) {
+    auto index = std::make_shared<Index>();
+    index->points.reserve(arrangement.vertices.size());
+    for (const core::RationalPoint& vertex : arrangement.vertices) {
+        index->points.push_back(to_picture(vertex));
+    }
+    for (std::size_t v = 0; v < index->points.size(); ++v) {
+        index->by_x.push_back(v);
+    }
+    std::ranges::stable_sort(index->by_x, {}, [&](std::size_t v) { return index->points[v].x; });
+    index->leaving.resize(arrangement.vertices.size());
+    for (std::size_t h = 0; h < arrangement.half_edges.size(); ++h) {
+        index->leaving[static_cast<std::size_t>(arrangement.half_edges[h].origin)].push_back(h);
+    }
+    for (std::size_t e = 0; e < arrangement.sources.size(); ++e) {
+        const std::int32_t source = arrangement.sources[e];
+        if (source >= 0) {
+            const auto s = static_cast<std::size_t>(source);
+            if (index->of_source.size() <= s) {
+                index->of_source.resize(s + 1);
+            }
+            index->of_source[s].push_back(e);
+        } else if (source == shared_source) {
+            index->shared.push_back(e);
+        }
+    }
+    return index;
+}
+
+SharedBoundary::SharedBoundary(const Arrangement& arrangement, const std::vector<FittedChain>& fitted,
+                               Analysis analysis)
+    : arrangement_(&arrangement), analysis_(analysis), base_(arrangement.sources.size()),
+      moved_(arrangement.vertices.size()), overrides_(arrangement.sources.size()) {
     for (const FittedChain& chain : fitted) {
         for (std::size_t i = 0; i < chain.edges.size(); ++i) {
             std::vector<Vec2> piece = chain.pieces[i];
@@ -254,6 +285,13 @@ SharedBoundary::SharedBoundary(const Arrangement& arrangement, const std::vector
         }
     }
     course_ = base_;
+    if (analysis_ == Analysis::Fast) {
+        index_ = make_index(arrangement);
+        boxes_.reserve(course_.size());
+        for (const std::vector<Vec2>& course : course_) {
+            boxes_.push_back(box_of(course));
+        }
+    }
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity): one shape's placement and its checks share its state.
@@ -261,7 +299,44 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
     const Arrangement& arr = *arrangement_;
     const std::size_t edge_count = arr.sources.size();
     const auto origin = [&](std::size_t h) { return static_cast<std::size_t>(arr.half_edges[h].origin); };
-    const auto position = [&](std::size_t v) { return moved_[v] ? *moved_[v] : to_picture(arr.vertices[v]); };
+    // The fast analysis's lookups (docs/hd-pipeline.md, "Room entry"); the
+    // reference scans every vertex and half-edge. Both visit the same
+    // vertices and half-edges in the same (ascending) order.
+    const Index* index = index_.get();
+    const auto point_of = [&](std::size_t v) {
+        return index != nullptr ? index->points[v] : to_picture(arr.vertices[v]);
+    };
+    const auto position = [&](std::size_t v) { return moved_[v] ? *moved_[v] : point_of(v); };
+    // The half-edges leaving a vertex.
+    const auto leaving_from = [&](std::size_t v) {
+        if (index != nullptr) {
+            return index->leaving[v];
+        }
+        std::vector<std::size_t> found;
+        for (std::size_t h = 0; h < arr.half_edges.size(); ++h) {
+            if (origin(h) == v) {
+                found.push_back(h);
+            }
+        }
+        return found;
+    };
+    // The vertices whose points may lie within same_point of p: all for the
+    // reference, those with x within same_point for the fast analysis.
+    const auto vertices_near = [&](Vec2 p) {
+        std::vector<std::size_t> found;
+        if (index == nullptr) {
+            for (std::size_t v = 0; v < arr.vertices.size(); ++v) {
+                found.push_back(v);
+            }
+            return found;
+        }
+        const auto first = std::ranges::lower_bound(index->by_x, p.x - same_point, {},
+                                                    [&](std::size_t v) { return index->points[v].x; });
+        for (auto it = first; it != index->by_x.end() && index->points[*it].x <= p.x + same_point; ++it) {
+            found.push_back(*it);
+        }
+        return found;
+    };
 
     std::map<std::size_t, Vec2> placed;                  // Vertex -> its new point (this shape).
     std::map<std::size_t, std::vector<Vec2>> new_course; // Edge -> its new course (this shape).
@@ -275,8 +350,13 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
             continue;
         }
         const bool reversed = distance(line.piece.back(), line.from) < distance(line.piece.front(), line.from);
-        for (std::size_t v = 0; v < arr.vertices.size(); ++v) {
-            const Vec2 p = to_picture(arr.vertices[v]);
+        std::vector<std::size_t> near = vertices_near(line.from);
+        std::ranges::move(vertices_near(line.to), std::back_inserter(near));
+        std::ranges::stable_sort(near);
+        const auto [last, end] = std::ranges::unique(near);
+        near.erase(last, end);
+        for (const std::size_t v : near) {
+            const Vec2 p = point_of(v);
             if (distance(p, line.from) < same_point) {
                 ends.try_emplace(v, reversed ? line.piece.back() : line.piece.front());
             } else if (distance(p, line.to) < same_point) {
@@ -299,12 +379,23 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         const auto along = [&](Vec2 p) { return (((p.x - a.x) * (b.x - a.x)) + ((p.y - a.y) * (b.y - a.y))) / len2; };
         const auto on_line = [&](Vec2 p) { return std::abs(cross(a, b, p)) / std::sqrt(len2) < same_point; };
         // The line's edges: its own, and those it shares with lines over it.
-        std::vector<std::size_t> edges;
-        for (std::size_t e = 0; e < edge_count; ++e) {
+        const auto is_line_edge = [&](std::size_t e) {
             const std::int32_t source = arr.sources[e];
-            if (source == line.source || (source == shared_source && on_line(to_picture(arr.vertices[origin(2 * e)])) &&
-                                          on_line(to_picture(arr.vertices[origin((2 * e) + 1)])))) {
-                edges.push_back(e);
+            return source == line.source || (source == shared_source && on_line(point_of(origin(2 * e))) &&
+                                             on_line(point_of(origin((2 * e) + 1))));
+        };
+        std::vector<std::size_t> edges;
+        if (index != nullptr && line.source >= 0) {
+            if (std::cmp_less(line.source, index->of_source.size())) {
+                edges = index->of_source[static_cast<std::size_t>(line.source)];
+            }
+            std::ranges::copy_if(index->shared, std::back_inserter(edges), is_line_edge);
+            std::ranges::stable_sort(edges);
+        } else {
+            for (std::size_t e = 0; e < edge_count; ++e) {
+                if (is_line_edge(e)) {
+                    edges.push_back(e);
+                }
             }
         }
         if (edges.empty() || len2 == 0.0) {
@@ -321,7 +412,7 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         // point already set (a line end of the shape, a crossing with an
         // earlier line, an earlier shape) is kept if it lies on the piece.
         const auto place = [&](std::size_t v, bool allow_slide) -> std::optional<OnPiece> {
-            const Vec2 p = to_picture(arr.vertices[v]);
+            const Vec2 p = point_of(v);
             const double t = along(p);
             std::optional<Vec2> fixed = moved_[v];
             if (const auto found = placed.find(v); found != placed.end()) {
@@ -353,8 +444,8 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
             if (allow_slide) {
                 // The directions of the other edges here.
                 std::vector<Vec2> others;
-                for (std::size_t h = 0; h < arr.half_edges.size(); ++h) {
-                    if (origin(h) == v && !line_edges.contains(h / 2)) {
+                for (const std::size_t h : leaving_from(v)) {
+                    if (!line_edges.contains(h / 2)) {
                         const core::IntPoint d = arr.half_edges[h].direction;
                         others.push_back(Vec2{.x = static_cast<double>(d.x), .y = static_cast<double>(d.y)});
                     }
@@ -373,7 +464,7 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         std::vector<std::pair<double, std::size_t>> by_t;
         by_t.reserve(vertices.size());
         for (const std::size_t v : vertices) {
-            by_t.emplace_back(along(to_picture(arr.vertices[v])), v);
+            by_t.emplace_back(along(point_of(v)), v);
         }
         std::ranges::stable_sort(by_t);
         std::map<std::size_t, OnPiece> found_at;
@@ -406,7 +497,7 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         for (const std::size_t e : edges) {
             std::size_t lo = origin(2 * e);
             std::size_t hi = origin((2 * e) + 1);
-            const bool flipped = along(to_picture(arr.vertices[lo])) > along(to_picture(arr.vertices[hi]));
+            const bool flipped = along(point_of(lo)) > along(point_of(hi));
             if (flipped) {
                 std::swap(lo, hi);
             }
@@ -430,8 +521,8 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
 
     // The other edges at moved vertices end at the new points.
     for (const auto& [v, q] : placed) {
-        for (std::size_t h = 0; h < arr.half_edges.size(); ++h) {
-            if (origin(h) != v || own_edges.contains(h / 2)) {
+        for (const std::size_t h : leaving_from(v)) {
+            if (own_edges.contains(h / 2)) {
                 continue;
             }
             const std::size_t e = h / 2;
@@ -464,17 +555,24 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         const auto found = new_course.find(e);
         return found != new_course.end() ? found->second : course_[e];
     };
-    const auto vertex_now = [&](std::size_t v) {
-        const auto found = placed.find(v);
-        return found != placed.end() ? found->second : position(v);
-    };
+    // The box of an edge's course now: the fast analysis keeps the boxes of
+    // the edges this shape does not move.
+    std::vector<bool> is_new(edge_count, false);
+    for (const auto& entry : new_course) {
+        is_new[entry.first] = true;
+    }
+    const auto box_now = [&](std::size_t e) { return index != nullptr && !is_new[e] ? boxes_[e] : box_of(now(e)); };
+    std::vector<bool> is_placed(arr.vertices.size(), false);
+    for (const auto& entry : placed) {
+        is_placed[entry.first] = true;
+    }
 
     // A moved edge that crosses an edge leaving the same vertex at almost
     // the same direction is pushed just off it (at most max_off_piece).
     for (auto& [e, course] : new_course) {
         const Bounds box = box_of(course);
         for (std::size_t f = 0; f < edge_count; ++f) {
-            if (f == e || !box.meets(box_of(now(f))) || !courses_cross(course, now(f))) {
+            if (f == e || !box.meets(box_now(f)) || !courses_cross(course, now(f))) {
                 continue;
             }
             // The shared end, now and before, and the side e lay on.
@@ -518,7 +616,7 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
     // No moved edge crosses another edge.
     std::vector<Bounds> boxes(edge_count);
     for (std::size_t e = 0; e < edge_count; ++e) {
-        boxes[e] = box_of(now(e));
+        boxes[e] = box_now(e);
     }
     for (const auto& [e, course] : new_course) {
         for (std::size_t f = 0; f < edge_count; ++f) {
@@ -533,10 +631,10 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
         swept.insert(swept.end(), course.rbegin(), course.rend());
         const Bounds area = box_of(swept);
         for (std::size_t v = 0; v < arr.vertices.size(); ++v) {
-            if (v == origin(2 * e) || v == origin((2 * e) + 1) || placed.contains(v)) {
+            if (v == origin(2 * e) || v == origin((2 * e) + 1) || is_placed[v]) {
                 continue;
             }
-            const Vec2 p = vertex_now(v);
+            const Vec2 p = position(v);
             if (p.x >= area.x0 && p.x <= area.x1 && p.y >= area.y0 && p.y <= area.y1 && inside(swept, p)) {
                 return "its boundary would pass over another vertex";
             }
@@ -546,10 +644,7 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
     for (const auto& [v, q] : placed) {
         std::vector<std::pair<double, std::size_t>> before;
         std::vector<std::pair<double, std::size_t>> after;
-        for (std::size_t h = 0; h < arr.half_edges.size(); ++h) {
-            if (origin(h) != v) {
-                continue;
-            }
+        for (const std::size_t h : leaving_from(v)) {
             std::vector<Vec2> old_course = course_[h / 2];
             std::vector<Vec2> course = now(h / 2);
             if (h % 2 != 0) {
@@ -577,6 +672,9 @@ std::string SharedBoundary::apply(const std::vector<BoundaryLine>& lines) {
     }
 
     for (auto& [e, course] : new_course) {
+        if (index != nullptr) {
+            boxes_[e] = box_of(course);
+        }
         course_[e] = course;
         overrides_[e] = std::move(course);
     }

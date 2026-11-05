@@ -12,6 +12,7 @@
 #include "sci/vector/hints.hpp"
 #include "sci/vector/scene.hpp"
 
+#include <cstdint>
 #include <span>
 #include <string>
 #include <vector>
@@ -125,12 +126,22 @@ struct BuiltScene {
 // build_scene makes, that is whenever tests/golden/pictures.txt changes.
 inline constexpr std::uint32_t analyser_version = 2;
 
+// How the analysis computes the scene. The fast analysis is the default;
+// the reference is the simple implementation it is checked against (the
+// spec's "optimisations only after measurement": both give the same scene,
+// bit for bit; docs/hd-pipeline.md, "Room entry").
+enum class Analysis : std::uint8_t {
+    Fast,
+    Reference,
+};
+
 // Builds the scene of one plane from the maps and trace of path 1. `hints`
 // holds the hints of each draw_picture call of the trace (by the trace's
 // picture index; null or missing for none). Hints for lines not drawn into
 // this plane are left out; the other plane's scene uses them.
 [[nodiscard]] BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace, Plane plane,
-                                     std::span<const PictureHints* const> hints = {});
+                                     std::span<const PictureHints* const> hints = {},
+                                     Analysis analysis = Analysis::Fast);
 
 #ifdef SCI_DEBUG_HIGHLIGHT
 // Development only (CMake option SCI_DEBUG_HIGHLIGHT, spec section 6.3): the

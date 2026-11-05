@@ -52,6 +52,7 @@ struct Prepared {
     std::int64_t max_x = 0;
     std::int64_t min_y = 0;
     std::int64_t max_y = 0;
+    bool whole = false; // From a to b (or b to a): its points are a + t (b - a), 0 <= t <= 1.
 };
 
 Prepared prepare(const TopoSegment& segment, std::int64_t scale = 1) {
@@ -65,6 +66,9 @@ Prepared prepare(const TopoSegment& segment, std::int64_t scale = 1) {
         .high = std::max(segment.from, segment.to),
     };
     SCI_ASSERT(prepared.low != prepared.high);
+    const RationalPoint a(segment.a);
+    const RationalPoint b(segment.b);
+    prepared.whole = (segment.from == a && segment.to == b) || (segment.from == b && segment.to == a);
     // By value: minmax of temporaries would return dangling references.
     const core::Rational low_x = prepared.low.x();
     const core::Rational high_x = prepared.high.x();
@@ -87,6 +91,35 @@ bool boxes_overlap(const Prepared& s, const Prepared& t) {
 
 bool contains(const Prepared& s, const RationalPoint& p) {
     return !(p < s.low) && !(s.high < p);
+}
+
+// Whether two segments that both run from a to b cannot meet where their
+// lines cross: the crossing is s.a + (along_s / denominator) * s.direction
+// and t.a + (along_t / denominator) * t.direction, outside one of them
+// where a fraction lies outside [0, 1]. Decided without making the point;
+// the caller's result is the same.
+bool crossing_outside(const Prepared& s, const Prepared& t, IntPoint offset, std::int64_t along_s,
+                      std::int64_t denominator) {
+    if (!s.whole || !t.whole) {
+        return false;
+    }
+    const std::int64_t along_t = core::cross(offset, s.direction);
+    const auto within = [&](std::int64_t along) {
+        return denominator > 0 ? along >= 0 && along <= denominator : along <= 0 && along >= denominator;
+    };
+    return !within(along_s) || !within(along_t);
+}
+
+// The point s.a + (along / denominator) * s.direction; at s's ends that is
+// an integer point (in lowest terms already).
+RationalPoint point_on(const Prepared& s, std::int64_t along, std::int64_t denominator) {
+    if (along == 0) {
+        return RationalPoint(s.a);
+    }
+    if (along == denominator) {
+        return RationalPoint(IntPoint{.x = s.a.x + s.direction.x, .y = s.a.y + s.direction.y});
+    }
+    return point_along(s.a, s.direction, along, denominator);
 }
 
 // Adds the points where s and t meet to their split lists.
@@ -112,7 +145,11 @@ void intersect(const Prepared& s, const Prepared& t, std::vector<RationalPoint>&
         return;
     }
     // The point on both lines.
-    const RationalPoint p = point_along(s.a, s.direction, core::cross(offset, t.direction), denominator);
+    const std::int64_t along_s = core::cross(offset, t.direction);
+    if (crossing_outside(s, t, offset, along_s, denominator)) {
+        return;
+    }
+    const RationalPoint p = point_on(s, along_s, denominator);
     if (contains(s, p) && contains(t, p)) {
         s_splits.push_back(p);
         t_splits.push_back(p);
@@ -138,7 +175,66 @@ bool clockwise_before(IntPoint a, IntPoint b) {
     return core::cross(a, b) > 0;
 }
 
-std::vector<Edge> split_into_edges(std::span<const TopoSegment> segments, std::int64_t scale,
+// Intersects every pair of segments whose boxes overlap (the reference).
+void intersect_all_pairs(const std::vector<Prepared>& prepared, std::vector<std::vector<RationalPoint>>& splits) {
+    for (std::size_t i = 0; i < prepared.size(); ++i) {
+        for (std::size_t j = i + 1; j < prepared.size(); ++j) {
+            if (boxes_overlap(prepared[i], prepared[j])) {
+                intersect(prepared[i], prepared[j], splits[i], splits[j]);
+            }
+        }
+    }
+}
+
+// The same pairs, found in a grid of cells (16 pixels square): each segment
+// is listed in the cells its box covers, and a pair whose boxes overlap is
+// met in the cell of their overlap's top left corner only. The split points
+// are put in order afterwards and are in lowest terms, so the order in
+// which pairs are met changes nothing.
+void intersect_pairs_by_cells(const std::vector<Prepared>& prepared, std::int64_t scale,
+                              std::vector<std::vector<RationalPoint>>& splits) {
+    if (prepared.empty()) {
+        return;
+    }
+    const std::int64_t cell = core::checked_mul(32, scale);
+    std::int64_t left = prepared.front().min_x;
+    std::int64_t top = prepared.front().min_y;
+    std::int64_t right = prepared.front().max_x;
+    std::int64_t bottom = prepared.front().max_y;
+    for (const Prepared& p : prepared) {
+        left = std::min(left, p.min_x);
+        top = std::min(top, p.min_y);
+        right = std::max(right, p.max_x);
+        bottom = std::max(bottom, p.max_y);
+    }
+    const auto column = [&](std::int64_t x) { return static_cast<std::size_t>((x - left) / cell); };
+    const auto row = [&](std::int64_t y) { return static_cast<std::size_t>((y - top) / cell); };
+    const std::size_t columns = column(right) + 1;
+    const auto cell_of = [&](std::int64_t x, std::int64_t y) { return (row(y) * columns) + column(x); };
+    std::vector<std::vector<std::size_t>> cells(columns * (row(bottom) + 1));
+    for (std::size_t i = 0; i < prepared.size(); ++i) {
+        for (std::size_t y = row(prepared[i].min_y); y <= row(prepared[i].max_y); ++y) {
+            for (std::size_t x = column(prepared[i].min_x); x <= column(prepared[i].max_x); ++x) {
+                cells[(y * columns) + x].push_back(i);
+            }
+        }
+    }
+    for (std::size_t c = 0; c < cells.size(); ++c) {
+        const std::vector<std::size_t>& here = cells[c]; // Ascending.
+        for (std::size_t k = 0; k < here.size(); ++k) {
+            for (std::size_t m = k + 1; m < here.size(); ++m) {
+                const Prepared& first = prepared[here[k]];
+                const Prepared& second = prepared[here[m]];
+                if (boxes_overlap(first, second) &&
+                    cell_of(std::max(first.min_x, second.min_x), std::max(first.min_y, second.min_y)) == c) {
+                    intersect(first, second, splits[here[k]], splits[here[m]]);
+                }
+            }
+        }
+    }
+}
+
+std::vector<Edge> split_into_edges(std::span<const TopoSegment> segments, std::int64_t scale, Analysis analysis,
                                    std::vector<RationalPoint>& vertices) {
     std::vector<Prepared> prepared;
     prepared.reserve(segments.size());
@@ -149,11 +245,11 @@ std::vector<Edge> split_into_edges(std::span<const TopoSegment> segments, std::i
     for (std::size_t i = 0; i < prepared.size(); ++i) {
         splits[i].push_back(prepared[i].low);
         splits[i].push_back(prepared[i].high);
-        for (std::size_t j = i + 1; j < prepared.size(); ++j) {
-            if (boxes_overlap(prepared[i], prepared[j])) {
-                intersect(prepared[i], prepared[j], splits[i], splits[j]);
-            }
-        }
+    }
+    if (analysis == Analysis::Reference) {
+        intersect_all_pairs(prepared, splits);
+    } else {
+        intersect_pairs_by_cells(prepared, scale, splits);
     }
     for (auto& list : splits) {
         std::ranges::stable_sort(list);
@@ -232,10 +328,10 @@ std::optional<RationalPoint> perpendicular_foot(IntPoint p, const TopoSegment& s
     return foot;
 }
 
-Arrangement build_arrangement(std::span<const TopoSegment> segments, std::int64_t scale) {
+Arrangement build_arrangement(std::span<const TopoSegment> segments, std::int64_t scale, Analysis analysis) {
     SCI_ASSERT(scale >= 1 && scale <= max_scale);
     Arrangement arrangement;
-    const std::vector<Edge> edges = split_into_edges(segments, scale, arrangement.vertices);
+    const std::vector<Edge> edges = split_into_edges(segments, scale, analysis, arrangement.vertices);
     // Back to doubled picture coordinates: dividing by the scale keeps the
     // order of the points and, for points of segments scaled from the
     // doubled grid, gives exactly the points of the unscaled arrangement.

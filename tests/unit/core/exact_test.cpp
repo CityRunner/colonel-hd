@@ -4,6 +4,8 @@
 #include "sci/core/rounding.hpp"
 #include "sci_test.hpp"
 
+#include <array>
+#include <compare>
 #include <cstdint>
 
 using sci::core::IntPoint;
@@ -75,4 +77,26 @@ SCI_TEST(wide_products_compare_exactly) {
     const Rational p(std::int64_t{70368744177664} + 1, std::int64_t{2147483648} - 1);
     const Rational q(std::int64_t{70368744177664} + 3, std::int64_t{2147483648} + 1);
     SCI_CHECK(q < p);
+}
+
+// compare_products takes 64 bits where the factors are small and wide_mul
+// otherwise: the same order either way, also at the 2^31 border.
+SCI_TEST(compared_products_agree_with_wide_products) {
+    using sci::core::compare_products;
+    using sci::core::wide_mul;
+    constexpr std::int64_t border = 2147483648; // 2^31
+    const std::array<std::int64_t, 13> values{
+        0, 1, -1, 7, -7, border - 1, -border + 1, border, -border, border + 1, 46340, -46341, 70368744177664, // 2^46
+    };
+    int disagree = 0;
+    for (const std::int64_t a : values) {
+        for (const std::int64_t b : values) {
+            for (const std::int64_t c : values) {
+                for (const std::int64_t d : values) {
+                    disagree += compare_products(a, b, c, d) == (wide_mul(a, b) <=> wide_mul(c, d)) ? 0 : 1;
+                }
+            }
+        }
+    }
+    SCI_CHECK(disagree == 0);
 }

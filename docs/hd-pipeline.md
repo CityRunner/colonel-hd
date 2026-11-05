@@ -398,7 +398,46 @@ As built (`with_curve`, `enter_curved_shapes` in `build_scene.cpp`):
   of the partition: <reason>" (for the mixed-face rule, the new mixed
   faces' boxes).
 - **Cost.** Each round builds the plane again; room entry of the pictures
-  with such shapes takes 2 to 4 times as long at N = 1 (`docs/hd-quality.md`).
+  with such shapes took 2 to 4 times as long at N = 1. The fast analysis
+  below brings it back to about the pre-curve times (`docs/hd-quality.md`,
+  "Room entry after the speed-up").
+
+### Room entry: the fast analysis and the reference (milestone 10)
+
+`build_scene` takes an `Analysis`: `Fast` (the default, used everywhere)
+or `Reference`, the simple implementation it is checked against (spec:
+optimisations only after measurement, the reference kept for differential
+tests). Both give the same scene and the same report, bit for bit; the
+fast analysis only finds the same things sooner. Measured first
+(`sci-hd-report`, N = 1, a profile per step): most of the time went to
+building arrangements (several per round, each testing every pair of
+segments whose boxes overlap) and to the shared boundary
+(`SharedBoundary::apply` scanned every vertex and half-edge for each
+vertex it moved, and the box of every edge for each edge it moved), not
+to the rounds as such.
+
+| Step | Reference | Fast analysis |
+|---|---|---|
+| Pairs of segments to intersect | every pair, box test | a grid of cells 16 px square; a pair is met in the cell of its boxes' overlap's top left corner only |
+| Partitions | each one built | the last four kept per plane; the same segments at the same scale again (the start of the round after a shape entered, the straight shapes' base) give a copy |
+| The doubled-grid partition a curved shape is checked against | built again on the fine grid | the doubled-grid one already made (segments scaled exactly give the same arrangement, section 9 and its unit test) |
+| Shared boundary: half-edges at a vertex, edges of a line, vertices near a line end | scan of all | indexes made once per arrangement (shared by the copies the relation solver makes) |
+| Shared boundary: boxes of the edges not moved | computed per test | kept per edge, updated when a shape is applied |
+
+Two exact shortcuts serve both: products of factors below 2^31 compare in
+64 bits (`sci::core::compare_products`, `wide_mul` otherwise), and two
+segments that run from their `a` to their `b` and cross outside one of
+them are passed over before the crossing point is made (its fractions
+along both are compared with the denominator); a crossing at a segment's
+end is that end. The rounds, the joint-then-one-by-one entry and the fine
+grid are unchanged: no shape enters differently.
+
+**Differential tests.** `sci-golden-hashes <game> <file> --reference`
+builds both planes of every picture with both analyses and compares the
+scenes (`write_scene`) and the hints' outcomes; the unit test
+`a_steered_oval_builds_the_same_scene_in_both_analyses` does so on a
+synthetic decided ellipse. The golden hashes of every entry are those of
+the build before.
 
 ### Relation solving (milestone 10, A4 A.3)
 

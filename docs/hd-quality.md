@@ -173,6 +173,49 @@ Measured on branch `m10-curved-arrangement` (`docs/hd-pipeline.md`,
   211, 57: 67 -> 138, 58: 74 -> 162, 71: 111 -> 147. Every round builds
   the plane again; not optimised yet. Other pictures as before.
 
+## Room entry after the speed-up (2026-11-05)
+
+Branch `m10-entry-speed` (`docs/hd-pipeline.md`, "Room entry: the fast
+analysis and the reference"). `sci-hd-report --scale 1 --hints hints`,
+release build, best of 3 runs, in ms (path 1, both scenes, the HD frame
+and the priority map; another job shared the machine, load about 1.5):
+
+| Pic | Before curves | Curved shapes entered | Now | Now / before curves |
+|---|---|---|---|---|
+| 10 | 128 | 268 | 127 | 0.99 |
+| 12 | 279 | 612 | 286 | 1.03 |
+| 20 | 114 | 244 | 148 | 1.30 |
+| 42 | 103 | 397 | 161 | 1.56 |
+| 44 | 57 | 196 | 93 | 1.63 |
+| 57 | 67 | 140 | 84 | 1.25 |
+| 58 | 74 | 155 | 83 | 1.12 |
+| 71 | 111 | 148 | 88 | 0.79 |
+
+"Before curves" is the `milestone-10` build before curved shapes entered
+the arrangement (as measured then); "Curved shapes entered" the
+`milestone-10` build this branch starts from, measured with the runs
+above. All 88 pictures: 9722 -> 7407 ms in sum; none is slower than
+before (the arrangement and the shared boundary are faster everywhere).
+
+- **What limits 42 and 44.** Their planes take three rounds (an inner arch
+  entered pushes the lit band beside it off sharing, which enters in the
+  next round), and each round fits the plane's chains again, steers the
+  scene model again and partitions a new topology on the fine grid (a
+  profile of 42's visual scene, all rounds: fitting 21 ms, steering
+  22 ms, partitions 74 ms). Going further
+  needs work done per round to be kept where the topology did not change
+  (the fits of chains away from the curves, the arrangement outside a box
+  around them) with the same edge and vertex numbering; not done.
+- **The reference** (`Analysis::Reference`, the simple implementation)
+  builds the visual scenes of these pictures in 117 to 610 ms (12: 610,
+  42: 344), the fast analysis in 62 to 225 ms (`sci-golden-hashes
+  --reference`, one run).
+- **Output unchanged.** `sci-golden-hashes --reference`: both planes of
+  all 88 pictures identical in both analyses. Golden hashes: all 475
+  entries equal to a run of the `milestone-10` build. `sci-hd-report`
+  report (but the times), round trip, `--changes` and
+  `--smoothing-suspects` byte for byte as before.
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted

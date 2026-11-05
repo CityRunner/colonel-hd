@@ -78,6 +78,18 @@ struct WideProduct {
     return {.hi = static_cast<std::int64_t>(hi), .lo = lo};
 }
 
+// a * b compared with c * d, exactly: in 64 bits where every factor is
+// below 2^31 in magnitude (the products then fit), else with wide_mul.
+[[nodiscard]] constexpr std::strong_ordering compare_products(std::int64_t a, std::int64_t b, std::int64_t c,
+                                                              std::int64_t d) noexcept {
+    constexpr std::int64_t small = 2147483648; // 2^31
+    const auto fits = [](std::int64_t v) { return v > -small && v < small; };
+    if (fits(a) && fits(b) && fits(c) && fits(d)) {
+        return (a * b) <=> (c * d);
+    }
+    return wide_mul(a, b) <=> wide_mul(c, d);
+}
+
 // A rational number num / den with den > 0, in lowest terms, so that equal
 // values have equal representations.
 class Rational {
@@ -104,7 +116,7 @@ public:
     friend constexpr bool operator==(const Rational&, const Rational&) noexcept = default;
 
     friend constexpr std::strong_ordering operator<=>(const Rational& a, const Rational& b) noexcept {
-        return wide_mul(a.num_, b.den_) <=> wide_mul(b.num_, a.den_);
+        return compare_products(a.num_, b.den_, b.num_, a.den_);
     }
 
     friend constexpr Rational operator+(const Rational& a, const Rational& b) noexcept {
@@ -200,10 +212,10 @@ public:
 
     // Ordered by x, then y.
     friend constexpr std::strong_ordering operator<=>(const RationalPoint& a, const RationalPoint& b) noexcept {
-        if (const auto by_x = wide_mul(a.x_, b.den_) <=> wide_mul(b.x_, a.den_); by_x != 0) {
+        if (const auto by_x = compare_products(a.x_, b.den_, b.x_, a.den_); by_x != 0) {
             return by_x;
         }
-        return wide_mul(a.y_, b.den_) <=> wide_mul(b.y_, a.den_);
+        return compare_products(a.y_, b.den_, b.y_, a.den_);
     }
 
 private:
