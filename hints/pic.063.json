@@ -25,15 +25,15 @@
       "type": "window",
       "cell": "A2.4-A3.1",
       "confidence": 900,
-      "label": "the round window in the gable, a ring drawn several lines thick",
+      "label": "the round window in the gable, a ring drawn two lines thick",
       "parts": [
         {
           "id": "round-window-gable-rim",
           "role": "frame",
-          "label": "the outer and inner edge of the rim, whole ovals",
+          "label": "the outer and inner line of the rim, whole ovals",
           "primitives": [
-            {"id": "round-window-gable-outer", "kind": "ellipse", "commands": [103, 102, 101, 100, 99, 98, 97, 106, 107, 109, 110, 111, 113, 114, 115], "points": [[126, 36], [137, 42], [126, 52], [119, 42], [126, 36]]},
-            {"id": "round-window-gable-inner", "kind": "ellipse", "commands": [95, 104, 119, 117, 86, 87, 88, 105, 93, 108, 94, 112, 89, 90, 91, 92, 96], "points": [[126, 37], [137, 43], [128, 51], [119, 45], [126, 37]]}
+            {"id": "round-window-gable-outer", "kind": "ellipse", "commands": [97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 109, 110, 111, 113, 115], "points": [[126, 36], [137, 42], [126, 52], [119, 42], [126, 36]]},
+            {"id": "round-window-gable-inner", "kind": "ellipse", "commands": [86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 104, 108, 112, 114, 117, 119], "points": [[126, 37], [136, 42], [125, 51], [119, 45], [126, 37]]}
           ]
         }
       ],
@@ -50,15 +50,15 @@
       "type": "window",
       "cell": "B3.4-B4.1",
       "confidence": 900,
-      "label": "the round window left of the corner post, a ring drawn several lines thick",
+      "label": "the round window left of the corner post, a ring drawn two lines thick",
       "parts": [
         {
           "id": "round-window-left-rim",
           "role": "frame",
-          "label": "the outer and inner edge of the rim, whole ovals",
+          "label": "the outer and inner line of the rim, whole ovals",
           "primitives": [
-            {"id": "round-window-left-outer", "kind": "ellipse", "commands": [222, 223, 239, 224, 242, 240, 225, 226, 215, 214, 213, 216, 217, 218, 219], "points": [[184, 83], [197, 94], [187, 102], [178, 88], [184, 83]]},
-            {"id": "round-window-left-inner", "kind": "ellipse", "commands": [306, 241, 232, 235, 243, 231, 245, 230, 229, 244, 233, 267, 234, 236, 307, 220, 237, 221, 238, 308], "points": [[183, 84], [196, 93], [186, 101], [178, 93], [183, 84]]}
+            {"id": "round-window-left-outer", "kind": "ellipse", "commands": [213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226], "points": [[184, 83], [197, 94], [187, 102], [178, 88], [184, 83]]},
+            {"id": "round-window-left-inner", "kind": "ellipse", "commands": [229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 267, 306, 307, 308], "points": [[183, 84], [196, 93], [186, 101], [179, 88], [183, 84]]}
           ]
         }
       ],
@@ -75,15 +75,15 @@
       "type": "window",
       "cell": "B4.2",
       "confidence": 900,
-      "label": "the round window right of the corner post, a ring drawn several lines thick",
+      "label": "the round window right of the corner post, a ring drawn two lines thick",
       "parts": [
         {
           "id": "round-window-right-rim",
           "role": "frame",
-          "label": "the outer and inner edge of the rim, whole ovals",
+          "label": "the outer and inner line of the rim, whole ovals",
           "primitives": [
-            {"id": "round-window-right-outer", "kind": "ellipse", "commands": [207, 305, 208, 264, 269, 209, 265, 210, 198, 196, 193, 202, 201, 253, 200, 256, 199, 203, 204, 205, 206], "points": [[228, 93], [242, 104], [232, 113], [223, 100], [228, 93]]},
-            {"id": "round-window-right-inner", "kind": "ellipse", "commands": [263, 250, 197, 249, 251, 248, 247, 252, 254, 255, 257, 266, 258, 262, 259, 261, 260], "points": [[235, 94], [241, 103], [231, 112], [224, 103], [235, 94]]}
+            {"id": "round-window-right-outer", "kind": "ellipse", "commands": [196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 193, 305], "points": [[228, 93], [242, 104], [232, 113], [223, 100], [228, 93]]},
+            {"id": "round-window-right-inner", "kind": "ellipse", "commands": [247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 266], "points": [[233, 95], [241, 103], [231, 112], [224, 103], [233, 95]]}
           ]
         }
       ],
