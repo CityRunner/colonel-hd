@@ -223,7 +223,7 @@ SCI_TEST(hints_read_keep_decisions) {
     SCI_CHECK(!is_open(main) && !keeps_reconstruction(main) && followed_hypothesis(main) == &main.main);
     const ObjectHint flat =
         object(replaced(scene, R"("hypothesis": "keep")", R"("hypothesis": "transom-flat")"), "transom");
-    SCI_CHECK(followed_hypothesis(flat) == &flat.alternatives[0]);
+    SCI_CHECK(followed_hypothesis(flat) == flat.alternatives.data());
     // The decided and certain objects of the example.
     const ObjectHint door = object(scene, "door");
     SCI_CHECK(!is_open(door) && !keeps_reconstruction(door) && followed_hypothesis(door) == &door.main);
@@ -415,7 +415,8 @@ SCI_TEST(relations_stay_as_drawn_only_for_a_main_hypothesis_chosen_over_alternat
     using sci::vector::Decision;
     using sci::vector::Hypothesis;
     using sci::vector::ObjectHint;
-    ObjectHint window{.id = "window", .cell = "B3", .label = "window", .main = {}, .alternatives = {}, .decision = {}};
+    ObjectHint window;
+    window.id = "window";
     window.main.id = "window";
     Hypothesis equal;
     equal.id = "window-equal-panes";
@@ -431,7 +432,7 @@ SCI_TEST(relations_stay_as_drawn_only_for_a_main_hypothesis_chosen_over_alternat
     // The alternative chosen: its relations are solved.
     window.decision->hypothesis = "window-equal-panes";
     SCI_CHECK(!sci::vector::keeps_relations_as_drawn(window));
-    SCI_CHECK(sci::vector::followed_hypothesis(window) == &window.alternatives[0]);
+    SCI_CHECK(sci::vector::followed_hypothesis(window) == window.alternatives.data());
     // Open (alternatives, no decision): nothing is followed at all.
     window.decision.reset();
     SCI_CHECK(!sci::vector::keeps_relations_as_drawn(window) && sci::vector::followed_hypothesis(window) == nullptr);

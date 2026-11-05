@@ -1998,6 +1998,7 @@ bool on_segment(const TopoSegment& segment, const RationalPoint& p) {
 
 // The topology with one curved shape entered, in fine units, or why not.
 // `topology` is in fine units already.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity): one pass over the topology, case by case.
 std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector<TopoSegment>& topology,
                                                                const CurvedShape& shape,
                                                                const std::vector<DrawnLine>& lines,
@@ -2040,6 +2041,7 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
     for (const detail::BoundaryLine& piece : shape.pieces) {
         const DrawnLine& line = lines[static_cast<std::size_t>(piece.source)];
         std::vector<IntPoint> points;
+        points.reserve(piece.piece.size());
         for (const Vec2 p : piece.piece) {
             points.push_back(fine_point(p));
         }
@@ -2099,7 +2101,7 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
             const Vec2 a{.x = static_cast<double>(chord.a.x), .y = static_cast<double>(chord.a.y)};
             const Vec2 d{.x = static_cast<double>(chord.b.x) - a.x, .y = static_cast<double>(chord.b.y) - a.y};
             const double t =
-                std::clamp(((from.x - a.x) * d.x + (from.y - a.y) * d.y) / ((d.x * d.x) + (d.y * d.y)), 0.0, 1.0);
+                std::clamp((((from.x - a.x) * d.x) + ((from.y - a.y) * d.y)) / ((d.x * d.x) + (d.y * d.y)), 0.0, 1.0);
             const Vec2 q{.x = a.x + (t * d.x), .y = a.y + (t * d.y)};
             const double distance = ((q.x - from.x) * (q.x - from.x)) + ((q.y - from.y) * (q.y - from.y));
             if (!best || distance < best_distance) {
@@ -2212,6 +2214,7 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
 // is then in fine units (scale curve_scale). A shape is kept only if the
 // partition gets no more mixed faces or 1x-block pixels. Whether any shape
 // was put in; why each other one was not, in `why`.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity): jointly, then one by one, as for gap hints.
 bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale,
                          const std::vector<CurvedShape>& shapes, const std::vector<DrawnLine>& lines,
                          const std::vector<std::optional<TopoSegment>>& own, const PlaneView& view,
@@ -2243,7 +2246,7 @@ bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale
             }
         }
         if (complete) {
-            if (Partition with = partition(all, view, trace, curve_scale); no_worse(with, current)) {
+            if (const Partition with = partition(all, view, trace, curve_scale); no_worse(with, current)) {
                 for (const CurvedShape& shape : shapes) {
                     for (const std::size_t line : shape.lines) {
                         in_arrangement[line] = Entered::Curve;
@@ -2305,7 +2308,7 @@ void note_curves_not_entered(const std::vector<CurveRefusal>& refusals, SceneSta
     for (const CurveRefusal& refusal : refusals) {
         for (HintOutcome& outcome : stats.applied_hints) {
             if (outcome.picture == refusal.picture && outcome.id == refusal.id &&
-                outcome.detail.find("the faces keep the 3b fit") != std::string::npos) {
+                outcome.detail.contains("the faces keep the 3b fit")) {
                 outcome.detail += std::format("; not a curve of the partition: {}", refusal.reason);
             }
         }
@@ -2465,6 +2468,7 @@ constexpr bool without_stroke_integrity = true;
 constexpr bool without_stroke_integrity = false;
 #endif
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity): the plane's steps in order, with the entry rounds.
 BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace, Plane plane,
                        std::span<const PictureHints* const> hints) {
     BuiltScene built;

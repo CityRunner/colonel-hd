@@ -369,6 +369,7 @@ SCI_TEST(segments_scaled_to_the_fine_grid_give_the_same_vertices) {
         make_segment({.x = 5, .y = 0}, {.x = 11, .y = 13}, 2),
     };
     std::vector<TopoSegment> fine_grid;
+    fine_grid.reserve(doubled_grid.size());
     for (const TopoSegment& s : doubled_grid) {
         fine_grid.push_back(scaled_segment(s.a, s.b, s.source));
     }
@@ -384,6 +385,7 @@ SCI_TEST(segments_scaled_to_the_fine_grid_give_the_same_vertices) {
     }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity): one scene, checked edge by edge and pixel by pixel.
 SCI_TEST(a_curve_crossing_a_straight_edge_splits_it_and_the_faces_keep_their_sides) {
     // A vertical line at x = 20.5 across the frame, and a curve from
     // (5.25, 10.1) to (35.75, 10.1) bulging down to y = 18.1, crossing the
@@ -430,8 +432,9 @@ SCI_TEST(a_curve_crossing_a_straight_edge_splits_it_and_the_faces_keep_their_sid
                 continue;
             }
             const bool below = (y + 0.5) > curve_y;
-            const std::int32_t expected =
-                below ? (x < 20 ? below_left : below_right) : (x < 20 ? above_left : above_right);
+            const std::int32_t left = below ? below_left : above_left;
+            const std::int32_t right = below ? below_right : above_right;
+            const std::int32_t expected = x < 20 ? left : right;
             SCI_CHECK(label_at(labels, x, y) == expected);
         }
     }
