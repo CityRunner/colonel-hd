@@ -52,6 +52,7 @@ struct Prepared {
     std::int64_t max_x = 0;
     std::int64_t min_y = 0;
     std::int64_t max_y = 0;
+    bool whole = false; // From a to b (or b to a): its points are a + t (b - a), 0 <= t <= 1.
 };
 
 Prepared prepare(const TopoSegment& segment, std::int64_t scale = 1) {
@@ -65,6 +66,9 @@ Prepared prepare(const TopoSegment& segment, std::int64_t scale = 1) {
         .high = std::max(segment.from, segment.to),
     };
     SCI_ASSERT(prepared.low != prepared.high);
+    const RationalPoint a(segment.a);
+    const RationalPoint b(segment.b);
+    prepared.whole = (segment.from == a && segment.to == b) || (segment.from == b && segment.to == a);
     // By value: minmax of temporaries would return dangling references.
     const core::Rational low_x = prepared.low.x();
     const core::Rational high_x = prepared.high.x();
@@ -112,7 +116,21 @@ void intersect(const Prepared& s, const Prepared& t, std::vector<RationalPoint>&
         return;
     }
     // The point on both lines.
-    const RationalPoint p = point_along(s.a, s.direction, core::cross(offset, t.direction), denominator);
+    // The point is s.a + (along_s / denominator) * s.direction and
+    // t.a + (along_t / denominator) * t.direction. Where both segments run
+    // from a to b, a fraction outside [0, 1] puts it outside one of them:
+    // that is decided without making the point (the result is the same).
+    const std::int64_t along_s = core::cross(offset, t.direction);
+    if (s.whole && t.whole) {
+        const std::int64_t along_t = core::cross(offset, s.direction);
+        const auto within = [&](std::int64_t along) {
+            return denominator > 0 ? along >= 0 && along <= denominator : along <= 0 && along >= denominator;
+        };
+        if (!within(along_s) || !within(along_t)) {
+            return;
+        }
+    }
+    const RationalPoint p = point_along(s.a, s.direction, along_s, denominator);
     if (contains(s, p) && contains(t, p)) {
         s_splits.push_back(p);
         t_splits.push_back(p);

@@ -2277,7 +2277,11 @@ bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale
         }
     }
     why.clear();
-    Partition current = partition(fine, curve_scale);
+    // Segments scaled exactly give the same arrangement, so the fast
+    // analysis takes the partition of the doubled grid it made already; the
+    // reference makes the one of the fine grid.
+    Partition current = partition.analysis() == Analysis::Fast ? partition(topology, scale)
+                                                                : partition(fine, curve_scale);
     // All together first (one partition), then one by one.
     if (shapes.size() > 1) {
         std::vector<TopoSegment> all = fine;
