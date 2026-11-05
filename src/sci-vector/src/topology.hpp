@@ -22,6 +22,14 @@ namespace sci::vector::detail {
 
 inline constexpr std::int64_t max_coordinate = 1024;
 
+// The finest scale of the arrangement's input (docs/hd-pipeline.md,
+// "Curved shapes in the arrangement"): segments may be given in units of
+// 1 / (2 * scale) picture pixels. At scale 8 coordinates stay below 2^14,
+// directions below 2^15, cross products below 2^31 and intersection
+// numerators below 2^47; comparing two points takes the 128-bit products
+// of sci/core/exact.hpp.
+inline constexpr std::int64_t max_scale = 8;
+
 inline constexpr std::int32_t no_source = -1;
 inline constexpr std::int32_t shared_source = -2; // An edge of several overlapping segments.
 
@@ -71,7 +79,10 @@ struct Arrangement {
     std::int32_t face_count = 0;
 };
 
-[[nodiscard]] Arrangement build_arrangement(std::span<const TopoSegment> segments);
+// The segments are given in units of 1 / (2 * scale) picture pixels
+// (scale 1: doubled coordinates); the vertices are returned in doubled
+// coordinates whatever the scale, so callers read them as always.
+[[nodiscard]] Arrangement build_arrangement(std::span<const TopoSegment> segments, std::int64_t scale = 1);
 
 // The face of every pixel centre of a width x height grid (pixel (x, y) at
 // doubled point (2x + 1, 2y + 1)), row by row; on_edge where the centre lies

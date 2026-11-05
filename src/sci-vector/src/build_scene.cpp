@@ -5,6 +5,7 @@
 #include "curves.hpp"
 #include "relations.hpp"
 #include "scene_model.hpp"
+#include "sci/core/rounding.hpp"
 #include "sci/pic/geometry.hpp"
 #include "sci/vector/raster_1x.hpp"
 #include "shared_boundary.hpp"
@@ -25,6 +26,7 @@
 #include <string_view>
 #include <tuple>
 #include <utility>
+#include <variant>
 
 namespace sci::vector {
 
@@ -868,8 +870,31 @@ struct Partition {
     SceneStats stats;
 };
 
-Partition partition(std::span<const TopoSegment> topology, const PlaneView& view, const pic::DrawTrace& trace) {
-    Partition result{.arrangement = detail::build_arrangement(topology), .faces = {}, .stats = {}};
+// A segment of doubled coordinates in units scale times finer, exactly.
+TopoSegment scaled(const TopoSegment& segment, std::int64_t scale) {
+    if (scale == 1) {
+        return segment;
+    }
+    const auto point = [&](IntPoint p) {
+        return IntPoint{.x = core::checked_mul(p.x, scale), .y = core::checked_mul(p.y, scale)};
+    };
+    const auto rational = [&](const RationalPoint& p) {
+        return RationalPoint(core::checked_mul(p.x_num(), scale), core::checked_mul(p.y_num(), scale), p.den());
+    };
+    return TopoSegment{
+        .a = point(segment.a),
+        .b = point(segment.b),
+        .from = rational(segment.from),
+        .to = rational(segment.to),
+        .source = segment.source,
+    };
+}
+
+// The topology's segments, in units of 1 / (2 * scale) picture pixels
+// (docs/hd-pipeline.md, "Curved shapes in the arrangement").
+Partition partition(std::span<const TopoSegment> topology, const PlaneView& view, const pic::DrawTrace& trace,
+                    std::int64_t scale = 1) {
+    Partition result{.arrangement = detail::build_arrangement(topology, scale), .faces = {}, .stats = {}};
     result.faces.resize(static_cast<std::size_t>(result.arrangement.face_count));
     const std::vector<std::int32_t> labels =
         detail::label_pixel_centres(result.arrangement, picture_width, picture_height);
@@ -886,14 +911,14 @@ bool no_worse(const Partition& candidate, const Partition& base) {
 
 // Partitions the topology, closing the gaps that hints ask for where that
 // keeps the rule: all at once if they keep it together, else one by one.
-Partition close_hinted_gaps(std::vector<TopoSegment> topology, const PlaneHints& hints,
+Partition close_hinted_gaps(std::vector<TopoSegment> topology, std::int64_t scale, const PlaneHints& hints,
                             const std::vector<DrawnLine>& lines, const PlaneView& view, const pic::DrawTrace& trace,
                             SceneStats& stats) {
-    Partition base = partition(topology, view, trace);
+    Partition base = partition(topology, view, trace, scale);
     std::vector<std::pair<const HintGap*, TopoSegment>> candidates;
     for (const HintGap& gap : hints.gaps) {
         if (auto connector = gap_connector(gap, lines)) {
-            candidates.emplace_back(&gap, *connector);
+            candidates.emplace_back(&gap, scaled(*connector, scale));
         } else {
             reject_hint(stats, gap.picture, gap.hint->id, "the lines already touch, or are too far apart");
         }
@@ -905,7 +930,7 @@ Partition close_hinted_gaps(std::vector<TopoSegment> topology, const PlaneHints&
     for (const auto& candidate : candidates) {
         all.push_back(candidate.second);
     }
-    if (Partition closed = partition(all, view, trace); no_worse(closed, base)) {
+    if (Partition closed = partition(all, view, trace, scale); no_worse(closed, base)) {
         stats.hint_gaps += static_cast<int>(candidates.size());
         for (const auto& candidate : candidates) {
             stats.applied_hints.push_back(HintOutcome{
@@ -918,7 +943,7 @@ Partition close_hinted_gaps(std::vector<TopoSegment> topology, const PlaneHints&
     }
     for (const auto& [gap, connector] : candidates) {
         topology.push_back(connector);
-        if (Partition closed = partition(topology, view, trace); no_worse(closed, base)) {
+        if (Partition closed = partition(topology, view, trace, scale); no_worse(closed, base)) {
             base = std::move(closed);
             ++stats.hint_gaps;
             stats.applied_hints.push_back(
@@ -1239,15 +1264,36 @@ Curves fit_with_hints(const detail::Arrangement& arrangement, const std::vector<
 // follow the primitive's shape where the round trip allows it.
 // A straight steered shape the partition cannot take by moving vertices:
 // one segment of the arrangement in place of its lines' segments.
+// How a steered line is in the arrangement: not (its own segment), as one
+// segment of a straight shape, or as chords of a curved shape.
+enum class Entered : std::uint8_t { No, Segment, Curve };
+
 struct StraightShape {
     std::vector<std::size_t> lines;
     IntPoint a; // Doubled picture coordinates of the shape's ends.
     IntPoint b;
 };
 
+// A curved (or off-grid) steered shape the partition cannot take by
+// moving vertices: its pieces enter the arrangement as chords.
+struct CurvedShape {
+    int picture = 0;
+    std::string id; // The primitive's, for the report.
+    std::vector<std::size_t> lines;
+    std::vector<detail::BoundaryLine> pieces; // One per line, as the shared boundary takes them.
+};
+
+// Why a curved shape did not enter the arrangement.
+struct CurveRefusal {
+    int picture = 0;
+    std::string id;
+    std::string reason;
+};
+
 struct SceneModelFits {
     std::vector<bool> steered;                                        // Per line.
     std::vector<StraightShape> straight;                              // Shapes to enter the arrangement.
+    std::vector<CurvedShape> curved;                                  // Shapes to enter as chords.
     std::vector<FittedChain> records;                                 // One per steered primitive.
     std::vector<std::pair<std::size_t, detail::StepCut>> square_ends; // Lines' ends at step corners.
     std::vector<std::pair<std::size_t, pic::ScreenPoint>> inner_ends; // Where the lines of a shape meet.
@@ -1400,7 +1446,7 @@ std::vector<detail::BoundaryLine> boundary_lines(const PendingShape& shape, cons
 
 // Makes the shape the lines' strokes and records it; `why` is why the
 // partition could not take it (empty: the faces share it).
-void apply_shape(PendingShape& shape, int picture, const std::string& why, bool entered,
+void apply_shape(PendingShape& shape, int picture, const std::string& why, std::string_view entered,
                  const std::vector<DrawnLine>& lines, Curves& curves, SceneModelFits& model, SceneStats& stats) {
     const PrimitiveHint& primitive = *shape.primitive;
     // The ends where the shape's lines meet (on or next to another line's
@@ -1437,7 +1483,7 @@ void apply_shape(PendingShape& shape, int picture, const std::string& why, bool 
         .id = primitive.id,
         .detail = why.empty() ? std::format("drawn as its {} (round trip {}), shared by the faces{}",
                                             primitive_name(primitive.kind), shape.result.deviation,
-                                            entered ? " (one segment of the partition)" : "")
+                                            entered)
                               : std::format("drawn as its {} (round trip {}); the faces keep the 3b fit: the shared "
                                             "boundary fails ({})",
                                             primitive_name(primitive.kind), shape.result.deviation, why),
@@ -1482,14 +1528,15 @@ std::optional<StraightShape> straight_shape(const PendingShape& shape) {
 // the partition takes them so, else each on its own, and applies them.
 // How many of them keep the 3b faces (the partition could not take them).
 int share_shapes(std::vector<PendingShape>& shapes, int picture, const std::vector<DrawnLine>& lines,
-                 const std::vector<bool>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
+                 const std::vector<Entered>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
                  SceneModelFits& model, SceneStats& stats) {
     if (shapes.empty()) {
         return 0;
     }
     // Straight shapes already in the arrangement are its boundary.
     const auto entered = [&](const PendingShape& shape) {
-        return std::ranges::all_of(shape.line_of, [&](std::size_t line) { return in_arrangement[line]; });
+        return std::ranges::all_of(shape.line_of,
+                                   [&](std::size_t line) { return in_arrangement[line] != Entered::No; });
     };
     std::vector<std::string> why(shapes.size());
     bool joint = false;
@@ -1513,9 +1560,21 @@ int share_shapes(std::vector<PendingShape>& shapes, int picture, const std::vect
         if (!why[i].empty()) {
             if (auto straight = straight_shape(shapes[i])) {
                 model.straight.push_back(std::move(*straight));
+            } else {
+                model.curved.push_back(CurvedShape{
+                    .picture = picture,
+                    .id = shapes[i].primitive->id,
+                    .lines = shapes[i].line_of,
+                    .pieces = boundary_lines(shapes[i], lines),
+                });
             }
         }
-        apply_shape(shapes[i], picture, why[i], entered(shapes[i]), lines, curves, model, stats);
+        std::string_view note;
+        if (entered(shapes[i])) {
+            note = in_arrangement[shapes[i].line_of.front()] == Entered::Curve ? " (a curve of the partition)"
+                                                                                : " (one segment of the partition)";
+        }
+        apply_shape(shapes[i], picture, why[i], note, lines, curves, model, stats);
     }
     return static_cast<int>(std::ranges::count_if(why, [](const std::string& w) { return !w.empty(); }));
 }
@@ -1702,7 +1761,7 @@ std::vector<std::optional<std::vector<Vec2>>> solve_object(const ObjectHint& obj
 // NOLINTNEXTLINE(readability-function-cognitive-complexity): the solved and unsolved placements share their state.
 void steer_object(const HintLines& find, std::size_t p, const PictureHints& picture, const ObjectHint& object,
                   const std::vector<DrawnLine>& lines, const std::vector<std::vector<std::size_t>>& pixels,
-                  const std::vector<bool>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
+                  const std::vector<Entered>& in_arrangement, Curves& curves, detail::SharedBoundary& boundary,
                   SceneModelFits& model, SceneStats& stats) {
     const Hypothesis* hypothesis = followed_hypothesis(object);
     if (hypothesis == nullptr || is_organic(hypothesis->type)) {
@@ -1835,11 +1894,12 @@ void steer_object(const HintLines& find, std::size_t p, const PictureHints& pict
 
 SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vector<DrawnLine>& lines,
                                     const PlaneView& view, std::span<const PictureHints* const> hints,
-                                    const std::vector<bool>& in_arrangement, Curves& curves,
+                                    const std::vector<Entered>& in_arrangement, Curves& curves,
                                     detail::SharedBoundary& boundary, SceneStats& stats) {
     SceneModelFits model{
         .steered = std::vector<bool>(lines.size(), false),
         .straight = {},
+        .curved = {},
         .records = {},
         .square_ends = {},
         .inner_ends = {},
@@ -1866,7 +1926,7 @@ SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vect
 // Whether any shape was put in.
 bool enter_straight_shapes(std::vector<TopoSegment>& topology, const std::vector<StraightShape>& shapes,
                            const std::vector<DrawnLine>& lines, const PlaneView& view, const pic::DrawTrace& trace,
-                           std::vector<bool>& in_arrangement) {
+                           std::vector<Entered>& in_arrangement) {
     bool entered = false;
     Partition current = partition(topology, view, trace);
     for (const StraightShape& shape : shapes) {
@@ -1899,12 +1959,232 @@ bool enter_straight_shapes(std::vector<TopoSegment>& topology, const std::vector
             topology = std::move(candidate);
             current = std::move(with);
             for (const std::size_t line : shape.lines) {
-                in_arrangement[line] = true;
+                in_arrangement[line] = Entered::Segment;
             }
             entered = true;
         }
     }
     return entered;
+}
+
+// The scale at which curved shapes enter the arrangement: 1/16 original
+// pixel (docs/hd-pipeline.md, "Curved shapes in the arrangement").
+constexpr std::int64_t curve_scale = detail::max_scale;
+
+// The point of the fine grid (units of 1 / (2 * curve_scale) pixels)
+// nearest to a point in picture coordinates.
+IntPoint fine_point(Vec2 p) {
+    constexpr double units = 2.0 * curve_scale;
+    return IntPoint{.x = core::round_half_up(p.x * units), .y = core::round_half_up(p.y * units)};
+}
+
+// Whether the point lies on the segment (exactly).
+bool on_segment(const TopoSegment& segment, const RationalPoint& p) {
+    if (core::orientation(segment.a, segment.b, p) != 0) {
+        return false;
+    }
+    const RationalPoint low = std::min(segment.from, segment.to);
+    const RationalPoint high = std::max(segment.from, segment.to);
+    return !(p < low) && !(high < p);
+}
+
+// The topology with one curved shape entered, in fine units, or why not.
+// `topology` is in fine units already.
+std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector<TopoSegment>& topology,
+                                                               const CurvedShape& shape,
+                                                               const std::vector<DrawnLine>& lines,
+                                                               const std::vector<std::optional<TopoSegment>>& own) {
+    std::vector<bool> mine(lines.size(), false);
+    for (const std::size_t line : shape.lines) {
+        mine[line] = true;
+    }
+    // The shape's old segments (as the topology had them), fine units.
+    std::vector<TopoSegment> old;
+    for (const std::size_t line : shape.lines) {
+        if (own[line]) {
+            old.push_back(scaled(*own[line], curve_scale));
+        }
+    }
+    // The path's ends: line ends not on or next to another line's end of
+    // the shape. They stay exactly where they are.
+    std::vector<pic::ScreenPoint> outer;
+    for (const std::size_t line : shape.lines) {
+        for (const pic::ScreenPoint end : {lines[line].from, lines[line].to}) {
+            const bool inner = std::ranges::any_of(shape.lines, [&](std::size_t other) {
+                return other != line &&
+                       std::ranges::any_of(std::array{lines[other].from, lines[other].to}, [&](pic::ScreenPoint e) {
+                           return std::abs(e.x - end.x) <= 1 && std::abs(e.y - end.y) <= 1;
+                       });
+            });
+            if (!inner) {
+                outer.push_back(end);
+            }
+        }
+    }
+    const auto fine_end = [&](pic::ScreenPoint p) { return scaled(detail::make_segment(doubled(p), {}), curve_scale).a; };
+    const auto is_outer = [&](const RationalPoint& p) {
+        return std::ranges::any_of(outer, [&](pic::ScreenPoint e) { return RationalPoint(fine_end(e)) == p; });
+    };
+    // The chords: each line's piece, its points on the fine grid; an end at
+    // a path end is the pixel centre itself.
+    std::vector<TopoSegment> chords;
+    for (const detail::BoundaryLine& piece : shape.pieces) {
+        const DrawnLine& line = lines[static_cast<std::size_t>(piece.source)];
+        std::vector<IntPoint> points;
+        for (const Vec2 p : piece.piece) {
+            points.push_back(fine_point(p));
+        }
+        if (points.empty()) {
+            return std::string("a piece is empty");
+        }
+        for (IntPoint* end : {&points.front(), &points.back()}) {
+            for (const pic::ScreenPoint e : {line.from, line.to}) {
+                const IntPoint centre_point = fine_end(e);
+                const bool outer_end = std::ranges::find(outer, e) != outer.end();
+                if (outer_end && std::max(std::abs(end->x - centre_point.x), std::abs(end->y - centre_point.y)) <=
+                                     curve_scale) {
+                    *end = centre_point;
+                }
+            }
+        }
+        for (std::size_t k = 0; k + 1 < points.size(); ++k) {
+            if (points[k] != points[k + 1]) {
+                chords.push_back(detail::make_segment(points[k], points[k + 1]));
+            }
+        }
+    }
+    if (chords.empty()) {
+        return std::string("no chords");
+    }
+    const auto on_old = [&](const RationalPoint& p) {
+        return std::ranges::any_of(old, [&](const TopoSegment& segment) { return on_segment(segment, p); });
+    };
+    // The nearest crossing of the segment's line with the chords, to p,
+    // within 2 original pixels.
+    const auto to_curve = [&](const TopoSegment& segment, const RationalPoint& p) -> std::optional<RationalPoint> {
+        std::optional<RationalPoint> best;
+        double best_distance = 0;
+        const Vec2 from = detail::to_picture(p);
+        for (const TopoSegment& chord : chords) {
+            const auto crossing = detail::line_meets_segment(segment.a, segment.b, chord);
+            if (!crossing) {
+                continue;
+            }
+            const Vec2 at = detail::to_picture(*crossing);
+            // Fine units: picture coordinates times curve_scale.
+            const double distance = ((at.x - from.x) * (at.x - from.x)) + ((at.y - from.y) * (at.y - from.y));
+            if (distance <= 4.0 * curve_scale * curve_scale && (!best || distance < best_distance)) {
+                best = crossing;
+                best_distance = distance;
+            }
+        }
+        return best;
+    };
+    std::vector<TopoSegment> result;
+    for (const TopoSegment& segment : topology) {
+        const bool own_line =
+            segment.source >= 0 && std::cmp_less(segment.source, lines.size()) && mine[static_cast<std::size_t>(segment.source)];
+        if (own_line) {
+            // The gap closer's extension at a path end stays, from the
+            // pixel centre on along the line.
+            const DrawnLine& line = lines[static_cast<std::size_t>(segment.source)];
+            for (const auto& [e, at] : {std::pair{line.from, segment.from}, std::pair{line.to, segment.to}}) {
+                const RationalPoint end(fine_end(e));
+                if (std::ranges::find(outer, e) != outer.end() && at != end) {
+                    TopoSegment extension = segment;
+                    extension.from = end;
+                    extension.to = at;
+                    extension.source = detail::no_source;
+                    result.push_back(extension);
+                }
+            }
+            continue;
+        }
+        const bool from_on = on_old(segment.from) && !is_outer(segment.from);
+        const bool to_on = on_old(segment.to) && !is_outer(segment.to);
+        if (!from_on && !to_on) {
+            result.push_back(segment);
+            continue;
+        }
+        if (from_on && to_on) {
+            continue; // A connector between the shape's own lines.
+        }
+        TopoSegment moved = segment;
+        RationalPoint& end = from_on ? moved.from : moved.to;
+        const auto crossing = to_curve(segment, end);
+        if (!crossing) {
+            return std::string("an edge ending on the shape does not reach its curve");
+        }
+        end = *crossing;
+        if (moved.from == moved.to) {
+            continue;
+        }
+        if (core::orientation(moved.a, moved.b, moved.from) != 0 || core::orientation(moved.a, moved.b, moved.to) != 0) {
+            return std::string("an edge ending on the shape does not reach its curve");
+        }
+        result.push_back(moved);
+    }
+    std::ranges::move(chords, std::back_inserter(result));
+    return result;
+}
+
+// Puts each curved shape into the topology as the chords of its pieces
+// (docs/hd-pipeline.md, "Curved shapes in the arrangement"); the topology
+// is then in fine units (scale curve_scale). A shape is kept only if the
+// partition gets no more mixed faces or 1x-block pixels. Whether any shape
+// was put in; why each other one was not, in `why`.
+bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale, const std::vector<CurvedShape>& shapes,
+                         const std::vector<DrawnLine>& lines, const std::vector<std::optional<TopoSegment>>& own,
+                         const PlaneView& view, const pic::DrawTrace& trace, std::vector<Entered>& in_arrangement,
+                         std::vector<CurveRefusal>& why) {
+    SCI_ASSERT(scale == 1);
+    std::vector<TopoSegment> fine;
+    fine.reserve(topology.size());
+    for (const TopoSegment& segment : topology) {
+        fine.push_back(scaled(segment, curve_scale));
+    }
+    Partition current = partition(fine, view, trace, curve_scale);
+    bool entered = false;
+    for (const CurvedShape& shape : shapes) {
+        auto candidate = with_curve(fine, shape, lines, own);
+        if (const auto* reason = std::get_if<std::string>(&candidate)) {
+            why.push_back(CurveRefusal{.picture = shape.picture, .id = shape.id, .reason = *reason});
+            continue;
+        }
+        auto& segments = std::get<std::vector<TopoSegment>>(candidate);
+        Partition with = partition(segments, view, trace, curve_scale);
+        if (!no_worse(with, current)) {
+            why.push_back(CurveRefusal{.picture = shape.picture, .id = shape.id, .reason = std::format("the curve in the partition adds mixed faces or 1x blocks "
+                                                              "({} to {} mixed, {} to {} pixels)",
+                                                              current.stats.mixed_faces, with.stats.mixed_faces,
+                                                              current.stats.fallback_pixels, with.stats.fallback_pixels)});
+            continue;
+        }
+        fine = std::move(segments);
+        current = std::move(with);
+        for (const std::size_t line : shape.lines) {
+            in_arrangement[line] = Entered::Curve;
+        }
+        entered = true;
+    }
+    if (entered) {
+        topology = std::move(fine);
+        scale = curve_scale;
+    }
+    return entered;
+}
+
+// Adds why a curved shape whose faces keep the 3b fit did not enter the
+// arrangement to its report entry.
+void note_curves_not_entered(const std::vector<CurveRefusal>& refusals, SceneStats& stats) {
+    for (const CurveRefusal& refusal : refusals) {
+        for (HintOutcome& outcome : stats.applied_hints) {
+            if (outcome.picture == refusal.picture && outcome.id == refusal.id &&
+                outcome.detail.find("the faces keep the 3b fit") != std::string::npos) {
+                outcome.detail += std::format("; not a curve of the partition: {}", refusal.reason);
+            }
+        }
+    }
 }
 
 // The step corners: each stroke runs on to its end pixel's outer edge and
@@ -2098,15 +2378,18 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     // vertices enters the arrangement as one segment, and the plane is
     // built again (docs/hd-pipeline.md, "The shared boundary").
     const SceneStats before_steering = built.stats;
-    std::vector<bool> in_arrangement(lines.size(), false);
+    std::vector<Entered> in_arrangement(lines.size(), Entered::No);
+    std::int64_t scale = 1;
+    std::vector<CurveRefusal> curve_why;
     for (bool again = plane == Plane::Visual;; again = false) {
-        Partition parts = close_hinted_gaps(topology, plane_hints, lines, view, trace, built.stats);
+        Partition parts = close_hinted_gaps(topology, scale, plane_hints, lines, view, trace, built.stats);
         Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
         // The scene model changes the HD picture only, so the visual plane;
         // a steered shape is the faces' boundary as well as the strokes.
         SceneModelFits model{
             .steered = std::vector<bool>(lines.size(), false),
             .straight = {},
+            .curved = {},
             .records = {},
             .square_ends = {},
             .inner_ends = {},
@@ -2115,11 +2398,18 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
         if (plane == Plane::Visual) {
             model = steer_by_scene_model(trace, lines, view, hints, in_arrangement, curves, boundary, built.stats);
         }
-        if (again && !model.straight.empty() &&
-            enter_straight_shapes(topology, model.straight, lines, view, trace, in_arrangement)) {
-            built.stats = before_steering;
-            continue;
+        if (again) {
+            const bool straight = !model.straight.empty() &&
+                                  enter_straight_shapes(topology, model.straight, lines, view, trace, in_arrangement);
+            const bool curved = !model.curved.empty() && enter_curved_shapes(topology, scale, model.curved, lines,
+                                                                             segments, view, trace, in_arrangement,
+                                                                             curve_why);
+            if (straight || curved) {
+                built.stats = before_steering;
+                continue;
+            }
         }
+        note_curves_not_entered(curve_why, built.stats);
         copy_face_stats(parts.stats, built.stats);
         scene.faces = std::move(parts.faces);
         scene.block_values = block_values(view, trace);

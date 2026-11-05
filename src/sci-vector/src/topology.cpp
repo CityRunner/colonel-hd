@@ -29,8 +29,9 @@ IntPoint primitive_direction(IntPoint d) {
     return result;
 }
 
-bool in_range(IntPoint p) {
-    return std::abs(p.x) <= max_coordinate && std::abs(p.y) <= max_coordinate;
+bool in_range(IntPoint p, std::int64_t scale = 1) {
+    const std::int64_t limit = core::checked_mul(max_coordinate, scale);
+    return std::abs(p.x) <= limit && std::abs(p.y) <= limit;
 }
 
 // The point a + (numerator / denominator) * direction.
@@ -53,8 +54,8 @@ struct Prepared {
     std::int64_t max_y = 0;
 };
 
-Prepared prepare(const TopoSegment& segment) {
-    SCI_ASSERT(segment.a != segment.b && in_range(segment.a) && in_range(segment.b));
+Prepared prepare(const TopoSegment& segment, std::int64_t scale = 1) {
+    SCI_ASSERT(segment.a != segment.b && in_range(segment.a, scale) && in_range(segment.b, scale));
     SCI_ASSERT(core::orientation(segment.a, segment.b, segment.from) == 0);
     SCI_ASSERT(core::orientation(segment.a, segment.b, segment.to) == 0);
     Prepared prepared{
@@ -137,11 +138,12 @@ bool clockwise_before(IntPoint a, IntPoint b) {
     return core::cross(a, b) > 0;
 }
 
-std::vector<Edge> split_into_edges(std::span<const TopoSegment> segments, std::vector<RationalPoint>& vertices) {
+std::vector<Edge> split_into_edges(std::span<const TopoSegment> segments, std::int64_t scale,
+                                   std::vector<RationalPoint>& vertices) {
     std::vector<Prepared> prepared;
     prepared.reserve(segments.size());
     for (const TopoSegment& segment : segments) {
-        prepared.push_back(prepare(segment));
+        prepared.push_back(prepare(segment, scale));
     }
     std::vector<std::vector<RationalPoint>> splits(segments.size());
     for (std::size_t i = 0; i < prepared.size(); ++i) {
@@ -229,9 +231,18 @@ std::optional<RationalPoint> perpendicular_foot(IntPoint p, const TopoSegment& s
     return foot;
 }
 
-Arrangement build_arrangement(std::span<const TopoSegment> segments) {
+Arrangement build_arrangement(std::span<const TopoSegment> segments, std::int64_t scale) {
+    SCI_ASSERT(scale >= 1 && scale <= max_scale);
     Arrangement arrangement;
-    const std::vector<Edge> edges = split_into_edges(segments, arrangement.vertices);
+    const std::vector<Edge> edges = split_into_edges(segments, scale, arrangement.vertices);
+    // Back to doubled picture coordinates: dividing by the scale keeps the
+    // order of the points and, for points of segments scaled from the
+    // doubled grid, gives exactly the points of the unscaled arrangement.
+    if (scale != 1) {
+        for (RationalPoint& vertex : arrangement.vertices) {
+            vertex = RationalPoint(vertex.x_num(), vertex.y_num(), core::checked_mul(vertex.den(), scale));
+        }
+    }
 
     auto& half_edges = arrangement.half_edges;
     half_edges.reserve(2 * edges.size());

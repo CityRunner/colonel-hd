@@ -37,6 +37,47 @@ namespace sci::core {
     return static_cast<int>(value > 0) - static_cast<int>(value < 0);
 }
 
+// The exact product of two 64-bit integers as a 128-bit two's complement
+// value (hi, lo), portable (no compiler extension), for comparisons whose
+// products do not fit 64 bits.
+struct WideProduct {
+    std::int64_t hi = 0;
+    std::uint64_t lo = 0;
+
+    friend constexpr bool operator==(const WideProduct&, const WideProduct&) noexcept = default;
+
+    friend constexpr std::strong_ordering operator<=>(const WideProduct& a, const WideProduct& b) noexcept {
+        if (const auto by_hi = a.hi <=> b.hi; by_hi != 0) {
+            return by_hi;
+        }
+        return a.lo <=> b.lo;
+    }
+};
+
+[[nodiscard]] constexpr WideProduct wide_mul(std::int64_t a, std::int64_t b) noexcept {
+    const bool negative = (a < 0) != (b < 0);
+    // Magnitudes as unsigned values (well defined for INT64_MIN too).
+    const std::uint64_t ua = a < 0 ? (~static_cast<std::uint64_t>(a)) + 1 : static_cast<std::uint64_t>(a);
+    const std::uint64_t ub = b < 0 ? (~static_cast<std::uint64_t>(b)) + 1 : static_cast<std::uint64_t>(b);
+    constexpr std::uint64_t mask = 0xFFFFFFFFU;
+    const std::uint64_t a_lo = ua & mask;
+    const std::uint64_t a_hi = ua >> 32U;
+    const std::uint64_t b_lo = ub & mask;
+    const std::uint64_t b_hi = ub >> 32U;
+    const std::uint64_t lo_lo = a_lo * b_lo;
+    const std::uint64_t hi_lo = a_hi * b_lo;
+    const std::uint64_t lo_hi = a_lo * b_hi;
+    const std::uint64_t hi_hi = a_hi * b_hi;
+    const std::uint64_t middle = (lo_lo >> 32U) + (hi_lo & mask) + (lo_hi & mask);
+    std::uint64_t lo = (middle << 32U) | (lo_lo & mask);
+    std::uint64_t hi = hi_hi + (hi_lo >> 32U) + (lo_hi >> 32U) + (middle >> 32U);
+    if (negative) {
+        lo = ~lo + 1;
+        hi = ~hi + static_cast<std::uint64_t>(lo == 0);
+    }
+    return {.hi = static_cast<std::int64_t>(hi), .lo = lo};
+}
+
 // A rational number num / den with den > 0, in lowest terms, so that equal
 // values have equal representations.
 class Rational {
@@ -63,7 +104,7 @@ public:
     friend constexpr bool operator==(const Rational&, const Rational&) noexcept = default;
 
     friend constexpr std::strong_ordering operator<=>(const Rational& a, const Rational& b) noexcept {
-        return checked_mul(a.num_, b.den_) <=> checked_mul(b.num_, a.den_);
+        return wide_mul(a.num_, b.den_) <=> wide_mul(b.num_, a.den_);
     }
 
     friend constexpr Rational operator+(const Rational& a, const Rational& b) noexcept {
@@ -159,10 +200,10 @@ public:
 
     // Ordered by x, then y.
     friend constexpr std::strong_ordering operator<=>(const RationalPoint& a, const RationalPoint& b) noexcept {
-        if (const auto by_x = checked_mul(a.x_, b.den_) <=> checked_mul(b.x_, a.den_); by_x != 0) {
+        if (const auto by_x = wide_mul(a.x_, b.den_) <=> wide_mul(b.x_, a.den_); by_x != 0) {
             return by_x;
         }
-        return checked_mul(a.y_, b.den_) <=> checked_mul(b.y_, a.den_);
+        return wide_mul(a.y_, b.den_) <=> wide_mul(b.y_, a.den_);
     }
 
 private:
