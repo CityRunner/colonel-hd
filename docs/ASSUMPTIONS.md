@@ -4326,3 +4326,16 @@ left), per changed picture the sheet and plain image.
   (time). **Open.**
 - **Picture 17, the cyan sliver beside the top of the shaft: not
   fixed;** it is the same cause as A1.4 above. **Open.**
+- **Checks** (numbers in `docs/hd-quality.md`, "After the group A
+  follow-ups"): release workflow, 27 of 27 test programs pass (new unit
+  tests: open ellipse and arc over one-pixel gaps, a wider gap refused, a
+  gap a dot bridges, the tolerance member in the parser);
+  `check-hints.py`, `sci-hint-tool check hints`, `check-repo-policy.py`,
+  clang-format and clang-tidy on the changed files clean. Acceptance
+  unchanged (worst 99.993%, 0 failing, 0 untouched line pixels). Golden
+  hashes against a run of the `milestone-10` build (before group D): the
+  8 HD entries of pictures 11 and 16 differ; every other entry and every
+  `original1` entry is unchanged. Shared code changed (small):
+  `scene_model.*`, `build_scene.cpp` (steer input, line check, report),
+  `hints.*`, `raster_1x.*`, `acceptance.*` (an optional `widened` list),
+  `tools/hd-report`. **Finding.**
