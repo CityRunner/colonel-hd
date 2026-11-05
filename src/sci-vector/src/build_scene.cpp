@@ -2009,6 +2009,7 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
     // The path's ends: line ends not on or next to another line's end of
     // the shape. They stay exactly where they are.
     std::vector<pic::ScreenPoint> outer;
+    std::vector<pic::ScreenPoint> inner_ends;
     for (const std::size_t line : shape.lines) {
         for (const pic::ScreenPoint end : {lines[line].from, lines[line].to}) {
             const bool inner = std::ranges::any_of(shape.lines, [&](std::size_t other) {
@@ -2017,9 +2018,7 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
                            return std::abs(e.x - end.x) <= 1 && std::abs(e.y - end.y) <= 1;
                        });
             });
-            if (!inner) {
-                outer.push_back(end);
-            }
+            (inner ? inner_ends : outer).push_back(end);
         }
     }
     const auto fine_end = [&](pic::ScreenPoint p) { return scaled(detail::make_segment(doubled(p), {}), curve_scale).a; };
@@ -2101,6 +2100,14 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
             }
             continue;
         }
+        // The connectors at the lines' inner ends go: those ends are no
+        // longer drawn (as for straight shapes).
+        const auto at_inner_end = [&](const RationalPoint& p) {
+            return std::ranges::any_of(inner_ends, [&](pic::ScreenPoint e) { return RationalPoint(fine_end(e)) == p; });
+        };
+        if (segment.source == detail::no_source && (at_inner_end(segment.from) || at_inner_end(segment.to))) {
+            continue;
+        }
         const bool from_on = on_old(segment.from) && !is_outer(segment.from);
         const bool to_on = on_old(segment.to) && !is_outer(segment.to);
         if (!from_on && !to_on) {
@@ -2114,7 +2121,9 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
         RationalPoint& end = from_on ? moved.from : moved.to;
         const auto crossing = to_curve(segment, end);
         if (!crossing) {
-            return std::string("an edge ending on the shape does not reach its curve");
+            const Vec2 at = detail::to_picture(end);
+            return std::format("the {} ending on the shape at ({:.2f}, {:.2f}) does not reach its curve within 2 px",
+                               segment.source >= 0 ? "line" : "connector", at.x / curve_scale, at.y / curve_scale);
         }
         end = *crossing;
         if (moved.from == moved.to) {
