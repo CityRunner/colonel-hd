@@ -306,3 +306,168 @@ SCI_TEST(the_round_trip_tolerance_is_one_pixel_chebyshev) {
     SCI_CHECK(!sci::vector::within_round_trip_tolerance(row, 20, 22));
     SCI_CHECK(!sci::vector::within_round_trip_tolerance(row, 32, 20));
 }
+
+// Curved shapes in the arrangement (docs/hd-pipeline.md): the arrangement
+// built on the fine grid (scale 8, 1/16 pixel) with chords of a curve.
+namespace {
+
+constexpr std::int64_t fine = sci::vector::detail::max_scale;
+
+TopoSegment scaled_segment(IntPoint a, IntPoint b, std::int32_t source = sci::vector::detail::no_source) {
+    return make_segment({.x = a.x * fine, .y = a.y * fine}, {.x = b.x * fine, .y = b.y * fine}, source);
+}
+
+// A point in picture coordinates on the fine grid.
+IntPoint fine_point(Vec2 p) {
+    return {.x = std::lround(p.x * 2 * fine), .y = std::lround(p.y * 2 * fine)};
+}
+
+// Chords from left to right along y = top + bulge * (1 - u^2), u from -1
+// to 1 (a parabola).
+std::vector<TopoSegment> parabola(double left, double right, double top, double bulge) {
+    std::vector<TopoSegment> chords;
+    const double mid = (left + right) / 2;
+    const double half = (right - left) / 2;
+    constexpr int steps = 32;
+    IntPoint previous{};
+    for (int i = 0; i <= steps; ++i) {
+        const double x = left + ((right - left) * i / steps);
+        const double u = (x - mid) / half;
+        const IntPoint p = fine_point({.x = x, .y = top + (bulge * (1 - (u * u)))});
+        if (i > 0 && p != previous) {
+            chords.push_back(make_segment(previous, p));
+        }
+        previous = p;
+    }
+    return chords;
+}
+
+// A 40 x 30 frame (doubled coordinates, scaled).
+std::vector<TopoSegment> frame() {
+    return {
+        scaled_segment({.x = 0, .y = 0}, {.x = 80, .y = 0}),
+        scaled_segment({.x = 80, .y = 0}, {.x = 80, .y = 60}),
+        scaled_segment({.x = 80, .y = 60}, {.x = 0, .y = 60}),
+        scaled_segment({.x = 0, .y = 60}, {.x = 0, .y = 0}),
+    };
+}
+
+std::int32_t label_at(const std::vector<std::int32_t>& labels, int x, int y) {
+    return labels[(static_cast<std::size_t>(y) * 40) + static_cast<std::size_t>(x)];
+}
+
+} // namespace
+
+SCI_TEST(segments_scaled_to_the_fine_grid_give_the_same_vertices) {
+    // Three lines crossing at rational points: built on the doubled grid
+    // and on the fine grid, the vertices (returned in doubled coordinates),
+    // edges and faces are the same, and convert to the same picture
+    // coordinates bit for bit.
+    const std::vector<TopoSegment> doubled_grid{
+        make_segment({.x = 1, .y = 1}, {.x = 31, .y = 7}, 0),
+        make_segment({.x = 3, .y = 9}, {.x = 25, .y = 0}, 1),
+        make_segment({.x = 5, .y = 0}, {.x = 11, .y = 13}, 2),
+    };
+    std::vector<TopoSegment> fine_grid;
+    for (const TopoSegment& s : doubled_grid) {
+        fine_grid.push_back(scaled_segment(s.a, s.b, s.source));
+    }
+    const Arrangement coarse = build_arrangement(doubled_grid);
+    const Arrangement scaled = build_arrangement(fine_grid, fine);
+    SCI_CHECK(coarse.vertices == scaled.vertices);
+    SCI_CHECK(coarse.face_count == scaled.face_count);
+    SCI_CHECK(coarse.sources == scaled.sources);
+    for (std::size_t v = 0; v < coarse.vertices.size(); ++v) {
+        const Vec2 a = sci::vector::detail::to_picture(coarse.vertices[v]);
+        const Vec2 b = sci::vector::detail::to_picture(scaled.vertices[v]);
+        SCI_CHECK(a.x == b.x && a.y == b.y);
+    }
+}
+
+SCI_TEST(a_curve_crossing_a_straight_edge_splits_it_and_the_faces_keep_their_sides) {
+    // A vertical line at x = 20.5 across the frame, and a curve from
+    // (5.25, 10.1) to (35.75, 10.1) bulging down to y = 18.1, crossing the
+    // line once; the curve's ends join the frame's top by vertical chords.
+    std::vector<TopoSegment> segments = frame();
+    segments.push_back(scaled_segment({.x = 41, .y = 0}, {.x = 41, .y = 60}, 0));
+    const std::vector<TopoSegment> curve = parabola(5.25, 35.75, 10.1, 8.0);
+    segments.insert(segments.end(), curve.begin(), curve.end());
+    segments.push_back(make_segment(fine_point({.x = 5.25, .y = 10.1}), fine_point({.x = 5.25, .y = 0})));
+    segments.push_back(make_segment(fine_point({.x = 35.75, .y = 10.1}), fine_point({.x = 35.75, .y = 0})));
+    const Arrangement arrangement = build_arrangement(segments, fine);
+    // The line is split where the curve crosses it.
+    SCI_CHECK(std::ranges::count(arrangement.sources, 0) == 2);
+    const auto labels = sci::vector::detail::label_pixel_centres(arrangement, 40, 30);
+    const std::int32_t above_left = label_at(labels, 15, 12);
+    const std::int32_t above_right = label_at(labels, 25, 12);
+    const std::int32_t below_left = label_at(labels, 15, 24);
+    const std::int32_t below_right = label_at(labels, 25, 24);
+    SCI_CHECK(above_left >= 0 && above_right >= 0 && below_left >= 0 && below_right >= 0);
+    SCI_CHECK(above_left != above_right && below_left != below_right && above_left != below_left &&
+              above_right != below_right);
+    // The line's part above the curve divides the two upper faces, its part
+    // below the two lower ones.
+    for (std::size_t e = 0; e < arrangement.sources.size(); ++e) {
+        if (arrangement.sources[e] != 0) {
+            continue;
+        }
+        const std::int32_t a = arrangement.half_edges[2 * e].face;
+        const std::int32_t b = arrangement.half_edges[(2 * e) + 1].face;
+        const bool upper = (a == above_left && b == above_right) || (a == above_right && b == above_left);
+        const bool lower = (a == below_left && b == below_right) || (a == below_right && b == below_left);
+        SCI_CHECK(upper || lower);
+    }
+    // Every pixel centre takes the face of its side of the curve and of the
+    // line: no gap, no overlap along the curve.
+    for (int y = 1; y < 29; ++y) {
+        for (int x = 6; x < 35; ++x) {
+            if (x == 20) {
+                continue; // On the line.
+            }
+            const double u = ((x + 0.5) - 20.5) / 15.25;
+            const double curve_y = 10.1 + (8.0 * (1 - (u * u)));
+            if (std::abs((y + 0.5) - curve_y) < 0.1) {
+                continue;
+            }
+            const bool below = (y + 0.5) > curve_y;
+            const std::int32_t expected =
+                below ? (x < 20 ? below_left : below_right) : (x < 20 ? above_left : above_right);
+            SCI_CHECK(label_at(labels, x, y) == expected);
+        }
+    }
+}
+
+SCI_TEST(a_curve_passing_over_a_nearby_line_end_leaves_a_dangling_edge) {
+    // A horizontal line from the frame to x = 20.5 at y = 15.5, and a curve
+    // from top to bottom that passes 0.2 px before the line's end: the
+    // curve crosses the line, and the bit past it has one face on both
+    // sides.
+    std::vector<TopoSegment> segments = frame();
+    segments.push_back(scaled_segment({.x = 0, .y = 31}, {.x = 41, .y = 31}, 0));
+    std::vector<IntPoint> points;
+    for (int i = 0; i <= 16; ++i) {
+        const double y = static_cast<double>(i) * 30.0 / 16.0;
+        const double u = (y - 15.5) / 15.5;
+        points.push_back(fine_point({.x = 20.3 - (1.5 * u * u), .y = y}));
+    }
+    for (std::size_t k = 0; k + 1 < points.size(); ++k) {
+        if (points[k] != points[k + 1]) {
+            segments.push_back(make_segment(points[k], points[k + 1]));
+        }
+    }
+    const Arrangement arrangement = build_arrangement(segments, fine);
+    SCI_CHECK(std::ranges::count(arrangement.sources, 0) == 2);
+    int dangling = 0;
+    int dividing = 0;
+    for (std::size_t e = 0; e < arrangement.sources.size(); ++e) {
+        if (arrangement.sources[e] == 0) {
+            const bool same = arrangement.half_edges[2 * e].face == arrangement.half_edges[(2 * e) + 1].face;
+            dangling += same ? 1 : 0;
+            dividing += same ? 0 : 1;
+        }
+    }
+    SCI_CHECK(dangling == 1 && dividing == 1);
+    const auto labels = sci::vector::detail::label_pixel_centres(arrangement, 40, 30);
+    SCI_CHECK(label_at(labels, 25, 10) == label_at(labels, 25, 20));
+    SCI_CHECK(label_at(labels, 10, 10) != label_at(labels, 10, 20));
+}

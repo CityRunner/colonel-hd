@@ -407,3 +407,32 @@ SCI_TEST(hints_reject_invalid_scene_models) {
     // A valid leap day.
     SCI_CHECK(rejection(replaced(scene, R"("date": "2026-10-30")", R"("date": "2028-02-29")")).empty());
 }
+
+// A.3, the two choices in relation solving (docs/ASSUMPTIONS.md): the
+// customer's choice of the main hypothesis over alternatives keeps the
+// relations unsolved (as drawn); a chosen alternative has them solved.
+SCI_TEST(relations_stay_as_drawn_only_for_a_main_hypothesis_chosen_over_alternatives) {
+    using sci::vector::Decision;
+    using sci::vector::Hypothesis;
+    using sci::vector::ObjectHint;
+    ObjectHint window{.id = "window", .cell = "B3", .label = "window", .main = {}, .alternatives = {}, .decision = {}};
+    window.main.id = "window";
+    Hypothesis equal;
+    equal.id = "window-equal-panes";
+    // Certain (no alternatives, no decision): solved.
+    SCI_CHECK(!sci::vector::keeps_relations_as_drawn(window));
+    // Decided without alternatives (the rhombus): solved.
+    window.decision = Decision{.hypothesis = "window", .date = "2026-11-04", .cell = "B3", .note = ""};
+    SCI_CHECK(!sci::vector::keeps_relations_as_drawn(window));
+    // The main hypothesis chosen over an alternative: as drawn, unsolved.
+    window.alternatives.push_back(equal);
+    SCI_CHECK(sci::vector::keeps_relations_as_drawn(window));
+    SCI_CHECK(sci::vector::followed_hypothesis(window) == &window.main);
+    // The alternative chosen: its relations are solved.
+    window.decision->hypothesis = "window-equal-panes";
+    SCI_CHECK(!sci::vector::keeps_relations_as_drawn(window));
+    SCI_CHECK(sci::vector::followed_hypothesis(window) == &window.alternatives[0]);
+    // Open (alternatives, no decision): nothing is followed at all.
+    window.decision.reset();
+    SCI_CHECK(!sci::vector::keeps_relations_as_drawn(window) && sci::vector::followed_hypothesis(window) == nullptr);
+}
