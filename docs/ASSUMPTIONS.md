@@ -4341,3 +4341,12 @@ pictures 12, 31, 45 and 71, on branch `m10-b3-group-d`. Review images in
   entries); every `original1` entry and every other picture unchanged.
   The analysis cache rebuilds through the scene format version (1 -> 2);
   `analyser_version` is left at 2 for the gate. **Finding.**
+
+## Milestone 10: the customer's finding on picture 41's wallpaper (2026-11-05)
+
+- "there are dots and diamonds in original and only diamonds in hd - must
+  be fixed": the group D rule (the smallest circle brush drawn as a
+  diamond) also turns the wallpaper's dots into diamonds. The original's
+  wallpaper has both: diamonds stay diamonds, and dots stay dots (small
+  round dots of their drawn size). The rule must tell the two apart from
+  what the original pixels show. **Decided (customer).**
