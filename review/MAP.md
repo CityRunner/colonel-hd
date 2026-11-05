@@ -220,7 +220,8 @@ preset or as corpus replays otherwise.
 `check-hints.py`, `run-clang-tidy.sh`, `run-fuzzers.sh`,
 `package-release.sh` (release archives), `ci-minutes.py` (CI cost
 measurement), `gen-trigonometry.py` (generates the sin/cos table of
-glibc values used by sci-vm [not verified which file it writes]).
+glibc values, writing `src/sci-vm/src/trigonometry.{hpp,cpp}`
+(`scripts/gen-trigonometry.py:1`)).
 
 ---
 
@@ -528,4 +529,79 @@ most tools, `tests/README.md`, `hints/README.md`, `THIRD_PARTY.md`.
 Facts found while mapping; no fixes or recommendations here. Severity per
 the brief only where clearly warranted.
 
-OBSERVATIONS_PLACEHOLDER
+1. **CI barely exercises the interpreter.** sci-vm is 59 % of the
+   first-party code but has 38.4 % line / 27.8 % branch coverage in the
+   CI suite; the bytecode loop (`machine.cpp`, 2.5 %), animation, menus,
+   controls, kernel graphics, strings, lists, movement and the GC are at or
+   near 0 % (6.4). `run_deterministic` is in no test binary. The VM's
+   correctness rests on the local, game-dependent checks of 6.3 (scenarios
+   and playthrough against the patched reference ScummVM), which need the
+   customer's game files, a ScummVM checkout at the pinned revision and
+   about 0.8 GB of reference build. A VM regression is not detectable in
+   CI. Severity: **High** (serious risk for any refactoring of sci-vm in
+   iteration 2; the brief's stage 5 safety net depends on these local
+   checks).
+2. **The application layer is untested by CTest.** `main.cpp` (1,207
+   lines: options, `GameHost`, presenter, event loop, audio opening, end
+   state), `viewer.cpp`, `file_store.cpp`, and in sci-platform
+   `hd_pictures.cpp` and `game_files.cpp`, are linked into no test binary;
+   sci-platform as a whole is at 62.3 % lines. The program is checked only
+   by the local `tools/playthrough/program-run.sh` under Xvfb. Severity:
+   Medium.
+3. **The pixel-level safety net covers pictures only.** Golden hashes exist
+   for every picture (HD N=1,2,5,10 and original) and every sound, but
+   are checked locally only; views, fonts, cursors and composed game
+   frames have no golden outputs in the repository (they are compared
+   against ScummVM at 1x by `graphics-compare` and the scenario screens,
+   both local). No severity yet: relevant to the brief's stage 5 ("render
+   ALL resources ... compare pixel-by-pixel").
+4. **`docs/ARCHITECTURE.md` is partly stale** although it claims to be
+   updated at every milestone: header says "State: milestone 4a"
+   (`:4-5`); "Data flow (planned)" (`:75`); sci-platform's dependency list
+   omits sci-audio (`:23`, cf. `src/app/platform/CMakeLists.txt:18`); "app's
+   executor will (milestone 3a)" (`:307`) although `thread_executor.cpp:24`
+   does; logging "`Resources` so far" (`:298`) although `LogCategory::Vm`
+   exists (`log.hpp:26`); the tool list omits `tools/playthrough` and
+   `tools/audio-gaps`. Severity: Low.
+5. **`src/sci-vm/README.md` is stale:** "the music player with a silent
+   driver" and "saving and restoring report failure until the save format
+   of milestone 8" (`:7`, `:11`), while saves (`save_game.cpp`,
+   `k_files.cpp`) and the AdLib/MT-32 devices are implemented. Severity:
+   Low.
+6. **Other comment/doc mismatches:** `cmake/SciThirdParty.cmake:5-6` says
+   SDL3 is for "the audio output of sci-audio", but the audio output is in
+   app (`src/app/src/audio_output.cpp`) and sci-audio does not link SDL3;
+   `docker/run.sh:8` shows `cmake --preset linux-debug`, a preset that does
+   not exist (`CMakePresets.json` has `debug`); `docs/ASSUMPTIONS.md:28`
+   says the repository is private, `:510` says public since 2026-10-22.
+   Severity: Low.
+7. **Declared but unused dependency edges:** sci-pic, sci-view and
+   sci-text declare sci-resource, and sci-render declares sci-view, without
+   including them (1.3). The documented graph therefore overstates
+   coupling and no tool checks it. Severity: Low.
+8. **Dead placeholders:** `component_name()` in `src/sci-audio/src/component.cpp`
+   and `src/sci-vm/src/component.cpp` has no caller (`grep -rn
+   component_name src` finds only the definitions and headers), though
+   `docs/ASSUMPTIONS.md` ("Milestone 0 placeholders") says they are
+   removed once a library has content. Severity: Low.
+9. **Private headers reached by tests.** Five test targets add a library's
+   private `src/` to their include path (1.4), so the "src is private"
+   rule holds for libraries but not for tests; refactoring internals of
+   sci-vm and sci-vector will touch tests too. No severity.
+10. **SPDX headers are checked for `.cpp`/`.hpp` only**
+    (`scripts/check-repo-policy.py:8`, `SOURCE` regex); 15 tracked Python/shell files in
+    `scripts/` and `tools/` have none (e.g. `scripts/check-format.sh`,
+    `tools/reference-scummvm/build.sh`). Severity: Low.
+11. **Vendored-file checksums are recorded but not checked** by any script
+    or CI job (`THIRD_PARTY.md`, `VENDORED.md`; 5). Not verified whether
+    the tree still matches them. No severity.
+12. **Build-mode differences that matter for determinism checks:**
+    `-fwrapv` is applied only to Release/RelWithDebInfo without sanitizers
+    (`cmake/SciCompilerFlags.cmake:91-96`); Debug builds and sanitizer
+    builds have no `-fwrapv`. The draft-PR TSan job runs only the
+    `threads` label; the gate runs all tests under TSan. macOS is not part
+    of the gate (customer decision, `docs/ASSUMPTIONS.md` "Platform
+    priorities"). No severity: facts for later stages.
+13. **Tools without README:** `tools/common`, `tools/graphics-dump`,
+    `tools/resource-dump`, `tools/playthrough` (the last is documented in
+    `docs/playthrough.md`). Severity: Low.
