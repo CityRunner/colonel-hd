@@ -2634,7 +2634,8 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
         // The baseline of milestone 3b's report is measured without the pass
         // (development option SCI_WITHOUT_STROKE_INTEGRITY).
         if (plane == Plane::Visual && !without_stroke_integrity) {
-            const std::vector<detail::StrokeLine> stroke_lines = stroke_lines_of(lines, model, built.stats.decided_lines);
+            const std::vector<detail::StrokeLine> stroke_lines =
+                stroke_lines_of(lines, model, built.stats.decided_lines);
             detail::apply_stroke_integrity(scene.layers, stroke_lines, view.owners, built.stats);
         }
         return built;

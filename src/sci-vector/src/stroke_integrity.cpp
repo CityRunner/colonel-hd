@@ -554,6 +554,21 @@ private:
         record(IntegrityChangeKind::ClippedEnd, i, best_line, end, on_top ? decided_evidence : contact_evidence);
     }
 
+    // The unit normal of the segment a-b on the side of `side`.
+    static Vec2 across_towards(Vec2 a, Vec2 b, Vec2 side) {
+        const Vec2 s = (b - a) * (1 / length(b - a));
+        const Vec2 u{.x = -s.y, .y = s.x};
+        return dot(u, side) < 0 ? u * -1 : u;
+    }
+
+    // Removes the points next to the stroke's end (its front or its back)
+    // that the cut does not keep, keeping the end itself.
+    static void drop_points_past(std::vector<Vec2>& points, bool front, const Cut& cut) {
+        while (points.size() > 2 && !cut.keeps(front ? points[1] : points[points.size() - 2])) {
+            points.erase(front ? points.begin() + 1 : points.end() - 2);
+        }
+    }
+
     // A line end beside a contour, pointing along or away from it: a
     // connector from the end to the contour's nearest point, cut along the
     // contour's near edge.
@@ -579,21 +594,14 @@ private:
         const double radius = lines_[best_line].strokes.front().radius;
         // Across the contour, towards the line's end point.
         const Vec2 towards_end = distance > 0 ? (p - x) * (1 / distance) : Vec2{};
-        const bool under = distance == 0 || !Cut{.point = x + (towards_end * radius), .normal = towards_end * -1}.keeps(
-                                                centre_of(end));
+        const bool under = distance == 0 ||
+                           !Cut{.point = x + (towards_end * radius), .normal = towards_end * -1}.keeps(centre_of(end));
         // The end lies under the contour's stroke. A shape the customer
         // decided stays on top: the line is cut at its near edge, on the
         // side of the line's other end.
         const bool on_top = decided && under && length(b - a) > 0;
-        Vec2 u = towards_end;
-        if (on_top) {
-            const Vec2 s = (b - a) * (1 / length(b - a));
-            u = Vec2{.x = -s.y, .y = s.x};
-            const std::size_t far = end == lines_[i].first() ? lines_[i].last() : lines_[i].first();
-            if (dot(u, centre_of(far) - x) < 0) {
-                u = u * -1;
-            }
-        }
+        const std::size_t far = end == lines_[i].first() ? lines_[i].last() : lines_[i].first();
+        const Vec2 u = on_top ? across_towards(a, b, centre_of(far) - x) : towards_end;
         const Cut cut{.point = x + (u * radius), .normal = u * -1};
         if (!on_top && under) {
             ++stats_->kept_contacts;
@@ -609,10 +617,7 @@ private:
         // its near edge (a fitted edge running on to a junction on the
         // shape) go with the end.
         if (on_top) {
-            auto& points = stroke.points;
-            while (points.size() > 2 && !cut.keeps(front ? points[1] : points[points.size() - 2])) {
-                points.erase(front ? points.begin() + 1 : points.end() - 2);
-            }
+            drop_points_past(stroke.points, front, cut);
         }
         bool only_end = true;
         for (std::size_t k = 0; k < stroke.points.size(); ++k) {

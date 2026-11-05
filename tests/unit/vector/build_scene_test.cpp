@@ -205,7 +205,9 @@ SCI_TEST(the_smallest_circle_brush_is_a_diamond) {
     SCI_CHECK(agrees_outside_band(drawn));
     // The plus at 1x: its 5 pixels, not the box's corners or its fourth column.
     const auto reduced = sci::render::reduce_to_1x(drawn.built.scene);
-    const auto at = [&](int x, int y) { return reduced[(static_cast<std::size_t>(y) * 320) + static_cast<std::size_t>(x)]; };
+    const auto at = [&](int x, int y) {
+        return reduced[(static_cast<std::size_t>(y) * 320) + static_cast<std::size_t>(x)];
+    };
     SCI_CHECK(at(60, 60) == at(59, 60) && at(60, 60) == at(61, 60) && at(60, 59) == at(60, 60));
     SCI_CHECK(at(60, 61) == at(60, 60) && at(60, 60) != at(62, 60) && at(59, 59) != at(60, 60));
     SCI_CHECK(at(61, 61) != at(60, 60));

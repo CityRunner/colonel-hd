@@ -187,9 +187,11 @@ OnTop end_under_a_shape(bool decided) {
     lines[0].decided = decided;
     lines[1].decided = decided;
     OnTop result;
-    result.layers = {stroke(0, {.x = 20.5, .y = 10.5}, {.x = 19.8, .y = 20}),
-                     stroke(1, {.x = 19.8, .y = 20}, {.x = 20.5, .y = 30.5}),
-                     stroke(2, {.x = 10.5, .y = 20.5}, {.x = 19.5, .y = 20.5})};
+    result.layers = {
+        stroke(0, {.x = 20.5, .y = 10.5}, {.x = 19.8, .y = 20}),
+        stroke(1, {.x = 19.8, .y = 20}, {.x = 20.5, .y = 30.5}),
+        stroke(2, {.x = 10.5, .y = 20.5}, {.x = 19.5, .y = 20.5}),
+    };
     sci::vector::detail::apply_stroke_integrity(result.layers, lines, owners, result.stats);
     return result;
 }
