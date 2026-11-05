@@ -31,6 +31,10 @@ constexpr double joined = 0.75;
 // to a spur (original pixels); fitted curves stay closer.
 constexpr double spur_tolerance = 0.5;
 
+// How far inside its end pixel's edge a line keeps its stroke under a
+// decided shape on top (original pixels from the pixel's centre).
+constexpr double end_pixel_inset = 0.45;
+
 // Pixels of a hidden run this far apart along the line belong to one run.
 constexpr double run_gap = 1.5;
 
@@ -533,7 +537,8 @@ private:
         const Cut cut{.point = x + (u * radius), .normal = u * -1};
         // A shape the customer decided stays on top: the end is cut at its
         // near edge even where the end pixel lies under its stroke.
-        const bool on_top = lines_[best_line].decided && !cut.keeps(centre_of(end));
+        const bool on_top =
+            lines_[best_line].decided && !cut.keeps(centre_of(end)) && keeps_end_pixel(lines_[i], end, cut);
         if (!on_top && !cut.keeps(centre_of(end))) {
             ++stats_->kept_contacts;
             record(IntegrityChangeKind::KeptContact, i, best_line, end, on_contour_evidence);
@@ -552,6 +557,19 @@ private:
         stroke.cuts.push_back(cut);
         ++stats_->clipped_ends;
         record(IntegrityChangeKind::ClippedEnd, i, best_line, end, on_top ? decided_evidence : contact_evidence);
+    }
+
+    // Whether the cut keeps part of the line's end pixel: a point just
+    // inside its edge towards the line's other end. A decided shape on top
+    // never takes a line's end pixel from it (spec section 6.4: every line
+    // pixel stays touched by its own stroke).
+    static bool keeps_end_pixel(const Line& line, std::size_t end, const Cut& cut) {
+        const std::size_t far = end == line.first() ? line.last() : line.first();
+        if (far == end) {
+            return false;
+        }
+        const Vec2 towards = centre_of(far) - centre_of(end);
+        return cut.keeps(centre_of(end) + (towards * (end_pixel_inset / length(towards))));
     }
 
     // The unit normal of the segment a-b on the side of `side`.
@@ -603,7 +621,7 @@ private:
         const std::size_t far = end == lines_[i].first() ? lines_[i].last() : lines_[i].first();
         const Vec2 u = on_top ? across_towards(a, b, centre_of(far) - x) : towards_end;
         const Cut cut{.point = x + (u * radius), .normal = u * -1};
-        if (!on_top && under) {
+        if ((!on_top && under) || (on_top && !keeps_end_pixel(lines_[i], end, cut))) {
             ++stats_->kept_contacts;
             record(IntegrityChangeKind::KeptContact, i, best_line, end, on_contour_evidence);
             return;
