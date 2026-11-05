@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 31,
   "pic_sha256": "d823ddbd4a97871369621651e984b1d253b7ae04de2b96ae91451c1ce84b6cfc",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -11,6 +11,364 @@
     {"id": "back-wall", "at": [200, 40], "label": "back wall"},
     {"id": "fireplace", "at": [210, 70], "label": "fireplace"},
     {"id": "side-wall", "at": [40, 60], "label": "side wall"}
+  ],
+  "objects": [
+    {
+      "id": "window-curtain-left",
+      "type": "window",
+      "cell": "A3.1-A3.2",
+      "confidence": 900,
+      "label": "round-topped window with curtain, left",
+      "parts": [
+        {
+          "id": "window-curtain-left-arch",
+          "role": "frame",
+          "label": "inner edge of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-left-arch-inner",
+              "kind": "ellipse",
+              "commands": [
+                441,
+                442,
+                443,
+                444,
+                445,
+                446,
+                447,
+                448,
+                449,
+                450
+              ],
+              "points": [
+                [
+                  173,
+                  19
+                ],
+                [
+                  161,
+                  10
+                ],
+                [
+                  149,
+                  19
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "window-curtain-left-outer",
+          "role": "frame",
+          "label": "outer edge of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-left-arch-outer",
+              "kind": "ellipse",
+              "commands": [
+                491,
+                492,
+                493,
+                494,
+                495,
+                496,
+                497,
+                498,
+                499
+              ],
+              "points": [
+                [
+                  177,
+                  19
+                ],
+                [
+                  160,
+                  7
+                ],
+                [
+                  145,
+                  20
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "window-curtain-left-glazing",
+          "role": "glazing-bar",
+          "label": "lit bead of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-left-arch-lit",
+              "kind": "arc",
+              "commands": [
+                769,
+                770
+              ],
+              "points": [
+                [
+                  155,
+                  11
+                ],
+                [
+                  151,
+                  14
+                ],
+                [
+                  149,
+                  19
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-curtain-left",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A3.1-A3.2",
+        "note": "batch 3 case 6: round-topped curtained window, as batch 2 (pictures 42, 44): the arch half of an ellipse through the drawn springers and crown (no objection)"
+      }
+    },
+    {
+      "id": "window-curtain-right",
+      "type": "window",
+      "cell": "A4.2-A5.1",
+      "confidence": 900,
+      "label": "round-topped window with curtain, right",
+      "parts": [
+        {
+          "id": "window-curtain-right-arch",
+          "role": "frame",
+          "label": "inner edge of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-right-arch-inner",
+              "kind": "ellipse",
+              "commands": [
+                452,
+                453,
+                454,
+                455,
+                456,
+                457,
+                458,
+                459
+              ],
+              "points": [
+                [
+                  272,
+                  19
+                ],
+                [
+                  258,
+                  10
+                ],
+                [
+                  245,
+                  19
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "window-curtain-right-outer",
+          "role": "frame",
+          "label": "outer edge of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-right-arch-outer",
+              "kind": "ellipse",
+              "commands": [
+                506,
+                507,
+                508,
+                509,
+                510,
+                511,
+                512,
+                513
+              ],
+              "points": [
+                [
+                  242,
+                  19
+                ],
+                [
+                  261,
+                  7
+                ],
+                [
+                  276,
+                  19
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "window-curtain-right-glazing",
+          "role": "glazing-bar",
+          "label": "lit bead of the arch",
+          "primitives": [
+            {
+              "id": "window-curtain-right-arch-lit",
+              "kind": "arc",
+              "commands": [
+                771,
+                772
+              ],
+              "points": [
+                [
+                  252,
+                  11
+                ],
+                [
+                  249,
+                  14
+                ],
+                [
+                  246,
+                  19
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-curtain-right",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A4.2-A5.1",
+        "note": "batch 3 case 6: round-topped curtained window, as batch 2 (pictures 42, 44): the arch half of an ellipse through the drawn springers and crown (no objection)"
+      }
+    },
+    {
+      "id": "crossed-spears",
+      "type": "other",
+      "cell": "A3.4-A4.3",
+      "confidence": 900,
+      "label": "two crossed spears over the fireplace",
+      "parts": [
+        {
+          "id": "spear-right-head",
+          "role": "outline",
+          "label": "head of the spear pointing up right",
+          "primitives": [
+            {
+              "id": "spear-right-tip",
+              "kind": "polyline",
+              "commands": [
+                1765,
+                1766,
+                1767
+              ],
+              "points": [
+                [
+                  224,
+                  32
+                ],
+                [
+                  225,
+                  33
+                ],
+                [
+                  229,
+                  30
+                ],
+                [
+                  223,
+                  31
+                ]
+              ],
+              "corners": [
+                {
+                  "point": 1,
+                  "kind": "sharp"
+                },
+                {
+                  "point": 2,
+                  "kind": "sharp"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "spear-left-head",
+          "role": "outline",
+          "label": "head of the spear pointing up left",
+          "primitives": [
+            {
+              "id": "spear-left-tip",
+              "kind": "polyline",
+              "commands": [
+                1770,
+                1771
+              ],
+              "points": [
+                [
+                  190,
+                  30
+                ],
+                [
+                  186,
+                  30
+                ],
+                [
+                  191,
+                  31
+                ]
+              ],
+              "corners": [
+                {
+                  "point": 1,
+                  "kind": "sharp"
+                }
+              ]
+            },
+            {
+              "id": "spear-left-socket",
+              "kind": "polyline",
+              "commands": [
+                1772,
+                1773
+              ],
+              "points": [
+                [
+                  191,
+                  31
+                ],
+                [
+                  190,
+                  33
+                ],
+                [
+                  194,
+                  32
+                ]
+              ],
+              "corners": [
+                {
+                  "point": 1,
+                  "kind": "sharp"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "crossed-spears",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A3-A4",
+        "note": "finding: the spear ends are clean pointed tips (straight sides, sharp points), not zig-zags; the spear is drawn over the wallpaper"
+      }
+    }
   ],
   "chains": [
     {"id": "left-window-arch", "lines": [442, 443, 444, 445, 446, 447, 448], "primitive": "arc", "label": "left window arch"},
