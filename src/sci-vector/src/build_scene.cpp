@@ -1207,7 +1207,8 @@ HintCheck check_hint_chains(const PlaneHints& hints, const Curves& curves, const
 
 Curves fit_with_hints(const detail::Arrangement& arrangement, const std::vector<DrawnLine>& lines,
                       const std::vector<std::optional<TopoSegment>>& segments, const std::vector<int>& owned,
-                      const PlaneView& view, const PlaneHints& hints, SceneStats& stats) {
+                      const PlaneView& view, const PlaneHints& hints, const std::vector<bool>& curve_lines,
+                      SceneStats& stats) {
     std::vector<std::int32_t> hint_of_line(lines.size(), -1);
     std::vector<detail::CurveKind> kinds;
     for (std::size_t h = 0; h < hints.chains.size(); ++h) {
@@ -1225,6 +1226,13 @@ Curves fit_with_hints(const detail::Arrangement& arrangement, const std::vector<
         }
         reject_hint(stats, hints.chains[h].picture, hints.chains[h].hint->id, std::move(reason));
     };
+    // A chain hint on lines of a steered curve in the partition: the
+    // steered shape replaces its fit.
+    for (std::size_t h = 0; h < hints.chains.size(); ++h) {
+        if (std::ranges::any_of(hints.chains[h].lines, [&](std::size_t line) { return curve_lines[line]; })) {
+            drop(h, "its lines are a steered shape, a curve of the partition");
+        }
+    }
     // Each round drops at least one hint, or ends.
     while (true) {
         std::vector<std::int32_t> failed;
@@ -2218,6 +2226,32 @@ bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale
     }
     why.clear();
     Partition current = partition(fine, view, trace, curve_scale);
+    // All together first (one partition), then one by one.
+    if (shapes.size() > 1) {
+        std::vector<TopoSegment> all = fine;
+        bool complete = true;
+        for (const CurvedShape& shape : shapes) {
+            auto candidate = with_curve(all, shape, lines, own);
+            if (auto* segments = std::get_if<std::vector<TopoSegment>>(&candidate)) {
+                all = std::move(*segments);
+            } else {
+                complete = false;
+                break;
+            }
+        }
+        if (complete) {
+            if (Partition with = partition(all, view, trace, curve_scale); no_worse(with, current)) {
+                for (const CurvedShape& shape : shapes) {
+                    for (const std::size_t line : shape.lines) {
+                        in_arrangement[line] = Entered::Curve;
+                    }
+                }
+                topology = std::move(all);
+                scale = curve_scale;
+                return true;
+            }
+        }
+    }
     bool entered = false;
     for (const CurvedShape& shape : shapes) {
         auto candidate = with_curve(fine, shape, lines, own);
@@ -2476,7 +2510,12 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     for (int round = 0;; ++round) {
         const bool again = plane == Plane::Visual && round < max_entry_rounds;
         Partition parts = close_hinted_gaps(topology, scale, plane_hints, lines, view, trace, built.stats);
-        Curves curves = fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, built.stats);
+        std::vector<bool> curve_lines(lines.size(), false);
+        for (std::size_t line = 0; line < lines.size(); ++line) {
+            curve_lines[line] = in_arrangement[line] == Entered::Curve;
+        }
+        Curves curves =
+            fit_with_hints(parts.arrangement, lines, segments, owned, view, plane_hints, curve_lines, built.stats);
         // The scene model changes the HD picture only, so the visual plane;
         // a steered shape is the faces' boundary as well as the strokes.
         SceneModelFits model{
