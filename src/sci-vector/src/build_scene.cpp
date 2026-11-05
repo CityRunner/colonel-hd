@@ -890,17 +890,64 @@ TopoSegment scaled(const TopoSegment& segment, std::int64_t scale) {
     };
 }
 
-// The topology's segments, in units of 1 / (2 * scale) picture pixels
-// (docs/hd-pipeline.md, "Curved shapes in the arrangement").
-Partition partition(std::span<const TopoSegment> topology, const PlaneView& view, const pic::DrawTrace& trace,
-                    std::int64_t scale = 1) {
-    Partition result{.arrangement = detail::build_arrangement(topology, scale), .faces = {}, .stats = {}};
-    result.faces.resize(static_cast<std::size_t>(result.arrangement.face_count));
-    const std::vector<std::int32_t> labels =
-        detail::label_pixel_centres(result.arrangement, picture_width, picture_height);
-    colour_faces(labels, view, trace, result.faces, result.stats);
-    return result;
-}
+// Partitions the topologies of one plane: segments in units of
+// 1 / (2 * scale) picture pixels (docs/hd-pipeline.md, "Curved shapes in
+// the arrangement"). The fast analysis keeps the last partitions it made
+// and gives a copy where the same segments come again at the same scale (a
+// shape entered is partitioned to be checked, and again at the start of
+// the next round; docs/hd-pipeline.md, "Room entry"); the reference makes
+// every one.
+class Partitioner {
+public:
+    Partitioner(const PlaneView& view, const pic::DrawTrace& trace, Analysis analysis)
+        : view_(&view), trace_(&trace), analysis_(analysis) {}
+
+    Partition operator()(std::span<const TopoSegment> topology, std::int64_t scale = 1) {
+        if (analysis_ == Analysis::Fast) {
+            for (const Made& made : made_) {
+                if (made.scale == scale && std::ranges::equal(made.topology, topology)) {
+                    return made.partition;
+                }
+            }
+        }
+        Partition result{
+            .arrangement = detail::build_arrangement(topology, scale, analysis_),
+            .faces = {},
+            .stats = {},
+        };
+        result.faces.resize(static_cast<std::size_t>(result.arrangement.face_count));
+        const std::vector<std::int32_t> labels =
+            detail::label_pixel_centres(result.arrangement, picture_width, picture_height);
+        colour_faces(labels, *view_, *trace_, result.faces, result.stats);
+        if (analysis_ == Analysis::Fast) {
+            if (made_.size() == kept) {
+                made_.erase(made_.begin());
+            }
+            made_.push_back(Made{
+                .topology = std::vector<TopoSegment>(topology.begin(), topology.end()),
+                .scale = scale,
+                .partition = result,
+            });
+        }
+        return result;
+    }
+
+    [[nodiscard]] Analysis analysis() const { return analysis_; }
+
+private:
+    static constexpr std::size_t kept = 4;
+
+    struct Made {
+        std::vector<TopoSegment> topology;
+        std::int64_t scale = 1;
+        Partition partition;
+    };
+
+    const PlaneView* view_;
+    const pic::DrawTrace* trace_;
+    Analysis analysis_;
+    std::vector<Made> made_;
+};
 
 // Whether a partition has no more mixed faces and 1x blocks than another
 // (the rule gap hints must keep).
@@ -912,9 +959,8 @@ bool no_worse(const Partition& candidate, const Partition& base) {
 // Partitions the topology, closing the gaps that hints ask for where that
 // keeps the rule: all at once if they keep it together, else one by one.
 Partition close_hinted_gaps(std::vector<TopoSegment> topology, std::int64_t scale, const PlaneHints& hints,
-                            const std::vector<DrawnLine>& lines, const PlaneView& view, const pic::DrawTrace& trace,
-                            SceneStats& stats) {
-    Partition base = partition(topology, view, trace, scale);
+                            const std::vector<DrawnLine>& lines, Partitioner& partition, SceneStats& stats) {
+    Partition base = partition(topology, scale);
     std::vector<std::pair<const HintGap*, TopoSegment>> candidates;
     for (const HintGap& gap : hints.gaps) {
         if (auto connector = gap_connector(gap, lines)) {
@@ -930,7 +976,7 @@ Partition close_hinted_gaps(std::vector<TopoSegment> topology, std::int64_t scal
     for (const auto& candidate : candidates) {
         all.push_back(candidate.second);
     }
-    if (Partition closed = partition(all, view, trace, scale); no_worse(closed, base)) {
+    if (Partition closed = partition(all, scale); no_worse(closed, base)) {
         stats.hint_gaps += static_cast<int>(candidates.size());
         for (const auto& candidate : candidates) {
             stats.applied_hints.push_back(HintOutcome{
@@ -943,7 +989,7 @@ Partition close_hinted_gaps(std::vector<TopoSegment> topology, std::int64_t scal
     }
     for (const auto& [gap, connector] : candidates) {
         topology.push_back(connector);
-        if (Partition closed = partition(topology, view, trace, scale); no_worse(closed, base)) {
+        if (Partition closed = partition(topology, scale); no_worse(closed, base)) {
             base = std::move(closed);
             ++stats.hint_gaps;
             stats.applied_hints.push_back(
@@ -1933,10 +1979,10 @@ SceneModelFits steer_by_scene_model(const pic::DrawTrace& trace, const std::vect
 // gets no more mixed faces or 1x-block pixels (the rule of gap hints).
 // Whether any shape was put in.
 bool enter_straight_shapes(std::vector<TopoSegment>& topology, const std::vector<StraightShape>& shapes,
-                           const std::vector<DrawnLine>& lines, const PlaneView& view, const pic::DrawTrace& trace,
+                           const std::vector<DrawnLine>& lines, Partitioner& partition,
                            std::vector<Entered>& in_arrangement) {
     bool entered = false;
-    Partition current = partition(topology, view, trace);
+    Partition current = partition(topology);
     for (const StraightShape& shape : shapes) {
         std::vector<bool> own(lines.size(), false);
         std::vector<IntPoint> inner_ends;
@@ -1962,7 +2008,7 @@ bool enter_straight_shapes(std::vector<TopoSegment>& topology, const std::vector
             }
         }
         candidate.push_back(detail::make_segment(shape.a, shape.b));
-        Partition with = partition(candidate, view, trace);
+        Partition with = partition(candidate);
         if (no_worse(with, current)) {
             topology = std::move(candidate);
             current = std::move(with);
@@ -2217,8 +2263,8 @@ std::variant<std::vector<TopoSegment>, std::string> with_curve(const std::vector
 // NOLINTNEXTLINE(readability-function-cognitive-complexity): jointly, then one by one, as for gap hints.
 bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale,
                          const std::vector<CurvedShape>& shapes, const std::vector<DrawnLine>& lines,
-                         const std::vector<std::optional<TopoSegment>>& own, const PlaneView& view,
-                         const pic::DrawTrace& trace, std::vector<Entered>& in_arrangement,
+                         const std::vector<std::optional<TopoSegment>>& own, Partitioner& partition,
+                         std::vector<Entered>& in_arrangement,
                          std::vector<CurveRefusal>& why) {
     std::vector<TopoSegment> fine;
     if (scale == curve_scale) {
@@ -2231,7 +2277,7 @@ bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale
         }
     }
     why.clear();
-    Partition current = partition(fine, view, trace, curve_scale);
+    Partition current = partition(fine, curve_scale);
     // All together first (one partition), then one by one.
     if (shapes.size() > 1) {
         std::vector<TopoSegment> all = fine;
@@ -2246,7 +2292,7 @@ bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale
             }
         }
         if (complete) {
-            if (const Partition with = partition(all, view, trace, curve_scale); no_worse(with, current)) {
+            if (const Partition with = partition(all, curve_scale); no_worse(with, current)) {
                 for (const CurvedShape& shape : shapes) {
                     for (const std::size_t line : shape.lines) {
                         in_arrangement[line] = Entered::Curve;
@@ -2266,7 +2312,7 @@ bool enter_curved_shapes(std::vector<TopoSegment>& topology, std::int64_t& scale
             continue;
         }
         auto& segments = std::get<std::vector<TopoSegment>>(candidate);
-        Partition with = partition(segments, view, trace, curve_scale);
+        Partition with = partition(segments, curve_scale);
         if (!no_worse(with, current)) {
             std::string where;
             for (const Fallback& fallback : with.stats.fallbacks) {
@@ -2470,7 +2516,7 @@ constexpr bool without_stroke_integrity = false;
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity): the plane's steps in order, with the entry rounds.
 BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace, Plane plane,
-                       std::span<const PictureHints* const> hints) {
+                       std::span<const PictureHints* const> hints, Analysis analysis) {
     BuiltScene built;
     Scene& scene = built.scene;
     scene.plane = plane;
@@ -2503,6 +2549,7 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
 
     const PlaneHints plane_hints = resolve_hints(trace, lines, hints, built.stats);
     const std::vector<int> owned = owned_pixels(trace, view);
+    Partitioner partition(view, trace, analysis);
     // A straight steered shape the partition cannot take by moving its
     // vertices enters the arrangement as one segment, and the plane is
     // built again (docs/hd-pipeline.md, "The shared boundary"); a curved
@@ -2516,7 +2563,7 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     std::vector<CurveRefusal> curve_why;
     for (int round = 0;; ++round) {
         const bool again = plane == Plane::Visual && round < max_entry_rounds;
-        Partition parts = close_hinted_gaps(topology, scale, plane_hints, lines, view, trace, built.stats);
+        Partition parts = close_hinted_gaps(topology, scale, plane_hints, lines, partition, built.stats);
         std::vector<bool> curve_lines(lines.size(), false);
         for (std::size_t line = 0; line < lines.size(); ++line) {
             curve_lines[line] = in_arrangement[line] == Entered::Curve;
@@ -2540,10 +2587,10 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
         if (again) {
             // Straight shapes enter the doubled grid, in the first round.
             const bool straight = scale == 1 && !model.straight.empty() &&
-                                  enter_straight_shapes(topology, model.straight, lines, view, trace, in_arrangement);
+                                  enter_straight_shapes(topology, model.straight, lines, partition, in_arrangement);
             const bool curved =
-                !model.curved.empty() && enter_curved_shapes(topology, scale, model.curved, lines, segments, view,
-                                                             trace, in_arrangement, curve_why);
+                !model.curved.empty() && enter_curved_shapes(topology, scale, model.curved, lines, segments, partition,
+                                                             in_arrangement, curve_why);
             if (straight || curved) {
                 built.stats = before_steering;
                 continue;

@@ -138,7 +138,7 @@ bool clockwise_before(IntPoint a, IntPoint b) {
     return core::cross(a, b) > 0;
 }
 
-std::vector<Edge> split_into_edges(std::span<const TopoSegment> segments, std::int64_t scale,
+std::vector<Edge> split_into_edges(std::span<const TopoSegment> segments, std::int64_t scale, Analysis analysis,
                                    std::vector<RationalPoint>& vertices) {
     std::vector<Prepared> prepared;
     prepared.reserve(segments.size());
@@ -149,9 +149,31 @@ std::vector<Edge> split_into_edges(std::span<const TopoSegment> segments, std::i
     for (std::size_t i = 0; i < prepared.size(); ++i) {
         splits[i].push_back(prepared[i].low);
         splits[i].push_back(prepared[i].high);
-        for (std::size_t j = i + 1; j < prepared.size(); ++j) {
-            if (boxes_overlap(prepared[i], prepared[j])) {
-                intersect(prepared[i], prepared[j], splits[i], splits[j]);
+    }
+    if (analysis == Analysis::Reference) {
+        // Every pair whose boxes overlap.
+        for (std::size_t i = 0; i < prepared.size(); ++i) {
+            for (std::size_t j = i + 1; j < prepared.size(); ++j) {
+                if (boxes_overlap(prepared[i], prepared[j])) {
+                    intersect(prepared[i], prepared[j], splits[i], splits[j]);
+                }
+            }
+        }
+    } else {
+        // The same pairs, found by sweeping the boxes from left to right.
+        // The split points are put in order below and are in lowest terms,
+        // so the order in which pairs are met changes nothing.
+        std::vector<std::size_t> by_left(prepared.size());
+        std::iota(by_left.begin(), by_left.end(), std::size_t{0});
+        std::ranges::stable_sort(by_left, {}, [&](std::size_t i) { return prepared[i].min_x; });
+        for (std::size_t k = 0; k < by_left.size(); ++k) {
+            const Prepared& s = prepared[by_left[k]];
+            for (std::size_t m = k + 1; m < by_left.size() && prepared[by_left[m]].min_x <= s.max_x; ++m) {
+                const std::size_t i = std::min(by_left[k], by_left[m]);
+                const std::size_t j = std::max(by_left[k], by_left[m]);
+                if (boxes_overlap(prepared[i], prepared[j])) {
+                    intersect(prepared[i], prepared[j], splits[i], splits[j]);
+                }
             }
         }
     }
@@ -232,10 +254,10 @@ std::optional<RationalPoint> perpendicular_foot(IntPoint p, const TopoSegment& s
     return foot;
 }
 
-Arrangement build_arrangement(std::span<const TopoSegment> segments, std::int64_t scale) {
+Arrangement build_arrangement(std::span<const TopoSegment> segments, std::int64_t scale, Analysis analysis) {
     SCI_ASSERT(scale >= 1 && scale <= max_scale);
     Arrangement arrangement;
-    const std::vector<Edge> edges = split_into_edges(segments, scale, arrangement.vertices);
+    const std::vector<Edge> edges = split_into_edges(segments, scale, analysis, arrangement.vertices);
     // Back to doubled picture coordinates: dividing by the scale keeps the
     // order of the points and, for points of segments scaled from the
     // doubled grid, gives exactly the points of the unscaled arrangement.

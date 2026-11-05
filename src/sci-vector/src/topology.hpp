@@ -12,6 +12,7 @@
 #pragma once
 
 #include "sci/core/exact.hpp"
+#include "sci/vector/build_scene.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -41,6 +42,8 @@ struct TopoSegment {
     core::RationalPoint from;
     core::RationalPoint to;
     std::int32_t source = no_source; // What the segment stands for, for the caller.
+
+    friend bool operator==(const TopoSegment&, const TopoSegment&) = default;
 };
 
 // A segment from a to b.
@@ -81,8 +84,12 @@ struct Arrangement {
 
 // The segments are given in units of 1 / (2 * scale) picture pixels
 // (scale 1: doubled coordinates); the vertices are returned in doubled
-// coordinates whatever the scale, so callers read them as always.
-[[nodiscard]] Arrangement build_arrangement(std::span<const TopoSegment> segments, std::int64_t scale = 1);
+// coordinates whatever the scale, so callers read them as always. The
+// reference tests every pair of segments whose boxes overlap; the fast
+// analysis finds the same pairs by a sweep (the result is the same, bit for
+// bit).
+[[nodiscard]] Arrangement build_arrangement(std::span<const TopoSegment> segments, std::int64_t scale = 1,
+                                            Analysis analysis = Analysis::Fast);
 
 // The face of every pixel centre of a width x height grid (pixel (x, y) at
 // doubled point (2x + 1, 2y + 1)), row by row; on_edge where the centre lies
