@@ -4063,3 +4063,68 @@ speed-up").
   (a line ending beside it was taken by sliding); the entry path is
   covered by the arrangement unit tests of "Curved shapes in the
   arrangement" and by the game-wide differential test. **Open.**
+
+## Milestone 10: the customer's answers to batch 3 and new findings (2026-11-05)
+
+The customer's words (2026-11-05), then how they are read. Each goes into
+the hint files as a decision with its cell reference.
+
+**Batch 3, "will be fixed like ... unless you object"** (cases 1-9): no
+objection; all nine are fixed as listed in batch-3.md. **Decided
+(customer, by not objecting).**
+
+**Batch 3 questions:**
+- 10a: the cottage's round windows are ovals in both pictures 14 and 63.
+- 11a: picture 59's round table top is an ellipse.
+- 12a: picture 43's rug medallions are smooth ovals, the left and right
+  pair mirror-symmetric.
+- 13a: picture 46's rug triangles are symmetric.
+- 14a/a: picture 24's gazebo steps get square tread ends, and the newel
+  knobs are round.
+- 15a "handle too": picture 66's dial rim is a half ellipse with the
+  spokes meeting it, and its handle is smoothed the same way (straight
+  where straight, round where round, as drawn).
+**Decided (customer).**
+
+**New findings** (the customer's words, then the reading):
+- **10, B3.3** "fix small brown line on upper step": a short brown stroke
+  on the upper step that the original does not show as such; to be
+  removed or merged into the step's edge as drawn.
+- **12, B2.2** "halo must be on top": where the tree branch ends on the
+  halo, the halo is drawn over the branch, so the outline is unbroken
+  (the grey notch goes).
+- **20** "Make door arches an oval as well": the door arches are half
+  ellipses, like the window arch (batch 2 case 3).
+- **17, A1 and C1** "Column shapes is crooked in hd": the columns have
+  straight, parallel sides and symmetric capitals and bases. **17, C3.2**
+  "fix grey lines on stairs": the grey lines on the stairs are straight,
+  even and in step with the treads.
+- **22, C3.3** "fix little pink line on red arrow": a stray pink line on
+  the red arrow is removed or put where the original draws it.
+- **31, A3-A4** "Fix spear ends to not look like zig-zags, Spear itself
+  must not be covered by wallpapers": the spear tips are clean pointed
+  shapes (straight sides, sharp points), and the spear is drawn over the
+  wallpaper, never under it (drawing order, A1).
+- **42, B3.4** "fix shape of light from a window on carpet": the patch of
+  window light on the carpet has the window's shape in perspective:
+  straight edges, the bars' shadows straight and parallel.
+- **45** "Change wallpaper ornament to smaller diamonds instead of
+  bigger ovals in hd": the wallpaper's repeated ornament is small diamonds
+  as in the original, not enlarged ovals.
+- **57, A2 and A4** "fix letters "CSA" on glass and make windows look more
+  similar like mirrored except letters, colours and accents": the letters
+  CSA on the stained glass keep their drawn shapes (clean strokes, no
+  blobs); the two stained-glass windows are mirror images in their
+  geometry (frame, panes, medallions), while letters, colours and
+  highlights stay as drawn. **57, B3 and B4** "fix tomb edges": the tomb's
+  edges are straight with sharp corners.
+- **71** "Fix color fills on pipe": the colour areas of the pipe follow
+  its outlines without slivers, gaps or patches of the wrong colour.
+- **85, A1.2** "make frame look sharp as in original": the frame's corners
+  are sharp (as batch 3 case 9).
+**Decided (customer).**
+
+**Milestone 9** "Skip playtest on milestone 9 for now": the customer's
+manual playthrough is deferred. The milestone 9 pull request stays open
+until the customer approves it; nothing else changes. **Decided
+(customer).**
