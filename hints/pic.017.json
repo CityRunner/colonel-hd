@@ -181,6 +181,72 @@
         "cell": "A5.1",
         "note": "batch 3 case 3: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
       }
+    },
+    {
+      "id": "porch-column",
+      "type": "column",
+      "cell": "A1-C1",
+      "confidence": 900,
+      "label": "the round porch column at the left, through the porch roof",
+      "parts": [
+        {
+          "id": "column-shaft",
+          "role": "shaft",
+          "label": "the shaft's sides and the edges of its shading bands",
+          "primitives": [
+            {"id": "column-side-left", "kind": "line", "commands": [1269], "points": [[17, 152], [19, 41]]},
+            {"id": "column-side-right", "kind": "line", "commands": [1271], "points": [[44, 152], [42, 41]]},
+            {"id": "column-band-1", "kind": "line", "commands": [1718], "points": [[21, 42], [20, 153]]},
+            {"id": "column-band-2", "kind": "line", "commands": [1715], "points": [[27, 46], [27, 155]]},
+            {"id": "column-band-3", "kind": "line", "commands": [1748], "points": [[33, 44], [34, 155]]},
+            {"id": "column-band-4", "kind": "line", "commands": [1733], "points": [[38, 42], [39, 154]]}
+          ]
+        },
+        {
+          "id": "column-collar",
+          "role": "capital",
+          "label": "the ring where the column passes the porch roof, the front half of each edge",
+          "primitives": [
+            {"id": "column-collar-top", "kind": "ellipse", "commands": [1475, 1477, 1478, 1476], "points": [[18, 19], [30, 22], [43, 19]]},
+            {"id": "column-collar-bottom", "kind": "ellipse", "commands": [1480, 1481, 1479], "points": [[16, 23], [30, 26], [46, 23]]}
+          ]
+        },
+        {
+          "id": "column-capital",
+          "role": "capital",
+          "label": "the lower edge of the capital, the front half of an ellipse",
+          "primitives": [
+            {"id": "column-capital-edge", "kind": "arc", "commands": [1288, 1292, 1290], "points": [[18, 40], [31, 43], [43, 40]]}
+          ]
+        },
+        {
+          "id": "column-base",
+          "role": "base",
+          "label": "the rings of the base, the front half of each",
+          "primitives": [
+            {"id": "column-base-ring-1", "kind": "ellipse", "commands": [1273, 1277, 1276, 1274], "points": [[18, 153], [30, 157], [43, 153]]},
+            {"id": "column-base-ring-2", "kind": "arc", "commands": [1282, 1285, 1284, 1283], "points": [[19, 157], [30, 160], [42, 156]]}
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "kind": "parallel",
+          "items": ["column-side-left", "column-side-right", "column-band-1", "column-band-2", "column-band-3", "column-band-4"]
+        },
+        {
+          "kind": "symmetry",
+          "axis": "vertical",
+          "items": ["column-side-left", "column-side-right"]
+        }
+      ],
+      "decision": {
+        "hypothesis": "porch-column",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A1-C1",
+        "note": "findings after batch 3: A1 and C1, column shapes crooked in HD: straight parallel sides, symmetric capitals and bases"
+      }
     }
   ]
 }
