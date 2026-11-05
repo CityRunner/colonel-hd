@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 16,
   "pic_sha256": "ae8a1d02491b1604db00bc5c2034593196b3b1c6248dc879f67396bf555f3163",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -41,5 +41,162 @@
     {"id": "dead-shrub-twig-7", "lines": [619, 620, 621, 622], "primitive": "spline", "label": "dead shrub twig", "uncertain": true},
     {"id": "dead-shrub-twig-8", "lines": [627, 628, 629], "primitive": "spline", "label": "dead shrub twig", "uncertain": true},
     {"id": "dead-shrub-twig-9", "lines": [639, 640, 641, 642, 643], "primitive": "spline", "label": "dead shrub twig", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "lamp-halo-left",
+      "type": "other",
+      "cell": "A2.4-B2.2",
+      "confidence": 900,
+      "label": "the pale yellow light halo of the lamp left of the door",
+      "parts": [
+        {
+          "id": "lamp-halo-left-outline",
+          "role": "highlight",
+          "label": "a whole oval around the lamp",
+          "primitives": [
+            {"id": "lamp-halo-left-oval", "kind": "ellipse", "commands": [1595, 1594, 1586, 1578, 1600, 1606, 1601, 1581, 1589, 1596, 1597, 1588, 1580, 1603, 1607, 1602, 1579, 1587], "points": [[115, 44], [126, 58], [116, 73], [105, 59], [115, 44]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "lamp-halo-left",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A2.4-B2.2",
+        "note": "batch 3 case 1: the halo a smooth oval, its yellow area included, as picture 12's halo (no objection)"
+      }
+    },
+    {
+      "id": "lamp-halo-right",
+      "type": "other",
+      "cell": "A4.3-B4.1",
+      "confidence": 900,
+      "label": "the pale yellow light halo of the lamp right of the door",
+      "parts": [
+        {
+          "id": "lamp-halo-right-outline",
+          "role": "highlight",
+          "label": "a whole oval around the lamp",
+          "primitives": [
+            {"id": "lamp-halo-right-oval", "kind": "ellipse", "commands": [1590, 1591, 1583, 1574, 1573, 1604, 1598, 1577, 1584, 1593, 1592, 1585, 1576, 1599, 1605, 1572, 1575, 1582], "points": [[204, 44], [215, 58], [204, 73], [193, 59], [204, 44]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "lamp-halo-right",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A4.3-B4.1",
+        "note": "batch 3 case 1: the halo a smooth oval, its yellow area included, as picture 12's halo (no objection)"
+      }
+    },
+    {
+      "id": "door-fanlight",
+      "type": "window",
+      "cell": "A3.1-A3.2",
+      "confidence": 900,
+      "label": "the round-headed fanlight over the front door",
+      "parts": [
+        {
+          "id": "door-fanlight-arch",
+          "role": "frame",
+          "label": "outer arch from jamb to jamb",
+          "primitives": [
+            {"id": "door-fanlight-outer", "kind": "ellipse", "commands": [960, 958, 956, 954, 952, 951, 953, 955, 957, 959], "points": [[129, 31], [160, 12], [190, 31]]}
+          ]
+        },
+        {
+          "id": "door-fanlight-inner",
+          "role": "frame",
+          "label": "inner edge of the frame, either side of the centre bar",
+          "primitives": [
+            {"id": "door-fanlight-inner-left", "kind": "arc", "commands": [997, 995, 980, 979, 978, 974, 972], "points": [[135, 37], [140, 26], [158, 18]]},
+            {"id": "door-fanlight-inner-right", "kind": "arc", "commands": [996, 975, 977, 976, 973, 971], "points": [[184, 37], [179, 26], [161, 18]]}
+          ]
+        },
+        {
+          "id": "door-fanlight-hub",
+          "role": "frame",
+          "label": "the small half-round hub where the bars meet",
+          "primitives": [
+            {"id": "door-fanlight-hub-curve", "kind": "ellipse", "commands": [1012, 1011, 1009, 1010], "points": [[154, 36], [159, 33], [165, 36]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "door-fanlight",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A3.1-A3.2",
+        "note": "batch 3 case 2: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    },
+    {
+      "id": "window-left-fanlight",
+      "type": "window",
+      "cell": "A1.2",
+      "confidence": 900,
+      "label": "the round-headed fanlight of the left window",
+      "parts": [
+        {
+          "id": "window-left-fanlight-arch",
+          "role": "frame",
+          "label": "outer and inner edge of the arched frame",
+          "primitives": [
+            {"id": "window-left-fanlight-outer", "kind": "ellipse", "commands": [1197, 1201, 1205, 1207, 1204, 1200, 1196], "points": [[34, 19], [50, 8], [67, 19]]},
+            {"id": "window-left-fanlight-inner", "kind": "ellipse", "commands": [1250, 1248, 1259, 1260, 1241, 1258, 1257, 1247, 1245], "points": [[35, 20], [50, 9], [66, 20]]}
+          ]
+        },
+        {
+          "id": "window-left-fanlight-springers",
+          "role": "jamb",
+          "primitives": [
+            {"id": "window-left-fanlight-spring-0", "kind": "line", "commands": [1193], "points": [[33, 25], [33, 20]]},
+            {"id": "window-left-fanlight-spring-1", "kind": "line", "commands": [1192], "points": [[68, 25], [68, 20]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-left-fanlight",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A1.2",
+        "note": "batch 3 case 2: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    },
+    {
+      "id": "window-right-fanlight",
+      "type": "window",
+      "cell": "A5.1",
+      "confidence": 900,
+      "label": "the round-headed fanlight of the right window",
+      "parts": [
+        {
+          "id": "window-right-fanlight-arch",
+          "role": "frame",
+          "label": "outer and inner edge of the arched frame",
+          "primitives": [
+            {"id": "window-right-fanlight-outer", "kind": "ellipse", "commands": [1195, 1198, 1202, 1206, 1203, 1199, 1194], "points": [[254, 19], [270, 8], [287, 19]]},
+            {"id": "window-right-fanlight-inner", "kind": "ellipse", "commands": [1234, 1235, 1236, 1253, 1254, 1240, 1256, 1255, 1232, 1231], "points": [[255, 20], [270, 9], [286, 20]]}
+          ]
+        },
+        {
+          "id": "window-right-fanlight-springers",
+          "role": "jamb",
+          "primitives": [
+            {"id": "window-right-fanlight-spring-0", "kind": "line", "commands": [1191], "points": [[253, 25], [253, 20]]},
+            {"id": "window-right-fanlight-spring-1", "kind": "line", "commands": [1190], "points": [[288, 25], [288, 20]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "window-right-fanlight",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A5.1",
+        "note": "batch 3 case 2: the fanlight half of an ellipse through the drawn springers and crown, the bars meeting it (no objection)"
+      }
+    }
   ]
 }
