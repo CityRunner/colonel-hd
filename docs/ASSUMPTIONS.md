@@ -3945,3 +3945,70 @@ in the arrangement").
 - **Cost.** Room entry of the changed pictures at N = 1 is 2 to 4 times
   as long (picture 12: 279 -> 650 ms, 42: 103 -> 438 ms); each round
   builds the plane again. Not optimised yet. **Open.**
+
+## Milestone 10: room-entry speed (2026-11-05)
+
+The open cost of "curved shapes in the arrangement", on branch
+`m10-entry-speed` (`docs/hd-pipeline.md`, "Room entry: the fast analysis
+and the reference"; times in `docs/hd-quality.md`, "Room entry after the
+speed-up").
+
+- **Measured first.** A profile per step of the visual scene (release
+  build, N = 1) showed the time in building arrangements (every pair of
+  segments with overlapping boxes, several partitions per round) and in
+  the shared boundary (scans of every vertex and half-edge per moved
+  vertex), not in the rounds as such. Picture 12 spent 356 ms of 637 in
+  steering, 155 in arrangements. **Finding.**
+- **The reference kept.** `build_scene` takes `Analysis::Fast` (default)
+  or `Analysis::Reference`, the simple implementation as it was. The fast
+  analysis finds the same pairs of segments in a grid of cells, keeps the
+  last four partitions of a plane and reuses one where the same segments
+  come again at the same scale, checks curved shapes against the
+  doubled-grid partition it made already (segments scaled exactly give the
+  same arrangement), and looks up the shared boundary's vertices and edges
+  in indexes with the edges' boxes kept. Two exact shortcuts serve both
+  (64-bit products where the factors are below 2^31; crossings outside
+  whole segments passed over before the point is made). No shape enters
+  differently: the rounds and the fine grid are unchanged. **Decided
+  (agent).**
+- **Differential tests.** `sci-golden-hashes --reference` (needs the game):
+  both planes of all 88 pictures identical in both analyses, scenes byte
+  for byte and the hints' outcomes. Unit test on a synthetic decided
+  ellipse (with and without a line ending beside it). Golden hashes: all
+  475 entries equal to a run of the `milestone-10` build; `sci-hd-report`
+  (but the times), round trip, `--changes`, `--smoothing-suspects` byte
+  for byte as before. **Finding.**
+- **Result.** Room entry at N = 1, ms (before curves -> curves entered ->
+  now): 10: 128 -> 268 -> 127; 12: 279 -> 612 -> 286; 20: 114 -> 244 ->
+  148; 42: 103 -> 397 -> 161; 44: 57 -> 196 -> 93; 57: 67 -> 140 -> 84; 58:
+  74 -> 155 -> 83; 71: 111 -> 148 -> 88. Within 1.3 times the pre-curve
+  time but 42 (1.56) and 44 (1.63): their planes take three rounds, each
+  fitting, steering and partitioning on the fine grid again; keeping
+  per-round work where the topology did not change (local re-arrangement
+  with the same numbering, fits reused) is not done. All 88 pictures:
+  9722 -> 7407 ms. **Finding; 42 and 44 open.**
+- **Picture 12's new A1 break at (109, 78), command 29** (a split group of
+  the halo's line, 2 pieces): at N = 8 the yellow halo outline is
+  continuous there; the round end of the grey branch stroke that ends on
+  the halo's left side reaches onto the outer part of the yellow stroke
+  (as far as seen in the crop: the branch's end meets the steered curve,
+  which runs outside the old chord), so in the 1x reduction one pixel of
+  the halo line shows the branch. Not a visible break at crop size; a
+  small grey notch in the outline's outer edge at close zoom. Not treated as a defect; crops in
+  `reports/images/milestone-10/checks/` (git ignored). **Finding; to be
+  looked at by the customer.**
+- **Sample coverage along a shared curve.** Unit test through
+  `sci::render::SceneSampler`: along the steered ellipse, every pixel the
+  curve passes through has its 16 x 16 samples in the inside or the
+  outside face (256 in all), every sample farther than 1/32 pixel from the
+  stroke on its own side, and both faces where the curve passes near the
+  pixel's centre. Holds. The faces are compared by value: the outside
+  colour has two faces there (a sliver beside the curve's top), both of
+  the outside's value. **Finding.**
+- **End to end.** The same test checks that the stroke is the ellipse
+  (within the round trip) and that the faces meet on it. The synthetic
+  ellipse is shared by moving vertices; no synthetic case found in the
+  time that the shared boundary refuses so that it enters the arrangement
+  (a line ending beside it was taken by sliding); the entry path is
+  covered by the arrangement unit tests of "Curved shapes in the
+  arrangement" and by the game-wide differential test. **Open.**
