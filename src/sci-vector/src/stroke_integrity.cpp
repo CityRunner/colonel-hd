@@ -3,7 +3,6 @@
 #include "stroke_integrity.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <iterator>
 #include <map>
@@ -97,8 +96,8 @@ struct Line {
     std::vector<Stroke> strokes;
     std::vector<Stroke> connectors; // Added to join other lines; not the line's own geometry.
     std::vector<std::size_t> fixed; // End pixels the scene model fixed (step corners).
-    std::vector<std::size_t> inner; // Inner joints of a steered shape (no line ends).
-    bool decided = false;           // A line of a shape the customer decided.
+    std::vector<std::size_t> inner; // Inner joints of a steered shape (also fixed).
+    bool decided = false;           // A line of a shape the customer decided (stays on top).
 
     [[nodiscard]] bool is_fixed(std::size_t pixel) const { return std::ranges::find(fixed, pixel) != fixed.end(); }
 
@@ -110,19 +109,7 @@ struct Line {
     [[nodiscard]] std::size_t last() const { return path.back(); }
 
     [[nodiscard]] bool is_end(std::size_t pixel) const { return pixel == first() || pixel == last(); }
-
-    // Whether an end of the line other than an inner joint of a decided
-    // shape is at or next to the pixel. A decided shape's lines run on
-    // through their inner joints, so a line ending there ends on the shape.
-    [[nodiscard]] bool open_end_near(std::size_t pixel) const;
 };
-
-bool Line::open_end_near(std::size_t pixel) const {
-    return std::ranges::any_of(std::array{first(), last()}, [&](std::size_t end) {
-        const bool through = decided && std::ranges::find(inner, end) != inner.end();
-        return !through && (end == pixel || touching(end, pixel));
-    });
-}
 
 bool Line::fixed_near(std::size_t pixel) const {
     return std::ranges::any_of(fixed, [&](std::size_t end) { return end == pixel || touching(end, pixel); });
@@ -451,6 +438,21 @@ private:
         record(IntegrityChangeKind::ClosedJoint, i, j, end, near_end_evidence);
     }
 
+    // Whether the end pixel's centre lies under the stroke of line j, a
+    // line of a shape the customer decided, beside an inner joint of that
+    // shape: the shape runs on through the joint, so a line ending there
+    // ends on the shape, which stays on top (picture 12's halo, B2.2).
+    [[nodiscard]] bool under_decided_joint(std::size_t end, std::size_t j) const {
+        const Line& other = lines_[j];
+        if (!other.decided || std::ranges::none_of(other.inner, [&](std::size_t joint) {
+                return joint == end || touching(joint, end);
+            })) {
+            return false;
+        }
+        const auto nearest = nearest_on(j, centre_of(end));
+        return nearest && length(centre_of(end) - std::get<0>(*nearest)) < other.strokes.front().radius;
+    }
+
     // The contours a line end touches: lines passing next to the end pixel,
     // seen there, without an end of their own near it, that the ending line
     // does not cross near its end.
@@ -462,7 +464,9 @@ private:
                     return;
                 }
                 const Line& other = lines_[j];
-                if (!other.open_end_near(end) && !crosses_near_end(lines_[line], end, other)) {
+                const bool end_near = other.first() == end || other.last() == end || touching(other.first(), end) ||
+                                      touching(other.last(), end);
+                if ((!end_near || under_decided_joint(end, j)) && !crosses_near_end(lines_[line], end, other)) {
                     found.push_back(j);
                 }
             });
@@ -529,7 +533,7 @@ private:
         const Cut cut{.point = x + (u * radius), .normal = u * -1};
         // A shape the customer decided stays on top: the end is cut at its
         // near edge even where the end pixel lies under its stroke.
-        const bool on_top = lines_[best_line].decided;
+        const bool on_top = lines_[best_line].decided && !cut.keeps(centre_of(end));
         if (!on_top && !cut.keeps(centre_of(end))) {
             ++stats_->kept_contacts;
             record(IntegrityChangeKind::KeptContact, i, best_line, end, on_contour_evidence);
@@ -565,17 +569,24 @@ private:
             }
         }
         const double distance = best ? length(p - std::get<0>(*best)) : 1e300;
-        const bool on_top = best && lines_[best_line].decided;
-        if (!best || distance > max_across || (distance == 0 && !on_top)) {
+        const bool decided = best && lines_[best_line].decided;
+        if (!best || distance > max_across || (distance == 0 && !decided)) {
             ++stats_->kept_contacts;
             record(IntegrityChangeKind::KeptContact, i, contours.front(), end, no_crossing_evidence);
             return;
         }
         const auto& [x, a, b] = *best;
-        // Across the contour towards the line's end point; on a decided
-        // shape, which the end may lie under, towards the line's other end.
-        Vec2 u = distance > 0 ? (p - x) * (1 / distance) : Vec2{};
-        if (on_top && length(b - a) > 0) {
+        const double radius = lines_[best_line].strokes.front().radius;
+        // Across the contour, towards the line's end point.
+        const Vec2 towards_end = distance > 0 ? (p - x) * (1 / distance) : Vec2{};
+        const bool under = distance == 0 || !Cut{.point = x + (towards_end * radius), .normal = towards_end * -1}.keeps(
+                                                centre_of(end));
+        // The end lies under the contour's stroke. A shape the customer
+        // decided stays on top: the line is cut at its near edge, on the
+        // side of the line's other end.
+        const bool on_top = decided && under && length(b - a) > 0;
+        Vec2 u = towards_end;
+        if (on_top) {
             const Vec2 s = (b - a) * (1 / length(b - a));
             u = Vec2{.x = -s.y, .y = s.x};
             const std::size_t far = end == lines_[i].first() ? lines_[i].last() : lines_[i].first();
@@ -583,14 +594,8 @@ private:
                 u = u * -1;
             }
         }
-        if (length(u) == 0) {
-            ++stats_->kept_contacts;
-            record(IntegrityChangeKind::KeptContact, i, best_line, end, no_crossing_evidence);
-            return;
-        }
-        const double radius = lines_[best_line].strokes.front().radius;
         const Cut cut{.point = x + (u * radius), .normal = u * -1};
-        if (!on_top && !cut.keeps(centre_of(end))) {
+        if (!on_top && under) {
             ++stats_->kept_contacts;
             record(IntegrityChangeKind::KeptContact, i, best_line, end, on_contour_evidence);
             return;
