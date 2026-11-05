@@ -220,11 +220,11 @@
         }
       ],
       "decision": {
-        "hypothesis": "front-stairs",
+        "hypothesis": "keep",
         "by": "customer",
         "date": "2026-11-05",
         "cell": "C3.1-C3.2",
-        "note": "batch 3 case 8: square tread ends as picture 74's stairs: treads horizontal, risers vertical, sharp corners, drawn heights kept (no objection)"
+        "note": "in perspective as originally: batch 3 case 8 reverted, the grey tread ends keep the sloping edge of the 3b reconstruction"
       }
     }
   ]
