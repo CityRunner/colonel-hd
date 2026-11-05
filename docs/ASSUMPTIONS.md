@@ -2870,3 +2870,26 @@ the old numbers to the new ones, so older references stay unambiguous:
   "ZINK: vkCreateInstance failed" and "glx: failed to create drisw screen"
   (Xvfb has no GPU, so SDL's renderer is software), Xvfb's keyboard lines.
   Every warning or error of the program counts. **Decided.**
+
+## Milestone 9 approved; milestones 10, 11 and 12 declined (2026-11-05)
+
+- **The customer's instruction:** "Merge 9, decline 10, 11 and 12. Start
+  refactoring and optimising."
+- **Milestone 9 is approved and merged.** The customer's manual
+  playthrough in HD mode and the spot checks in original mode, part of its
+  exit criterion (spec section 12), were deferred by the customer and are
+  waived for the merge. The release candidate tag `v0.9.0-rc.1` was never
+  pushed. **Decided (customer).**
+- **Milestone 10 (HD background quality, addendum A4) is declined,** at a
+  point where much of it was built. Its work stays on the pushed branch
+  `milestone-10` and is not merged into `main`; two unmerged task branches
+  remain local (`m10-b3-group-b`, `m10-b3-group-d2`). Golden hashes and
+  frozen hint files on `main` stay those of milestone 9. **Decided
+  (customer).**
+- **Milestones 11 (ScummVM-compatible saves) and 12 (vectorised font
+  glyphs) are declined.** **Decided (customer).**
+- **Next:** the audit and iteration 2 (`review/TASK.md`), which the
+  customer calls "refactoring and optimising". Its own rules apply: work in
+  stages with a stop after each; stages 1 to 4 are read-only; refactoring
+  starts only at stage 5, after the customer approves the plan. It audits
+  `main`, the code as merged. **Decided (customer).**

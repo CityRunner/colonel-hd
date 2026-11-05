@@ -1,6 +1,6 @@
 # Milestone 9: the playthrough
 
-Status: **awaiting the customer's manual playthrough and approval.**
+Status: **approved** (2026-11-05). The customer deferred the manual playthrough and approved the merge.
 
 Exit criterion (spec section 12): the game is completed from start to
 ending without errors:
