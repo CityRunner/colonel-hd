@@ -370,17 +370,49 @@ so each face keeps its colour.
 - **Strokes** stay the unrounded pieces (at most 1/32 px from the chords,
   under the stroke).
 
+As built (`with_curve`, `enter_curved_shapes` in `build_scene.cpp`):
+
+- **Which shapes.** A steered shape that passes the round trip and the
+  line check, whose faces the shared boundary cannot take, and that is
+  not a `line` with pixel-centre ends (those enter as one segment). The
+  shapes of a plane enter jointly if the partition takes them so, else
+  one by one. A shape entered can make a neighbour that shared by moving
+  vertices fail to (an arch's lit band beside its inner arch): the plane
+  is built again with the shapes entered and the steering repeated, at
+  most three rounds; straight shapes enter in the first round only.
+- **The connectors at the shape's inner ends** that join its own lines
+  or extend one of them along its line go. A connector from another
+  line's end to an inner end, and every other edge ending on the shape's
+  old segments, moves along its own line to the nearest crossing with the
+  chords within 2 px. Where its line does not reach the curve (it runs
+  along it): an end on the grid stays and a connector joins it to the
+  chords' nearest point on the grid; a line the gap closer extended onto
+  the shape goes back to its own end pixel and is joined so. Otherwise
+  the shape is not entered ("the line ending on the shape at (x, y) does
+  not reach its curve within 2 px").
+- **Chain hints (3a) on lines of a shape entered** are superseded: the
+  steered shape is their boundary ("its lines are a steered shape, a
+  curve of the partition").
+- **Report.** "shared by the faces (a curve of the partition)"; a shape
+  not entered keeps "the faces keep the 3b fit: ..." with "; not a curve
+  of the partition: <reason>" (for the mixed-face rule, the new mixed
+  faces' boxes).
+- **Cost.** Each round builds the plane again; room entry of the pictures
+  with such shapes takes 2 to 4 times as long at N = 1 (`docs/hd-quality.md`).
+
 ### Relation solving (milestone 10, A4 A.3)
 
 `solve_object` in `build_scene.cpp` with `src/sci-vector/src/relations.*`,
 run for each object before its primitives are steered:
 
 - **Which objects.** Those that steer (decided or certain, not organic,
-  not `keep`) and whose followed hypothesis has relations. An object the
-  customer decided **over alternatives** keeps its relations unsolved: the
-  customer chose that hypothesis as it was shown, as drawn (picture 12's
-  tall window, "keep as drawn": its bars are not touched; picture 74's
-  stairs, "drawn heights"). Open and organic objects are never solved.
+  not `keep`) and whose followed hypothesis has relations. An object
+  whose **main hypothesis** the customer chose over alternatives keeps its
+  relations unsolved: the main hypothesis is the "as drawn" reading
+  (picture 12's tall window, "keep as drawn": its bars are not touched;
+  picture 74's stairs, "drawn heights"). An **alternative** the customer
+  chose has its relations solved (`keeps_relations_as_drawn`,
+  `sci/vector/hints.hpp`). Open and organic objects are never solved.
 - **Unknowns.** The anchor points of the object's `line` (its path's two
   ends) and `polyline` (its vertices) primitives that are items of a
   relation (`anchors` in `scene_model.hpp`). Points the hint gives equal
@@ -499,7 +531,10 @@ pixel. The baseline is in `docs/hd-quality.md`.
 
 ## 9. Determinism
 
-Topology is exact. Fitting and rasterisation use `double` under the
+Topology is exact, on the doubled grid or, for a plane with a curved
+shape entered, the grid of 1/16 pixel (comparisons of points with 128-bit
+products, `sci::core::wide_mul`, no compiler extension; the curve's chord
+ends rounded half up). Fitting and rasterisation use `double` under the
 floating-point profile of spec section 5.3; orders that reach the output
 use stable sorts with explicit tie-breakers. Golden hashes of synthetic
 scenes run in CI on x86-64 and ARM64, and those of every picture of the

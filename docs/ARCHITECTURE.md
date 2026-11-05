@@ -314,6 +314,10 @@ when off, so they stay in release builds.
 - Functions whose results differ between platforms or standard libraries are
   banned by clang-tidy (`.clang-tidy`, `bugprone-unsafe-functions`).
   `float` and `long double` are banned by `scripts/check-repo-policy.py`.
+- The vector path's arrangement is exact integer arithmetic; where a
+  curved shape enters it (`docs/hd-pipeline.md`, "Curved shapes in the
+  arrangement") it runs on a grid of 1/16 pixel and compares points with
+  portable 128-bit products (`sci::core::wide_mul`), never `__int128`.
 - The interpreter's results do not depend on the C library either: string
   comparison returns glibc's values (the reference's), sin and cos come
   from a table of glibc's values, and the two kernel functions that

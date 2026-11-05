@@ -147,6 +147,32 @@ solving"; picture 42's rhombus added) against the `milestone-10` build:
   `back-window-left`, `-right`; picture 174 and 58's `rose-window` hold as
   drawn.
 
+## After curved shapes in the arrangement (2026-11-04)
+
+Measured on branch `m10-curved-arrangement` (`docs/hd-pipeline.md`,
+"Curved shapes in the arrangement") against the `milestone-10` build:
+
+- Round trip: 13206 chains, 13189 pass, 17 fail (was 13208 / 13191 / 17;
+  the same 17 fail). The two fewer are chain hints of picture 20
+  (`left-window-arch`, `-outer`) whose lines are now steered curves of the
+  partition (also 57 `left-portrait-oval-side` and 71 `shower-pipe-bend`,
+  superseded the same way); hinted arcs deviation 0 8 -> 7, hinted lines
+  18 -> 17.
+- Acceptance (section 6.4): 88 pictures, worst agreement 99.993%, 0
+  failing, 0 swaps, 0 untouched line pixels; the same 12 pixels within
+  the A.6 tolerance.
+- A1 residuals: unchanged but one break (10754 -> 10755: a split group at
+  (109, 78) in picture 12, command 29).
+- Smoothing suspects: identical (`--smoothing-suspects` output equal).
+- Steered shapes keeping 3b faces: 14 -> 0; 17 shapes are curves of the
+  partition (the 14, picture 42's light rhombus half, and the lit bands of
+  42's right arch and 44's arch, which an inner arch entered pushed off
+  sharing by moving vertices).
+- Room entry at N = 1 (`sci-hd-report`, ms, milestone-10 -> now): 10:
+  128 -> 262, 12: 279 -> 650, 20: 114 -> 267, 42: 103 -> 438, 44: 57 ->
+  211, 57: 67 -> 138, 58: 74 -> 162, 71: 111 -> 147. Every round builds
+  the plane again; not optimised yet. Other pictures as before.
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted
