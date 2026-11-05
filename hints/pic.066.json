@@ -1,6 +1,6 @@
 {
   "format": "sierra-hd-hints",
-  "version": 1,
+  "version": 2,
   "picture": 66,
   "pic_sha256": "f9cd29f9b41c3e588e6fb9a18635d68495f5cc4ef3fe2e220820689e49d93189",
   "analyser": "Claude (AI-assisted review of sci-hint-tool candidates), 2026-10-21",
@@ -17,5 +17,59 @@
     {"id": "lever-handle-underside", "lines": [923, 924, 925], "primitive": "spline", "label": "lever handle underside", "uncertain": true},
     {"id": "lever-handle-end", "lines": [883, 884, 885], "primitive": "spline", "label": "lever handle end", "uncertain": true},
     {"id": "keyhole-top", "lines": [29, 30, 31], "primitive": "arc", "label": "keyhole top", "uncertain": true}
+  ],
+  "objects": [
+    {
+      "id": "lever-box-dial",
+      "type": "other",
+      "cell": "B2.3-B3.3",
+      "confidence": 900,
+      "label": "the half-round dial of the lever box, its rim and spokes",
+      "parts": [
+        {
+          "id": "lever-box-dial-rim",
+          "role": "frame",
+          "label": "the edges of the rim, half ellipses on the dial base line",
+          "primitives": [
+            {"id": "dial-rim-outline", "kind": "ellipse", "commands": [45, 46, 48, 49, 50, 51, 52, 53, 54, 55], "points": [[45, 144], [106, 84], [158, 126]]},
+            {"id": "dial-rim-face", "kind": "ellipse", "commands": [67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79], "points": [[51, 154], [114, 88], [152, 124]]},
+            {"id": "dial-rim-band-edge", "kind": "arc", "commands": [82, 83, 84, 85, 86, 87, 88], "points": [[149, 122], [140, 98], [113, 89]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "lever-box-dial",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "B2.3-B3.3",
+        "note": "batch 3 case 15a: the dial rim is a half ellipse, the spokes meeting it"
+      }
+    },
+    {
+      "id": "lever-grip",
+      "type": "other",
+      "cell": "A2.1-A2.4",
+      "confidence": 900,
+      "label": "the red grip of the lever, a cylinder lying on its side",
+      "parts": [
+        {
+          "id": "lever-grip-ends",
+          "role": "other",
+          "label": "the round end face, the rim around it and the far end, smooth curves",
+          "primitives": [
+            {"id": "lever-grip-end-face", "kind": "ellipse", "commands": [866, 867, 868, 869, 870, 871, 872, 873, 874, 875, 876, 877, 878], "points": [[112, 35], [120, 42], [110, 53], [107, 41], [112, 35]]},
+            {"id": "lever-grip-end-rim", "kind": "arc", "commands": [219, 220, 221, 222, 223, 224], "points": [[115, 30], [123, 41], [108, 57]]},
+            {"id": "lever-grip-left-end", "kind": "arc", "commands": [238, 237, 236, 235, 234], "points": [[59, 21], [51, 31], [60, 46]]}
+          ]
+        }
+      ],
+      "decision": {
+        "hypothesis": "lever-grip",
+        "by": "customer",
+        "date": "2026-11-05",
+        "cell": "A2.1-A2.4",
+        "note": "batch 3 case 15a \"handle too\": round where round (its ends), straight where straight, as drawn"
+      }
+    }
   ]
 }
