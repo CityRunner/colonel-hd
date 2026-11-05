@@ -5,14 +5,14 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Stage 1b, recover requirements: done → at STOP** (2026-11-05). Waiting
-for the customer's "continue" before stage 2.
+**Stage 2, reconcile with the original requirements: done → at STOP**
+(2026-11-05). Waiting for the customer's "continue" before stage 3.
 
 | Stage | File | State |
 |---|---|---|
 | 1a Codebase map | `review/MAP.md` | done |
-| 1b Recover requirements | `review/REQUIREMENTS_RECOVERED.md` | done (at STOP) |
-| 2 Reconcile | `review/GAPS.md` | not started |
+| 1b Recover requirements | `review/REQUIREMENTS_RECOVERED.md` | done |
+| 2 Reconcile | `review/GAPS.md` | done (at STOP) |
 | 3 Grilling | `review/QUESTIONS.md` | not started |
 | 4 Backlog and plan | `review/BACKLOG_V2.md`, `review/REFACTOR_PLAN.md` | not started |
 | 5 Refactoring | `review/REFACTOR_REPORT.md` | only after the customer approves the plan |
@@ -83,6 +83,30 @@ for the customer's "continue" before stage 2.
 
 ## Open items
 
+- **Stage 2 results (`review/GAPS.md`):** 156 G-items (G-01 … G-156)
+  covering spec v15 §1-§15 section by section, A1, A2 (withdrawn), A4 and
+  the customer's decisions. Classes: FULL 114 (one of them untested
+  scope, the 5.25" release), PART 23, DROP 2, DECL 5, CREEP 4, AMB 8.
+  Severities: Critical 0, High 3, Medium 6, Low 26, none 121. To carry
+  into stage 3 (questions, highest severity first):
+  - G-24 (High): the repository is public since 2026-10-22 without a
+    recorded history cleanup pass or hint licensing review (§3.4, §14,
+    §15). Were they knowingly waived?
+  - G-125 (High): no release ever published (no remote tag, no GitHub
+    release, the release workflow never ran on a tag); `v0.1.0` and
+    `v0.9.0-rc.1` are local tags only. Push them, or drop releases?
+  - G-07 (High): macOS in scope but known not to build (`std::jthread`,
+    `zoned_time`); no macOS sanitizers or x86-64 target.
+  - G-150 (AMB, Medium): the reading of answer 4 and its edge cases
+    (G-07, G-24, G-125, G-103).
+  - Medium: G-18 (patch files not covered by `.gitignore`/policy), G-44
+    (ARCHITECTURE.md stale), G-48 (scripts, sound resources, patch banks,
+    configuration not fuzzed), G-122 (AMB: files next to the executable),
+    G-123 (performance never measured on reference-class hardware).
+  - The local golden-hash check of all pictures was re-run in stage 2
+    (`review/GAPS.md`, "Local check run in stage 2"; logs in
+    `build/audit-stage2-golden-*.log`).
+
 - Stage 1b results (`review/REQUIREMENTS_RECOVERED.md`): 144 R-items
   (FACT 135, HYPOTHESIS 6, mixed 3; tested CI 95, local only 27,
   untested 15, none/n.a. 7), observations V-01 … V-15. To carry into
@@ -114,17 +138,17 @@ for the customer's "continue" before stage 2.
   pixel golden outputs for pictures only; stale docs.
 - The remote branch `milestone-10` (customer to delete on GitHub) and the
   local `m10-*` branches/worktrees (customer to confirm removal).
-- Confirm the reading of answer 4 (stage 3).
+- Confirm the reading of answer 4 (stage 3; G-150).
 
 ## How to resume in a new session
 
 1. `cd /home/user/sierra-hd && git checkout audit && git log --oneline -5`.
 2. Read `review/TASK.md` (the brief), this file, then `review/MAP.md`.
 3. Continue with the next stage only after the customer's "continue".
-   Stage 2 compares `review/REQUIREMENTS_RECOVERED.md` (R-xx) with the
-   original spec v15 (not committed; in the customer's context) and
-   `docs/SPEC_ADDENDA.md`, applying answer 4 (unimplemented = dropped,
-   ASSUMED reading).
+   Stage 3 asks questions (Q-xx) in batches of 5-10, highest severity
+   first, from `review/GAPS.md` (G-xx; its "Items with a severity"
+   table), recording answers in `review/QUESTIONS.md`. The original spec
+   v15 is not committed; it is in the customer's context.
 4. Scratch outputs go under `build/` (git-ignored). The coverage build of
    stage 1a was deleted to save disk; its logs and `llvm-cov` reports are
    in `build/audit-coverage/` (`report-files.txt`: CI suite;

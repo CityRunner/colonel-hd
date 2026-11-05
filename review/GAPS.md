@@ -52,8 +52,8 @@ with all references, so it is counted once.
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
 | G-01 | §1.1 HD vector backgrounds; sprites original, scaled by an integer factor with no added detail | R-26…R-51, R-82 | FULL | — | `src/sci-render/include/sci/render/compose.hpp:1-15`; `tests/unit/render/compose_test.cpp:70-181` | Sprites are original cels in N x N blocks (A2 undithering withdrawn; no undithering code in `src/`). |
-| G-02 | §1.1 "completable from start to finish, with sound" | R-80, R-93, R-99 | FULL | — | `tests/playthrough/playthrough.txt`; `tools/playthrough/check.sh`, `program-run.sh`; `reports/milestone-9.md:80-100` | local. Stage 1a re-ran the playthrough to its end tick 337,613; the match with the reference is claimed (43 checkpoints), not re-run. The customer's manual playthrough is G-118. |
-| G-03 | §1.1, §6.1 "Game logic always behaves as in the original" | R-25, R-63, R-76 | FULL | — | `src/sci-vm/src/gfx_paint.cpp:60-85` (logic reads path 1); `tools/vm-trace/run-all-scenarios.sh` | local (claimed). CI cannot detect a VM regression (MAP.md 8.1, sci-vm 38 % lines in CI): not a spec gap (§11 puts game checks local), but a High risk for stage 5, carried as a finding. See also G-104 (script patches change game logic). |
+| G-02 | §1.1 "completable from start to finish, with sound" | R-80, R-93, R-99 | FULL | — | `tests/playthrough/playthrough.txt`; `tools/playthrough/check.sh`, `program-run.sh`; `reports/milestone-9.md:80-100` | local. Stage 1a re-ran the playthrough to its end tick 337,613; the match with the reference is claimed (43 checkpoints), not re-run. The customer's manual playthrough is G-142. |
+| G-03 | §1.1, §6.1 "Game logic always behaves as in the original" | R-25, R-63, R-76 | FULL | — | `src/sci-vm/src/gfx_paint.cpp:60-85` (logic reads path 1); `tools/vm-trace/run-all-scenarios.sh` | local (claimed). CI cannot detect a VM regression (MAP.md 8.1, sci-vm 38 % lines in CI): not a spec gap (§11 puts game checks local), but a High risk for stage 5, carried as a finding. See also G-146 (script patches change game logic). |
 | G-04 | §1.2 Game: the English DOS EGA version; tested release accepted | R-01, R-02, R-05 | FULL | — | `src/app/platform/src/identify.cpp:25-51`, `:97-105`; `tests/unit/platform/platform_test.cpp:71-79` | Positive identification needs the game (local). |
 | G-05 | §1.2 Platforms: Linux x86-64 and ARM64 | R-143, R-144 | FULL | — | `.github/workflows/ci.yml:179-267`; `scripts/pre-push.sh:9-53` (qemu-user) | Gate platform, first priority (customer, 2026-10-22). |
 | G-06 | §1.2 Platforms: Windows x86-64 and ARM64 | R-143 | FULL | — | `ci.yml:244-267`; `.github/workflows/release.yml` | x64 release + ASan in the gate, ARM64 release build. |
@@ -71,7 +71,7 @@ with all references, so it is counted once.
 | G-13 | Own interpreter, not a ScummVM fork; SCI0 logic ported from ScummVM | R-63 | FULL | — | `src/sci-vm/src/kernel.cpp:3-8`; `THIRD_PARTY.md` | |
 | G-14 | Licence GPL v3 or later; every other component compatible | — | FULL | — | `LICENSE`; `THIRD_PARTY.md` | V-09: LGPL-2.1+ libraries linked statically into a GPL-3.0+ program, probably compliant **[not verified; not a legal opinion]**. |
 | G-15 | Square pixels, 320N x 200N frame, integer N | R-50, R-112 | FULL | — | `main.cpp:734-739`, `:1057-1071` | |
-| G-16 | Rendering deterministic, bit-identical on every supported machine | R-52…R-55 | FULL | — | `tests/golden/synthetic_test.cpp:73`, `:108` | CI checks synthetic scenes on x86-64, ARM64 and Windows; the real-game goldens are local (G-46). macOS never checked (G-07). |
+| G-16 | Rendering deterministic, bit-identical on every supported machine | R-52…R-55 | FULL | — | `tests/golden/synthetic_test.cpp:73`, `:108` | CI checks synthetic scenes on x86-64, ARM64 and Windows; the real-game goldens are local (G-54). macOS never checked (G-07). |
 | G-17 | SDL3, Nuked OPL3, mt32emu vendored at pinned versions; further dependencies justified in docs/; fewer preferred | — | FULL | — | `third_party/` (exactly these three); `THIRD_PARTY.md`; `docs/ASSUMPTIONS.md:862-866`, `:2022-2033` | No further dependency. The recorded vendored checksums are checked by no script (MAP.md 8.11) — not required by the spec. |
 | G-18 | Game resources and ROM files are never committed | R-135 | PART | Medium | `.gitignore` (resource, driver, ROM patterns); `scripts/check-repo-policy.py:1-60` | Holds today: a name check over all local history (`git log --all --name-only`) found no game file and no game-derived image (only two SDL documentation PNGs) **[checked by file name only, not by content]**. But neither `.gitignore` nor the policy script matches SCI0 patch files `TYPE.NNN` (`SCRIPT.052`, `TEXT.052`, `PATCH.001`, …), which the tested release ships (V-06): one careless `git add` of a game folder copy would not be caught. |
 | G-19 | Natural language English in code, comments, commits, docs | — | FULL | — | sampled | |
@@ -121,7 +121,7 @@ with all references, so it is counted once.
 | G-48 | §5.2 All file parsers bounds-checked and covered by libFuzzer targets | R-138 | PART | Medium | `tests/fuzz/*.cpp` (12 targets) | Fuzzed: map/volumes/patches, decompression, PIC, view/font/cursor, vocabulary + Said, JSON/hints, replay, save, cached scene, game folder. **Not fuzzed:** script resources (`src/sci-vm/src/script.cpp`), sound resources (`src/sci-vm/src/midi_parser.cpp`, `music.cpp`), the AdLib and MT-32 patch resources (`adlib.cpp`, `patch.001`), the configuration file (`config.cpp`). Scripts and songs are untrusted game input. |
 | G-49 | §5.2 Warnings are errors; sanitizers UBSan/ASan/TSan on Linux and macOS, ASan on Windows | R-133, R-137 | FULL | — | `cmake/SciTargets.cmake:20-39`; `ci.yml:179-267` | Linux and Windows as required; macOS part counted in G-07. |
 | G-50 | §5.3 Topology in exact integer arithmetic on 1x coordinates; intersections exact rationals in int64 | R-27 | FULL | — | `src/sci-vector/src/topology.hpp:23`; `src/sci-core/include/sci/core/exact.hpp:42`, `:127`; `tests/unit/core/exact_test.cpp:11-47` | Doubled coordinates, products bounded below 2^60. |
-| G-51 | §5.3 Floating-point profile (double only, `-ffp-contract=off`, no fast-math, SSE2, no libm transcendentals in output code, no FTZ/DAZ asserted on every rendering and analysis thread) | R-52, R-53, R-144 | FULL | — | `src/sci-core/src/fp_profile.cpp:11-50`; `thread_executor.cpp:24`; `tests/unit/core/fp_profile_test.cpp:9-16` | The VM's sin/cos come from a table of glibc results (R-73) — game logic, not rendering; V-05 (comment) Low, counted in G-128. |
+| G-51 | §5.3 Floating-point profile (double only, `-ffp-contract=off`, no fast-math, SSE2, no libm transcendentals in output code, no FTZ/DAZ asserted on every rendering and analysis thread) | R-52, R-53, R-144 | FULL | — | `src/sci-core/src/fp_profile.cpp:11-50`; `thread_executor.cpp:24`; `tests/unit/core/fp_profile_test.cpp:9-16` | The VM's sin/cos come from a table of glibc results (R-73) — game logic, not rendering; V-05 (comment) Low, counted in G-156. |
 | G-52 | §5.3 Colours, blending, palette indices and hashes stay integer | R-46 | FULL | — | `src/sci-render/include/sci/render/colors.hpp:43-66` | |
 | G-53 | §5.3 GPU only presents; all rasterisation on the CPU | R-91 | FULL | — | `src/app/platform/src/game_frame.cpp:34-60` | |
 | G-54 | §5.3 Golden SHA-256 of the background of every PIC (with overlays where rooms use them): HD RGBA at N ∈ {1, 2, 5, 10}, original palette-index frame at N = 1; equal on x86-64 and ARM64 | R-56, R-57 | FULL | — | `tools/golden-hashes/main.cpp:58`; `tests/golden/pictures.txt` (88 pictures, 440 `pic` + 35 `stack` lines) | local (claimed; ARM64 under qemu-user per `reports/milestone-3b.md`). What the spec does not ask for is also absent (HD priority map, N > 10, views, fonts, composed frames: V-04) — a stage 5 safety-net question, not a gap. |
@@ -145,7 +145,7 @@ with all references, so it is counted once.
 | G-67 | §6.3 Drawing order kept as a stack of layers | R-40 | FULL | — | `scene.hpp:66-71` | |
 | G-68 | §6.3 Debug mode highlighting every replacement, development only, behind a CMake option | — | FULL | — | `CMakeLists.txt:17`; `build_scene.cpp:1328`; `tools/room-viewer/main.cpp:132` | Not built in any CI preset **[not verified that it still compiles]**. |
 | G-69 | §6.4 Unresolvable regions fall back to 1x shapes in N x N blocks; the replacement report lists every fallback | R-30, R-48, R-128 | PART | Low | `tools/hd-report/main.cpp:237-238`; `tests/unit/render/render_test.cpp:117`; `docs/ASSUMPTIONS.md:782-787` | Mixed faces are listed; thin faces (the majority of fallbacks) are only counted. |
-| G-70 | §6.4 Acceptance metric: pair classes, no swaps, ≥ 99 % outside a 1 px band; every visible line covered along its length | R-45 | FULL | — | `src/sci-render/include/sci/render/acceptance.hpp:1-39`; `reports/milestone-3b.md:78-83` | local (offline report; `acceptance.cpp` in no CI test). Worst 99.993 %, 0 swaps, 0 untouched line pixels (claimed). "Swap" was left undefined by the spec: G-125. |
+| G-70 | §6.4 Acceptance metric: pair classes, no swaps, ≥ 99 % outside a 1 px band; every visible line covered along its length | R-45 | FULL | — | `src/sci-render/include/sci/render/acceptance.hpp:1-39`; `reports/milestone-3b.md:78-83` | local (offline report; `acceptance.cpp` in no CI test). Worst 99.993 %, 0 swaps, 0 untouched line pixels (claimed). "Swap" was left undefined by the spec: G-147. |
 | G-71 | §6.4 Manual side-by-side acceptance at the milestone 3 gate | — | FULL | — | `docs/ASSUMPTIONS.md:843-858`, `:1059-1068` | Approved with the 3b gate. |
 | G-72 | §6.5 Pairs through the active palette (4 x 40); dithering replaced by a 256-entry LUT computed at build time; dither rule verified, ScummVM's undithering cross-checked and differences documented | R-18, R-24, R-47 | FULL | — | `colors.hpp:43-55` (`constexpr` table); `docs/ASSUMPTIONS.md:810-814` | |
 | G-73 | §6.5 Plain sRGB average, 16 bits per channel, sums in `uint64_t`, shifts with explicit rounding; edge coverage in the same space; no linear light | R-46, R-47 | PART | Low | `colors.hpp:36-66`; `src/sci-render/src/rasterize.cpp:181-195`, `:374` | Sums are `uint32_t`, not `uint64_t`. No overflow: at most 256 samples x 2 x 255 x 257 = 33,553,920 < 2^32 (arithmetic from the code). Deviation in letter only. |
@@ -174,10 +174,10 @@ with all references, so it is counted once.
 
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-94 | A1 plan: milestone 3b gate; hint schema covers depth/containment relations; hints frozen and goldens regenerated at 3b; release v0.1 after 3b | R-36 | FULL | — | `hints/schema.json`; `src/sci-vector/src/hints.cpp`; `docs/ASSUMPTIONS.md:1059-1073` | The release itself: G-117. |
+| G-94 | A1 plan: milestone 3b gate; hint schema covers depth/containment relations; hints frozen and goldens regenerated at 3b; release v0.1 after 3b | R-36 | FULL | — | `hints/schema.json`; `src/sci-vector/src/hints.cpp`; `docs/ASSUMPTIONS.md:1059-1073` | The release itself: G-125. |
 | G-95 | A1 rules: line ends clipped at the contour they end on; equal neighbours' common boundary drawn once in the colour seen at 1x; no stray fragments; no breaks between connected strokes | R-42 | PART | Low | `src/sci-vector/src/stroke_integrity.cpp:16-35`; `tests/unit/vector/stroke_integrity_test.cpp:67-118` | Implemented as a pass; remaining cases (7,070 overshoots, 2,859 doubled boundaries, 6,436 fragments, 7,396 broken joints; `reports/milestone-3b.md:60-110`) were accepted by the customer as listed (option 1, `docs/ASSUMPTIONS.md:1063-1066`). Low: accepted, but visible in HD. |
 | G-96 | A1 rules: nearer objects drawn over farther ones (depth from the priority map) | R-43, R-44 | PART | Low | `src/sci-render/include/sci/render/integrity.hpp:1-30` | Depth is only measured (15 pixels found), never used to reorder; layers keep the command order (R-44, HYP medium). Accepted at 3b. |
-| G-97 | A1 evidence: depth and containment relations from the AI hints | R-36, R-44 | DROP | none | `hints.cpp` parses them; no user; no hint file has any | Dropped (answer 3 after stage 1b, confirmed). The stale claims that they are used (`src/sci-vector/include/sci/vector/hints.hpp:78-80`, `hints/README.md` "Relations … The vector path uses them from milestone 3b") are counted in G-123. |
+| G-97 | A1 evidence: depth and containment relations from the AI hints | R-36, R-44 | DROP | none | `hints.cpp` parses them; no user; no hint file has any | Dropped (answer 3 after stage 1b, confirmed). The stale claims that they are used (`src/sci-vector/include/sci/vector/hints.hpp:78-80`, `hints/README.md` "Relations … The vector path uses them from milestone 3b") are counted in G-155. |
 | G-98 | A1: a fitted primitive that cannot satisfy the rules falls back to its original segments | — | DROP | none | — | "The fitted-chain fallback and a local 1x fallback are not implemented" (`docs/ASSUMPTIONS.md:1063-1066`, accepted at 3b); answer 4. |
 | G-99 | A1 limits: only the HD picture changes; differences on the involved strokes within the 1 px band; no region changes its pair | R-42, R-45 | FULL | — | `reports/milestone-3b.md:78-83` | Acceptance still holds (claimed). |
 | G-100 | A1: every clip, merge, removal and closed joint reported with its evidence; automated A1 checks over every picture | R-43, R-128 | FULL | — | `stroke_integrity.cpp:37-40`; `tools/hd-report/main.cpp:238` (`--changes`) | local. |
@@ -195,7 +195,7 @@ with all references, so it is counted once.
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
 | G-104 | §7 Port SCI0 logic (resources, bytecode, classes, objects, selectors, kernel functions with calls logged, animation and motion, vocabulary and Said, windows and text) | R-63, R-64, R-81, R-85, R-86 | FULL | — | `src/sci-vm/src/*`; `src/sci-text/` | local (claimed scenarios). `kDoAvoider` is a stub that faults (R-65) but the game does not reference it (`docs/ASSUMPTIONS.md:1208`). |
-| G-105 | §7 Port ScummVM's script patches for this game, per accepted release | R-69, R-70 | FULL | — | `src/sci-vm/src/script_patches.cpp:612-742`; `tests/unit/vm/script_patcher_test.cpp:105-192` | 16 patches, all active. Effect on the 5.25" release: untested scope (G-114). |
+| G-105 | §7 Port ScummVM's script patches for this game, per accepted release | R-69, R-70 | FULL | — | `src/sci-vm/src/script_patches.cpp:612-742`; `tests/unit/vm/script_patcher_test.cpp:105-192` | 16 patches, all active. Effect on the 5.25" release: untested scope (G-116). |
 | G-106 | §7 Keep ScummVM's state model (reg segment:offset, segments, heap) | R-78 | FULL | — | `src/sci-vm/src/seg_manager.cpp`, `segments.cpp` | |
 | G-107 | §7 Virtual clock and an RNG ported from ScummVM's random source with the same seeding; reference patched the same way | R-71, R-72, R-74 | FULL | — | `src/sci-vm/src/timing.hpp:3-112`; `k_math.cpp:41-59`; `tests/unit/vm/input_test.cpp:140-231`; `tools/scummvm-patches/0003-deterministic-trace.patch` | |
 | G-108 | §7 One replay format for both engines; Event Recorder evaluated and decision recorded | R-77 | FULL | — | `src/sci-vm/src/events.cpp:184`; `docs/formats/replay-and-trace.md`; `docs/ASSUMPTIONS.md:2823-2830` | |
@@ -214,90 +214,89 @@ with all references, so it is counted once.
 
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-114a | §9 Own versioned save format, described in docs/; save/restore for the whole game; older versions migrated or rejected with a clear message | R-103…R-109 | FULL | — | `src/sci-vm/src/save_game.cpp:46-147`; `docs/formats/save-format.md`; `tests/unit/vm/save_test.cpp:122-198` | Only version 1 exists; others are refused naming both versions. |
-| G-114b | §9 ScummVM-compatible saves (old 10 → new 11) | — | DECL | none | — | Declined (2026-11-05). |
+| G-114 | §9 Own versioned save format, described in docs/; save/restore for the whole game; older versions migrated or rejected with a clear message | R-103…R-109 | FULL | — | `src/sci-vm/src/save_game.cpp:46-147`; `docs/formats/save-format.md`; `tests/unit/vm/save_test.cpp:122-198` | Only version 1 exists; others are refused naming both versions. |
+| G-115 | §9 ScummVM-compatible saves (old 10 → new 11) | — | DECL | none | — | Declined (2026-11-05). |
 
 ## §10 Application and platform
 
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-114 | §10.2 Other English DOS EGA releases from ScummVM's tables accepted with a warning and listed in ASSUMPTIONS; any other version stops | R-04, R-05, R-06 | FULL | none (untested scope) | `identify.cpp:66-70`, `:124-138`; `docs/ASSUMPTIONS.md:51-104` | The 5.25" release: **untested scope** (customer, answer 2 after stage 1b). Its warning says the HD hints are not used, which nothing enforces and is unverified (V-01). |
-| G-115 | §10.1 SDL3 window, windowed and fullscreen; keyboard and mouse as in the original | R-119, R-120 | FULL | — | `main.cpp:470-473`, `:753-755`; `game_screen.cpp:60-190`; `game_screen_test.cpp:63-135` | |
-| G-116 | §10.1 Dirty rectangles: only changed areas redrawn and uploaded | R-91 | FULL | — | `game_frame.cpp:34-60`; `tests/unit/platform/game_frame_test.cpp:98` | |
-| G-116a | §10.2 Identification by resource hashes; the customer's copy is the tested release | R-02, R-03 | FULL | — | `identify.cpp:25-64` | |
-| G-116b | §10.2 Configuration file next to the executable (INI/TOML, format version): game folder, mode, N, MT-32 ROM path | R-113, R-114 | FULL | — | `config.cpp:16-145`; `tests/unit/platform/platform_test.cpp:15-69` | Rewriting the file at exit drops unknown keys and user comments (R-114) and a failed write is silent — a quality issue, not a spec deviation; for stage 3. |
-| G-116c | §10.2 Analysis cache: all rooms analysed on first launch with progress, cached next to the configuration, keyed by game files, analyser and hint-file versions; missing rooms analysed lazily; hints shipped with the program | R-59…R-62, R-124 | FULL | — | `src/app/platform/src/analysis_cache.cpp:50-140`, `:289-330`; `tests/unit/platform/analysis_cache_test.cpp:33-51` | The rule "bump `analyser_version` when the goldens change" is not enforced (R-58, V-12), Low, counted in G-128. |
-| G-116d | §10.2 "next to the executable" for configuration (and cache, saves, game-written files) | R-125 | AMB | Medium | `main.cpp:1086-1087`, `:1125`, `:1137` | The spec fixes the location; on installed or read-only locations (Windows `Program Files`, a macOS app bundle, a Linux package) it cannot be written (V-08, **HYPOTHESIS** medium, not tested on any platform). The requirement itself conflicts with ordinary installs. |
-| G-116e | §10.3 60 FPS up to N = 10 and room entry under 1 s on an ordinary laptop without a discrete GPU; backgrounds rasterised once per room | R-92 | PART | Medium | `reports/milestone-3.md:96-103`, `reports/milestone-5.md:140-153`, `reports/milestone-4b.md:127-129` | Measured only on the 4-core development container (no GPU; Linux): changed frames ≤ 1.4 ms, room entry ≤ 530 ms at N = 10, first launch 2.8 s; a whole frame at N = 10 takes 20.7 ms (> 16.7 ms; on room entry and mode switch only). Never measured on reference-class hardware, on Windows or on ARM64, and no automated performance check guards it. |
-| G-116f | §10.3 Reference machine proposed at milestone 3 and confirmed; first-launch time budget | — | FULL | — | `docs/ASSUMPTIONS.md:831-838`, `:854-857` | 4-core 2020 laptop, room entry < 1 s at N = 10, first launch < 15 s. |
+| G-116 | §10.2 Other English DOS EGA releases from ScummVM's tables accepted with a warning and listed in ASSUMPTIONS; any other version stops | R-04, R-05, R-06 | FULL | none (untested scope) | `identify.cpp:66-70`, `:124-138`; `docs/ASSUMPTIONS.md:51-104` | The 5.25" release: **untested scope** (customer, answer 2 after stage 1b). Its warning says the HD hints are not used, which nothing enforces and is unverified (V-01). |
+| G-117 | §10.1 SDL3 window, windowed and fullscreen; keyboard and mouse as in the original | R-119, R-120 | FULL | — | `main.cpp:470-473`, `:753-755`; `game_screen.cpp:60-190`; `game_screen_test.cpp:63-135` | |
+| G-118 | §10.1 Dirty rectangles: only changed areas redrawn and uploaded | R-91 | FULL | — | `game_frame.cpp:34-60`; `tests/unit/platform/game_frame_test.cpp:98` | |
+| G-119 | §10.2 Identification by resource hashes; the customer's copy is the tested release | R-02, R-03 | FULL | — | `identify.cpp:25-64` | |
+| G-120 | §10.2 Configuration file next to the executable (INI/TOML, format version): game folder, mode, N, MT-32 ROM path | R-113, R-114 | FULL | — | `config.cpp:16-145`; `tests/unit/platform/platform_test.cpp:15-69` | Rewriting the file at exit drops unknown keys and user comments (R-114) and a failed write is silent — a quality issue, not a spec deviation; for stage 3. |
+| G-121 | §10.2 Analysis cache: all rooms analysed on first launch with progress, cached next to the configuration, keyed by game files, analyser and hint-file versions; missing rooms analysed lazily; hints shipped with the program | R-59…R-62, R-124 | FULL | — | `src/app/platform/src/analysis_cache.cpp:50-140`, `:289-330`; `tests/unit/platform/analysis_cache_test.cpp:33-51` | The rule "bump `analyser_version` when the goldens change" is not enforced (R-58, V-12), Low, counted in G-156. |
+| G-122 | §10.2 "next to the executable" for configuration (and cache, saves, game-written files) | R-125 | AMB | Medium | `main.cpp:1086-1087`, `:1125`, `:1137` | The spec fixes the location; on installed or read-only locations (Windows `Program Files`, a macOS app bundle, a Linux package) it cannot be written (V-08, **HYPOTHESIS** medium, not tested on any platform). The requirement itself conflicts with ordinary installs. |
+| G-123 | §10.3 60 FPS up to N = 10 and room entry under 1 s on an ordinary laptop without a discrete GPU; backgrounds rasterised once per room | R-92 | PART | Medium | `reports/milestone-3.md:96-103`, `reports/milestone-5.md:140-153`, `reports/milestone-4b.md:127-129` | Measured only on the 4-core development container (no GPU; Linux): changed frames ≤ 1.4 ms, room entry ≤ 530 ms at N = 10, first launch 2.8 s; a whole frame at N = 10 takes 20.7 ms (> 16.7 ms; on room entry and mode switch only). Never measured on reference-class hardware, on Windows or on ARM64, and no automated performance check guards it. |
+| G-124 | §10.3 Reference machine proposed at milestone 3 and confirmed; first-launch time budget | — | FULL | — | `docs/ASSUMPTIONS.md:831-838`, `:854-857` | 4-core 2020 laptop, room entry < 1 s at N = 10, first launch < 15 s. |
 
 ## §10.4, §14 Build and delivery
 
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-117 | §10.4, §12 (3a, moved after 3b by A1), §14 Unsigned release binaries for all three OSes built by CI, **including release v0.1**; delivery "source plus unsigned release binaries" | R-141 | PART | **High** | `.github/workflows/release.yml`; `scripts/package-release.sh:15-29` | The release workflow exists, but **no release was ever published**: `git ls-remote --tags origin` → none; `gh api repos/CityRunner/sierra-hd/releases` → `[]`. The tags `v0.1.0` and `v0.9.0-rc.1` exist only in the local clone (the session may not push tags: `reports/milestone-9.md:162-163`; `docs/ASSUMPTIONS.md:2881`). The release workflow last ran on pull requests in milestones 3a–4b (2 failures). `README.md` says binaries "are attached to the GitHub releases". macOS binaries cannot be built (G-07). A required deliverable is missing; the fix is the customer's tag push. |
-| G-118 | §14 README: how to build, point the program at the game folder, configuration options, MT-32 ROMs | — | PART | Low | `README.md`; `docs/USER-README.md:74-92` | Build, game folder and MT-32 are covered; configuration options are in `docs/USER-README.md` (shipped as the release README), not in `README.md`. `README.md` also states a macOS build path that fails (G-07) and published binaries that do not exist (G-117). |
-| G-119 | §14 THIRD_PARTY.md: every component with its licence, incl. ported ScummVM code | — | FULL | — | `THIRD_PARTY.md` | |
-| G-120 | §14 Golden-hash files and test scripts, with instructions for the local tests that need game files | R-56, R-99, R-131 | FULL | — | `tests/golden/`; `tests/README.md`; `tools/*/README.md` | Four tools lack a README (MAP.md 8.13), Low, counted in G-123. |
+| G-125 | §10.4, §12 (3a, moved after 3b by A1), §14 Unsigned release binaries for all three OSes built by CI, **including release v0.1**; delivery "source plus unsigned release binaries" | R-141 | PART | **High** | `.github/workflows/release.yml`; `scripts/package-release.sh:15-29` | The release workflow exists, but **no release was ever published**: `git ls-remote --tags origin` → none; `gh api repos/CityRunner/sierra-hd/releases` → `[]`. The tags `v0.1.0` and `v0.9.0-rc.1` exist only in the local clone (the session may not push tags: `reports/milestone-9.md:162-163`; `docs/ASSUMPTIONS.md:2881`). The release workflow has run 9 times, all on pull requests between 2026-10-21 06:01 and 21:38 (milestones 3a–4b: 3 successes, 2 failures, 4 cancelled), never on a tag (`gh api …/actions/workflows/release.yml/runs`). `README.md` says binaries "are attached to the GitHub releases". macOS binaries cannot be built (G-07). A required deliverable is missing; the fix is the customer's tag push. |
+| G-126 | §14 README: how to build, point the program at the game folder, configuration options, MT-32 ROMs | — | PART | Low | `README.md`; `docs/USER-README.md:74-92` | Build, game folder and MT-32 are covered; configuration options are in `docs/USER-README.md` (shipped as the release README), not in `README.md`. `README.md` also states a macOS build path that fails (G-07) and published binaries that do not exist (G-125). |
+| G-127 | §14 THIRD_PARTY.md: every component with its licence, incl. ported ScummVM code | — | FULL | — | `THIRD_PARTY.md` | |
+| G-128 | §14 Golden-hash files and test scripts, with instructions for the local tests that need game files | R-56, R-99, R-131 | FULL | — | `tests/golden/`; `tests/README.md`; `tools/*/README.md` | Four tools lack a README (MAP.md 8.13), Low, counted in G-155. |
 
 ## §11 Testing
 
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-121 | §11 CI without game files: synthetic PIC streams, numeric unit tests, fuzzing of parsers and rasteriser, hint schema; whole suite under the sanitizers; synthetic golden hashes on x86-64 and ARM64 runners | R-55, R-137, R-138 | FULL | — | `tests/unit/`, `tests/fuzz/fuzz_vector.cpp` (rasteriser), `tests/golden/synthetic_test.cpp`; `ci.yml:179-298` | Fuzz coverage gaps in G-48. As specified, CI leaves the VM nearly untested (MAP.md 8.1). |
-| G-122 | §11 Local with game files: golden frame hashes (also ARM64 under qemu-user), comparison with ScummVM, hint-anchor check, deterministic runs; regression at N = 1 original mode bit-identical | R-19, R-56, R-76, R-129 | FULL | — | `tools/golden-hashes`, `tools/graphics-compare`, `tools/vm-trace/run-all-scenarios.sh`, `tools/hint-tool` | local (claimed; not re-run in stage 2). |
+| G-129 | §11 CI without game files: synthetic PIC streams, numeric unit tests, fuzzing of parsers and rasteriser, hint schema; whole suite under the sanitizers; synthetic golden hashes on x86-64 and ARM64 runners | R-55, R-137, R-138 | FULL | — | `tests/unit/`, `tests/fuzz/fuzz_vector.cpp` (rasteriser), `tests/golden/synthetic_test.cpp`; `ci.yml:179-298` | Fuzz coverage gaps in G-48. As specified, CI leaves the VM nearly untested (MAP.md 8.1). |
+| G-130 | §11 Local with game files: golden frame hashes (also ARM64 under qemu-user), comparison with ScummVM, hint-anchor check, deterministic runs; regression at N = 1 original mode bit-identical | R-19, R-56, R-76, R-129 | FULL | — | `tools/golden-hashes`, `tools/graphics-compare`, `tools/vm-trace/run-all-scenarios.sh`, `tools/hint-tool` | local (claimed; not re-run in stage 2). |
 
 ## §12 Milestones (exit criteria with checkable artefacts)
 
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-124a | M0 bootstrap: empty libraries build and pass style and sanitizer jobs on every CI platform; reference ScummVM runs; decisions recorded | — | FULL | — | `reports/milestone-0.md`; `docs/ASSUMPTIONS.md:606-611` | |
-| G-124b | M1 every resource decodes byte-identically to ScummVM | R-15 | FULL | — | `tools/resource-compare/run.sh` | local (claimed). |
-| G-124c | M2 path 1, views, fonts bit-exact for all rooms; room viewer | R-19, R-126 | FULL | — | `tools/graphics-compare/run.sh`; `tools/room-viewer/` | local (claimed). |
-| G-124d | M3 original mode identical to M2; per-room replacement report checked against §6.4; HD goldens recorded | R-45, R-56, R-128 | FULL | — | `reports/milestone-3-pictures.md`; `tests/golden/pictures.txt` | |
-| G-124e | M3a hints committed; release build of the room viewer without debug overlays (window, N, HD switch) | R-126 | FULL | — | `main.cpp:156-190` (`--viewer`); `docs/ASSUMPTIONS.md:955-970` | The CI binaries of v0.1: G-117. |
-| G-124f | M4a boot, kernel-call traces match; M4b every referenced kernel function implemented, scenarios over the main areas match | R-64, R-76 | FULL | — | `tests/scenarios/scenarios.txt` (39 runs) | local (claimed). 97 kernel functions referenced; DoAvoider not among them. |
-| G-124g | M5 scripted walks give ScummVM's hero positions frame by frame; §6.8 cases side by side | R-81 | FULL | — | `tools/vm-trace` actor files; `reports/milestone-5.md` | local (claimed). |
-| G-124h | M6a typed commands give ScummVM's results; M6b window layout matches in 1x and renders at every N | R-85, R-86, R-87 | FULL | — | `tests/unit/text/parser_test.cpp`; `tools/hd-frames --check-interface` | local + CI (synthetic). |
-| G-124i | M7 OPL goldens; every sound plays on both devices; signals and cues match; by-ear comparison recorded | R-97, R-99 | FULL | — | `tests/golden/sounds.txt`; `reports/milestone-7.md:196-200` | |
-| G-124j | M8 save/restore at scenario points gives the same VM state hash; replay continues identically | R-109 | FULL | — | `tools/vm-trace/run-round-trips.sh`; `tests/unit/vm/save_test.cpp:64-82` | local (claimed) + CI (synthetic). |
-| G-124k | M9 the agent's scripted playthrough in both graphics modes, start to end; optional walkthrough checkpoints match ScummVM | R-80 | FULL | — | `tests/playthrough/`; `reports/milestone-9.md:80-100` | local. |
-| G-124l | M9 one full manual playthrough by the customer in HD mode, spot checks in original mode | — | DECL | none | `docs/ASSUMPTIONS.md:2879-2882` | Waived by the customer for the merge (2026-11-05). Nobody has played the merged program by hand end to end **[per the records]**. |
+| G-131 | M0 bootstrap: empty libraries build and pass style and sanitizer jobs on every CI platform; reference ScummVM runs; decisions recorded | — | FULL | — | `reports/milestone-0.md`; `docs/ASSUMPTIONS.md:606-611` | |
+| G-132 | M1 every resource decodes byte-identically to ScummVM | R-15 | FULL | — | `tools/resource-compare/run.sh` | local (claimed). |
+| G-133 | M2 path 1, views, fonts bit-exact for all rooms; room viewer | R-19, R-126 | FULL | — | `tools/graphics-compare/run.sh`; `tools/room-viewer/` | local (claimed). |
+| G-134 | M3 original mode identical to M2; per-room replacement report checked against §6.4; HD goldens recorded | R-45, R-56, R-128 | FULL | — | `reports/milestone-3-pictures.md`; `tests/golden/pictures.txt` | |
+| G-135 | M3a hints committed; release build of the room viewer without debug overlays (window, N, HD switch) | R-126 | FULL | — | `main.cpp:156-190` (`--viewer`); `docs/ASSUMPTIONS.md:955-970` | The CI binaries of v0.1: G-125. Keeping the viewer as `--viewer` of the game program follows from this. |
+| G-136 | M4a boot, kernel-call traces match; M4b every referenced kernel function implemented, scenarios over the main areas match | R-64, R-76 | FULL | — | `tests/scenarios/scenarios.txt` (39 runs) | local (claimed). 97 kernel functions referenced; DoAvoider not among them. |
+| G-137 | M5 scripted walks give ScummVM's hero positions frame by frame; §6.8 cases side by side | R-81 | FULL | — | `tools/vm-trace` actor files; `reports/milestone-5.md` | local (claimed). |
+| G-138 | M6a typed commands give ScummVM's results; M6b window layout matches in 1x and renders at every N | R-85, R-86, R-87 | FULL | — | `tests/unit/text/parser_test.cpp`; `tools/hd-frames --check-interface` | local + CI (synthetic). |
+| G-139 | M7 OPL goldens; every sound plays on both devices; signals and cues match; by-ear comparison recorded | R-97, R-99 | FULL | — | `tests/golden/sounds.txt`; `reports/milestone-7.md:196-200` | |
+| G-140 | M8 save/restore at scenario points gives the same VM state hash; replay continues identically | R-109 | FULL | — | `tools/vm-trace/run-round-trips.sh`; `tests/unit/vm/save_test.cpp:64-82` | local (claimed) + CI (synthetic). |
+| G-141 | M9 the agent's scripted playthrough in both graphics modes, start to end; optional walkthrough checkpoints match ScummVM | R-80 | FULL | — | `tests/playthrough/`; `reports/milestone-9.md:80-100` | local. |
+| G-142 | M9 one full manual playthrough by the customer in HD mode, spot checks in original mode | — | DECL | none | `docs/ASSUMPTIONS.md:2879-2882` | Waived by the customer for the merge (2026-11-05). Nobody has played the merged program by hand end to end **[per the records]**. |
 
 ## §13 Working protocol and §15 open questions (checkable artefacts only)
 
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-125a | §13 A pull request and `reports/milestone-N.md` per milestone and sub-gate; decisions recorded in `docs/ASSUMPTIONS.md`; formats documented in `docs/`; licence headers kept | — | FULL | — | `reports/milestone-0.md` … `milestone-9.md`; `docs/formats/` | |
-| G-125b | §15 Open questions: arc threshold, edge blend space, reference machine, AI tooling, optional walkthrough | — | FULL | — | `docs/ASSUMPTIONS.md:843-858` (0.5 px, sRGB, machine); `:898-911` (the agent, Claude, did the AI step); `tests/playthrough/` (scripted walkthrough) | Resolved. Hint licensing: G-24. |
-| G-125c | §15 Whether other sound devices are wanted after the first release | — | AMB | Low | — | Unanswered; moot until a first release exists (G-117). |
+| G-143 | §13 A pull request and `reports/milestone-N.md` per milestone and sub-gate; decisions recorded in `docs/ASSUMPTIONS.md`; formats documented in `docs/`; licence headers kept | — | FULL | — | `reports/milestone-0.md` … `milestone-9.md`; `docs/formats/` | |
+| G-144 | §15 Open questions: arc threshold, edge blend space, reference machine, AI tooling, optional walkthrough | — | FULL | — | `docs/ASSUMPTIONS.md:843-858` (0.5 px, sRGB, machine); `:898-911` (the agent, Claude, did the AI step); `tests/playthrough/` (scripted walkthrough) | Resolved. Hint licensing: G-24. |
+| G-145 | §15 Whether other sound devices are wanted after the first release | — | AMB | Low | — | Unanswered; moot until a first release exists (G-125). |
 
 ## Contradictions and ambiguities in the requirements (not listed above)
 
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-126 | §1.1/§6.1 "Game logic is never changed" / "always behaves as in the original" vs §7 "Port the script patches ScummVM applies to this game" | R-69, R-70 | AMB | Low | `script_patches.cpp:612-742` | The 16 patches change the original game's logic (lock-up fixes, copy-protection random fix). The project followed ScummVM; the spec's two statements disagree. |
-| G-127 | §6.4 "no swaps" and "pair classes" are not defined | R-45 | AMB | Low | `docs/ASSUMPTIONS.md:801-809` | Resolved by the agent's definitions (swap = 4+ connected differing pixels outside the band; (a,b) ≡ (b,a)), decided at milestone 3. |
-| G-128a | N has no upper bound in §6.1, but §5.3 goldens stop at N = 10, §10.3 performance targets stop at N = 10, and the code allows N up to 16 | R-50, R-57 | AMB | Low | `config.hpp:36`; `compose.hpp:94`; `fitting.cpp:15-17` (V-03) | N = 11–16 has no golden, no performance target and a flattening comment that assumes N ≤ 10. |
-| G-128b | Milestone numbers: the spec (10 saves, 11 glyphs, 12 exact coverage) vs A4 (10 HD quality incl. exact coverage, 11 saves, 12 glyphs) vs reports dated before 2026-10-29 | — | AMB | Low | `docs/SPEC_ADDENDA.md:8-14`; `docs/ASSUMPTIONS.md:2784-2800` | Resolved by the mapping table; recorded so the IDs here are unambiguous. |
-| G-128c | Answer 4 ("If it is not implemented, then drop it") is an ASSUMED reading; its edge cases are open: macOS (G-07, partly built), unpublished release (G-117, built but not published), A4 part B (G-103) | — | AMB | Medium | `review/STATUS.md` | Medium: it decides whether three High/Low items are work or dropped. Stage 3. |
+| G-146 | §1.1/§6.1 "Game logic is never changed" / "always behaves as in the original" vs §7 "Port the script patches ScummVM applies to this game" | R-69, R-70 | AMB | Low | `script_patches.cpp:612-742` | The 16 patches change the original game's logic (lock-up fixes, copy-protection random fix). The project followed ScummVM; the spec's two statements disagree. |
+| G-147 | §6.4 "no swaps" and "pair classes" are not defined | R-45 | AMB | Low | `docs/ASSUMPTIONS.md:801-809` | Resolved by the agent's definitions (swap = 4+ connected differing pixels outside the band; (a,b) ≡ (b,a)), decided at milestone 3. |
+| G-148 | N has no upper bound in §6.1, but §5.3 goldens stop at N = 10, §10.3 performance targets stop at N = 10, and the code allows N up to 16 | R-50, R-57 | AMB | Low | `config.hpp:36`; `compose.hpp:94`; `fitting.cpp:15-17` (V-03) | N = 11–16 has no golden, no performance target and a flattening comment that assumes N ≤ 10. |
+| G-149 | Milestone numbers: the spec (10 saves, 11 glyphs, 12 exact coverage) vs A4 (10 HD quality incl. exact coverage, 11 saves, 12 glyphs) vs reports dated before 2026-10-29 | — | AMB | Low | `docs/SPEC_ADDENDA.md:8-14`; `docs/ASSUMPTIONS.md:2784-2800` | Resolved by the mapping table; recorded so the IDs here are unambiguous. |
+| G-150 | Answer 4 ("If it is not implemented, then drop it") is an ASSUMED reading; its edge cases are open: macOS (G-07, partly built), the unpublished release (G-125, built but not published), the history cleanup and hint licensing review before publication (G-24, not done, but the repository is already public), A4 part B (G-103) | — | AMB | Medium | `review/STATUS.md` | Medium: it decides whether three High items and one Low item are work or dropped. Stage 3. |
 
 ## Scope creep (implemented but not required)
 
 | ID | What | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-129 | Test hooks in the shipped program: `--replay`, `--seed`, `--fast`, `--end-state` | R-115…R-117 | CREEP | Low | `main.cpp:73-100`, `:687-728`, `:1030-1055`, `:1143-1169` | Serve the milestone 9 playthrough in the program (both graphics modes); §5.1 "no debug hacks outside build options" argues for a build option or a tool. Untested by CTest (R-110). |
-| G-130 | `volume` key and `music = off` | R-96, R-102 | CREEP | Low | `config.hpp:35-56`; `main.cpp:1012`, `:1026-1027`; `mixer_test.cpp:126` | Small, harmless conveniences beyond §10.2's key list. |
-| G-131 | `SCI_WITHOUT_STROKE_INTEGRITY` build option | R-42 | CREEP | Low | `build_scene.cpp:1257-1261` | Kept from the 3b baseline measurement; a second code path no CI preset builds. |
-| G-132 | Region, symmetry and relation hint parsing/validation kept although nothing uses them | R-36 | CREEP | Low | `src/sci-vector/src/hints.cpp`; `hints.hpp:78-100` | Regions and symmetry are spec content (§6.7) but consumed by nothing; relations are dropped (G-97). Parse code and 535 hint entries with no effect on output. |
-| G-133 | Room viewer inside the product (`--viewer`) | R-126 | CREEP | — | `main.cpp:156-190` | Not creep in effect: §12 (3a) asks for "a release build of the room viewer" as v0.1; kept as a mode of the game program. Listed for completeness, no severity. |
+| G-151 | Test hooks in the shipped program: `--replay`, `--seed`, `--fast`, `--end-state` | R-115…R-117 | CREEP | Low | `main.cpp:73-100`, `:687-728`, `:1030-1055`, `:1143-1169` | Serve the milestone 9 playthrough in the program (both graphics modes); §5.1 "no debug hacks outside build options" argues for a build option or a tool. Untested by CTest (R-110). |
+| G-152 | `volume` key and `music = off` | R-96, R-102 | CREEP | Low | `config.hpp:35-56`; `main.cpp:1012`, `:1026-1027`; `mixer_test.cpp:126` | Small, harmless conveniences beyond §10.2's key list. |
+| G-153 | `SCI_WITHOUT_STROKE_INTEGRITY` build option | R-42 | CREEP | Low | `build_scene.cpp:1257-1261` | Kept from the 3b baseline measurement; a second code path no CI preset builds. |
+| G-154 | Region, symmetry and relation hint parsing/validation kept although nothing uses them | R-36 | CREEP | Low | `src/sci-vector/src/hints.cpp`; `hints.hpp:78-100` | Regions and symmetry are spec content (§6.7) but consumed by nothing; relations are dropped (G-97). Parse code and 535 hint entries with no effect on output. |
 
 ## Cross-cutting documentation item
 
 | ID | Requirement | R | Class | Sev | Code / test | Note |
 |---|---|---|---|---|---|---|
-| G-123 | §5.1 comments explain why; §14 docs current | — | PART | Low | `hints.hpp:78-80`, `hints/README.md` (relations "used from milestone 3b"); `src/sci-vm/README.md:7`, `:11`; `cmake/SciThirdParty.cmake:5-6`; `docker/run.sh:8`; `docs/ASSUMPTIONS.md:28` (private); `config.cpp:184` (V-11); `trigonometry.hpp:3-7` (V-05); `docs/formats/replay-and-trace.md:40` (V-07); four tools without README (MAP.md 8.13) | Stale or false statements in code comments and docs other than ARCHITECTURE.md (G-44). |
-| G-128 | Unenforced rules and minor comment mismatches carried from stage 1b: V-03, V-05, V-12 | R-58, R-73 | PART | Low | `fitting.cpp:15-17`; `trigonometry.hpp:3-7`; `build_scene.hpp:97-100` | No script checks the analyser-version rule; two comments contradict the code. |
+| G-155 | §5.1 comments explain why; §14 docs current | — | PART | Low | `hints.hpp:78-80`, `hints/README.md` (relations "used from milestone 3b"); `src/sci-vm/README.md:7`, `:11`; `cmake/SciThirdParty.cmake:5-6`; `docker/run.sh:8`; `docs/ASSUMPTIONS.md:28` (private); `config.cpp:184` (V-11); `trigonometry.hpp:3-7` (V-05); `docs/formats/replay-and-trace.md:40` (V-07); four tools without README (MAP.md 8.13) | Stale or false statements in code comments and docs other than ARCHITECTURE.md (G-44). |
+| G-156 | Unenforced rules and minor comment mismatches carried from stage 1b: V-03, V-05, V-12 | R-58, R-73 | PART | Low | `fitting.cpp:15-17`; `trigonometry.hpp:3-7`; `build_scene.hpp:97-100` | No script checks the analyser-version rule; two comments contradict the code. |
 
 ---
 
@@ -305,8 +304,69 @@ with all references, so it is counted once.
 
 ### Counts per class and severity
 
-DRAFT — recomputed in the final pass.
+Computed by a script over the `| G-` rows of this file (156 items,
+G-01 … G-156).
+
+| Class | Critical | High | Medium | Low | — / none | Total |
+|---|---|---|---|---|---|---|
+| FULL (fully implemented) | 0 | 0 | 0 | 0 | 114 (1 of them untested scope: G-116) | **114** |
+| PART (partial or deviating) | 0 | 3 | 4 | 16 | 0 | **23** |
+| DROP (not implemented — dropped, answer 4) | — | — | — | — | 2 | **2** |
+| DECL (not implemented — declined by the customer) | — | — | — | — | 5 | **5** |
+| CREEP (implemented, not required) | 0 | 0 | 0 | 4 | 0 | **4** |
+| AMB (contradiction/ambiguity in the requirements) | 0 | 0 | 2 | 6 | 0 | **8** |
+| **Total** | **0** | **3** | **6** | **26** | **121** | **156** |
+
+No Critical item: nothing found breaks core functionality, loses data or
+blocks iteration 2 by itself. "FULL" for game-dependent behaviour mostly
+rests on local checks claimed by the milestone reports (column "Note":
+"local (claimed)"); stage 2 re-ran one of them (golden hashes, below).
+
+### Items with a severity, highest first
+
+| Sev | Items |
+|---|---|
+| High | G-07 macOS not buildable; G-24 public repository without the recorded §14 cleanup and hint licensing review; G-125 no release ever published |
+| Medium | G-18 patch files not covered by `.gitignore`/policy; G-44 ARCHITECTURE.md stale since 4a; G-48 parsers without fuzz targets; G-122 (AMB) files "next to the executable"; G-123 performance never measured on reference-class hardware; G-150 (AMB) edge cases of answer 4 |
+| Low | G-29, G-31, G-34, G-36, G-39, G-41, G-43, G-69, G-73, G-79, G-87, G-95, G-96, G-103 (AMB), G-126, G-145 (AMB), G-146 (AMB), G-147 (AMB), G-148 (AMB), G-149 (AMB), G-151 … G-154 (CREEP), G-155, G-156 |
+
+DROP: G-97 (A1 relation hints), G-98 (A1 fitted-chain fallback).
+DECL: G-77 (exact area coverage), G-91 (vectorised glyphs), G-102 (A4
+part A), G-115 (ScummVM-compatible saves), G-142 (customer's manual
+playthrough).
 
 ### Top findings
 
-DRAFT — see the final pass.
+1. **G-24 (High): the repository is public without the pre-publication
+   steps of §3.4/§14.** It was made public on 2026-10-22 (customer's
+   decision at the 4b gate, to make CI free). No history cleanup pass and
+   no hint-file licensing review (§15) is recorded. A file-name check of
+   all local history found no game data or game-derived images, but the
+   content was not reviewed.
+2. **G-125 (High): no release was ever published.** Release v0.1 (§12
+   3a/A1) and the "release binaries for all three OSes built by CI"
+   (§10.4, §14) do not exist on GitHub: no remote tag, no release, the
+   release workflow never ran on a tag. `v0.1.0` and `v0.9.0-rc.1` exist
+   only as local tags; `README.md` says binaries are attached to releases.
+3. **G-07 (High): macOS is in scope (§1.2) but does not build.** Two
+   known libc++ gaps (`std::jthread`, `std::chrono::zoned_time`) were left
+   open when the customer made macOS optional; no macOS sanitizer job
+   (§5.2), no macOS x86-64 target at all, and `README.md` documents a
+   macOS build as if it worked.
+4. **G-48 (Medium): not every parser of untrusted game data is fuzzed
+   (§5.2).** Script resources, sound resources (MIDI parser), the AdLib
+   and MT-32 patch resources and the configuration file have no libFuzzer
+   target; 12 targets cover the rest.
+5. **G-44 / G-123 / G-18 (Medium):** `docs/ARCHITECTURE.md` stops at
+   milestone 4a although §5.1 requires it current at every milestone;
+   the §10.3 performance targets were only measured in the development
+   container, never on reference-class hardware, Windows or ARM64; and the
+   "never commit game data" guard misses SCI0 patch files (`SCRIPT.052`).
+
+Carried risk (not a requirement gap, already High in MAP.md 8.1): CI
+cannot detect a VM regression; the game-dependent local checks are the
+only safety net for refactoring sci-vm (G-03, G-121).
+
+### Local check run in stage 2
+
+(running; result added when it finishes)
