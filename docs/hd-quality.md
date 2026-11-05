@@ -216,6 +216,34 @@ before (the arrangement and the shared boundary are faster everywhere).
   report (but the times), round trip, `--changes` and
   `--smoothing-suspects` byte for byte as before.
 
+## After batch 3 fixes, group D (2026-11-05)
+
+Measured on branch `m10-b3-group-d` against a run of the `milestone-10`
+build (same hint files apart from pictures 31 and 45):
+
+- Round trip: 13200 chains, 13183 pass, 17 fail (was 13206 / 13189 / 17;
+  the same 17 fail). Pictures 31 and 45 check 3 chains fewer each: their
+  3a arch chain hints (`left-window-arch`; `left-back-window-arch`,
+  `right-back-window-arch`) are superseded by the decided half ellipses;
+  hinted ellipses 18 -> 26 (all deviation 1), hinted arcs 85 -> 84.
+- Acceptance (section 6.4): 88 pictures, worst agreement 99.993%, 0
+  failing, 0 swaps, 0 untouched line pixels; the same 12 pixels within the
+  A.6 tolerance. Line pixels overlapped (the second number of the
+  acceptance column) fall in every picture with size 1 circle brushes
+  (4: 23 -> 6, 5: 18 -> 3, 10: 17 -> 6, 78: 19 -> 6, ...): the diamond
+  covers the plus's pixels and not its neighbours.
+- A1 residuals: overshoots 7080 -> 7082, doubled 2861 -> 2859, fragments
+  6461 -> 6472, breaks 10755 -> 10675 (split groups 2967 -> 2915, hidden
+  groups 307 -> 284, broken joints 7481 -> 7476). Picture 12's split
+  group at (109, 78), command 29, is gone.
+- Picture 45's overlapped line pixels rise 2 -> 7 and its hint column
+  shows 2 left out: the steered arches cover a few pixels of the
+  curtain lines beside them (within 6.4), and the two superseded 3a arch
+  chains.
+- Room entry: not compared. The run shared the machine with other
+  builds, and every picture was 2 to 3 times slower, unchanged ones too
+  (27: 1220 ms); nothing in this change adds rounds.
+
 ## The metric
 
 `sci::render::check_round_trip` (`sci/render/round_trip.hpp`), per fitted
