@@ -97,6 +97,7 @@ found it.
 | B-44 | `fuzz-save` missing from the fuzz target list | defect | Low | S (0.5 h) | iteration 2 | open (found in stage 5 step 0.5) | MAP 6.2, B-05 |
 | B-45 | Script loader reads past an object's properties on a malformed script | defect | Low | S (2 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-script) | B-05 |
 | B-46 | The music player can loop forever on a malformed song | defect | Low | S (3 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-sound) | B-05 |
+| B-47 | The program embeds the repository's `git describe` as SDL's revision | defect | Low | S (1 h) | iteration 2 | open (found in stage 5 step 0.7) | B-20, step 0.1 |
 
 B-43: the project rename (added by the customer, 2026-11-06). B-44 onward: reserved for bugs found in stage 5 (the range started at B-43 before the rename item took that number).
 
@@ -1134,6 +1135,36 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   `tests/fuzz/corpus/sound`.
 - **Acceptance criteria:** the reproducer renders within the 0.2 s limit;
   `fuzz-sound` runs 10 minutes without a timeout.
+
+### B-47 The program embeds the repository's `git describe` as SDL's revision
+
+- **Kind:** defect (build reproducibility). **Severity:** Low (no
+  behaviour change visible in play; it breaks binary identity between
+  commits and misreports SDL's version). **Found in:** stage 5 step 0.7
+  (2026-11-06), when the gate's release build of commit `8dcfb7c` gave a
+  `sierra-hd` that differs from the one built at `3c3791d`/`5b1c01f`
+  although `src/` is the same. **State:** open, not fixed (brief 5.3).
+- **What:** the vendored SDL3's CMake (`third_party/SDL3/CMakeLists.txt`
+  `:3730-3742`) has no `REVISION.txt`, so it sets `SDL_REVISION` from
+  `git describe` of the enclosing repository, i.e. this project's
+  (`SDL-3.4.18-v0.9.0-rc.1-23-g8dcfb7c`), at configure time, and compiles
+  it into SDL (`SDL_GetRevision()`), hence into `sierra-hd` and
+  `sci-audio-output-tests`. Every commit changes these two binaries; a
+  release built from a tag reports the project's tag as SDL's revision.
+  Step 0.1's two builds were identical only because they were configured
+  at the same commit.
+- **Effect on stage 5:** S6 cannot use the SHA-256 of `sierra-hd` across
+  commits as built by the presets. Workaround used by the gate (test
+  side, no source or CMake change): S6 builds are configured with
+  `-DSDL_REVISION=SDL-3.4.18-stage5`, which SDL's CMake honours
+  (`:3737`); with it, `sierra-hd` of `a0422d6` and of the current commit
+  are compared (`review/REFACTOR_REPORT.md`, step 0.7).
+- **Fix (iteration 2):** add `third_party/SDL3/REVISION.txt` with the
+  vendored release's revision (as SDL's source releases have), or set
+  `SDL_REVISION` in `cmake/SciThirdParty.cmake`; record it in
+  `VENDORED.md`.
+- **Acceptance criteria:** two release builds of different commits with
+  the same `src/` give the same `sierra-hd`.
 
 ## Gap items closed without a backlog item
 
