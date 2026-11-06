@@ -30,6 +30,17 @@ step 12. Nothing is pushed.
   blocked until someone starts the daemon. Done meanwhile: branch,
   `review/`, CI minutes, the customer's answers recorded, a draft of
   `scripts/check-vm-hashes.sh`.
+- About 07:25 UTC: the main session started the daemon again (image
+  `sierra-hd-toolchain:fa237f3eeea06223` present); step 0.1 resumed.
+- Correction: my first hand-off report (07:25) said the MT-32 ROM folders
+  were empty. That was wrong: my listing was cut off by `head`. The ROMs
+  are present: `/home/user/roms/roland` holds
+  `CM32L_CONTROL.1989-12-05.v1.02.ROM`, `CM32L_PCM.ROM`,
+  `MT32_CONTROL.1987-10-07.v1.07.ROM`,
+  `MT32_CONTROL.1988-09-30.vX.XX-patched.ROM` and `MT32_PCM.ROM`;
+  `/home/user/roms/mt32-scummvm` has the symlinks `MT32_CONTROL.ROM` and
+  `MT32_PCM.ROM` into `../roland`. Mount `/home/user/roms:/roms`
+  (read-only) so the symlinks resolve.
 
 ## Baselines (before)
 

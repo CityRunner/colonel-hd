@@ -14,10 +14,10 @@ allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
 - Step 0.1: `refactor` created from `a0422d6`, `review/` brought in from
   `audit` (commit "Refactor step 0.1: bring in review/ ..."). **Blocked:**
   the two clean builds and the reproducibility check need the toolchain
-  container, and the shared docker daemon has not been running since the
-  machine's reboot at about 06:48 UTC on 2026-11-06 (no `dockerd`
-  process; this session may not start it). Resume 0.1 once `docker ps`
-  works: `docker/run.sh bash -c "cmake --preset release -B
+  container; the docker daemon was down after the machine's reboot at
+  about 06:48 UTC and was started again by the main session at about
+  07:25 UTC. MT-32 ROMs are present (mount `/home/user/roms:/roms`). Resume
+  0.1 with: `docker/run.sh bash -c "cmake --preset release -B
   build/baseline-release && cmake --build build/baseline-release"`, the
   same into `build/baseline-release-2`, then compare the binaries.
 - Step 0.2 (baselines): in progress; see REFACTOR_REPORT.md, "Baselines
