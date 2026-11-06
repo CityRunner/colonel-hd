@@ -18,21 +18,21 @@ allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
   `/home/user/roms:/roms`). The docker daemon was down from the reboot at
   about 06:48 UTC until about 07:25 UTC (restarted by the main session).
 - Step 0.2: done (numbers in the report).
-- Step 0.3: in part. Done: pictures, views, fonts, cursors
-  (`tools/golden-resources`, `tests/golden/resources.txt`). In progress:
-  the screens (`scripts/check-screen-hashes.sh` with the new
-  `sci-hd-frames --hashes`, `tests/golden/screens.txt`). Remaining: MIDI
-  per sound, the pixel-diff helper, the ARM64 run (see the report).
-- Step 0.4: done (`scripts/check-vm-hashes.sh`, `tests/golden/vm.txt`;
-  full outputs in `build/vm-baseline/`; ScummVM comparison at the start:
-  all match).
+- Step 0.3: done except the MT-32 MIDI streams per sound resource and the
+  ARM64 (qemu) run of the new tool (see the report).
+- Step 0.4: done.
 - Step 0.5: done with findings B-45 (script loader) and B-46 (music
-  player hang); B-44 (fuzz-save never fuzzed). **Open question for the
-  customer:** the fuzzing step of pre-push/CI fails on fuzz-script and
-  fuzz-sound until iteration 2 (options in the report, step 0.5).
-- Step 0.6: `scripts/check-local.sh` and "The local gate" in
-  `tests/README.md` written; committed once `screens.txt` exists.
-- Step 0.7 and steps 1-13: not started.
+  player hang); B-44 (fuzz-save never fuzzed).
+- Step 0.6: done (`scripts/check-local.sh`, `tests/README.md`).
+- Step 0.7: done, the gate passes on the original code; B-47 (SDL
+  revision from git describe) found; S6 uses a fixed SDL_REVISION.
+- **Open questions for the customer before step 1:** (1) one full suite
+  takes about 1 h 45 min per commit: may S4's screens and S5 run only
+  for steps that touch build inputs? (2) the fuzzing step of pre-push/CI
+  fails on fuzz-script/fuzz-sound until B-45/B-46 are fixed: accept red,
+  a known-failures list, or other? (report, steps 0.5 and 0.7).
+- Steps 1-13: not started.
+
 
 
 Earlier: **stage 4 done** (2026-11-06). Files:

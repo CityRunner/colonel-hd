@@ -11,11 +11,11 @@ step 12. Nothing is pushed.
 |---|---|---|
 | 0.1 branch, `review/`, two clean builds, reproducibility | **done** | `review/` brought in (e20328b); `git diff a0422d6 -- . ':!review'` empty; the two clean release builds are byte-identical (below) |
 | 0.2 baselines | **done** | CI minutes, warnings (all Linux presets), CTest + ASan/UBSan + TSan, ASan/UBSan over the game checks, room entry, first launch, frame times, peak memory, binary size, build times |
-| 0.3 golden outputs of all resources (Q-02) | **in part** | pictures, views, fonts, cursors done (`tools/golden-resources`, `tests/golden/resources.txt`, CI test), generated twice, identical; scenario/checkpoint screens in HD, MIDI per sound and the pixel-diff helper remain (below) |
+| 0.3 golden outputs of all resources (Q-02) | **done except MIDI per sound and the ARM64 run** | pictures, views, fonts, cursors done (`tools/golden-resources`, `tests/golden/resources.txt`, CI test), generated twice, identical; scenario/checkpoint screens in HD, MIDI per sound and the pixel-diff helper remain (below) |
 | 0.4 VM output hashes (Q-01) | **done** (incl. the ScummVM comparison at the start) | `scripts/check-vm-hashes.sh`, `tests/golden/vm.txt` (713 lines), generated twice, identical; `--check` tested; full outputs in `build/vm-baseline/` |
 | 0.5 four fuzz targets | **done, with findings** | `fuzz-script`, `fuzz-sound`, `fuzz-patch`, `fuzz-config`; corpora replay in CTest; 10 min each; B-45 (script) and B-46 (sound) found; B-44 (fuzz-save never fuzzed) found on the way |
-| 0.6 local VM gate written down | **done** (waits for `screens.txt`) | `scripts/check-local.sh` runs S4 + S5; `tests/README.md`, "The local gate" |
-| 0.7 gate: S1-S6 on the original code | in progress | S2, S3, S6 pass; S1, S4, S5 running; screens.txt generating |
+| 0.6 local VM gate written down | **done** | `scripts/check-local.sh` runs S4 + S5; `tests/README.md`, "The local gate" |
+| 0.7 gate: S1-S6 on the original code | **done: all pass** | S1-S6 pass; screens.txt generated twice, identical; run times recorded |
 
 ## Environment incidents
 
@@ -132,11 +132,15 @@ screens, before the game quits) at N = 1, 2, 5, 10 and writes
 `tests/golden/screens.txt` (about 59,000 lines). The binary is built in
 two separate trees (`build/stage5-tools-1`, `-2`: identical SHA-256
 `d76c996c…`), not in the reference builds, whose original tools stay
-untouched. **Run time:** one generation takes about 45 minutes on 4
-cores (the playthrough at N = 10 alone is the longest job; at N = 5 it
-took 10.5 minutes). Two generations were running at the end of this
-session (`build/stage5/screens/screens-1.txt`, `-2.txt`); the next
-session compares them and commits `tests/golden/screens.txt`.
+untouched. **Run time:** about 45 minutes alone on 4 cores (estimate
+from the first attempt; the playthrough at N = 5 took 10.5 minutes), 66
+minutes with two runs at once. **Generated twice** (after a machine restart
+killed the first attempt), from `build/stage5-tools-1` and `-2`, the two
+at once with 2 jobs each beside the gate: **identical**, 59,084 lines
+(14,731 screens × 4 N, plus 160 exit lines, all 0), 9.97 MB; each took
+3,960 s (66 min) under that load. The boot screen at tick 60, N = 10,
+also equals a gauge run made before the restart. Committed as
+`tests/golden/screens.txt`.
 **Consequence:** with the screens, S4 + S5 take about an hour per
 commit, at the plan's threshold for asking the customer whether S4/S5
 may run per step instead of per commit (each step of 1-13 is one commit,
@@ -280,6 +284,24 @@ Commit `8dcfb7c` (and later review-only commits): `src/` is that of
 |---|---|---|---|
 | S2 + S3 | clean configure, build, CTest of `release`, `asan`, `tsan` in fresh folders (`build/stage5-gate-*`) | 31/31 pass in each (26 + `sci-golden-layers-tests` + 4 new corpus replays); 0 project warnings; no sanitizer report | release 55 + 295 + 7 s; asan 30 + 589 + 23 s; tsan 29 + 369 + 67 s |
 | S6 | release builds of `a0422d6` (`build/stage5-s6-a0422d6`) and of `8dcfb7c` (`build/stage5-s6-current`), both with `-DSDL_REVISION=SDL-3.4.18-stage5` (B-47) | every executable of `a0422d6` identical in the current build, among them `sierra-hd` (`500ce7fd…`), `sci-vm-trace`, `sci-golden-hashes`, `sci-sound-render`, every test; the only difference is `sci-hd-frames` (the `--hashes` option of step 0.6, intended); new: the four fuzz targets, `sci-golden-resources`, `sci-golden-layers-tests` | — |
+
+| S1 | `check-format.sh`, `check-repo-policy.py`, `check-hints.py`, clang-tidy on the debug configuration | pass ("86 hint files, 0 problems"; no clang-tidy finding) | 846 s |
+| S4 | `sci-golden-resources --check` (resources.txt) | "all resource hashes match" | 1,041 s |
+| S4 | `sci-golden-hashes --check` (pictures.txt) | "all golden hashes match" | 110 s |
+| S4 | `sci-sound-render --check` (sounds.txt) | "all 119 sound golden hashes match" | 27 s |
+| S4 | screens.txt | generated twice, identical (above); the generation is the check | 3,960 s each |
+| S5 | `check-vm-hashes.sh --check` with the gate's release build | "all VM hashes match" | 175 s |
+
+**The gate passes on the original code.** Run time of one full suite,
+measured under load (two screen generations at once): S1 14 min, S2+S3
+about 25 min, S4 about 20 min plus the screens (about 45 min alone), S5
+3 min: **about 1 h 45 min per commit**, much over the hour the plan sets.
+As the plan says, the customer is asked before step 1 whether S4 (with
+the screens) and S5 may run per step instead of per commit; since steps
+1-13 are one commit each, the practical question is whether the screens
+part of S4 may run only at steps that touch rendering or the app (steps
+6-9 build changes; 1-5, 10, 11 docs/CI/layout only, where S6 binary
+identity already proves no change).
 
 A slip during this step: to build `a0422d6` for S6 I switched the
 working tree to it for about five minutes while the `asan` gate build was
