@@ -175,6 +175,20 @@ game-dependent run times).
      the model with permission), not "marked ASSUMED" as the plan's step
      4 row still reads (written before the answer).
 
+- **Project rename, the customer's request (2026-11-06, relayed by the
+  main session):** "Additional step - rename repo and all files/mentions:
+  sierra -> colonel", then "Agreed to your proposals": (1) the project
+  name `sierra-hd`/`sierra_hd`/`SIERRA_HD`/`sierraHd` becomes
+  `colonel-hd`/`colonel_hd`/`COLONEL_HD`/`colonelHd` everywhere outside
+  `third_party/` (program, ini, saves, image tag, archives, hint format
+  id, environment variables, patch identifiers, docs, scripts, CMake,
+  workflows); Sierra the company, SCI, `SIERRA.COM` and ScummVM's names
+  stay; (2) clean rename, old user files ignored, no migration; (3) the
+  GitHub repository rename is the customer's step, the local folder
+  stays; (4) one extra step at the end of stage 5. Recorded as B-43 and
+  plan step 13. The stage 5 bug range now starts at **B-44** (it was
+  B-43). **Decided (customer).**
+
 ## Open items
 
 - **Stage 4 (at STOP), what the customer is asked:**
@@ -279,7 +293,7 @@ game-dependent run times).
    build of step 0.1). Large outputs stay under `build/` (git-ignored).
 4. Docker is shared: never start or stop the daemon; if `docker ps` fails,
    wait with an until-loop.
-5. Bugs found go into `review/BACKLOG_V2.md` as B-43 onward, unfixed.
+5. Bugs found go into `review/BACKLOG_V2.md` as B-44 onward, unfixed.
 
 **Earlier stages (for reference):**
 
@@ -289,7 +303,7 @@ game-dependent run times).
    Stage 5 follows `review/REFACTOR_PLAN.md` exactly, on branch
    `refactor` from `a0422d6` (`origin/main`; the local `main` is stale at
    `df81541`); bugs found go into
-   `review/BACKLOG_V2.md` as B-43 onward, unfixed.
+   `review/BACKLOG_V2.md` as B-44 onward, unfixed.
    Stage 3 asks questions (Q-xx) in batches of 5-10, highest severity
    first, from `review/GAPS.md` (G-xx; its "Items with a severity"
    table), recording answers in `review/QUESTIONS.md` (its "Answers"

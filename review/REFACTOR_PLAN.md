@@ -29,7 +29,7 @@ checks alone.
   used as the start point by name. Its first
   commit brings in `review/` from `audit` (`git checkout audit -- review`;
   `audit` differs from `main` only in `review/`), so `REFACTOR_REPORT.md`
-  and new stage 5 bugs (B-43+) are written on the same branch as the code.
+  and new stage 5 bugs (B-44+) are written on the same branch as the code.
   Nothing is pushed or merged without the customer's instruction.
 - **One step = one commit** (step 0 has one commit per sub-step), message
   "Stage 5 step N: …", each naming its B-item.
@@ -37,7 +37,7 @@ checks alone.
   that fails any part is reverted at once (`git revert`), the cause logged;
   no fix-forward.
 - **Prohibited** (brief 5.3): changing observable behaviour, fixing bugs
-  "while at it", going beyond this plan. A bug found is logged as B-43+ in
+  "while at it", going beyond this plan. A bug found is logged as B-44+ in
   `review/BACKLOG_V2.md` with the step that found it, and left alone.
 
 ## The full suite (after every commit)
@@ -91,7 +91,7 @@ the original code, and every golden is generated twice and identical.
 | 0.2 | Baselines (B-20): warning count per preset (`-Wall -Wextra` and the project's set, `SCI_WARNINGS_AS_ERRORS=OFF`); ASan/UBSan and TSan workflows; UBSan over the local game checks; timings (room entry per room at N = 1, 2, 5, 10; first launch; frame percentiles and worst frame; median of 5); peak memory; binary size stripped and unstripped; clean build time; CI minutes of the last gate. Recorded in `review/` (stage 5 report draft); no code | B-20 (Q-04) | no source change | M, 6 h | revert |
 | 0.3 | Golden outputs of all resources (B-18): extend `tools/golden-hashes` or add a local tool; committed hash files under `tests/golden/`; a CI test on synthetic resources that a one-pixel change changes each layer's hash; PNGs for N = 1, 2, 5, 10 under `build/` only. Scope exactly as Q-02: every picture (1x visual, priority, control; HD image and HD priority map at N = 1…16), every view cel, font glyph and cursor at 1x and N = 1, 2, 5, 10, every scenario and checkpoint screen (original and HD at N = 1, 2, 5, 10), the 119 OPL hashes and the MT-32 MIDI streams. **Generated twice from the two builds of 0.1; byte-identical** | B-18 (Q-02) | `src/` untouched; the existing `tests/golden/pictures.txt` and `sounds.txt` still match | M, 16 h + run time | revert; nothing depends on it yet |
 | 0.4 | VM output hashes (B-19): `scripts/check-vm-hashes.sh`, committed `tests/golden/vm.txt` (hashes of the files `sci-vm-trace` writes for the 39 scenarios, the playthrough, the round trips, plus the program run's end state); full traces kept under `build/vm-baseline/`. **Generated twice; identical.** ScummVM comparison run once (start), log kept | B-19 (Q-01) | `src/` untouched | M, 10 h + run time | revert |
-| 0.5 | Four fuzz targets (B-05): `fuzz-script`, `fuzz-sound`, `fuzz-patch`, `fuzz-config`, synthetic seed corpora, CTest corpus replays, wired into `run-fuzzers.sh` and the CI `fuzz` job; 10 min each locally. Crashes → B-43+, not fixed | B-05 (Q-09) | only `tests/fuzz/`, `scripts/run-fuzzers.sh`, `ci.yml` change; S6 shows `sierra-hd` unchanged | M, 8 h | revert |
+| 0.5 | Four fuzz targets (B-05): `fuzz-script`, `fuzz-sound`, `fuzz-patch`, `fuzz-config`, synthetic seed corpora, CTest corpus replays, wired into `run-fuzzers.sh` and the CI `fuzz` job; 10 min each locally. Crashes → B-44+, not fixed | B-05 (Q-09) | only `tests/fuzz/`, `scripts/run-fuzzers.sh`, `ci.yml` change; S6 shows `sierra-hd` unchanged | M, 8 h | revert |
 | 0.6 | The local VM gate written down (B-08 stage 5 part): `tests/README.md` (or `CONTRIBUTING.md`) says which changes need S4/S5 before merging, and `scripts/check-local.sh` runs S4 + S5 in one go | B-08 (Q-01 item 3) | docs and a script only | S, 1 h | revert |
 | 0.7 | **Gate:** S1-S6 all pass on the original code (with 0.3-0.6 in); the run time of each part recorded | brief 5.1 | — | S, 1 h + run time | — |
 
@@ -106,7 +106,7 @@ of that commit (the steps are independent unless "after" is named).
 | # | What changes | Why (B) | How behaviour is shown unchanged | Effort | Risk | Rollback |
 |---|---|---|---|---|---|---|
 | 1 | SPDX header in the 19 tracked `.py`/`.sh` files without one (scripts/ 6, tools/ 9, docker/ 3, tests/ 1; counted in stage 4); `SOURCE` in `scripts/check-repo-policy.py` also covers `.py` and `.sh` | B-26 | comment lines only; S6 identical binaries; each script's `--help` or dry output unchanged; S1 passes | S, 1.5 h | none | revert |
-| 2 | `scripts/check-vendored.py` checks every SHA-256 recorded in `THIRD_PARTY.md` / `VENDORED.md`; run in the lint job and `pre-push.sh`. Mismatches found → B-43+, not fixed (the check then lists them as known, so CI stays green) | B-25 | no build input changes; S6 identical | S, 3 h | none | revert |
+| 2 | `scripts/check-vendored.py` checks every SHA-256 recorded in `THIRD_PARTY.md` / `VENDORED.md`; run in the lint job and `pre-push.sh`. Mismatches found → B-44+, not fixed (the check then lists them as known, so CI stays green) | B-25 | no build input changes; S6 identical | S, 3 h | none | revert |
 | 3 | Policy script and `.gitignore`: SCI0 patch files `TYPE.NNN`, `*.sav`, `sierra-hd.ini` anywhere, with a self-test of names to reject and to accept | B-15 (G-18) | S6 identical; self-test; policy passes on the tree | S, 2 h | a pattern too wide (the accept list catches it) | revert |
 | 4 | "Licensing" section in `hints/README.md`, marked ASSUMED (Q-03), and a `docs/ASSUMPTIONS.md` entry | B-12 | docs only; `scripts/check-hints.py` passes; S6 identical | S, 2 h | none | revert |
 | 5 | macOS removed: `ci.yml` (option, plan output, job, comments), `release.yml` (input, job, header), `native-toolchain/action.yml` (macOS branch), `CMakePresets.json` display names, `cmake/SciCompilerFlags.cmake:48` (`NOT APPLE`) and `:59` (message), `scripts/ci-minutes.py`, `scripts/package-release.sh:7`, `README.md` macOS section, the two HiDPI comments reworded, `docs/ARCHITECTURE.md:320`, a `docs/ASSUMPTIONS.md` entry. SDL3's Apple back-ends stay (B-01 default) | B-01, B-16 | S6: compile and link commands identical on Linux (the `-fuse-ld=lld` condition is unchanged off Apple); the Windows presets are unaffected (`SCI_CLANG_CL` branch untouched); workflow files parse; a manual `quick` CI run if CI minutes are allowed; S2-S5 | M, 6 h | a YAML slip silently drops a job: compare the job list of a dispatched run with the one before | revert |
@@ -116,7 +116,7 @@ of that commit (the steps are independent unless "after" is named).
 | 9 | Move `src/app/platform` → `src/sci-platform` (`git mv`); `CMakeLists.txt` adds `add_subdirectory(src/sci-platform)` before `src/app`; `src/app/CMakeLists.txt` drops `add_subdirectory(platform)`; the two doc lines naming the old path. Target, include paths (`sci/platform/…`) and executable path unchanged | B-02 (Q-07), G-29 | S6: commands identical after replacing the path; S2-S5; `git log --follow` | S, 3 h | assertion messages name the new path (only on failure); open branches touching these files conflict | revert |
 | 10 | Move `reports/` → `docs/reports/` (`git mv`) and every reference: `ci.yml:19`, `:28`, `:100`; `.gitignore` `/reports/images/`, `/reports/dumps/`; `scripts/check-repo-policy.py:56`; `tools/room-viewer/main.cpp:25` (comment, same line count); `tools/room-viewer/README.md:26`, `tools/hd-frames/README.md:54`, `tools/hd-report/README.md:30`; `README.md:17`, `:103`, `:111`; the `reports/` paths in `docs/` (34 lines outside `review/`, from `git grep`). `review/` is not rewritten (it cites `a0422d6`); `review/STATUS.md` gets the path mapping | B-02 (Q-07) | S6 identical binaries (the comment edit keeps line numbers); acceptance grep of B-02; S1-S5 | M, 4 h | a missed path in CI `paths-ignore` makes doc-only pushes start CI (cost, not behaviour) | revert |
 | 11 | `local/` with `README.md` and `game/.gitkeep`, `rom/.gitkeep`, `saves/.gitkeep`; `.gitignore` rule; the policy script rejects anything else under `local/`; examples in docs and tool READMEs use `local/game` and `local/rom` (a new `docs/ASSUMPTIONS.md` entry, the old one kept). The program does **not** look there yet: that is B-03 in iteration 2 | B-02 (Q-07), B-15 | S6 identical; `git check-ignore -v` on sample paths; policy self-test with `local/game/RESOURCE.000` | S, 1 h | none | revert |
-| 12 | **Close:** S1-S6; `cross-aarch64` with S4; Windows presets; ScummVM comparisons (end); 10 min fuzzing per target; `review/REFACTOR_REPORT.md` with tests, warnings, sanitizers and timings before vs after, bugs found (B-43+), remaining work | brief 5.4 | before/after tables | S, 4 h + run times | — | — |
+| 12 | **Close:** S1-S6; `cross-aarch64` with S4; Windows presets; ScummVM comparisons (end); 10 min fuzzing per target; `review/REFACTOR_REPORT.md` with tests, warnings, sanitizers and timings before vs after, bugs found (B-44+), remaining work | brief 5.4 | before/after tables | S, 4 h + run times | — | — |
 
 Steps 1-12 total: about 30 hours plus run times. Stage 5 total: about 73
 hours plus the game-dependent run times.
@@ -155,7 +155,7 @@ hours plus the game-dependent run times.
 - Investigations: B-33 (`-fwrapv`), B-39 (trigonometry) — their evidence
   comes for free from step 0.2's UBSan run and step 0.4's traces, but the
   decisions are iteration 2's.
-- Fixes of any bug found in stage 5 (B-43+).
+- Fixes of any bug found in stage 5 (B-44+).
 - Pruning SDL3's Apple back-ends (B-01 default: keep).
 - Publishing a release (the customer's step, B-16).
 
@@ -171,3 +171,15 @@ hours plus the game-dependent run times.
 4. The defaults of `review/BACKLOG_V2.md` marked "default — accept or
    strike" that the plan uses: B-21, B-24 (steps 6-7), B-23 stage 5 part
    (step 8), and keeping SDL3's Apple back-ends (B-01).
+
+## Step 13: rename the project to colonel-hd (added by the customer, 2026-11-06)
+
+Added after approval, at the customer's request ("Additional step - rename
+repo and all files/mentions: sierra -> colonel"; "Agreed to your
+proposals"). Item B-43 in `review/BACKLOG_V2.md`. Done last, after steps
+1-12 and their checks, because it changes visible names (a behaviour
+change the customer asked for); everything else must stay the same.
+
+| What changes | How behaviour other than names is shown unchanged | Effort | Rollback |
+|---|---|---|---|
+| The project name everywhere outside `third_party/` and `review/`: `sierra-hd` → `colonel-hd`, `sierra_hd`/`SIERRA_HD` → `colonel_hd`/`COLONEL_HD`, `sierraHd` → `colonelHd` (program and CMake target, CMake project name, `colonel-hd.ini` and its section, `colonel-hd-NNN.sav`, the save header's program string, window titles and messages, toolchain image tag, release archive names, the hint format id in all 86 hint files + schema + parser + fuzz corpora, the replay header in the replay files + reader + corpora, the `SIERRA_HD_*` variables, the `sierraHd…` identifiers in `tools/scummvm-patches`, docs, scripts, workflows). Not renamed: Sierra the company and its interpreter, `SIERRA.COM`, ScummVM's names. Clean rename: old file names are ignored, no migration code. The GitHub repository rename is the customer's; the local folder stays. | S2-S5 pass with **every committed golden unchanged**: checked in step 0 that no hash input holds the name: the picture, resource and sound goldens hash pixels and samples only (the hint format id is parsed and dropped; the analysis cache key includes the hint file bytes, so the first launch re-analyses once, which no golden hashes); the VM hashes hash `sci-vm-trace`'s outputs, whose saves carry the program string `sci-vm-trace` (`interpreter.cpp:233`, `:375`), not the project name, and the VM state hash has no program string (`state.cpp`); the replay header is only checked when a replay is read. The only expected re-baselines: S6 binary identity (every binary changes; S6 is replaced for this one commit by "compile commands identical after the name substitution") and the program's own save headers and file names (not in any golden). New unit tests: the ini and save names; the old names ignored. Acceptance grep of B-43. | M, 8 h + one full suite | `git revert` (one commit; the hint files and replays are inside it) |

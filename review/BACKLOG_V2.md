@@ -44,7 +44,7 @@ checks add their run time (not recorded so far, Q-01).
 stage 5, as a behaviour change or as new work.
 
 **Stage 5 bugs.** The brief forbids fixing bugs found during stage 5. Any
-such bug is added below as B-43 onward, kind "defect", with the step that
+such bug is added below as B-44 onward, kind "defect", with the step that
 found it.
 
 ## Overview
@@ -93,8 +93,9 @@ found it.
 | B-40 | 5.25" release: hint warning possibly false | defect (unverified) | Low | — | — | struck (customer, 2026-11-06) | V-01, V-14, R-06 |
 | B-41 | LGPL static linking note | maintainability | Low | — | — | struck (customer, 2026-11-06) | V-09 |
 | B-42 | `uint32_t` sums instead of `uint64_t` | tech debt | Low | — | — | struck (customer, 2026-11-06) | G-73, R-46 |
+| B-43 | Rename the project `sierra-hd` → `colonel-hd` | requirement | Medium | M (8 h) | stage 5 step 13 | Decided (customer, 2026-11-06) | customer's request 2026-11-06 |
 
-B-43 onward: reserved for bugs found in stage 5.
+B-43: the project rename (added by the customer, 2026-11-06). B-44 onward: reserved for bugs found in stage 5 (the range started at B-43 before the rename item took that number).
 
 ## Iteration-2 requirements decided by the customer
 
@@ -357,7 +358,7 @@ sierra-hd/                               sierra-hd/
   3. `scripts/run-fuzzers.sh` and the CI `fuzz` job run all 16 targets
      (60 s each in the gate).
   4. Each target ran at least 10 minutes locally in the fuzz preset;
-     every crash, leak or timeout found is a new defect B-43+ with its
+     every crash, leak or timeout found is a new defect B-44+ with its
      reproducer kept under `build/` (not committed if it contains a game
      byte; synthetic ones may be committed to the corpus only after the
      fix, in iteration 2).
@@ -808,7 +809,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
      with no record (or a recorded whole-tree hash, if per-file records do
      not exist for SDL3's 1,511 files; to be seen in the step).
   2. Run in the lint job and in `scripts/pre-push.sh`.
-  3. First run on `main`: any mismatch is logged as a defect B-43+ and
+  3. First run on `main`: any mismatch is logged as a defect B-44+ and
      **not fixed** in stage 5.
 - **Risk:** none for behaviour.
 
@@ -1003,6 +1004,58 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   recorded as an accepted deviation in `docs/ASSUMPTIONS.md` (B-14).
   Changing the type would touch the rasteriser for no visible gain.
 
+### B-43 Rename the project `sierra-hd` → `colonel-hd`
+
+- **Kind:** requirement (customer's request, 2026-11-06: "Additional step
+  - rename repo and all files/mentions: sierra -> colonel"; then "Agreed
+  to your proposals"). **Severity:** Medium (visible names; no logic).
+  **Effort:** M, about 8 h plus one full suite. **When:** stage 5, step 13
+  (after steps 1-12 and their checks). **State:** Decided (customer,
+  2026-11-06).
+- **Scope (proposal 1, agreed):** the project name everywhere:
+  `sierra-hd` → `colonel-hd`, `sierra_hd`/`SIERRA_HD` →
+  `colonel_hd`/`COLONEL_HD`, `sierraHd` → `colonelHd`: the program and
+  its CMake target, `sierra-hd.ini` → `colonel-hd.ini` (and its section
+  `[sierra-hd]`), saves `sierra-hd-NNN.sav` → `colonel-hd-NNN.sav`, the
+  save header's program string (`sierra-hd <version>`), window titles and
+  messages, the toolchain image tag, release archive names, the hint
+  format id `sierra-hd-hints` in every hint file, the schema, the parser
+  (`src/sci-vector/src/hints.cpp:378`) and the fuzz corpora, the replay
+  header `sierra-hd replay 1` in the replay files and their reader (the
+  same kind of project format id; listed here so it is not missed), the
+  `SIERRA_HD_*` environment variables, the `sierraHd…` identifiers in
+  `tools/scummvm-patches`, docs, scripts, the CMake project name and the
+  workflows. **Not renamed:** Sierra the company and its interpreter
+  ("Sierra's The Colonel's Bequest", SCI = Sierra's Creative
+  Interpreter), the game's own files (`SIERRA.COM`), ScummVM's own names,
+  `third_party/`. Survey on `a0422d6`: 874 mentions in 234 files outside
+  `third_party/` (main session's count).
+- **Existing user files (proposal 2, agreed: clean rename):** the program
+  looks only for the new names; an old `sierra-hd.ini` or
+  `sierra-hd-*.sav` is ignored; the customer renames their own files by
+  hand once. No migration code.
+- **Repository and folder (proposal 3, agreed):** renaming the GitHub
+  repository is the customer's step (Settings → Repository name); after
+  it, the local remote URL is updated. The checkout folder
+  `/home/user/sierra-hd` is not renamed.
+- **Acceptance criteria:**
+  1. `git grep -i -E 'sierra[-_ ]?hd|sierrahd'` outside `third_party/`
+     and `review/` finds nothing (`review/` cites `a0422d6` and is not
+     rewritten; a name mapping goes into `review/STATUS.md`).
+  2. Every golden output and VM hash of step 0 still matches unchanged
+     (`tests/golden/pictures.txt`, `sounds.txt`, `resources.txt`,
+     `vm.txt`); see "Step 13" in `review/REFACTOR_PLAN.md` for why no
+     hash input holds the name.
+  3. The program writes and reads `colonel-hd.ini` and
+     `colonel-hd-NNN.sav` and ignores the old names (a unit test each in
+     `sci-platform-tests`).
+  4. CTest, sanitizers, fuzz corpora, S1 and the release packaging pass.
+- **Risk:** a missed mention in a workflow or script (criterion 1's grep
+  catches it); hint files with the old format id fail to load
+  (`scripts/check-hints.py` and the S4 picture goldens catch it); a
+  rename that touches "Sierra" the company (the grep pattern names only
+  the project forms).
+
 ## Gap items closed without a backlog item
 
 | G / item | Why no B-item |
@@ -1035,7 +1088,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 
 ### Counts by kind and severity
 
-Counted by a script over the 42 rows of the overview table (B-01 … B-42;
+Counted by a script over the 42 rows of the overview table (B-01 … B-42; B-43, added on 2026-11-06 after the count, is not in these tables;
 a kind in brackets, e.g. "requirement (defect)", counts under its first
 word).
 
