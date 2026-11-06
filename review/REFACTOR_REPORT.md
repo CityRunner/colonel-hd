@@ -131,7 +131,14 @@ only):
    counting slip in the audit files, not in the code; the goldens use
    the 38.
 4. ARM64 (qemu-user) run of the new tool once at the start (criterion 4).
-5. clang-tidy over the new files (S1) not run yet.
+5. ~~clang-tidy over the new files~~ done: the main session's pre-push
+   run found 8 clang-tidy errors in `layers.cpp` (bugprone-signed-bitwise
+   in `put16`, readability-trailing-comma); fixed (`put16` now takes the
+   low 16 bits through `std::uint16_t`, the same bytes for every value it
+   gets) and the style step (format, policy, hints, clang-tidy on debug)
+   passes. `tests/golden/resources.txt` re-checked in full with the fixed
+   tool: "all resource hashes match" (486 s); `sci-golden-layers-tests`
+   passes.
 
 ## Step 0.4: VM output hashes
 

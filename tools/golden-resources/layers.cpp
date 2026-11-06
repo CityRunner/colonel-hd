@@ -20,9 +20,11 @@ using render::compose_width;
 
 constexpr std::size_t screen_pixels = std::size_t{compose_width} * compose_height;
 
+// The low 16 bits of the value, little-endian.
 void put16(std::vector<std::uint8_t>& out, int value) {
-    out.push_back(static_cast<std::uint8_t>(value & 0xFF));
-    out.push_back(static_cast<std::uint8_t>((value >> 8) & 0xFF));
+    const auto bits = static_cast<std::uint16_t>(value);
+    out.push_back(static_cast<std::uint8_t>(bits & 0xFFU));
+    out.push_back(static_cast<std::uint8_t>(bits >> 8U));
 }
 
 // An empty screen: every layer zero (colour 0, owned by the picture,
@@ -37,18 +39,20 @@ struct Screen {
     std::vector<std::uint32_t> sprite_layer = std::vector<std::uint32_t>(screen_pixels, 0);
 
     [[nodiscard]] render::ComposeInput input(std::span<const render::ComposeSpriteList> lists) const {
-        return render::ComposeInput{.visual = visual,
-                                    .owner = owner,
-                                    .background_visual = background_visual,
-                                    .background_owner = background_owner,
-                                    .background_priority = background_priority,
-                                    .background_source = background_source,
-                                    .sprite_layer = sprite_layer,
-                                    .sprite_lists = lists,
-                                    .hd_background = nullptr,
-                                    .hd_priority = {},
-                                    .hd = true,
-                                    .snap = false};
+        return render::ComposeInput{
+            .visual = visual,
+            .owner = owner,
+            .background_visual = background_visual,
+            .background_owner = background_owner,
+            .background_priority = background_priority,
+            .background_source = background_source,
+            .sprite_layer = sprite_layer,
+            .sprite_lists = lists,
+            .hd_background = nullptr,
+            .hd_priority = {},
+            .hd = true,
+            .snap = false,
+        };
     }
 };
 
@@ -96,27 +100,38 @@ std::string cel_1x(const view::Cel& cel) {
 std::string cel_hd(const view::Cel& cel, int scale) {
     Screen screen;
     const int top = render::compose_picture_top;
-    const render::PixelRect rect{.x = 0,
-                                 .y = top,
-                                 .width = std::min<int>(cel.width, compose_width),
-                                 .height = std::min<int>(cel.height, compose_height - top)};
-    const std::array sprites{render::ComposeSprite{.left = 0,
-                                                   .top = top,
-                                                   .width = cel.width,
-                                                   .height = cel.height,
-                                                   .pixels = cel.pixels,
-                                                   .clear_key = cel.clear_key,
-                                                   .priority = 15,
-                                                   .clip_left = 0,
-                                                   .clip_top = top,
-                                                   .clip_right = compose_width,
-                                                   .clip_bottom = compose_height}};
+    const render::PixelRect rect{
+        .x = 0,
+        .y = top,
+        .width = std::min<int>(cel.width, compose_width),
+        .height = std::min<int>(cel.height, compose_height - top),
+    };
+    const std::array sprites{
+        render::ComposeSprite{
+            .left = 0,
+            .top = top,
+            .width = cel.width,
+            .height = cel.height,
+            .pixels = cel.pixels,
+            .clear_key = cel.clear_key,
+            .priority = 15,
+            .clip_left = 0,
+            .clip_top = top,
+            .clip_right = compose_width,
+            .clip_bottom = compose_height,
+        },
+    };
     for (int y = rect.y; y < rect.y + rect.height; ++y) {
         for (int x = rect.x; x < rect.x + rect.width; ++x) {
             screen.sprite_layer[(static_cast<std::size_t>(y) * compose_width) + static_cast<std::size_t>(x)] = 1;
         }
     }
-    const std::array lists{render::ComposeSpriteList{.generation = 1, .sprites = sprites}};
+    const std::array lists{
+        render::ComposeSpriteList{
+            .generation = 1,
+            .sprites = sprites,
+        },
+    };
     return compose_rect(screen.input(lists), rect, scale);
 }
 
@@ -128,10 +143,12 @@ std::string glyph_1x(const text::Glyph& glyph) {
 
 std::string glyph_hd(const text::Glyph& glyph, int scale) {
     Screen screen;
-    const render::PixelRect rect{.x = 0,
-                                 .y = 0,
-                                 .width = std::min<int>(glyph.width, compose_width),
-                                 .height = std::min<int>(glyph.height, compose_height)};
+    const render::PixelRect rect{
+        .x = 0,
+        .y = 0,
+        .width = std::min<int>(glyph.width, compose_width),
+        .height = std::min<int>(glyph.height, compose_height),
+    };
     for (int y = 0; y < rect.height; ++y) {
         for (int x = 0; x < rect.width; ++x) {
             const std::size_t i = (static_cast<std::size_t>(y) * compose_width) + static_cast<std::size_t>(x);
