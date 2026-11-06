@@ -4,6 +4,7 @@
 
 add_subdirectory(common)
 add_subdirectory(golden-hashes)
+add_subdirectory(golden-resources)
 add_subdirectory(graphics-dump)
 add_subdirectory(hd-frames)
 add_subdirectory(hd-report)

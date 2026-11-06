@@ -11,7 +11,7 @@ step 12. Nothing is pushed.
 |---|---|---|
 | 0.1 branch, `review/`, two clean builds, reproducibility | **done** | `review/` brought in (e20328b); `git diff a0422d6 -- . ':!review'` empty; the two clean release builds are byte-identical (below) |
 | 0.2 baselines | in progress | CI minutes, warnings (release, asan, tsan), CTest + ASan/UBSan + TSan, binary size, build time measured; game timings running |
-| 0.3 golden outputs of all resources (Q-02) | not started | |
+| 0.3 golden outputs of all resources (Q-02) | **in part** | pictures, views, fonts, cursors done (`tools/golden-resources`, `tests/golden/resources.txt`, CI test), generated twice, identical; scenario/checkpoint screens in HD, MIDI per sound and the pixel-diff helper remain (below) |
 | 0.4 VM output hashes (Q-01) | draft only | `scripts/check-vm-hashes.sh` drafted, untracked and never run (needs the container); the program-run end state (B-19 criterion 4) is not in it yet |
 | 0.5 four fuzz targets | not started | |
 | 0.6 local VM gate written down | not started | |
@@ -77,6 +77,56 @@ Key hashes of the original code (all 36 executables:
 code for the whole of stage 5; `build/baseline-release-2` is kept until
 the goldens of 0.3/0.4 have been generated from both. Logs and full
 manifests: `build/stage5/` (git-ignored).
+
+## Step 0.3: golden outputs of all resources (in part)
+
+**Done.** A new local tool `sci-golden-resources` (`tools/golden-resources/`,
+README there) writes `tests/golden/resources.txt` (39,403 lines, hashes
+only):
+
+| Kind | Layers | Lines |
+|---|---|---|
+| 88 pictures | 1x visual, priority, control maps; original frame at 1x; HD image and HD priority map at every N = 1 … 16 | 3,168 |
+| 6,220 view cels | all views, every loop and cel, at 1x and through the HD sprite path (`compose`) at N = 1, 2, 5, 10 | 31,100 |
+| fonts | every glyph at 1x and as interface text composed at N = 1, 2, 5, 10 | 5,120 |
+| 3 cursors | 1x and the program's `scale_cursor` at N = 1, 2, 5, 10 | 15 |
+
+- **Generated twice**, from `build/baseline-release` and
+  `build/baseline-release-2`: byte-identical. Run time 537 s and 477 s
+  (each alone would be less: the first ran beside the ASan game checks
+  and the VM hashes, the second beside the picture check).
+- **Cross-check:** its 440 `pic … hd1|hd2|hd5|hd10|original1` lines equal
+  the `pic` lines of `tests/golden/pictures.txt` (made by a different
+  path: `build_scene` with the hint set instead of `analyse`), so the HD
+  layers hash the right buffers.
+- **CI test** `sci-golden-layers-tests` (`tests/golden/layers_test.cpp`,
+  built with the tools): on synthetic cels, glyphs and cursors, a
+  one-pixel change changes the 1x hash and the HD hash at N = 1, 2, 5, 10.
+  Passes; CTest now has 27 tests on the release build.
+- **Existing goldens still match** (B-18 criterion 5) on the reference
+  build: `sci-golden-hashes … tests/golden/pictures.txt --check --hints
+  hints` "all golden hashes match" (61 s); `sci-sound-render /game
+  --golden tests/golden/sounds.txt --check` "all 119 sound golden hashes
+  match" (23 s).
+- `src/` untouched: the 36 executables of the reference build are still
+  byte-identical to `review/stage5/baseline-release-binaries.sha256`
+  after adding the tool. Format, policy and hint checks pass.
+- `--check` reports each difference by resource, layer and N.
+
+**Not done yet (rest of 0.3):**
+1. Every screen of the 39 scenarios and the 43 playthrough checkpoints,
+   original and HD at N = 1, 2, 5, 10 (Q-02). The 1x screens and maps
+   of every scenario and the playthrough are already hashed by step 0.4
+   (`sci-vm-trace --screens`, every 60 ticks); the HD and original
+   frames at N need a run of `sci-hd-frames` (or a hash option in it) at
+   those ticks.
+2. The MT-32 MIDI streams per sound resource (`sci-sound-render` renders
+   AdLib only); the MIDI streams of the scenarios are in 0.4's hashes.
+3. The diff helper that writes a pixel-difference image under `build/`
+   for a mismatch (B-18 criterion 3), and PNGs at N = 1, 2, 5, 10 under
+   `build/` only.
+4. ARM64 (qemu-user) run of the new tool once at the start (criterion 4).
+5. clang-tidy over the new files (S1) not run yet.
 
 ## Baselines (before)
 

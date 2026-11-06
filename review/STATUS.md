@@ -19,10 +19,13 @@ allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
   about 06:48 UTC until about 07:25 UTC (restarted by the main session).
 - Step 0.2 (baselines): in progress; see REFACTOR_REPORT.md, "Baselines
   (before)".
-- Step 0.4: `scripts/check-vm-hashes.sh` is drafted in the working tree,
-  untracked, never run (needs the container); test and finish it in
-  order, after 0.3. It lacks the program-run end state (B-19 item 4).
-- Steps 0.3, 0.5-0.7 and 1-12: not started.
+- Step 0.2: done except the warning counts of `debug`, `fuzz` and
+  `cross-aarch64` (see the report).
+- Step 0.3: in part (pictures, views, fonts, cursors: `tools/golden-resources`,
+  `tests/golden/resources.txt`); what remains is listed in the report,
+  "Step 0.3".
+- Step 0.4: see the report, "Step 0.4".
+- Steps 0.5-0.7 and 1-12: not started.
 
 Earlier: **stage 4 done** (2026-11-06). Files:
 `review/BACKLOG_V2.md` (42 items B-01 … B-42: High 7, Medium 12, Low 23,
