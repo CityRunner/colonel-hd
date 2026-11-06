@@ -97,6 +97,14 @@ Waiting for the customer's answers to batch 1.
      **Decided (customer).**
   4. "continue": stage 3 starts. **Decided (customer).**
 
+- **Answers to stage 3 batch 1 (2026-11-06)**, the customer's word:
+  "Defaults". Q-01, Q-02 and Q-04 to Q-10 take their defaults
+  (**Decided (customer)**); Q-03 has no default for its first part
+  (which account and terms), so Q-03 is **ASSUMED (unconfirmed)**: the
+  customer's own Claude sessions, publication under GPL-3.0-or-later
+  acceptable, the legal risk with the customer. All High questions are
+  closed (Q-03 as assumed). See `review/QUESTIONS.md`, Answers.
+
 ## Open items
 
 - **Stage 3, batch 1 (`review/QUESTIONS.md`), all open:**

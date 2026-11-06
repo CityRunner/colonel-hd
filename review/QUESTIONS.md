@@ -515,13 +515,13 @@ customer's words, the decision, and **Decided (customer)** or **ASSUMED
 
 | Q | Customer's words | Decision | State |
 |---|---|---|---|
-| Q-01 | | | open |
-| Q-02 | | | open |
-| Q-03 | | | open |
-| Q-04 | | | open |
-| Q-05 | | | open |
-| Q-06 | | | open |
-| Q-07 | | | open |
-| Q-08 | | | open |
-| Q-09 | | | open |
-| Q-10 | | | open |
+| Q-01 | "Defaults" (2026-11-06) | The batch-1 default: before any change, SHA-256 hashes of every output of our VM (39 scenarios, playthrough, save round trips), generated twice; only hashes committed, checked locally after each commit; ScummVM comparison once at the start and once at the end. Iteration-2 backlog: hand-built bytecode tests and a small home-made game in CI (target 70 % sci-vm lines); until then the local checks are a documented gate before any sci-vm merge. | **Decided (customer)** |
+| Q-02 | "Defaults" (2026-11-06) | The batch-1 default: every picture (1x maps, HD image, HD priority map, N = 1-16), every view cel, font glyph and cursor (1x and N = 1, 2, 5, 10), every scenario and checkpoint screen, and the sounds; hashes committed, PNGs kept locally under build/ for N = 1, 2, 5, 10. | **Decided (customer)** |
+| Q-03 | "Defaults" (2026-11-06) | (a) No answer to "which account and terms": ASSUMED that the hints were produced in the customer's own Claude sessions under the terms that applied to that account, and that the customer carries the legal risk. (b) ASSUMED acceptable to publish under GPL-3.0-or-later, and showing the customer's game pictures to the model allowed (customer's risk). (c) Recorded in a "Licensing" section of hints/README.md (stage 5). Parser word files and the old .pyc stay; no history rewrite. | **ASSUMED (unconfirmed)** |
+| Q-04 | "Defaults" (2026-11-06) | The batch-1 default: stage 5 records baselines only (room entry, first launch, frame times, memory, binary size, build time, CI minutes); iteration 2 fixes measured misses only: no frame over 16.7 ms at N = 10, memory at most baseline +10 %, and one timing run by the customer on a reference-class laptop. | **Decided (customer)** |
+| Q-05 | "Defaults" (2026-11-06) | The batch-1 default: answer 4 drops only wholly unimplemented requirements (G-97, G-98); the missing parts of partial items become backlog items for the customer to accept or drop; no A4 part B grid tooling (stage 5 changes no pixels). | **Decided (customer)** |
+| Q-06 | "Defaults" (2026-11-06) | The batch-1 default: one data folder, found as --data DIR, else the executable's folder if portable and writable, else the per-user folder; game/, rom/, saves/ inside it, shipped empty in the release archive; iteration 2 (a behaviour change). | **Decided (customer)** |
+| Q-07 | "Defaults" (2026-11-06) | The batch-1 default: minimal moves (src/app/platform → src/sci-platform, reports/ → docs/reports/) and a git-ignored local/ with game/, rom/, saves/ kept by placeholder files. | **Decided (customer)** |
+| Q-08 | "Defaults" (2026-11-06) | The batch-1 default: milestone 9's HD quality is final; the milestone-10 branch may be deleted (remote: the customer's step on GitHub). | **Decided (customer)** |
+| Q-09 | "Defaults" (2026-11-06) | The batch-1 default: add fuzz targets for scripts, sound resources, patch resources and the ini in stage 5 step 1, synthetic inputs only; crashes found are logged, not fixed. | **Decided (customer)** |
+| Q-10 | "Defaults" (2026-11-06) | The batch-1 default: in iteration 2 the ini is updated in place (changed keys only), everything else kept, the command-line game folder not saved, a failed write logged as a warning. | **Decided (customer)** |
