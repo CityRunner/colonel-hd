@@ -126,6 +126,14 @@ the plan and accepts or strikes the defaults.
   and Low candidates for batch 2 go into the stage 4 backlog with their
   defaults, for the customer to accept or strike. **Decided (customer).**
 
+- **Stage 4 answers (2026-11-06)**, the customer's words: "1 approve"
+  — `review/REFACTOR_PLAN.md` is approved, including the game-dependent
+  checks after every commit; stage 5 starts. "4 allowed" — CI minutes for
+  one Windows draft-PR run and one `quick` run during stage 5. **Decided
+  (customer).** Still open: which of the 23 default items to strike
+  ("which items?" — listed to the customer), and Q-03 ("which options?"
+  — explained to the customer).
+
 ## Open items
 
 - **Stage 4 (at STOP), what the customer is asked:**
