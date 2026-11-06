@@ -222,7 +222,8 @@ the plan and accepts or strikes the defaults.
 2. Read `review/TASK.md` (the brief), this file, then `review/MAP.md`.
 3. Continue with the next stage only after the customer's "continue".
    Stage 5 follows `review/REFACTOR_PLAN.md` exactly, on branch
-   `refactor` from `main` at `a0422d6`; bugs found go into
+   `refactor` from `a0422d6` (`origin/main`; the local `main` is stale at
+   `df81541`); bugs found go into
    `review/BACKLOG_V2.md` as B-43 onward, unfixed.
    Stage 3 asks questions (Q-xx) in batches of 5-10, highest severity
    first, from `review/GAPS.md` (G-xx; its "Items with a severity"
