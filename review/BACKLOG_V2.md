@@ -344,7 +344,8 @@ sierra-hd/                               sierra-hd/
   **Effort:** M, 8 h. **When:** stage 5 step 0. **State:** Decided (Q-09).
 - **Refs:** Q-09, G-48, R-138; `src/sci-vm/src/script.cpp`,
   `midi_parser.cpp`, `music.cpp`, `src/sci-audio/src/adlib.cpp` (patch
-  bank) and the MT-32 patch resource, `src/sci-platform/src/config.cpp`.
+  bank) and the MT-32 patch resource, `config.cpp` of sci-platform
+  (`src/app/platform/src/config.cpp` before B-02).
 - **Acceptance criteria:**
   1. Four new libFuzzer targets `fuzz-script`, `fuzz-sound`,
      `fuzz-patch` (AdLib and MT-32 banks), `fuzz-config` in
@@ -582,8 +583,11 @@ sierra-hd/                               sierra-hd/
   `config.cpp:194`; found in stage 4). Nothing of that kind is tracked
   today (V-06 grep).
 - **Acceptance criteria:**
-  1. Both match (case-insensitive) `(script|text|pic|view|font|sound|vocab|cursor|patch|memory|heap|palette)\.\d{3}`
-     anywhere in the tree except `third_party/`.
+  1. Both match (case-insensitive) a whole file name
+     `(^|/)(view|pic|script|text|sound|memory|vocab|font|cursor|patch)\.\d{3}$`
+     (the SCI0 resource types) anywhere in the tree except `third_party/`;
+     the name must end after the number, so `hints/pic.052.json` stays
+     allowed.
   2. `*.sav` and `sierra-hd.ini` are ignored everywhere; `cache/`,
      `files/`, `saves/` under `local/` (B-02) are ignored by its rule.
   3. A self-test (`scripts/check-repo-policy.py --self-test`, or a CTest
@@ -636,3 +640,434 @@ sierra-hd/                               sierra-hd/
   → item closed; present → port it with a CI bytecode test (B-06).
 - **Risk:** none until a copy turns up.
 
+## Safety net for stage 5 (decided in batch 1)
+
+These three items are stage 5 step 0 of `review/REFACTOR_PLAN.md`. They add
+test tooling and committed hash files only; they change no program
+behaviour. They stay useful after stage 5 as the local gate (B-08).
+
+### B-18 Golden outputs for all resources
+
+- **Kind:** maintainability (safety net). **Severity:** High (MAP 8.3,
+  V-04: the pixel goldens cover pictures only; views, fonts, cursors, the
+  HD priority map, N other than 1, 2, 5, 10 and composed frames have none).
+  **Effort:** M, 16 h, plus the generation run time (not measured).
+  **When:** stage 5 step 0. **State:** Decided (Q-02).
+- **Refs:** Q-02, V-04, R-56, R-57, G-54, G-148, MAP 6.3, 8.3.
+- **Scope (Q-02 default, decided):**
+  - every picture: 1x visual, priority and control maps; HD image and HD
+    priority map at every N = 1…16;
+  - every view loop and cel, every font glyph and every cursor at 1x and
+    through the HD sprite path at N = 1, 2, 5, 10;
+  - every screen of the 39 scenarios and of the 43 playthrough
+    checkpoints, original and HD at N = 1, 2, 5, 10;
+  - sounds: the existing 119 OPL hashes plus the MT-32 MIDI streams.
+- **Acceptance criteria:**
+  1. `sci-golden-hashes` (extended) or a new local tool writes one SHA-256
+     per image or stream into committed files under `tests/golden/`
+     (hashes only, game-free); PNGs at N = 1, 2, 5, 10 only under `build/`.
+  2. Generated twice from two clean builds of the original code; the two
+     files are byte-identical (determinism proven).
+  3. A `--check` mode reports every mismatch by resource, N and layer, and
+     a diff helper writes a pixel-difference image under `build/` for a
+     mismatch (regenerating the reference from a kept build of the
+     original code for N not kept as PNG).
+  4. Run on x86-64 after every stage 5 commit; on ARM64 (qemu-user) once
+     at the start and once at the end.
+  5. The existing `tests/golden/pictures.txt` and `sounds.txt` are a
+     subset and still match.
+- **Risk:** the tool itself is new code: a bug that hashes the wrong
+  buffer would pass everything. Mitigation: a CI test on synthetic
+  resources checks that a one-pixel change changes the hash for every
+  layer kind.
+
+### B-19 Hashes of every VM output
+
+- **Kind:** maintainability (safety net). **Severity:** High (MAP 8.1:
+  the only net for sci-vm). **Effort:** M, 10 h. **When:** stage 5 step 0.
+  **State:** Decided (Q-01).
+- **Refs:** Q-01, MAP 6.3, 6.4, R-66.
+- **Acceptance criteria:**
+  1. `scripts/check-vm-hashes.sh` (new, local) runs `sci-vm-trace` in
+     deterministic mode over the 39 scenarios (AdLib and, with the
+     customer's ROMs, MT-32), the 43-checkpoint playthrough and the save
+     round trips, and records a SHA-256 per output stream per run (kernel
+     trace, screens, 1x maps, actors, parser, layout, OPL, MIDI, state
+     hashes, end state) in a committed `tests/golden/vm.txt`. Hashes are
+     taken of the files `sci-vm-trace` already writes (`sha256sum`), so the
+     tool needs no change; a hash-only option is added only if disk space
+     forces it (test tooling, no program change).
+  2. Generated twice; identical.
+  3. `--check` compares and names the first differing stream; the full
+     traces of the original code stay under `build/vm-baseline/` to diff.
+  4. The program playthrough under Xvfb (`tools/playthrough/program-run.sh`)
+     end state is included.
+  5. ScummVM comparison (`run-all-scenarios.sh`, `tools/playthrough/check.sh`)
+     run once at the start and once at the end of stage 5, both logs kept.
+  6. Run time of one full check recorded (needed for B-08's gate and to
+     plan the per-commit cost).
+- **Risk:** as B-18 (tooling bugs); plus disk: full traces of the
+  playthrough are large (not measured).
+
+### B-20 Baselines: warnings, sanitizers, timings, memory, size, build time
+
+- **Kind:** maintainability (safety net). **Severity:** Medium. **Effort:**
+  M, 6 h. **When:** stage 5 step 0. **State:** Decided (Q-04; brief 5.1).
+- **Acceptance criteria:**
+  1. Warnings: a clean build of every Linux preset with
+     `SCI_WARNINGS_AS_ERRORS=OFF` and `-Wall -Wextra` (already in the
+     project flags, `cmake/SciTargets.cmake:20-39`); count and list of
+     warnings per preset committed in `review/` (stage 5 report) — expected
+     0 (MAP 6.4 build had 0).
+  2. Sanitizers: `asan` and `tsan` workflows, plus the local game checks
+     (B-19's playthrough and scenarios) under the `asan` build; results
+     recorded.
+  3. Timings: room entry per room at N = 1, 2, 5, 10; first launch; frame
+     time percentiles and worst frame; median of 5 runs, in the
+     development container (`sci-hd-frames --timing`).
+  4. Peak memory (B-11), binary size (stripped and not), clean build time
+     per preset, CI minutes of the last gate (`scripts/ci-minutes.py`).
+  5. All CTest tests and every B-18/B-19 check pass on the original code
+     before step 1.
+- **Risk:** none (measurement).
+
+## Improvements
+
+### B-21 Remove the four unused dependency edges
+
+- **Kind:** architecture. **Severity:** Low (G-31; MAP 8.7). **Effort:**
+  S, 1 h. **When:** stage 5. **State:** default — accept or strike
+  (batch-2 candidate G-31); in the plan.
+- **What:** delete `sci-resource` from the `DEPENDS` of sci-pic, sci-view
+  and sci-text, and `sci-view` from sci-render (MAP 1.3: no include, no
+  `resource::` or `view::` use).
+- **Acceptance criteria:** all presets build (a missing transitive include
+  fails at compile time); CTest passes; B-18/B-19 unchanged; MAP 1.3's
+  grep confirms no use.
+- **Risk:** low. A consumer that relied on a transitive include path breaks
+  the build, never the behaviour. Link order of static libraries changes,
+  which cannot change behaviour without duplicate symbols (the build would
+  report them).
+
+### B-22 Lint check that every declared edge is used
+
+- **Kind:** maintainability. **Severity:** Low. **Effort:** S, 3 h.
+  **When:** iteration 2. **State:** default — accept or strike.
+- **Acceptance criteria:** a script (in the lint job) parses each
+  `sci_add_library(... DEPENDS ...)` and fails when a library includes no
+  header of a declared dependency, or includes one it did not declare;
+  passes on the tree after B-21.
+- **Risk:** none for behaviour.
+
+### B-23 Tests that include private `src/` folders
+
+- **Kind:** architecture. **Severity:** Low (MAP 1.4, 8.9; it matters when
+  iteration 2 refactors sci-vm and sci-vector internals). **Effort:** S,
+  2 h in stage 5; M, 12 h in iteration 2. **When:** both.
+  **State:** stage 5 part in the plan; iteration-2 part default — accept
+  or strike.
+- **Stage 5 (behaviour-neutral):** replace the five ad-hoc
+  `target_include_directories(... src)` lines
+  (`tests/unit/CMakeLists.txt:49`, `:89`, `:98`, `:110`,
+  `tests/fuzz/CMakeLists.txt:76`) by one helper
+  `sci_test_private_includes(<test> <library>)` in `cmake/SciTesting.cmake`
+  that documents the exception and lists the users; B-05's targets use it.
+  No test source changes.
+- **Iteration 2:** tests of sci-vector reach only the public interface;
+  sci-vm tests keep private access through the helper (the VM's internals
+  are what B-06 tests), documented as the one allowed exception.
+- **Acceptance criteria:** the private paths appear only in the helper;
+  same tests, same results; B-18/B-19 unchanged.
+- **Risk:** none for behaviour (build-only).
+
+### B-24 Remove the dead `component_name()` placeholders
+
+- **Kind:** tech debt. **Severity:** Low (G-43, MAP 8.8). **Effort:** S,
+  0.5 h. **When:** stage 5. **State:** default — accept or strike; in the
+  plan.
+- **What:** delete `src/sci-audio/src/component.cpp`,
+  `src/sci-vm/src/component.cpp` and their declarations; no caller (`grep
+  -rn component_name src tools tests`: definitions and headers only).
+- **Acceptance criteria:** the grep finds nothing; builds and CTest pass;
+  B-18/B-19 unchanged.
+- **Risk:** none (the linker would report a caller).
+
+### B-25 Check the vendored files' SHA-256
+
+- **Kind:** maintainability (supply chain). **Severity:** Medium (MAP 5,
+  8.11: the per-file SHA-256s in `THIRD_PARTY.md` and the `VENDORED.md`
+  files are not checked by anything; whether the tree still matches them
+  was not verified). **Effort:** S, 3 h. **When:** stage 5. **State:** in
+  the plan.
+- **Acceptance criteria:**
+  1. `scripts/check-vendored.py` recomputes every recorded SHA-256 and
+     fails on a mismatch, a missing file, or a file under `third_party/`
+     with no record (or a recorded whole-tree hash, if per-file records do
+     not exist for SDL3's 1,511 files; to be seen in the step).
+  2. Run in the lint job and in `scripts/pre-push.sh`.
+  3. First run on `main`: any mismatch is logged as a defect B-43+ and
+     **not fixed** in stage 5.
+- **Risk:** none for behaviour.
+
+### B-26 SPDX headers on scripts; the policy checks `.py` and `.sh`
+
+- **Kind:** maintainability. **Severity:** Low (MAP 8.10: 15 tracked
+  Python/shell files in `scripts/` and `tools/` have none). **Effort:** S,
+  1.5 h. **When:** stage 5. **State:** in the plan.
+- **Acceptance criteria:** every tracked `.py`/`.sh` outside `third_party/`
+  has `SPDX-License-Identifier: GPL-3.0-or-later` in its first three lines
+  (after the shebang); `SOURCE` in `scripts/check-repo-policy.py` covers
+  `.py` and `.sh` and the script passes; scripts produce the same output
+  (a comment line only).
+- **Risk:** none.
+
+### B-27 A reason on every `NOLINT`
+
+- **Kind:** maintainability. **Severity:** Low (G-36: 20 of 137 without a
+  reason). **Effort:** S, 2 h. **When:** iteration 2. **State:** default —
+  accept or strike (batch-2 candidate).
+- **Default:** add the reason to each; a lint rule rejects a bare
+  `NOLINT`. The macOS-only reason at `build_scene.cpp:499` (B-01) is
+  re-examined: with macOS gone, `std::ranges::iota` may replace the
+  suppressed code (a code change, golden-checked).
+- **Acceptance criteria:** the G-36 grep finds nothing; lint fails on a new
+  bare `NOLINT`.
+- **Risk:** none (comments), except the optional `iota` change (B-18).
+
+### B-28 Switchable log categories in the program
+
+- **Kind:** requirement. **Severity:** Low (G-41, V-10, R-121: `Resources`
+  and `Vm` warnings can never be seen in the program). **Effort:** S, 4 h.
+  **When:** iteration 2. **State:** default — accept or strike
+  (batch-2 candidate).
+- **Default:** `--log vm,resources` and an ini key `log =`; off by default;
+  release builds keep them (§5.1).
+- **Acceptance criteria:** with `--log vm`, a script workaround warning
+  appears on stderr (tested with B-07's mini-game); without it, output is
+  unchanged.
+- **Risk:** logging on the hot path costs time; criterion: no B-20 timing
+  change with logging off.
+
+### B-29 The range of N
+
+- **Kind:** requirement. **Severity:** Low (G-148, V-03: N goes to 16, the
+  goldens and targets stop at 10, a comment assumes 10). **Effort:** S,
+  2 h. **When:** iteration 2. **State:** default — accept or strike
+  (batch-2 candidate).
+- **Default:** keep N ≤ 16 (no behaviour change); B-18 already covers
+  N = 11-16 in the goldens; recompute the flattening error at N = 16 for
+  `fitting.cpp:15-17` and correct the comment; state in `docs/` that the
+  §10.3 targets apply up to N = 10 only.
+- **Alternative:** cap at 10: a behaviour change (`config.hpp:36`,
+  `compose.hpp:94`), users with `scale = 16` get 10.
+- **Acceptance criteria (default):** the comment states the computed error
+  at N = 16; docs name the range and where targets apply.
+- **Risk:** none (default).
+
+### B-30 Other sound devices
+
+- **Kind:** requirement. **Severity:** Low (G-145). **Effort:** none with
+  the default. **State:** default — accept or strike: **no other device**
+  (AdLib and MT-32 only, as built). If the customer wants one (e.g. PC
+  speaker, General MIDI out), it becomes a new item with its own estimate.
+
+### B-31 Hint files for pictures 55 and 992
+
+- **Kind:** maintainability. **Severity:** Low (G-79). **Effort:** S,
+  0.5 h. **When:** iteration 2. **State:** default — accept or strike.
+- **Default:** no files (the two pictures need no hints,
+  `docs/ASSUMPTIONS.md:909`); `hints/README.md` says "one file per picture
+  that needs hints" and names the two.
+- **Acceptance criteria:** the README names both and why; the hint check
+  passes.
+- **Risk:** none.
+
+### B-32 Make the application layer testable
+
+- **Kind:** tech debt. **Severity:** Medium (MAP 8.2: `main.cpp` 1,207
+  lines — options, `GameHost`, presenter, event loop, audio opening, end
+  state — and `viewer.cpp`, `file_store.cpp`, `hd_pictures.cpp`,
+  `game_files.cpp` are in no test binary; R-110 untested; B-03, B-04 and
+  B-10 all change this code). **Effort:** M, 14 h. **When:** iteration 2,
+  before B-03. **State:** default — accept or strike.
+- **Default:** move `parse_options`, the data-folder resolution (B-03) and
+  the ini persistence (B-04) into sci-platform functions with CTest tests
+  (help, exit codes, invalid combinations of R-110); keep SDL code in app.
+- **Acceptance criteria:** R-110's rules each have a test; `main.cpp`
+  shrinks by the moved code; B-18/B-19 and the program playthrough
+  unchanged.
+- **Risk:** medium: the event loop and presenter are timing-sensitive; the
+  default moves only pure functions.
+
+### B-33 `-fwrapv` only in some build types
+
+- **Kind:** tech debt. **Severity:** Low (MAP 8.12: Release and
+  RelWithDebInfo without sanitizers get `-fwrapv`; Debug and sanitizer
+  builds do not, `cmake/SciCompilerFlags.cmake:91-96`). The goldens and
+  the VM hashes run on Release, so a reliance on wrapping that UBSan would
+  flag might hide there. **Effort:** S, 3 h. **When:** iteration 2 (a
+  flag change can change code generation). **State:** default — accept or
+  strike.
+- **Default:** B-20's UBSan run over the local game checks shows whether
+  any signed overflow happens; if none, keep as is and document why; if
+  some, a defect item per site.
+- **Acceptance criteria:** the decision and its evidence recorded in
+  `docs/ASSUMPTIONS.md`.
+- **Risk:** none (investigation).
+
+### B-34 Test hooks in the shipped program
+
+- **Kind:** requirement. **Severity:** Low (G-151 CREEP: `--replay`,
+  `--seed`, `--fast`, `--end-state`). **Effort:** S, 1 h. **When:**
+  iteration 2. **State:** default — accept or strike.
+- **Default:** keep them (the program playthrough and B-10 need them);
+  document them in `docs/USER-README.md` as testing options.
+- **Risk:** none.
+
+### B-35 Remove `SCI_WITHOUT_STROKE_INTEGRITY`
+
+- **Kind:** tech debt. **Severity:** Low (G-153: a second code path that
+  no preset builds, kept from a 3b measurement). **Effort:** S, 1 h.
+  **When:** iteration 2. **State:** default — accept or strike.
+- **Acceptance criteria:** the option and its `#if` branch
+  (`build_scene.cpp:1257-1261`) are gone; default-build output unchanged
+  (B-18).
+- **Risk:** none for the default build.
+
+### B-36 Remove relation-hint parsing; fix its comments
+
+- **Kind:** tech debt. **Severity:** Low (G-154, G-97 DROP, V-02).
+  **Effort:** S, 2 h. **When:** iteration 2. **State:** default — accept
+  or strike.
+- **Default:** relations are dropped (answer 3 after stage 1b), so their
+  parsing and validation go, and `hints.hpp:78-80` and `hints/README.md`
+  stop claiming they are used; region and symmetry hints stay (spec
+  content, §6.7) and are documented as informational. A hint file that
+  still has a `relations` key is rejected by the schema (none has one).
+- **Acceptance criteria:** schema and parser agree; `fuzz-hints` corpus
+  passes; B-18 unchanged.
+- **Risk:** low.
+
+### B-37 List thin fallbacks in the replacement report
+
+- **Kind:** requirement (tool). **Severity:** Low (G-69). **Effort:** S,
+  2 h. **When:** iteration 2. **State:** default — accept or strike.
+- **Acceptance criteria:** `sci-hd-report` lists every fallback block,
+  thin faces included (§6.4), with a count per picture.
+- **Risk:** none (tool only).
+
+### B-38 Check the `analyser_version` rule
+
+- **Kind:** maintainability. **Severity:** Low (V-12). **Effort:** S, 2 h.
+  **When:** iteration 2. **State:** default — accept or strike.
+- **Acceptance criteria:** a lint step fails when a change to
+  `tests/golden/pictures.txt` (or B-18's picture files) has no matching
+  bump of `analyser_version` (`build_scene.hpp:97-99`).
+- **Risk:** none.
+
+### B-39 Trigonometry outside -360…360
+
+- **Kind:** defect (unverified). **Severity:** Low (V-5: the table is used
+  modulo 360 and "may differ from glibc's in the last bits", so from
+  ScummVM; whether the game passes such angles is not known). **Effort:**
+  S, 2 h. **When:** iteration 2. **State:** default — accept or strike.
+- **Default:** count, in B-19's playthrough and scenarios, the kernel
+  calls with angles outside the range (trace grep); none → fix only the
+  comment (B-14); some → compare with glibc and decide.
+- **Risk:** none (investigation).
+
+### B-40 5.25" release hint warning
+
+- **Kind:** defect (unverified). **Severity:** Low (V-01, V-14; R-06).
+  **State:** default — **strike**: the customer has no 5.25" copy and its
+  acceptance is untested scope (answer 2 after stage 1b). Reopen if a copy
+  turns up.
+
+### B-41 LGPL static-linking note
+
+- **Kind:** maintainability. **Severity:** Low (V-09, a hypothesis, not a
+  legal opinion). **State:** default — **strike**: out of the code's scope;
+  the customer decides whether to ask counsel. If kept: one paragraph in
+  `THIRD_PARTY.md` on how users can relink (source is published under the
+  GPL).
+
+### B-42 `uint32_t` sums instead of `uint64_t`
+
+- **Kind:** tech debt. **Severity:** Low (G-73: a letter-only deviation; no
+  overflow possible, 33,553,920 < 2^32). **State:** default — **strike**,
+  recorded as an accepted deviation in `docs/ASSUMPTIONS.md` (B-14).
+  Changing the type would touch the rasteriser for no visible gain.
+
+## Gap items closed without a backlog item
+
+| G / item | Why no B-item |
+|---|---|
+| G-07 | → B-01 (macOS dropped) |
+| G-18 | → B-15, B-02 |
+| G-24 | → B-12 (ASSUMED) |
+| G-29 | → B-02 (sci-platform gets its own folder), B-13 (docs) |
+| G-34 | decided and reasoned (audio mixing on the main thread) |
+| G-44, G-155, G-156, G-39, G-126 | → B-13, B-14 |
+| G-48 | → B-05 |
+| G-69 | → B-37 |
+| G-77, G-91, G-102, G-115, G-142 | declined by the customer |
+| G-87, G-95, G-96 | HD quality frozen at milestone 9 (Q-08) |
+| G-97, G-98 | dropped (answer 4); parsing leftovers → B-36 |
+| G-103 | no grid tooling: stage 5 changes no pixel (Q-05 b) |
+| G-122 | → B-03 |
+| G-123 | → B-09, B-10, B-11, B-20 |
+| G-125 | → B-16; publishing is the customer's step |
+| G-145 | → B-30 |
+| G-146 | closed (customer, 2026-11-06: patches stay) |
+| G-147, G-149 | resolved by recorded definitions and the mapping table |
+| G-148 | → B-29 |
+| G-150 | closed by Q-05 |
+| G-151, G-152, G-153, G-154 | → B-34, (G-152 kept: harmless conveniences, no item), B-35, B-36 |
+| MAP 8.1 / G-03 | → B-06, B-07, B-08, B-19 |
+| R-65 / R-66 | → B-17 |
+
+## Summary
+
+### Counts by kind and severity
+
+Counted by a script over the 42 rows of the overview table (B-01 … B-42;
+a kind in brackets, e.g. "requirement (defect)", counts under its first
+word).
+
+| Kind | Critical | High | Medium | Low | Total |
+|---|---|---|---|---|---|
+| requirement | 0 | 5 (B-01, B-06, B-07, B-08, B-12) | 6 (B-02, B-03, B-04, B-05, B-10, B-16) | 5 (B-28, B-29, B-30, B-34, B-37) | **16** |
+| defect | 0 | 0 | 1 (B-15) | 3 (B-17, B-39, B-40) | **4** |
+| tech debt | 0 | 0 | 1 (B-32) | 5 (B-24, B-33, B-35, B-36, B-42) | **6** |
+| architecture | 0 | 0 | 0 | 2 (B-21, B-23) | **2** |
+| performance | 0 | 0 | 1 (B-09) | 1 (B-11) | **2** |
+| maintainability | 0 | 2 (B-18, B-19) | 3 (B-13, B-20, B-25) | 7 (B-14, B-22, B-26, B-27, B-31, B-38, B-41) | **12** |
+| **Total** | **0** | **7** | **12** | **23** | **42** |
+
+By state: Decided 16 (B-01 … B-11, B-15, B-16, B-18, B-19, B-20); ASSUMED
+1 (B-12); in the plan without a separate decision 2 (B-25, B-26, both
+behaviour-free hygiene the brief's "significantly reduce risk" covers);
+default — accept or strike 20; default — strike 3 (B-40, B-41, B-42).
+
+By timing: stage 5 (all or part) 15 — B-01, B-02, B-05, B-08 (local
+gate), B-12, B-15, B-16 (macOS part), B-18, B-19, B-20, B-21, B-23 (helper),
+B-24, B-25, B-26; iteration 2 the rest.
+
+Effort of the iteration-2 work with every default accepted (sum of the
+estimates of B-03, B-04, B-06, B-07, B-08 CI part, B-09, B-10, B-11, B-13,
+B-14, B-16 rest, B-17 scan, B-22, B-23 rest, B-27 … B-39): about 250 hours,
+of which the VM net (B-06, B-07) is 72. Judgement, not measured.
+
+### Top points for the customer
+
+1. **The VM net is the biggest item and the biggest risk** (B-06, B-07,
+   B-08, High, L): until CI covers sci-vm, every sci-vm change in
+   iteration 2 needs the local gate (B-19 hashes on your game).
+2. **Stage 5 gets the decided safety net first** (B-18, B-19, B-20, B-05):
+   about 40 hours before the first refactoring commit.
+3. **The layout move (B-02) and the macOS removal (B-01) are done in stage
+   5**, as behaviour-free steps, so iteration 2 starts on the final tree.
+4. **Hint licensing stays ASSUMED** (B-12, High): no release should be
+   tagged until you confirm it.
+5. **23 defaults to accept or strike** (batch-2 candidates and PART
+   remainders): silence means accept; B-40, B-41, B-42 default to strike.
