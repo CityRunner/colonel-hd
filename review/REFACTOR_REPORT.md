@@ -114,7 +114,7 @@ only):
 - `--check` reports each difference by resource, layer and N.
 
 **Not done yet (rest of 0.3):**
-1. Every screen of the 39 scenarios and the 43 playthrough checkpoints,
+1. Every screen of the 39 scenarios and the 38 playthrough checkpoints,
    original and HD at N = 1, 2, 5, 10 (Q-02). The 1x screens and maps
    of every scenario and the playthrough are already hashed by step 0.4
    (`sci-vm-trace --screens`, every 60 ticks); the HD and original
@@ -125,6 +125,11 @@ only):
 3. The diff helper that writes a pixel-difference image under `build/`
    for a mismatch (B-18 criterion 3), and PNGs at N = 1, 2, 5, 10 under
    `build/` only.
+   Note: `review/` (MAP 6.3, B-18, B-19) says "43 playthrough
+   checkpoints"; `tests/playthrough/checkpoints.txt` has 43 lines but 38
+   checkpoints (5 are comments), as `reports/milestone-9.md` says. A
+   counting slip in the audit files, not in the code; the goldens use
+   the 38.
 4. ARM64 (qemu-user) run of the new tool once at the start (criterion 4).
 5. clang-tidy over the new files (S1) not run yet.
 
@@ -140,7 +145,7 @@ output file in `tests/golden/vm.txt`, 713 lines:
 | 39 scenarios, AdLib (`--opl`) | trace, screens (sorted `sha256sum` list of every `<tick>.ppm` and the 1x `priority`/`control` maps, every 60 ticks), actors, parser, layout, opl, state (state hashes at 1/6 … 5/6 of the stop tick and at its end) |
 | 39 scenarios, MT-32 (`--music mt32 --roms /roms/roland --midi`) | trace, screens, midi |
 | 39 scenarios with round trips at 1/6 … 5/6 (`--round-trip`) | trace, screens, opl, state, round-trips |
-| the playthrough to its last checkpoint (tick 337613) | trace (2,448,724 calls), screens (5,627 screens, 16,881 files), actors, parser, layout, opl, state and globals at the 43 checkpoints |
+| the playthrough to its last checkpoint (tick 337613) | trace (2,448,724 calls), screens (5,627 screens, 16,881 files), actors, parser, layout, opl, state and globals at the 38 checkpoints of `checkpoints.txt` |
 | the program's playthrough under Xvfb (`program-run.sh`, HD, N = 4, AdLib, `--fast`) | end state |
 
 plus each run's exit code. All 119 runs exit 0; every round trip in
@@ -159,8 +164,15 @@ run ends with "end_state=same".
 - The screens themselves are hashed and deleted (disk); the lists of
   their hashes are kept in `build/vm-baseline/<run>/screens.txt`, so a
   mismatch is located to the tick.
-- **ScummVM comparison at the start** (B-19 criterion 5,
-  `run-all-scenarios.sh`, `tools/playthrough/check.sh`): see below.
+- **ScummVM comparison at the start** (B-19 criterion 5), reference
+  build `build/reference-scummvm` (not rebuilt), `sci-vm-trace` of
+  `build/baseline-release`:
+  - `tools/vm-trace/run-all-scenarios.sh --jobs 4
+    build/stage5/scummvm-scenarios`: **39 ok, 0 FAIL** (traces, screens,
+    maps, actors, parser, layout and OPL all match), 423 s. Log:
+    `build/stage5/scummvm-scenarios.log`.
+  - `tools/playthrough/check.sh` (the playthrough against ScummVM to the
+    last checkpoint, then the checkpoints): see below once finished.
 
 ## Baselines (before)
 
