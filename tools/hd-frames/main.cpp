@@ -10,7 +10,7 @@
 //   sci-hd-frames <game folder> <output folder> --at <tick>[,<tick>...]
 //                 [--replay <file>] [--seed <n>] [--scale <n>] [--snap]
 //                 [--hints <directory>] [--cache <directory>]
-//                 [--timing <from tick>-<to tick>] [--stop-tick <n>]
+//                 [--timing <from tick>-<to tick>] [--stop-tick <n>] [--hashes <file>]
 //   sci-hd-frames <game folder> <output folder> --stack <n>[+<n>...]
 //                 [--scale <n>] [--snap] [--hints <directory>] [--cache <directory>]
 //   sci-hd-frames <game folder> <output folder> --check-interface <from>-<to>
@@ -19,6 +19,10 @@
 //
 // Each tick gives <output>/<tick>.png (with --stack: stack-<n>+<n>.png):
 // original | HD, and with --snap a third panel, HD with priority_snap.
+// With --hashes <file> nothing is written per tick; instead one line per
+// tick goes to <file>: "<tick> original<N> <sha-256> hd<N> <sha-256>", the
+// hashes of the two whole frames (the golden screens of stage 5 step 0.3,
+// review/BACKLOG_V2.md B-18).
 // --timing composes the HD frame whenever the shown screen changes between
 // the two ticks, as the program presents it, and prints the time taken.
 // --check-interface (milestone 6b) checks every frame whose interface
@@ -32,6 +36,7 @@
 #include "picture.hpp"
 #include "png.hpp"
 #include "sci/core/log.hpp"
+#include "sci/core/sha256.hpp"
 #include "sci/platform/analysis_cache.hpp"
 #include "sci/platform/config.hpp"
 #include "sci/platform/game_frame.hpp"
@@ -88,6 +93,7 @@ struct Options {
     std::optional<std::pair<std::uint32_t, std::uint32_t>> timing;
     std::optional<std::uint32_t> stop_tick;
     std::optional<std::pair<int, int>> check_interface;
+    std::optional<fs::path> hashes;
 };
 
 std::optional<std::uint32_t> parse_number(std::string_view text) {
@@ -121,7 +127,7 @@ int usage() {
     std::println(stderr, "usage: sci-hd-frames <game folder> <output folder> --at <tick>[,<tick>...]\n"
                          "                     [--replay <file>] [--seed <n>] [--scale <n>] [--snap]\n"
                          "                     [--hints <directory>] [--cache <directory>]\n"
-                         "                     [--timing <from>-<to>] [--stop-tick <n>]\n"
+                         "                     [--timing <from>-<to>] [--stop-tick <n>] [--hashes <file>]\n"
                          "       sci-hd-frames <game folder> <output folder> --stack <n>[+<n>...] [--scale <n>]\n"
                          "                     [--snap] [--hints <directory>] [--cache <directory>]\n"
                          "       sci-hd-frames <game folder> <output folder> --check-interface <from>-<to>\n"
@@ -168,6 +174,8 @@ std::optional<Options> parse_options(std::span<char*> args) {
             options.hints = fs::path(value);
         } else if (flag == "--cache") {
             options.cache = fs::path(value);
+        } else if (flag == "--hashes") {
+            options.hashes = fs::path(value);
         } else if (flag == "--timing") {
             const auto range = parse_list(value, '-');
             if (!range || range->size() != 2) {
@@ -227,6 +235,20 @@ public:
             draw(GraphicsMode::Hd, true);
         }
         return image_.write_png(path);
+    }
+
+    // For --hashes: "<tick> original<N> <sha-256> hd<N> <sha-256>", the
+    // SHA-256 of each mode's whole frame (RGBA, 320N x 200N), each composed
+    // from scratch as write() composes its panels.
+    [[nodiscard]] std::string hash_line(const sci::vm::ShownScreen& shown, std::uint32_t tick) const {
+        std::string line = std::format("{}", tick);
+        for (const auto& [mode, name] :
+             {std::pair{GraphicsMode::Original, "original"}, std::pair{GraphicsMode::Hd, "hd"}}) {
+            GameFrame frame([this](auto stack, auto lines, int scale) { return pictures_->get(stack, lines, scale); });
+            frame.update(shown, mode, options_->scale, false);
+            line += std::format(" {}{} {}", name, options_->scale, sci::core::to_hex(sci::core::sha256(frame.frame())));
+        }
+        return line + "\n";
     }
 
 private:
@@ -425,6 +447,11 @@ public:
             time_full_frame(game.screen());
         }
         while (next_ < options_->ticks.size() && tick >= options_->ticks[next_]) {
+            if (options_->hashes) {
+                hash_lines_ += sheet_.hash_line(game.screen(), options_->ticks[next_]);
+                ++next_;
+                continue;
+            }
             const fs::path path = options_->output / std::format("{:06}.png", options_->ticks[next_]);
             if (!sheet_.write(game.screen(), path)) {
                 std::println(stderr, "cannot write {}", path.string());
@@ -446,6 +473,8 @@ public:
     }
 
     [[nodiscard]] const Timing& timing() const { return timing_; }
+
+    [[nodiscard]] const std::string& hash_lines() const { return hash_lines_; }
 
 private:
     // A whole frame composed again, the HD images already rendered (as
@@ -478,6 +507,7 @@ private:
     sci::platform::HdPictures* pictures_;
     const Options* options_;
     Sheet sheet_;
+    std::string hash_lines_;
     GameFrame timed_;
     InterfaceCheck* check_;
     Timing timing_;
@@ -607,6 +637,14 @@ int main(int argc, char** argv) {
     if (const auto fault = game.run()) {
         std::println(stderr, "the interpreter stopped: {}", *fault);
         return 1;
+    }
+    if (options->hashes) {
+        std::ofstream out(*options->hashes);
+        out << host.hash_lines();
+        if (!out) {
+            std::println(stderr, "cannot write {}", options->hashes->string());
+            return 1;
+        }
     }
     if (options->timing) {
         host.timing().print(options->scale);

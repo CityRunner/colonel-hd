@@ -9,7 +9,7 @@ run is deterministic: a replay file, a seed and virtual time.
     sci-hd-frames <game folder> <output folder> --at <tick>[,<tick>...]
                   [--replay <file>] [--seed <n>] [--scale <n>] [--snap]
                   [--hints <directory>] [--cache <directory>]
-                  [--timing <from>-<to>] [--stop-tick <n>]
+                  [--timing <from>-<to>] [--stop-tick <n>] [--hashes <file>]
     sci-hd-frames <game folder> <output folder> --stack <n>[+<n>...]
                   [--scale <n>] [--snap] [--hints <directory>] [--cache <directory>]
     sci-hd-frames <game folder> <output folder> --check-interface <from>-<to>
@@ -19,6 +19,10 @@ run is deterministic: a replay file, a seed and virtual time.
 - `--at` writes `<output>/<tick>.png` once the virtual time reaches each
   tick (60 per second): original | HD, and with `--snap` a third panel, HD
   with `priority_snap = on`. N is 5 unless `--scale` says otherwise.
+- `--hashes <file>` writes no images: one line per `--at` tick goes to
+  the file instead, `<tick> original<N> <sha-256> hd<N> <sha-256>`, the
+  SHA-256 of each mode's whole frame (RGBA, 320N x 200N). The golden
+  screens of stage 5 (`scripts/check-screen-hashes.sh`) use it.
 - Saves made in the game during the run (kSaveGame) are kept in memory:
   every run starts with none, as `sci-vm-trace`'s do, so a replay that
   saves and restores through the game's dialogs renders the same frames.

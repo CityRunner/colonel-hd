@@ -14,7 +14,7 @@ step 12. Nothing is pushed.
 | 0.3 golden outputs of all resources (Q-02) | **in part** | pictures, views, fonts, cursors done (`tools/golden-resources`, `tests/golden/resources.txt`, CI test), generated twice, identical; scenario/checkpoint screens in HD, MIDI per sound and the pixel-diff helper remain (below) |
 | 0.4 VM output hashes (Q-01) | **done** (incl. the ScummVM comparison at the start) | `scripts/check-vm-hashes.sh`, `tests/golden/vm.txt` (713 lines), generated twice, identical; `--check` tested; full outputs in `build/vm-baseline/` |
 | 0.5 four fuzz targets | **done, with findings** | `fuzz-script`, `fuzz-sound`, `fuzz-patch`, `fuzz-config`; corpora replay in CTest; 10 min each; B-45 (script) and B-46 (sound) found; B-44 (fuzz-save never fuzzed) found on the way |
-| 0.6 local VM gate written down | not started | |
+| 0.6 local VM gate written down | **done** (waits for `screens.txt`) | `scripts/check-local.sh` runs S4 + S5; `tests/README.md`, "The local gate" |
 | 0.7 gate: S1-S6 on the original code | not started | |
 
 ## Environment incidents
@@ -113,18 +113,47 @@ only):
   after adding the tool. Format, policy and hint checks pass.
 - `--check` reports each difference by resource, layer and N.
 
+**Screens (in progress, 2026-11-06):** `sci-hd-frames` got a test-only
+option `--hashes <file>` (tool change only; with it, no PNG is written and
+each `--at` tick gives `<tick> original<N> <sha-256> hd<N> <sha-256>`,
+the hashes of each mode's whole frame, composed by the program's own
+`GameFrame`). `scripts/check-screen-hashes.sh [--check]` runs it on every
+scenario and the playthrough at every 60th tick (the screens
+`sci-vm-trace --screens` dumps: 9,095 scenario screens + 5,627 playthrough
+screens, before the game quits) at N = 1, 2, 5, 10 and writes
+`tests/golden/screens.txt` (about 59,000 lines). The binary is built in
+two separate trees (`build/stage5-tools-1`, `-2`: identical SHA-256
+`d76c996c…`), not in the reference builds, whose original tools stay
+untouched. **Run time:** one generation takes about 45 minutes on 4
+cores (the playthrough at N = 10 alone is the longest job; at N = 5 it
+took 10.5 minutes). Two generations were running at the end of this
+session (`build/stage5/screens/screens-1.txt`, `-2.txt`); the next
+session compares them and commits `tests/golden/screens.txt`.
+**Consequence:** with the screens, S4 + S5 take about an hour per
+commit, at the plan's threshold for asking the customer whether S4/S5
+may run per step instead of per commit (each step of 1-13 is one commit,
+so this matters only inside step 0).
+
+**Pixel-diff helper (B-18 criterion 3):** `scripts/diff-frames.py
+<a.png> <b.png> <out.png>` (standard-library Python) marks differing
+pixels red over a dimmed copy and prints their count and bounding box;
+`scripts/diff-screen.sh <reference build> <current build> <replay> <seed>
+<tick> <N>` (or `--stack <list> <N>`) renders the screen with both builds
+and diffs it, under `build/screen-diff/`. Tested: identical builds give
+"identical"; two different ticks give "57960 pixels differ ...".
+
 **Not done yet (rest of 0.3):**
-1. Every screen of the 39 scenarios and the 38 playthrough checkpoints,
+1. ~~Every screen of the 39 scenarios and the 38 playthrough checkpoints,
    original and HD at N = 1, 2, 5, 10 (Q-02). The 1x screens and maps
    of every scenario and the playthrough are already hashed by step 0.4
    (`sci-vm-trace --screens`, every 60 ticks); the HD and original
    frames at N need a run of `sci-hd-frames` (or a hash option in it) at
-   those ticks.
+   those ticks.~~ In progress (above).
 2. The MT-32 MIDI streams per sound resource (`sci-sound-render` renders
    AdLib only); the MIDI streams of the scenarios are in 0.4's hashes.
-3. The diff helper that writes a pixel-difference image under `build/`
-   for a mismatch (B-18 criterion 3), and PNGs at N = 1, 2, 5, 10 under
-   `build/` only.
+3. ~~The diff helper~~ done (above); PNGs at N = 1, 2, 5, 10 under
+   `build/` are made on demand by `diff-screen.sh` rather than kept for
+   every screen (disk: about 15,000 screens per N).
    Note: `review/` (MAP 6.3, B-18, B-19) says "43 playthrough
    checkpoints"; `tests/playthrough/checkpoints.txt` has 43 lines but 38
    checkpoints (5 are comments), as `reports/milestone-9.md` says. A

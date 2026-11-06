@@ -48,6 +48,37 @@ Tests that need the game files run locally, never in CI:
   hints` (`tools/hint-tool/README.md`). CI checks the hint files against
   their schema without the game (`scripts/check-hints.py`).
 
+## The local gate
+
+CI has no game files, and its unit tests cover only part of sci-vm (38 %
+of its lines, `review/MAP.md` 6.4). Until the VM has a CI net of its own
+(`review/BACKLOG_V2.md` B-06, B-07, B-08), the game-dependent checks are
+the gate for changes that touch the game's behaviour:
+
+- **Who runs it:** the author of any change to `main` that touches
+  `src/sci-vm`, `src/sci-resource`, `src/sci-text` or `src/sci-audio`
+  (B-08), and of any change to `src/sci-pic`, `src/sci-view`,
+  `src/sci-vector`, `src/sci-render`, `src/app` or `hints/` (the golden
+  outputs). It runs locally on the customer's game copy (and the MT-32
+  ROMs), before merge, and the pull request names the log.
+- **What:** `scripts/check-local.sh` (S4 and S5 of the stage 5 plan):
+
+      SIERRA_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh \
+          scripts/check-local.sh build/release
+
+  It checks every committed golden file of `golden/`: `resources.txt`
+  (every picture layer at N = 1 to 16, every view cel, font glyph and
+  cursor; `tools/golden-resources`), `pictures.txt` and `sounds.txt` (as
+  above), `screens.txt` (every scenario and playthrough screen, original
+  and HD at N = 1, 2, 5, 10; `scripts/check-screen-hashes.sh`) and
+  `vm.txt` (every output of `sci-vm-trace` over the scenarios, the
+  playthrough and the round trips, and the program's own end state;
+  `scripts/check-vm-hashes.sh`). A change that is meant to change an
+  output regenerates exactly the affected file, generated twice with the
+  same result, and says why in the commit.
+- **Also before a release:** the comparison with the reference ScummVM,
+  `tools/vm-trace/run-all-scenarios.sh` and `tools/playthrough/check.sh`.
+
 ## Scenario recordings
 
 Each file in `scenarios/` is a hand-written replay, timed in game ticks.
