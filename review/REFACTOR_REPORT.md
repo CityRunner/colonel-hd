@@ -12,7 +12,7 @@ step 12. Nothing is pushed.
 | 0.1 branch, `review/`, two clean builds, reproducibility | **done** | `review/` brought in (e20328b); `git diff a0422d6 -- . ':!review'` empty; the two clean release builds are byte-identical (below) |
 | 0.2 baselines | in progress | CI minutes, warnings (release, asan, tsan), CTest + ASan/UBSan + TSan, binary size, build time measured; game timings running |
 | 0.3 golden outputs of all resources (Q-02) | **in part** | pictures, views, fonts, cursors done (`tools/golden-resources`, `tests/golden/resources.txt`, CI test), generated twice, identical; scenario/checkpoint screens in HD, MIDI per sound and the pixel-diff helper remain (below) |
-| 0.4 VM output hashes (Q-01) | draft only | `scripts/check-vm-hashes.sh` drafted, untracked and never run (needs the container); the program-run end state (B-19 criterion 4) is not in it yet |
+| 0.4 VM output hashes (Q-01) | **done except the ScummVM comparison** | `scripts/check-vm-hashes.sh`, `tests/golden/vm.txt` (713 lines), generated twice, identical; `--check` tested; full outputs in `build/vm-baseline/` |
 | 0.5 four fuzz targets | not started | |
 | 0.6 local VM gate written down | not started | |
 | 0.7 gate: S1-S6 on the original code | not started | |
@@ -127,6 +127,40 @@ only):
    `build/` only.
 4. ARM64 (qemu-user) run of the new tool once at the start (criterion 4).
 5. clang-tidy over the new files (S1) not run yet.
+
+## Step 0.4: VM output hashes
+
+`scripts/check-vm-hashes.sh [--check] [--keep <folder>] [--jobs <n>]
+[--file <hash file>]` (in the container, game at `/game`, ROMs at
+`/roms`) runs `sci-vm-trace` (unchanged) and records one SHA-256 per
+output file in `tests/golden/vm.txt`, 713 lines:
+
+| Runs | Streams hashed |
+|---|---|
+| 39 scenarios, AdLib (`--opl`) | trace, screens (sorted `sha256sum` list of every `<tick>.ppm` and the 1x `priority`/`control` maps, every 60 ticks), actors, parser, layout, opl, state (state hashes at 1/6 … 5/6 of the stop tick and at its end) |
+| 39 scenarios, MT-32 (`--music mt32 --roms /roms/roland --midi`) | trace, screens, midi |
+| 39 scenarios with round trips at 1/6 … 5/6 (`--round-trip`) | trace, screens, opl, state, round-trips |
+| the playthrough to its last checkpoint (tick 337613) | trace (2,448,724 calls), screens (5,627 screens, 16,881 files), actors, parser, layout, opl, state and globals at the 43 checkpoints |
+| the program's playthrough under Xvfb (`program-run.sh`, HD, N = 4, AdLib, `--fast`) | end state |
+
+plus each run's exit code. All 119 runs exit 0; every round trip in
+the files reads "equal … total equal" (193: 5 for each scenario except
+`mouse.txt 3600`, where the game quits at tick 1806, so 3); the program
+run ends with "end_state=same".
+
+- **Generated twice:** from `build/baseline-release` (with `--keep
+  build/vm-baseline`: full traces and screen-hash lists, 817 MB) and from
+  `build/baseline-release-2`: identical files. Run time 138 s and 124 s
+  (3 jobs; 4 cores).
+- **`--check` tested:** with one hash changed in a copy of the file
+  (`boot-3600-0-adlib opl`), a third run printed "DIFFERS
+  boot-3600-0-adlib: first differing stream opl ..." and "1 runs
+  differ", exit 1; every other stream matched.
+- The screens themselves are hashed and deleted (disk); the lists of
+  their hashes are kept in `build/vm-baseline/<run>/screens.txt`, so a
+  mismatch is located to the tick.
+- **ScummVM comparison at the start** (B-19 criterion 5,
+  `run-all-scenarios.sh`, `tools/playthrough/check.sh`): see below.
 
 ## Baselines (before)
 
