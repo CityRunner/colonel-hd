@@ -111,8 +111,20 @@ of each preset, in the container (4 cores), into fresh folders
 26 tests: the 14 unit/golden/thread targets and the 12 fuzz corpus
 replays (MAP 6.1). With `-fno-sanitize-recover=all` any sanitizer report
 fails its test, so a pass means none was reported. The sanitizers over
-the local game checks (UBSan over the playthrough and scenarios) follow
-below once run.
+the local game checks follow.
+
+**ASan + UBSan over the local game checks** (`build/stage5/asan-game.sh`:
+`sci-vm-trace` of the `asan` build, `-fno-sanitize-recover=all`, with
+`--actors`, `--parser`, `--layout` and the music device writing to
+`/dev/null`):
+
+| Check | Runs | Result | Wall |
+|---|---|---|---|
+| The 39 scenarios with AdLib (`--opl`) and with MT-32 (`--music mt32 --roms /roms/roland --midi`) | 78 | all exit 0; no ASan, UBSan or LeakSanitizer report | 111 s (4 at a time) |
+| The playthrough (seed 0, AdLib) | 1 | exit 0; no report; "2448724 kernel calls in 337613 ticks", as in milestone 9 | 65 s |
+
+So no signed overflow or other undefined behaviour that UBSan checks
+happens in these runs (evidence for B-33, decided in iteration 2).
 
 ### Timings and memory with the game (B-20 criteria 3 and 4)
 
