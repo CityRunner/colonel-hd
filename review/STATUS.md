@@ -11,15 +11,12 @@ every stage so the work can resume in a new session.
 with CI minutes for one Windows draft-PR run and one `quick` run ("4
 allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
 
-- Step 0.1: `refactor` created from `a0422d6`, `review/` brought in from
-  `audit` (commit "Refactor step 0.1: bring in review/ ..."). **Blocked:**
-  the two clean builds and the reproducibility check need the toolchain
-  container; the docker daemon was down after the machine's reboot at
-  about 06:48 UTC and was started again by the main session at about
-  07:25 UTC. MT-32 ROMs are present (mount `/home/user/roms:/roms`). Resume
-  0.1 with: `docker/run.sh bash -c "cmake --preset release -B
-  build/baseline-release && cmake --build build/baseline-release"`, the
-  same into `build/baseline-release-2`, then compare the binaries.
+- Step 0.1: **done**. `refactor` from `a0422d6`, `review/` brought in;
+  two clean release builds (`build/baseline-release`,
+  `build/baseline-release-2`) are byte-identical (569 outputs), so S6 can
+  use binary identity. MT-32 ROMs are present (mount
+  `/home/user/roms:/roms`). The docker daemon was down from the reboot at
+  about 06:48 UTC until about 07:25 UTC (restarted by the main session).
 - Step 0.2 (baselines): in progress; see REFACTOR_REPORT.md, "Baselines
   (before)".
 - Step 0.4: `scripts/check-vm-hashes.sh` is drafted in the working tree,

@@ -9,7 +9,7 @@ step 12. Nothing is pushed.
 
 | Sub-step | State | Notes |
 |---|---|---|
-| 0.1 branch, `review/`, two clean builds, reproducibility | in progress, blocked | `review/` brought in (commit e20328b); `git diff a0422d6 -- . ':!review'` empty; the two clean builds are blocked: docker daemon not running (below) |
+| 0.1 branch, `review/`, two clean builds, reproducibility | **done** | `review/` brought in (e20328b); `git diff a0422d6 -- . ':!review'` empty; the two clean release builds are byte-identical (below) |
 | 0.2 baselines | in progress | CI minutes measured (below) |
 | 0.3 golden outputs of all resources (Q-02) | not started | |
 | 0.4 VM output hashes (Q-01) | draft only | `scripts/check-vm-hashes.sh` drafted, untracked and never run (needs the container); the program-run end state (B-19 criterion 4) is not in it yet |
@@ -42,9 +42,57 @@ step 12. Nothing is pushed.
   `MT32_PCM.ROM` into `../roland`. Mount `/home/user/roms:/roms`
   (read-only) so the symlinks resolve.
 
+## Step 0.1: reproducibility of the build
+
+Two clean release builds of the original code (`a0422d6`; the tree of
+`refactor` differs only in `review/`), one after the other in the
+toolchain container (`sierra-hd-toolchain:fa237f3eeea06223`, 4 cores):
+
+    docker/run.sh bash -c 'cmake --preset release -B build/baseline-release && cmake --build build/baseline-release'
+    docker/run.sh bash -c 'cmake --preset release -B build/baseline-release-2 && cmake --build build/baseline-release-2'
+
+| | `baseline-release` | `baseline-release-2` |
+|---|---|---|
+| configure | 39.6 s | 16.5 s |
+| build (637 ninja steps) | 84.8 s | 81.2 s |
+| warnings | 9 (all in `third_party/SDL3`, below) | 9 (same) |
+
+**Result: the build is reproducible.** All 569 build outputs compared
+(36 executables, 16 static libraries, 517 object files; everything
+executable or `*.a`/`*.o` outside `CMakeFiles/`) have identical SHA-256 in
+both trees. `compile_commands.json` and `ninja -t commands` (637 commands)
+are identical after replacing the build folder name. So S6 can use binary
+identity: `sierra-hd`, every tool and every test binary.
+
+Key hashes of the original code (all 36 executables:
+`review/stage5/baseline-release-binaries.sha256`):
+
+| Binary | SHA-256 |
+|---|---|
+| `src/app/sierra-hd` | `54f59d747ebccf5435a76c40c1a0ed5148f78d953d97bc98ba21e977d1817e2a` |
+| `tools/vm-trace/sci-vm-trace` | `7a57f804f7c8d2abbd0c8230fbd4dcffebc66a0ce653196bfcb10e40e84585ab` |
+| `tools/golden-hashes/sci-golden-hashes` | `963d83abb03b2d4fb6ed41ea134542bd0573f422aef049f76821ff779af98d24` |
+
+`build/baseline-release` is kept as the reference build of the original
+code for the whole of stage 5; `build/baseline-release-2` is kept until
+the goldens of 0.3/0.4 have been generated from both. Logs and full
+manifests: `build/stage5/` (git-ignored).
+
 ## Baselines (before)
 
 All measured on the original code (`a0422d6`), unless noted.
+
+### Build warnings (B-20 criterion 1)
+
+Release preset with the project's flags (`-Wall -Wextra -Wpedantic
+-Wconversion ...` and `-Werror` on project targets): **0 warnings in
+project code**; 9 in vendored SDL3 (`-Wunused-but-set-global`:
+`SDL_events.c:119`, `SDL_gamepad.c:126`, five at
+`SDL_render_vulkan.c:158`, `SDL_evdev_kbd.c:189`, `:190`). The plan asks
+for `SCI_WARNINGS_AS_ERRORS=OFF`; with it ON the build succeeds, and
+`-Werror` changes only a warning's severity, not which warnings appear,
+so the OFF count is the same (0 in project code). The other presets:
+see below as they are measured.
 
 ### CI minutes of the last gate (B-20 criterion 4)
 
