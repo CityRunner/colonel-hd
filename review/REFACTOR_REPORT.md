@@ -153,6 +153,28 @@ with a cold file cache.) The end-state reference is
 (`program-run.sh` reuses it when present); the runs matching it confirms
 both.
 
+**Frame composition time** (`sci-hd-frames /game <out> --replay
+tests/playthrough/playthrough.txt --seed 0 --scale N --hints hints --cache
+<warm> --at 337600 --timing 0-337600`: every frame the program would
+present over the whole playthrough, 37,987 frames, of which 37,824
+incremental; "all frames" includes each room's first frame, which renders
+the HD images). N = 10: 5 runs; N = 1, 2, 5: 1 run each.
+
+| N | Runs | All frames: mean / median / 99th pct / worst | Incremental frames: mean / median / 99th pct / worst | Tool wall | Tool peak RSS |
+|---|---|---|---|---|---|
+| 1 | 1 | 0.408 / 0.346 / 0.833 / 29.97 ms | 0.371 / 0.346 / 0.752 / 8.14 ms | 27.0 s | 52 MiB |
+| 2 | 1 | 0.489 / 0.401 / 0.923 / 40.82 ms | 0.426 / 0.401 / 0.842 / 5.43 ms | 30.6 s | 58 MiB |
+| 5 | 1 | 0.800 / 0.575 / 1.364 / 115.18 ms | 0.616 / 0.575 / 1.298 / 5.57 ms | 43.3 s | 152 MiB |
+| 10 | 5, median | 1.480 / 0.855 / 2.813 / 310.17 ms | 0.979 / 0.854 / 2.631 / 7.26 ms | 69.6 s | 449-460 MiB |
+
+N = 10 per run (all frames worst; incremental worst): 419.5; 6.47 —
+320.7; 7.91 — 261.5; 57.29 — 273.7; 6.37 — 310.2; 7.26 ms. The
+incremental worst is 6-8 ms in four runs and 57.3 ms in one (run 3), so a
+single outlier frame over 16.7 ms appears in 1 of 5 runs (noise of the
+shared machine, not investigated; B-09 is iteration 2). Every room's
+first frame (HD images rendered) is over 16.7 ms at N >= 2, as known
+(B-09).
+
 ### Binary size (B-20 criterion 4)
 
 Release build (`-static-libstdc++ -static-libgcc`; dynamic only on libc
