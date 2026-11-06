@@ -10,7 +10,7 @@ step 12. Nothing is pushed.
 | Sub-step | State | Notes |
 |---|---|---|
 | 0.1 branch, `review/`, two clean builds, reproducibility | **done** | `review/` brought in (e20328b); `git diff a0422d6 -- . ':!review'` empty; the two clean release builds are byte-identical (below) |
-| 0.2 baselines | in progress | CI minutes measured (below) |
+| 0.2 baselines | in progress | CI minutes, warnings (release, asan, tsan), CTest + ASan/UBSan + TSan, binary size, build time measured; game timings running |
 | 0.3 golden outputs of all resources (Q-02) | not started | |
 | 0.4 VM output hashes (Q-01) | draft only | `scripts/check-vm-hashes.sh` drafted, untracked and never run (needs the container); the program-run end state (B-19 criterion 4) is not in it yet |
 | 0.5 four fuzz targets | not started | |
@@ -91,8 +91,45 @@ project code**; 9 in vendored SDL3 (`-Wunused-but-set-global`:
 `SDL_render_vulkan.c:158`, `SDL_evdev_kbd.c:189`, `:190`). The plan asks
 for `SCI_WARNINGS_AS_ERRORS=OFF`; with it ON the build succeeds, and
 `-Werror` changes only a warning's severity, not which warnings appear,
-so the OFF count is the same (0 in project code). The other presets:
-see below as they are measured.
+so the OFF count is the same (0 in project code). The same holds for
+the `asan` and `tsan` presets (clean builds below): 9 warnings each, the
+same 9 SDL3 lines, 0 in project code. `debug`, `fuzz` and
+`cross-aarch64` are not measured yet.
+
+### CTest suites and sanitizers (B-20 criteria 2 and 5, CI part)
+
+Clean configure, build and `ctest --output-on-failure --no-tests=error`
+of each preset, in the container (4 cores), into fresh folders
+(`build/baseline-release`, `build/stage5-asan`, `build/stage5-tsan`):
+
+| Preset | Configure | Clean build | CTest | Result |
+|---|---|---|---|---|
+| `release` | 39.6 s (first) / 16.5 s | 84.8 s / 81.2 s | 8 s (serial) | 26 / 26 passed |
+| `asan` (ASan + UBSan, `-fno-sanitize-recover=all`) | 17 s | 139 s | 8 s (`-j4`) | 26 / 26 passed: no ASan or UBSan report |
+| `tsan` | 17 s | 99 s | 30 s (`-j4`) | 26 / 26 passed: no TSan report |
+
+26 tests: the 14 unit/golden/thread targets and the 12 fuzz corpus
+replays (MAP 6.1). With `-fno-sanitize-recover=all` any sanitizer report
+fails its test, so a pass means none was reported. The sanitizers over
+the local game checks (UBSan over the playthrough and scenarios) follow
+below once run.
+
+### Binary size (B-20 criterion 4)
+
+Release build (`-static-libstdc++ -static-libgcc`; dynamic only on libc
+and libm):
+
+| Binary | Unstripped | Stripped (`llvm-strip`) |
+|---|---|---|
+| `sierra-hd` | 7,950,792 bytes (7.6 MiB) | 6,607,536 bytes (6.3 MiB) |
+| `sci-vm-trace` (tool) | 1,501,728 bytes | — |
+| `sci-golden-hashes` (tool) | 852,480 bytes | — |
+
+### Clean build time (B-20 criterion 4)
+
+See the tables above: release about 82-85 s, asan 139 s, tsan 99 s of
+build after a 17-40 s configure (container, 4 cores, no ccache). The
+first configure is slower (39.6 s) because of a cold file cache.
 
 ### CI minutes of the last gate (B-20 criterion 4)
 
