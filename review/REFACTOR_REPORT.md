@@ -114,6 +114,45 @@ fails its test, so a pass means none was reported. The sanitizers over
 the local game checks (UBSan over the playthrough and scenarios) follow
 below once run.
 
+### Timings and memory with the game (B-20 criteria 3 and 4)
+
+Reference build `build/baseline-release`, toolchain container, 4 x86-64
+cores, the customer's game (GOG) at `/game`, repository hints. Nothing
+else ran in the container during these runs. Scripts and raw logs:
+`build/stage5/timings.sh`, `build/stage5/timings/` (git-ignored). Peak
+memory is the largest `ru_maxrss` among the measured process tree
+(`build/stage5/measure.py`), since the container has no GNU `time`.
+
+**Room entry per picture** (`sci-hd-report /game <md> --scale N --hints
+hints`: path 1, both scenes, HD frame and priority map at N, threads one
+per core), 5 runs per N; per picture the median of its 5 times, then over
+the 88 pictures:
+
+| N | Slowest picture (median of 5) | Median picture | Mean | Slowest per run, min / max | Tool run (median wall) | Tool peak RSS |
+|---|---|---|---|---|---|---|
+| 1 | 157 ms (pic 28) | 56 ms | 68 ms | 150 / 169 ms | 24.5 s | 76 MiB |
+| 2 | 181 ms (pic 28) | 67 ms | 80 ms | 185 / 208 ms | 25.7 s | 76 MiB |
+| 5 | 237 ms (pic 28) | 109 ms | 120 ms | 229 / 253 ms | 28.8 s | 82 MiB |
+| 10 | 397 ms (pic 2) | 224 ms | 239 ms | 382 / 439 ms | 39.7 s | 105 MiB |
+
+**First launch and the program's peak memory**
+(`tools/playthrough/program-run.sh --scale 4 --cache cold`: the whole
+playthrough in `sierra-hd` under Xvfb, `--fast`, AdLib, the analysis cache
+emptied first), 5 runs:
+
+| | Runs 1-5 | Median |
+|---|---|---|
+| First-launch analysis ("analysed 176 scenes in ... ms") | 1898, 1814, 1908, 1824, 1821 ms | **1824 ms** |
+| Wall time of the run (boot to QUIT) | 20.15, 20.05, 19.94, 19.72, 19.97 s | **19.97 s** |
+| Peak RSS (largest process: `sierra-hd` or Xvfb) | 214188, 210924, 204388, 208708, 213268 KiB | **210924 KiB (206 MiB)** |
+| Result | status 0, 0 errors, 0 warnings, end tick 337613, end state same as `sci-vm-trace` | all 5 |
+
+(A first gauge run before the series took 29.3 s, 216000 KiB, 2140 ms,
+with a cold file cache.) The end-state reference is
+`build/program-run/reference-adlib.txt` from before stage 5
+(`program-run.sh` reuses it when present); the runs matching it confirms
+both.
+
 ### Binary size (B-20 criterion 4)
 
 Release build (`-static-libstdc++ -static-libgcc`; dynamic only on libc
