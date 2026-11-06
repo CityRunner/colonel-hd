@@ -12,11 +12,20 @@ with CI minutes for one Windows draft-PR run and one `quick` run ("4
 allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
 
 - Step 0.1: `refactor` created from `a0422d6`, `review/` brought in from
-  `audit` (commit "Refactor step 0.1: bring in review/ ..."); the two clean
-  builds and the reproducibility check: see REFACTOR_REPORT.md.
+  `audit` (commit "Refactor step 0.1: bring in review/ ..."). **Blocked:**
+  the two clean builds and the reproducibility check need the toolchain
+  container, and the shared docker daemon has not been running since the
+  machine's reboot at about 06:48 UTC on 2026-11-06 (no `dockerd`
+  process; this session may not start it). Resume 0.1 once `docker ps`
+  works: `docker/run.sh bash -c "cmake --preset release -B
+  build/baseline-release && cmake --build build/baseline-release"`, the
+  same into `build/baseline-release-2`, then compare the binaries.
 - Step 0.2 (baselines): in progress; see REFACTOR_REPORT.md, "Baselines
   (before)".
-- Steps 0.3-0.7 and 1-12: not started.
+- Step 0.4: `scripts/check-vm-hashes.sh` is drafted in the working tree,
+  untracked, never run (needs the container); test and finish it in
+  order, after 0.3. It lacks the program-run end state (B-19 item 4).
+- Steps 0.3, 0.5-0.7 and 1-12: not started.
 
 Earlier: **stage 4 done** (2026-11-06). Files:
 `review/BACKLOG_V2.md` (42 items B-01 … B-42: High 7, Medium 12, Low 23,

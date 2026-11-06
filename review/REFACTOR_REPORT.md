@@ -9,21 +9,27 @@ step 12. Nothing is pushed.
 
 | Sub-step | State | Notes |
 |---|---|---|
-| 0.1 branch, `review/`, two clean builds, reproducibility | in progress | `review/` brought in (commit e20328b); builds wait for the shared docker daemon |
+| 0.1 branch, `review/`, two clean builds, reproducibility | in progress, blocked | `review/` brought in (commit e20328b); `git diff a0422d6 -- . ':!review'` empty; the two clean builds are blocked: docker daemon not running (below) |
 | 0.2 baselines | in progress | CI minutes measured (below) |
 | 0.3 golden outputs of all resources (Q-02) | not started | |
-| 0.4 VM output hashes (Q-01) | not started | |
+| 0.4 VM output hashes (Q-01) | draft only | `scripts/check-vm-hashes.sh` drafted, untracked and never run (needs the container); the program-run end state (B-19 criterion 4) is not in it yet |
 | 0.5 four fuzz targets | not started | |
 | 0.6 local VM gate written down | not started | |
 | 0.7 gate: S1-S6 on the original code | not started | |
 
 ## Environment incidents
 
-- 2026-11-06 07:0x UTC: the shared docker daemon was not running at the
-  start of stage 5 (`docker ps`: "Cannot connect to the Docker daemon";
-  no `dockerd` process). Not started by this session (rule); waited with
-  an until-loop. Work that needs no container (branch, `review/`, CI
-  minutes) was done meanwhile.
+- 2026-11-06, from 07:0x to at least 07:25 UTC: the shared docker daemon
+  is not running. `docker ps`: "Cannot connect to the Docker daemon"; no
+  `dockerd` or `containerd` process; `/var/run/docker.pid` names pid 363,
+  which does not exist. The machine was rebooted at about 06:48 UTC
+  (`uptime`: up 34 min at 07:22) and the daemon was not started after the
+  reboot. This session does not start it (rule); it waited with
+  until-loops for about 17 minutes in total. Everything that needs the
+  container (all builds, tests, sanitizers, timings, game checks) is
+  blocked until someone starts the daemon. Done meanwhile: branch,
+  `review/`, CI minutes, the customer's answers recorded, a draft of
+  `scripts/check-vm-hashes.sh`.
 
 ## Baselines (before)
 
