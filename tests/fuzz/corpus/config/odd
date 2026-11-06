@@ -1,0 +1,8 @@
+# comment
+[other]
+x = 1
+[sierra-hd]
+format = 1
+scale = auto ; the largest
+new_key = 3
+volume = 101

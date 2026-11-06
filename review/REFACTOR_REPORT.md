@@ -13,7 +13,7 @@ step 12. Nothing is pushed.
 | 0.2 baselines | **done** | CI minutes, warnings (all Linux presets), CTest + ASan/UBSan + TSan, ASan/UBSan over the game checks, room entry, first launch, frame times, peak memory, binary size, build times |
 | 0.3 golden outputs of all resources (Q-02) | **in part** | pictures, views, fonts, cursors done (`tools/golden-resources`, `tests/golden/resources.txt`, CI test), generated twice, identical; scenario/checkpoint screens in HD, MIDI per sound and the pixel-diff helper remain (below) |
 | 0.4 VM output hashes (Q-01) | **done** (incl. the ScummVM comparison at the start) | `scripts/check-vm-hashes.sh`, `tests/golden/vm.txt` (713 lines), generated twice, identical; `--check` tested; full outputs in `build/vm-baseline/` |
-| 0.5 four fuzz targets | not started | |
+| 0.5 four fuzz targets | **done, with findings** | `fuzz-script`, `fuzz-sound`, `fuzz-patch`, `fuzz-config`; corpora replay in CTest; 10 min each; B-45 (script) and B-46 (sound) found; B-44 (fuzz-save never fuzzed) found on the way |
 | 0.6 local VM gate written down | not started | |
 | 0.7 gate: S1-S6 on the original code | not started | |
 
@@ -189,6 +189,50 @@ run ends with "end_state=same".
   - Not run: the MT-32 comparison against ScummVM
     (`SIERRA_HD_MUSIC=mt32 run-scenario.sh`); the plan names only the two
     scripts above.
+
+## Step 0.5: four fuzz targets (B-05)
+
+New in `tests/fuzz/` (and nothing outside it): `fuzz-script` (script 0
+of a synthetic game folder through `SegManager::script_segment`, private
+sci-vm headers as `fuzz-save`), `fuzz-sound` (`sci::vm::render_sound` on
+the AdLib driver, 2 loops, at most 0.2 s of output), `fuzz-patch`
+(`parse_adlib_patches` and `parse_mt32_patch`), `fuzz-config`
+(`parse_config`, and format + parse again). Seeds are synthetic, written
+by `tests/fuzz/make_seeds.py` (re-running it leaves every existing seed
+unchanged): 2 scripts, 3 songs, 2 AdLib banks + 2 MT-32 patches, 4
+configuration files. They are declared before the list block, so
+`fuzz-targets.txt` (and so `scripts/run-fuzzers.sh` and the CI `fuzz`
+job, which read it) has all four without changing either.
+
+- **CTest corpus replays** (release build): the four `fuzz-*-corpus`
+  tests pass.
+- **10 minutes each** (fuzz preset, the four at once beside the screen
+  hashes, `-timeout=10`):
+
+| Target | Executions | Coverage (cov) | Peak RSS | Result |
+|---|---|---|---|---|
+| `fuzz-patch` | 44,424,873 | 173 | 488 MB | clean |
+| `fuzz-config` | 7,580,073 | 383 | 543 MB | clean |
+| `fuzz-script` | 106, then stopped at a crash; a second 10-min run with `-fork=1 -ignore_crashes=1` | 1,116 | 227 MB | **crash: B-45** (344 inputs, one root cause: `Object::species()` reads past an object's empty property list, `object.hpp:53`) |
+| `fuzz-sound` | 447, then stopped at a timeout | 731 | 75 MB | **hang: B-46** (`MidiParser::on_timer` never leaves its event loop on a 47-byte song) |
+
+- Reproducers (synthetic, no game data) are under
+  `build/stage5/fuzz-artifacts/`; not committed (B-05 criterion 4: only
+  after the fix, in iteration 2).
+- **B-44** (found while wiring the targets): `fuzz-save` was never in
+  `fuzz-targets.txt` (the list block came before it), so it has never
+  been fuzzed by CI or `pre-push.sh`. Not fixed.
+- **Consequence for the per-commit suite and CI (needs a decision):**
+  with these targets in the list, the fuzzing step of `pre-push.sh`
+  and the CI `fuzz` job will fail on `fuzz-script` (within seconds) and
+  probably `fuzz-sound` (timeout) until B-45 and B-46 are fixed in
+  iteration 2. The plan does not say how to keep the gate green with
+  known crashes (step 2 does that for checksum mismatches only). Options
+  for the customer: (a) accept a red fuzz step until iteration 2; (b) a
+  known-failures list in `run-fuzzers.sh` that skips or tolerates those
+  two targets (test tooling, beyond the plan's wording); (c) fix B-45
+  and B-46 first (behaviour changes, so not in stage 5). The corpus
+  replays in CTest pass, so S2/S3 are not affected.
 
 ## Run times of the game-dependent checks (for the per-commit suite)
 

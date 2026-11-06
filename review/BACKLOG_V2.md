@@ -94,6 +94,9 @@ found it.
 | B-41 | LGPL static linking note | maintainability | Low | — | — | struck (customer, 2026-11-06) | V-09 |
 | B-42 | `uint32_t` sums instead of `uint64_t` | tech debt | Low | — | — | struck (customer, 2026-11-06) | G-73, R-46 |
 | B-43 | Rename the project `sierra-hd` → `colonel-hd` | requirement | Medium | M (8 h) | stage 5 step 13 | Decided (customer, 2026-11-06) | customer's request 2026-11-06 |
+| B-44 | `fuzz-save` missing from the fuzz target list | defect | Low | S (0.5 h) | iteration 2 | open (found in stage 5 step 0.5) | MAP 6.2, B-05 |
+| B-45 | Script loader reads past an object's properties on a malformed script | defect | Low | S (2 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-script) | B-05 |
+| B-46 | The music player can loop forever on a malformed song | defect | Low | S (3 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-sound) | B-05 |
 
 B-43: the project rename (added by the customer, 2026-11-06). B-44 onward: reserved for bugs found in stage 5 (the range started at B-43 before the rename item took that number).
 
@@ -1055,6 +1058,82 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   (`scripts/check-hints.py` and the S4 picture goldens catch it); a
   rename that touches "Sierra" the company (the grep pattern names only
   the project forms).
+
+### B-44 `fuzz-save` is missing from the fuzz target list
+
+- **Kind:** defect (test tooling). **Severity:** Low (one target never
+  fuzzed; its corpus still replays in the non-fuzz presets). **Found in:**
+  stage 5 step 0.5 (2026-11-06), while adding the B-05 targets. **State:**
+  open, not fixed (brief 5.3).
+- **What:** `tests/fuzz/CMakeLists.txt` reads the global property
+  `SCI_FUZZ_TARGETS` into `fuzz-targets.txt` (the list
+  `scripts/run-fuzzers.sh` and the CI `fuzz` job run) *before*
+  `sci_add_fuzz_target(NAME fuzz-save ...)` is called, so `fuzz-save` is
+  not in the list: `build/fuzz/fuzz-targets.txt` names 11 targets, not
+  12. In the fuzz preset (`SCI_FUZZ=ON`) the target is built but never
+  run, and it has no corpus-replay test there either. So the save loader
+  has never been fuzzed by CI or `pre-push.sh` (MAP 6.2 said 12 targets
+  ran).
+- **Fix (iteration 2):** move the list block to the end of the file
+  (after `fuzz-save`); then fuzz `fuzz-save` for 10 minutes and log what
+  it finds. The B-05 targets of step 0.5 are added before the list, so
+  they are in it.
+- **Acceptance criteria:** `fuzz-targets.txt` lists every
+  `sci_add_fuzz_target` of the file (a check in the lint job).
+
+### B-45 Script loader reads past an object's properties on a malformed script
+
+- **Kind:** defect (robustness). **Severity:** Low (only a malformed or
+  hostile script resource triggers it; the game's own scripts load in
+  every scenario and the playthrough). **Found in:** stage 5 step 0.5
+  (2026-11-06), by the new `fuzz-script` target after 106 inputs.
+  **State:** open, not fixed (brief 5.3).
+- **What:** `SegManager::script_segment(0, Lock)` →
+  `instantiate_script` → `Script::initialize_objects`
+  (`script.cpp:306`) → `Object::init_species` (`object.cpp:138`) →
+  `Object::species()` (`object.hpp:53`) reads `variables_[0]` of an object
+  whose property list is empty: a vector index out of range
+  (`_GLIBCXX_ASSERTIONS` aborts in the fuzz/asan/debug builds; in release
+  builds it is an out-of-bounds read, undefined behaviour). The
+  reproducer is a 22-byte synthetic script (no game data):
+  base64 `BwAIAAAMAAoBAAAAAAAAAAAAAAAAAA==`, kept in
+  `build/stage5/fuzz-script-crash-77b5445e35846c87f1c84c77bf028a3d39b974c1`.
+  A 10-minute run with `-fork=1 -ignore_crashes=1` wrote 343 more crash
+  inputs; replayed one by one, all 344 fail at the same check
+  (`object.hpp:53`), so this is one root cause
+  (`build/stage5/fuzz-script-classes.txt`).
+- **Fix (iteration 2):** the object loader checks that an object has at
+  least the four base properties (species, super, info, name) and that
+  its blocks fit the script, reporting a malformed script as for other
+  load errors; ScummVM's behaviour on such data to be compared first.
+  Then add the reproducer to `tests/fuzz/corpus/script`.
+- **Acceptance criteria:** the reproducer loads with an error message,
+  no abort; `fuzz-script` runs 10 minutes without a crash.
+
+### B-46 The music player can loop forever on a malformed song
+
+- **Kind:** defect (robustness). **Severity:** Low (only a malformed or
+  hostile sound resource; the game's 119 sounds render, and every
+  scenario and the playthrough play their music). **Found in:** stage 5
+  step 0.5 (2026-11-06), by the new `fuzz-sound` target (a timeout after
+  447 inputs). **State:** open, not fixed (brief 5.3).
+- **What:** a 47-byte synthetic sound (header, then a loop point `BF 60
+  7F` and events with zero deltas; kept in
+  `build/stage5/fuzz-artifacts/fuzz-sound-timeout-44b3c1579acaa5c96ad0aea55dfb37dd070f4c73`,
+  no game data) makes `sci::vm::render_sound` never return: the release
+  build was still running after 120 s, for 0.2 s of output. The stack is
+  in `MidiParser::on_timer` (`midi_parser.cpp:331-352`) →
+  `process_event` → `process_base_event` (`:469`): the timer call's
+  event loop never reaches an event later than the call's end time. In
+  the program this would freeze the game on such a resource (the same
+  code runs in kDoSound). Whether ScummVM's MidiParser_SCI loops the same
+  way on this input was not checked (the port follows it closely).
+- **Fix (iteration 2):** compare with ScummVM on the reproducer; bound
+  the events one timer call may process (or detect a loop that does not
+  advance time) as ScummVM does if it does; add the reproducer to
+  `tests/fuzz/corpus/sound`.
+- **Acceptance criteria:** the reproducer renders within the 0.2 s limit;
+  `fuzz-sound` runs 10 minutes without a timeout.
 
 ## Gap items closed without a backlog item
 
