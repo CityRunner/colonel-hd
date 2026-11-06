@@ -1,0 +1,249 @@
+# Audit status
+
+The customer's brief is `review/TASK.md`. This file is kept current at
+every stage so the work can resume in a new session.
+
+## Current stage
+
+**Stage 4, improvements and iteration 2 backlog: done → at STOP, waiting
+for the customer's approval** (2026-11-06). Files:
+`review/BACKLOG_V2.md` (42 items B-01 … B-42: High 7, Medium 12, Low 23,
+no Critical) and `review/REFACTOR_PLAN.md` (stage 5: step 0 safety net,
+then 11 behaviour-free steps and a closing step; about 73 hours plus the
+game-dependent run times). Stage 5 starts only after the customer approves
+the plan and accepts or strikes the defaults.
+
+| Stage | File | State |
+|---|---|---|
+| 1a Codebase map | `review/MAP.md` | done |
+| 1b Recover requirements | `review/REQUIREMENTS_RECOVERED.md` | done |
+| 2 Reconcile | `review/GAPS.md` | done |
+| 3 Grilling | `review/QUESTIONS.md` | batch 1 answered ("Defaults"); ended by "Move on to 4" |
+| 4 Backlog and plan | `review/BACKLOG_V2.md`, `review/REFACTOR_PLAN.md` | done, at STOP |
+| 5 Refactoring | `review/REFACTOR_REPORT.md` | only after the customer approves the plan |
+
+## Decisions in force
+
+- **Scope: `main` as merged = milestone 9** (`a0422d6`). Source:
+  `docs/ASSUMPTIONS.md`, "Milestone 9 approved; milestones 10, 11 and 12
+  declined (2026-11-05)": "Merge 9, decline 10, 11 and 12. Start
+  refactoring and optimising." The audit "audits `main`, the code as
+  merged". **Decided (customer).**
+- **Milestone 10** (HD background quality, addendum A4) is declined; its
+  work stays on branch `milestone-10` (and local task branches
+  `m10-*`), not merged, **out of scope unless the customer says
+  otherwise.** Golden hashes and frozen hint files on `main` stay those of
+  milestone 9. **Decided (customer).**
+- **Milestones 11 and 12** (ScummVM-compatible saves, vectorised font
+  glyphs) are declined. **Decided (customer).**
+- The customer's manual playthrough (part of milestone 9's exit criterion)
+  was deferred and waived for the merge. **Decided (customer).**
+- **Working rules (brief):** stages with a STOP after each; stages 1-4
+  read-only (only `review/` is written); stable IDs R-, G-, Q-, B-;
+  severity scale Critical/High/Medium/Low; never present guesses as facts.
+- **Visual reviews** in the audit use the format of A4 part B
+  (`docs/ASSUMPTIONS.md`, "Milestone numbers after A4"). **Decided.**
+- Work happens on branch `audit` (from `main` at `a0422d6`); nothing is
+  pushed without the customer's instruction.
+
+- **Answers after stage 1a (2026-11-05)**, the customer's words:
+  1. "Yes, continue": stage 1b starts. **Decided (customer).**
+  2. "Delete milestone 10 branch": the local branch `milestone-10` is
+     deleted. The remote branch could not be deleted from this session
+     (GitHub refuses branch deletion through the session's proxy, as it
+     refuses tags); the customer deletes it on GitHub. The local task
+     branches and worktrees `m10-*` remain until the customer confirms
+     their removal (a blanket forced removal was refused by the
+     session's safety check). Milestone 10 is out of the audit's scope.
+     **Decided (customer).**
+  3. "Yes": later stages may run the local game-dependent checks
+     (scenarios against the reference ScummVM, the playthrough, golden
+     hashes) on the game copy in this container. **Decided (customer).**
+  4. "If it is not implemented, then drop it." Read as: requirements of
+     the original spec (v15, the copy given at the start of the project,
+     plus `docs/SPEC_ADDENDA.md`) that `main` does not implement are
+     dropped from scope: stage 2 classifies them "not implemented —
+     dropped by the customer", not as gaps to fix, and iteration 2 does
+     not take them up. The spec is not committed to the repository.
+     **ASSUMED reading, to be confirmed at stage 3.**
+  5. "Also: rearrange folders and files in logical way. Prepare empty
+     folders for files: game, rom, saves, etc." A requirement for
+     iteration 2: a logical repository layout, and empty, git-ignored
+     folders for the user's own files (game files, MT-32 ROMs, saves,
+     and the like), kept by a placeholder file, never with game data.
+     Stages 1-4 are read-only, so it goes into the backlog and the
+     refactoring plan (stage 4) and is done at stage 5 after the plan is
+     approved. **Decided (customer); its timing follows the brief.**
+
+- **Answers after stage 1b (2026-11-05)**, the customer's words:
+  1. "continue": stage 2 starts. **Decided (customer).**
+  2. 5.25" release: "have no copy, mark untested": acceptance of the
+     5.25" release is untested scope (V-01, R-04, R-06). **Decided
+     (customer).**
+  3. "confirmed": the A1 depth and containment relation hints are dropped
+     under answer 4 ("not implemented → dropped"). **Decided (customer).**
+  4. "remove the m10 worktrees": the 21 local `m10-*` worktrees and
+     branches are removed (2026-11-05). The remote branch `milestone-10`
+     is still the customer's to delete on GitHub. **Done.**
+
+- **Answers after stage 2 (2026-11-05)**, the customer's words:
+  1. "drop macOS completely": macOS is out of scope (G-07); iteration 2
+     removes the macOS build paths, CI job, release job and README steps.
+     **Decided (customer).**
+  2. "clean up history now": the §14 cleanup pass over the whole history
+     (no game resources, resource dumps or game-derived images) is done
+     now, outside the audit's read-only stages, as a check of every blob
+     ever committed. Any history rewrite it calls for (a force push of
+     `main`) is put to the customer before it is done. **Decided
+     (customer).**
+  3. "we'll publish releases later": releases (G-125) stay; publishing is
+     the customer's step later (tags cannot be pushed from this session).
+     **Decided (customer).**
+  4. "continue": stage 3 starts. **Decided (customer).**
+
+- **Answers to stage 3 batch 1 (2026-11-06)**, the customer's word:
+  "Defaults". Q-01, Q-02 and Q-04 to Q-10 take their defaults
+  (**Decided (customer)**); Q-03 has no default for its first part
+  (which account and terms), so Q-03 is **ASSUMED (unconfirmed)**: the
+  customer's own Claude sessions, publication under GPL-3.0-or-later
+  acceptable, the legal risk with the customer. All High questions are
+  closed (Q-03 as assumed). See `review/QUESTIONS.md`, Answers.
+
+- **Script patches (G-146), the customer's correction (2026-11-06):** "if
+  this patches provided by gog version we need to use them too". The GOG
+  release ships the patch files `SCRIPT.052` and `TEXT.052` in the game
+  folder; they are already used: the resource manager loads them over the
+  map entries, as ScummVM does (R-12, `resource_manager.cpp:117-171`,
+  tested in CI by `patch_file_test.cpp`, `resource_manager_test.cpp:95`;
+  "Patching SCRIPT.052 - OK" in every run), and identification checks
+  them (R-03). **Decided (customer); already satisfied.** ScummVM's 16
+  in-memory script patches (R-69: lock-up fixes, copy-protection random
+  fix) are not from GOG; they stay as ported (spec §7 asks for them), so
+  the game behaves as in ScummVM. Confirmed by the customer (2026-11-06,
+  "Patches stays"). **Decided (customer).** G-146 is closed.
+
+- **"Move on to 4" (2026-11-06):** stage 3 ends after batch 1; the Medium
+  and Low candidates for batch 2 go into the stage 4 backlog with their
+  defaults, for the customer to accept or strike. **Decided (customer).**
+
+- **Stage 4 answers (2026-11-06)**, the customer's words: "1 approve"
+  — `review/REFACTOR_PLAN.md` is approved, including the game-dependent
+  checks after every commit; stage 5 starts. "4 allowed" — CI minutes for
+  one Windows draft-PR run and one `quick` run during stage 5. **Decided
+  (customer).** Still open: which of the 23 default items to strike
+  ("which items?" — listed to the customer), and Q-03 ("which options?"
+  — explained to the customer).
+
+## Open items
+
+- **Stage 4 (at STOP), what the customer is asked:**
+  1. Approve `review/REFACTOR_PLAN.md` (steps 0-12), including the full
+     suite after every commit with the game-dependent checks (S4, S5) on
+     the game copy in this container, and the branch `refactor` from
+     `a0422d6` (`origin/main`; the local `main` branch is stale at
+     `df81541`).
+  2. Accept or strike the 20 items marked "default — accept or strike"
+     and the 3 marked "default — strike" in `review/BACKLOG_V2.md`
+     (silence = accept the default). The plan uses B-21, B-24, B-23 (stage
+     5 part) and keeping SDL3's Apple back-ends (B-01).
+  3. Confirm or correct Q-03 (hint licensing, ASSUMED; B-12) before any
+     release tag.
+  4. Optional: CI minutes for one Windows draft-PR run and one `quick`
+     run during stage 5.
+- **Stage 4 decisions taken by the auditor (within the decided scope):**
+  the layout move (B-02) is a stage 5 step, not iteration 2, because it is
+  behaviour-neutral and blocks B-03 (reasons in `review/REFACTOR_PLAN.md`);
+  stage 5 restructures no sci-vm/render/vector/audio/app code; `review/`
+  files are not rewritten after the move (they cite `a0422d6`); after
+  stage 5, `src/app/platform` reads `src/sci-platform` and `reports/`
+  reads `docs/reports/`.
+- **New facts found in stage 4** (in BACKLOG_V2.md): `.gitignore` ignores
+  `analysis-cache/` while the program writes `cache/`, and does not ignore
+  `files/`, `saves/` or `*.sav` (B-15); 19 tracked `.py`/`.sh` files lack
+  an SPDX header, not 15 (B-26); assertion messages carry source paths
+  (`std::source_location`), so file moves change binaries but not outputs
+  (B-02).
+- **Stage 3, batch 1:** all ten answered on 2026-11-06 ("Defaults"); Q-03
+  ASSUMED. Batch 2 was not asked ("Move on to 4"); its candidates are
+  backlog items B-13, B-14, B-17, B-21, B-27 … B-31 with their defaults.
+
+- **Stage 2 results (`review/GAPS.md`):** 156 G-items (G-01 … G-156)
+  covering spec v15 §1-§15 section by section, A1, A2 (withdrawn), A4 and
+  the customer's decisions. Classes: FULL 114 (one of them untested
+  scope, the 5.25" release), PART 23, DROP 2, DECL 5, CREEP 4, AMB 8.
+  Severities: Critical 0, High 3, Medium 6, Low 26, none 121. To carry
+  into stage 3 (questions, highest severity first):
+  - G-24 (High): the repository is public since 2026-10-22 without a
+    recorded history cleanup pass or hint licensing review (§3.4, §14,
+    §15). Were they knowingly waived?
+  - G-125 (High): no release ever published (no remote tag, no GitHub
+    release, the release workflow never ran on a tag); `v0.1.0` and
+    `v0.9.0-rc.1` are local tags only. Push them, or drop releases?
+  - G-07 (High): macOS in scope but known not to build (`std::jthread`,
+    `zoned_time`); no macOS sanitizers or x86-64 target.
+  - G-150 (AMB, Medium): the reading of answer 4 and its edge cases
+    (G-07, G-24, G-125, G-103).
+  - Medium: G-18 (patch files not covered by `.gitignore`/policy), G-44
+    (ARCHITECTURE.md stale), G-48 (scripts, sound resources, patch banks,
+    configuration not fuzzed), G-122 (AMB: files next to the executable),
+    G-123 (performance never measured on reference-class hardware).
+  - The local golden-hash check of all pictures was re-run in stage 2 (x86-64): all match
+    (`review/GAPS.md`, "Local check run in stage 2"; logs in
+    `build/audit-stage2-golden-*.log`).
+
+- Stage 1b results (`review/REQUIREMENTS_RECOVERED.md`): 144 R-items
+  (FACT 135, HYPOTHESIS 6, mixed 3; tested CI 95, local only 27,
+  untested 15, none/n.a. 7), observations V-01 … V-15. To carry into
+  stage 2 (GAPS.md) and stage 3 (questions):
+  - V-01: the 5.25" release is said to run without hints, but nothing in
+    the code enforces it (only the PIC hash in each hint file); whether
+    its PIC data differs is unverified (no 5.25" copy).
+  - V-02 / R-36 / R-44: relation (depth/containment) hints of addendum A1
+    are parsed but used by no code and present in no hint file; a header
+    comment claims they are used.
+  - V-04 / R-57: golden hashes miss the HD priority map, N > 10 (and
+    3, 4, 6-9), views, fonts, cursors and composed frames; all
+    game-dependent goldens are local only.
+  - V-06: the repository policy script does not catch SCI0 patch files
+    (`SCRIPT.052`, `PATCH.001`, ...) as game data.
+  - V-08 (HYP): the program writes ini, cache, files and saves next to the
+    executable; a failed ini write is silent.
+  - R-65/R-66: `kDoAvoider` is a stub that stops the game; assumed unused
+    by the tested game (playthrough ran without it).
+  - R-114: the ini is rewritten at exit, dropping unknown keys and user
+    comments, persisting a command-line folder.
+  - Minor: V-03 (N = 10 in a comment, N goes to 16), V-05 (trigonometry
+    comment), V-07, V-10 (no way to see Vm/Resources logs), V-11, V-12,
+    V-13 (MAP.md said 87 hint files; 86).
+
+- Stage 1a observations to carry into stages 1b-4 (`review/MAP.md`,
+  section 8): CI coverage of sci-vm (38 % lines) and of the app layer;
+  the local-only game-dependent checks being the VM's real safety net;
+  pixel golden outputs for pictures only; stale docs.
+- The remote branch `milestone-10` (customer to delete on GitHub) and the
+  local `m10-*` branches/worktrees (customer to confirm removal).
+- Confirm the reading of answer 4 (stage 3; G-150).
+
+## How to resume in a new session
+
+1. `cd /home/user/sierra-hd && git checkout audit && git log --oneline -5`.
+2. Read `review/TASK.md` (the brief), this file, then `review/MAP.md`.
+3. Continue with the next stage only after the customer's "continue".
+   Stage 5 follows `review/REFACTOR_PLAN.md` exactly, on branch
+   `refactor` from `a0422d6` (`origin/main`; the local `main` is stale at
+   `df81541`); bugs found go into
+   `review/BACKLOG_V2.md` as B-43 onward, unfixed.
+   Stage 3 asks questions (Q-xx) in batches of 5-10, highest severity
+   first, from `review/GAPS.md` (G-xx; its "Items with a severity"
+   table), recording answers in `review/QUESTIONS.md` (its "Answers"
+   table; "you decide" → the question's default, marked ASSUMED). Batch 2
+   starts after the answers to batch 1; its candidates are listed in
+   QUESTIONS.md, "Considered for batch 1 and not asked". The original spec
+   v15 is not committed; it is in the customer's context.
+4. Scratch outputs go under `build/` (git-ignored). The coverage build of
+   stage 1a was deleted to save disk; its logs and `llvm-cov` reports are
+   in `build/audit-coverage/` (`report-files.txt`: CI suite;
+   `report-play.txt`: playthrough). Reproduce with the commands in
+   `review/MAP.md`, section 6.4. The toolchain image is
+   `sierra-hd-toolchain:fa237f3eeea06223` (`docker/image-tag.sh`); docker
+   is shared, do not start or stop the daemon.
