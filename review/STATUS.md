@@ -115,8 +115,12 @@ Waiting for the customer's answers to batch 1.
   them (R-03). **Decided (customer); already satisfied.** ScummVM's 16
   in-memory script patches (R-69: lock-up fixes, copy-protection random
   fix) are not from GOG; they stay as ported (spec §7 asks for them), so
-  the game behaves as in ScummVM. **ASSUMED (unconfirmed).** G-146 is
-  closed on this basis.
+  the game behaves as in ScummVM. Confirmed by the customer (2026-11-06,
+  "Patches stays"). **Decided (customer).** G-146 is closed.
+
+- **"Move on to 4" (2026-11-06):** stage 3 ends after batch 1; the Medium
+  and Low candidates for batch 2 go into the stage 4 backlog with their
+  defaults, for the customer to accept or strike. **Decided (customer).**
 
 ## Open items
 
