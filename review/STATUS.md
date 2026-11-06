@@ -5,13 +5,24 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Stage 4, improvements and iteration 2 backlog: done → at STOP, waiting
-for the customer's approval** (2026-11-06). Files:
+**Stage 5, refactoring: step 0 (safety net) in progress** (started
+2026-11-06 on branch `refactor` from `a0422d6`). The plan
+(`review/REFACTOR_PLAN.md`) was approved on 2026-11-06 ("1 approve"),
+with CI minutes for one Windows draft-PR run and one `quick` run ("4
+allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
+
+- Step 0.1: `refactor` created from `a0422d6`, `review/` brought in from
+  `audit` (commit "Refactor step 0.1: bring in review/ ..."); the two clean
+  builds and the reproducibility check: see REFACTOR_REPORT.md.
+- Step 0.2 (baselines): in progress; see REFACTOR_REPORT.md, "Baselines
+  (before)".
+- Steps 0.3-0.7 and 1-12: not started.
+
+Earlier: **stage 4 done** (2026-11-06). Files:
 `review/BACKLOG_V2.md` (42 items B-01 … B-42: High 7, Medium 12, Low 23,
 no Critical) and `review/REFACTOR_PLAN.md` (stage 5: step 0 safety net,
 then 11 behaviour-free steps and a closing step; about 73 hours plus the
-game-dependent run times). Stage 5 starts only after the customer approves
-the plan and accepts or strikes the defaults.
+game-dependent run times).
 
 | Stage | File | State |
 |---|---|---|
@@ -19,8 +30,8 @@ the plan and accepts or strikes the defaults.
 | 1b Recover requirements | `review/REQUIREMENTS_RECOVERED.md` | done |
 | 2 Reconcile | `review/GAPS.md` | done |
 | 3 Grilling | `review/QUESTIONS.md` | batch 1 answered ("Defaults"); ended by "Move on to 4" |
-| 4 Backlog and plan | `review/BACKLOG_V2.md`, `review/REFACTOR_PLAN.md` | done, at STOP |
-| 5 Refactoring | `review/REFACTOR_REPORT.md` | only after the customer approves the plan |
+| 4 Backlog and plan | `review/BACKLOG_V2.md`, `review/REFACTOR_PLAN.md` | done, plan approved 2026-11-06 |
+| 5 Refactoring | `review/REFACTOR_REPORT.md` | in progress: step 0 (safety net) |
 
 ## Decisions in force
 
@@ -225,6 +236,22 @@ the plan and accepts or strikes the defaults.
 - Confirm the reading of answer 4 (stage 3; G-150).
 
 ## How to resume in a new session
+
+**Stage 5 (current):**
+
+1. `cd /home/user/sierra-hd && git switch refactor && git log --oneline -8`
+   (commits "Refactor step 0.N: ..."; nothing pushed).
+2. Read `review/REFACTOR_PLAN.md` (follow it exactly), then
+   `review/REFACTOR_REPORT.md`: its "Step 0 progress" says which sub-step
+   is done and what is left; its "Baselines (before)" holds the numbers.
+3. The reference build of the original code is `build/baseline-release`
+   (kept for the whole stage; `build/baseline-release-2` is the second
+   build of step 0.1). Large outputs stay under `build/` (git-ignored).
+4. Docker is shared: never start or stop the daemon; if `docker ps` fails,
+   wait with an until-loop.
+5. Bugs found go into `review/BACKLOG_V2.md` as B-43 onward, unfixed.
+
+**Earlier stages (for reference):**
 
 1. `cd /home/user/sierra-hd && git checkout audit && git log --oneline -5`.
 2. Read `review/TASK.md` (the brief), this file, then `review/MAP.md`.
