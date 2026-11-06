@@ -23,7 +23,8 @@ allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
 - Step 0.3: in part (pictures, views, fonts, cursors: `tools/golden-resources`,
   `tests/golden/resources.txt`); what remains is listed in the report,
   "Step 0.3".
-- Step 0.4: see the report, "Step 0.4".
+- Step 0.4: done (`scripts/check-vm-hashes.sh`, `tests/golden/vm.txt`; full outputs in `build/vm-baseline/`; ScummVM comparison at the start: all match).
+- Next: finish 0.3 (HD/original screens of scenarios and checkpoints at N = 1, 2, 5, 10; MIDI per sound; pixel-diff helper; ARM64 run of the new tool; clang-tidy), then 0.5, 0.6, 0.7.
 - Steps 0.5-0.7 and 1-12: not started.
 
 Earlier: **stage 4 done** (2026-11-06). Files:

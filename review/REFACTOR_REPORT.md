@@ -12,7 +12,7 @@ step 12. Nothing is pushed.
 | 0.1 branch, `review/`, two clean builds, reproducibility | **done** | `review/` brought in (e20328b); `git diff a0422d6 -- . ':!review'` empty; the two clean release builds are byte-identical (below) |
 | 0.2 baselines | **done** | CI minutes, warnings (all Linux presets), CTest + ASan/UBSan + TSan, ASan/UBSan over the game checks, room entry, first launch, frame times, peak memory, binary size, build times |
 | 0.3 golden outputs of all resources (Q-02) | **in part** | pictures, views, fonts, cursors done (`tools/golden-resources`, `tests/golden/resources.txt`, CI test), generated twice, identical; scenario/checkpoint screens in HD, MIDI per sound and the pixel-diff helper remain (below) |
-| 0.4 VM output hashes (Q-01) | **done except the ScummVM comparison** | `scripts/check-vm-hashes.sh`, `tests/golden/vm.txt` (713 lines), generated twice, identical; `--check` tested; full outputs in `build/vm-baseline/` |
+| 0.4 VM output hashes (Q-01) | **done** (incl. the ScummVM comparison at the start) | `scripts/check-vm-hashes.sh`, `tests/golden/vm.txt` (713 lines), generated twice, identical; `--check` tested; full outputs in `build/vm-baseline/` |
 | 0.5 four fuzz targets | not started | |
 | 0.6 local VM gate written down | not started | |
 | 0.7 gate: S1-S6 on the original code | not started | |
@@ -171,8 +171,35 @@ run ends with "end_state=same".
     build/stage5/scummvm-scenarios`: **39 ok, 0 FAIL** (traces, screens,
     maps, actors, parser, layout and OPL all match), 423 s. Log:
     `build/stage5/scummvm-scenarios.log`.
-  - `tools/playthrough/check.sh` (the playthrough against ScummVM to the
-    last checkpoint, then the checkpoints): see below once finished.
+  - `tools/playthrough/check.sh` (the playthrough in both engines to tick
+    338000, then the 38 checkpoints): **matches**, 933 s: traces
+    2,448,724 calls, screens and maps 5,627, actors 50,061 frames, parser
+    21 parses / 3,812 Said calls, layout 7,253 lines, OPL 215,334 writes,
+    all identical; all 38 checkpoints hold ("the game quit at tick 337613
+    in room 786"), as in `reports/milestone-9.md`. Log:
+    `build/stage5/scummvm-playthrough.log` (the output folder is removed
+    by the script on a match).
+  - Not run: the MT-32 comparison against ScummVM
+    (`SIERRA_HD_MUSIC=mt32 run-scenario.sh`); the plan names only the two
+    scripts above.
+
+## Run times of the game-dependent checks (for the per-commit suite)
+
+On the reference build, container, 4 cores (some beside other runs, so
+upper bounds):
+
+| Check | Run time |
+|---|---|
+| S4: `sci-golden-resources --check` (all resources, N up to 16) | 477-537 s |
+| S4: `sci-golden-hashes … pictures.txt --check` | 61 s |
+| S4: `sci-sound-render --golden sounds.txt --check` | 23 s |
+| S5: `scripts/check-vm-hashes.sh --check` (119 runs + program run) | 124-138 s |
+| ScummVM: `run-all-scenarios.sh --jobs 4` | 423 s |
+| ScummVM: `tools/playthrough/check.sh` | 933 s |
+| ASan/UBSan game checks (78 scenario runs + playthrough) | 176 s |
+
+So S4 + S5 take about 12 minutes per commit, well under the hour the
+plan sets as the point to ask the customer.
 
 ## Baselines (before)
 
