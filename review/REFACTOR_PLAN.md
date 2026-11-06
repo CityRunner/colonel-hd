@@ -23,7 +23,10 @@ checks alone.
 
 ## Branch and working rules
 
-- **Branch:** `refactor`, created from `main` at `a0422d6`. Its first
+- **Branch:** `refactor`, created from `a0422d6` (`origin/main`;
+  `git switch -c refactor a0422d6`). Note: the local branch `main` in this
+  clone is stale at `df81541`, the first commit, so `main` must not be
+  used as the start point by name. Its first
   commit brings in `review/` from `audit` (`git checkout audit -- review`;
   `audit` differs from `main` only in `review/`), so `REFACTOR_REPORT.md`
   and new stage 5 bugs (B-43+) are written on the same branch as the code.

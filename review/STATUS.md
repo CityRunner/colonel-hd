@@ -132,7 +132,8 @@ the plan and accepts or strikes the defaults.
   1. Approve `review/REFACTOR_PLAN.md` (steps 0-12), including the full
      suite after every commit with the game-dependent checks (S4, S5) on
      the game copy in this container, and the branch `refactor` from
-     `main` at `a0422d6`.
+     `a0422d6` (`origin/main`; the local `main` branch is stale at
+     `df81541`).
   2. Accept or strike the 20 items marked "default — accept or strike"
      and the 3 marked "default — strike" in `review/BACKLOG_V2.md`
      (silence = accept the default). The plan uses B-21, B-24, B-23 (stage
