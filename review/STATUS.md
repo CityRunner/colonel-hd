@@ -19,8 +19,7 @@ allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
   about 06:48 UTC until about 07:25 UTC (restarted by the main session).
 - Step 0.2 (baselines): in progress; see REFACTOR_REPORT.md, "Baselines
   (before)".
-- Step 0.2: done except the warning counts of `debug`, `fuzz` and
-  `cross-aarch64` (see the report).
+- Step 0.2: done (numbers in the report).
 - Step 0.3: in part (pictures, views, fonts, cursors: `tools/golden-resources`,
   `tests/golden/resources.txt`); what remains is listed in the report,
   "Step 0.3".

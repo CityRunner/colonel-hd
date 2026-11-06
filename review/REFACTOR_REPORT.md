@@ -10,7 +10,7 @@ step 12. Nothing is pushed.
 | Sub-step | State | Notes |
 |---|---|---|
 | 0.1 branch, `review/`, two clean builds, reproducibility | **done** | `review/` brought in (e20328b); `git diff a0422d6 -- . ':!review'` empty; the two clean release builds are byte-identical (below) |
-| 0.2 baselines | in progress | CI minutes, warnings (release, asan, tsan), CTest + ASan/UBSan + TSan, binary size, build time measured; game timings running |
+| 0.2 baselines | **done** | CI minutes, warnings (all Linux presets), CTest + ASan/UBSan + TSan, ASan/UBSan over the game checks, room entry, first launch, frame times, peak memory, binary size, build times |
 | 0.3 golden outputs of all resources (Q-02) | **in part** | pictures, views, fonts, cursors done (`tools/golden-resources`, `tests/golden/resources.txt`, CI test), generated twice, identical; scenario/checkpoint screens in HD, MIDI per sound and the pixel-diff helper remain (below) |
 | 0.4 VM output hashes (Q-01) | **done except the ScummVM comparison** | `scripts/check-vm-hashes.sh`, `tests/golden/vm.txt` (713 lines), generated twice, identical; `--check` tested; full outputs in `build/vm-baseline/` |
 | 0.5 four fuzz targets | not started | |
@@ -189,8 +189,21 @@ for `SCI_WARNINGS_AS_ERRORS=OFF`; with it ON the build succeeds, and
 `-Werror` changes only a warning's severity, not which warnings appear,
 so the OFF count is the same (0 in project code). The same holds for
 the `asan` and `tsan` presets (clean builds below): 9 warnings each, the
-same 9 SDL3 lines, 0 in project code. `debug`, `fuzz` and
-`cross-aarch64` are not measured yet.
+same 9 SDL3 lines, 0 in project code. The other Linux presets, clean
+builds with `-DSCI_WARNINGS_AS_ERRORS=OFF` (`build/stage5/warn-builds.sh`;
+built from the tree of step 0.3, i.e. the original code plus the new
+golden tool and its test, which are 0-warning too):
+
+| Preset | Configure | Clean build | Warnings | In project code |
+|---|---|---|---|---|
+| `debug` | 17 s | 62 s | 9 (SDL3, as above) | 0 |
+| `fuzz` | 17 s | 158 s | 9 (SDL3) | 0 |
+| `cross-aarch64` (no app, so no SDL3) | 2 s | 75 s | 0 | 0 |
+
+(These three ran beside the ScummVM comparison, so their build times are
+upper bounds.) `cross-aarch64` CTest under qemu-user: 26/26 passed in
+13 s (`-j4`; no `sci-audio-output-tests` without the app; the new
+`sci-golden-layers-tests` passes on ARM64 too).
 
 ### CTest suites and sanitizers (B-20 criteria 2 and 5, CI part)
 
