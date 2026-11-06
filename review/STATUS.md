@@ -105,6 +105,19 @@ Waiting for the customer's answers to batch 1.
   acceptable, the legal risk with the customer. All High questions are
   closed (Q-03 as assumed). See `review/QUESTIONS.md`, Answers.
 
+- **Script patches (G-146), the customer's correction (2026-11-06):** "if
+  this patches provided by gog version we need to use them too". The GOG
+  release ships the patch files `SCRIPT.052` and `TEXT.052` in the game
+  folder; they are already used: the resource manager loads them over the
+  map entries, as ScummVM does (R-12, `resource_manager.cpp:117-171`,
+  tested in CI by `patch_file_test.cpp`, `resource_manager_test.cpp:95`;
+  "Patching SCRIPT.052 - OK" in every run), and identification checks
+  them (R-03). **Decided (customer); already satisfied.** ScummVM's 16
+  in-memory script patches (R-69: lock-up fixes, copy-protection random
+  fix) are not from GOG; they stay as ported (spec §7 asks for them), so
+  the game behaves as in ScummVM. **ASSUMED (unconfirmed).** G-146 is
+  closed on this basis.
+
 ## Open items
 
 - **Stage 3, batch 1 (`review/QUESTIONS.md`), all open:**
