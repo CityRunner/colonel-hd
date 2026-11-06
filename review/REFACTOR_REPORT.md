@@ -15,7 +15,7 @@ step 12. Nothing is pushed.
 | 0.4 VM output hashes (Q-01) | **done** (incl. the ScummVM comparison at the start) | `scripts/check-vm-hashes.sh`, `tests/golden/vm.txt` (713 lines), generated twice, identical; `--check` tested; full outputs in `build/vm-baseline/` |
 | 0.5 four fuzz targets | **done, with findings** | `fuzz-script`, `fuzz-sound`, `fuzz-patch`, `fuzz-config`; corpora replay in CTest; 10 min each; B-45 (script) and B-46 (sound) found; B-44 (fuzz-save never fuzzed) found on the way |
 | 0.6 local VM gate written down | **done** (waits for `screens.txt`) | `scripts/check-local.sh` runs S4 + S5; `tests/README.md`, "The local gate" |
-| 0.7 gate: S1-S6 on the original code | not started | |
+| 0.7 gate: S1-S6 on the original code | in progress | S2, S3, S6 pass; S1, S4, S5 running; screens.txt generating |
 
 ## Environment incidents
 
@@ -57,7 +57,8 @@ toolchain container (`sierra-hd-toolchain:fa237f3eeea06223`, 4 cores):
 | build (637 ninja steps) | 84.8 s | 81.2 s |
 | warnings | 9 (all in `third_party/SDL3`, below) | 9 (same) |
 
-**Result: the build is reproducible.** All 569 build outputs compared
+**Result: the build is reproducible** (for one commit: see the note on
+B-47 below). All 569 build outputs compared
 (36 executables, 16 static libraries, 517 object files; everything
 executable or `*.a`/`*.o` outside `CMakeFiles/`) have identical SHA-256 in
 both trees. `compile_commands.json` and `ninja -t commands` (637 commands)
@@ -72,6 +73,13 @@ Key hashes of the original code (all 36 executables:
 | `src/app/sierra-hd` | `54f59d747ebccf5435a76c40c1a0ed5148f78d953d97bc98ba21e977d1817e2a` |
 | `tools/vm-trace/sci-vm-trace` | `7a57f804f7c8d2abbd0c8230fbd4dcffebc66a0ce653196bfcb10e40e84585ab` |
 | `tools/golden-hashes/sci-golden-hashes` | `963d83abb03b2d4fb6ed41ea134542bd0573f422aef049f76821ff779af98d24` |
+
+**Note (found in step 0.7, B-47):** `sierra-hd` and
+`sci-audio-output-tests` embed the repository's `git describe` through
+SDL's `SDL_REVISION`, so these two binaries change with every commit even
+when `src/` does not. The two builds above were configured at the same
+commit, which is why they matched. S6 therefore builds with a fixed
+`-DSDL_REVISION=SDL-3.4.18-stage5` (step 0.7).
 
 `build/baseline-release` is kept as the reference build of the original
 code for the whole of stage 5; `build/baseline-release-2` is kept until
@@ -262,6 +270,24 @@ job, which read it) has all four without changing either.
   two targets (test tooling, beyond the plan's wording); (c) fix B-45
   and B-46 first (behaviour changes, so not in stage 5). The corpus
   replays in CTest pass, so S2/S3 are not affected.
+
+## Step 0.7: the gate on the original code (with 0.3-0.6 in)
+
+Commit `8dcfb7c` (and later review-only commits): `src/` is that of
+`a0422d6`; the step 0 tooling is added.
+
+| Part | What ran | Result | Time (beside the screen generations) |
+|---|---|---|---|
+| S2 + S3 | clean configure, build, CTest of `release`, `asan`, `tsan` in fresh folders (`build/stage5-gate-*`) | 31/31 pass in each (26 + `sci-golden-layers-tests` + 4 new corpus replays); 0 project warnings; no sanitizer report | release 55 + 295 + 7 s; asan 30 + 589 + 23 s; tsan 29 + 369 + 67 s |
+| S6 | release builds of `a0422d6` (`build/stage5-s6-a0422d6`) and of `8dcfb7c` (`build/stage5-s6-current`), both with `-DSDL_REVISION=SDL-3.4.18-stage5` (B-47) | every executable of `a0422d6` identical in the current build, among them `sierra-hd` (`500ce7fd…`), `sci-vm-trace`, `sci-golden-hashes`, `sci-sound-render`, every test; the only difference is `sci-hd-frames` (the `--hashes` option of step 0.6, intended); new: the four fuzz targets, `sci-golden-resources`, `sci-golden-layers-tests` | — |
+
+A slip during this step: to build `a0422d6` for S6 I switched the
+working tree to it for about five minutes while the `asan` gate build was
+running; that build may have compiled some files from `a0422d6`. It was
+rebuilt incrementally afterwards (ninja rebuilt what the switch touched)
+and CTest re-run: 31/31 pass. The screen generations running at the same
+time were not affected (their binary and inputs are the same in both
+trees: `hints/`, `tests/scenarios/`, `tests/playthrough/`).
 
 ## Run times of the game-dependent checks (for the per-commit suite)
 
