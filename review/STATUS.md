@@ -5,17 +5,21 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Stage 3, grilling session: batch 1 asked → at STOP** (2026-11-05).
-Ten questions Q-01 … Q-10 in `review/QUESTIONS.md` (4 High, 6 Medium).
-Waiting for the customer's answers to batch 1.
+**Stage 4, improvements and iteration 2 backlog: done → at STOP, waiting
+for the customer's approval** (2026-11-06). Files:
+`review/BACKLOG_V2.md` (42 items B-01 … B-42: High 7, Medium 12, Low 23,
+no Critical) and `review/REFACTOR_PLAN.md` (stage 5: step 0 safety net,
+then 11 behaviour-free steps and a closing step; about 73 hours plus the
+game-dependent run times). Stage 5 starts only after the customer approves
+the plan and accepts or strikes the defaults.
 
 | Stage | File | State |
 |---|---|---|
 | 1a Codebase map | `review/MAP.md` | done |
 | 1b Recover requirements | `review/REQUIREMENTS_RECOVERED.md` | done |
 | 2 Reconcile | `review/GAPS.md` | done |
-| 3 Grilling | `review/QUESTIONS.md` | batch 1 asked (Q-01 … Q-10), at STOP |
-| 4 Backlog and plan | `review/BACKLOG_V2.md`, `review/REFACTOR_PLAN.md` | not started |
+| 3 Grilling | `review/QUESTIONS.md` | batch 1 answered ("Defaults"); ended by "Move on to 4" |
+| 4 Backlog and plan | `review/BACKLOG_V2.md`, `review/REFACTOR_PLAN.md` | done, at STOP |
 | 5 Refactoring | `review/REFACTOR_REPORT.md` | only after the customer approves the plan |
 
 ## Decisions in force
@@ -124,30 +128,35 @@ Waiting for the customer's answers to batch 1.
 
 ## Open items
 
-- **Stage 3, batch 1 (`review/QUESTIONS.md`), all open:**
-  - High: Q-01 interpreter safety net (CI cannot run the game; default:
-    hashes of our own VM's outputs locally per commit, ScummVM at start and
-    end, synthetic bytecode CI suite as backlog); Q-02 scope of "render ALL
-    resources" (default: every picture incl. HD priority map at N = 1-16,
-    every view cel, glyph, cursor, scenario/playthrough screen; hashes
-    committed, images local); Q-03 hint licensing / model terms (G-24; item
-    1 only the customer can answer) and keeping the parser word files and
-    the old `.pyc` (default keep, no rewrite); Q-04 measurable goals for
-    "optimising" (default: baselines in stage 5, iteration 2 fixes only
-    measured misses, one reference-laptop run).
-  - Medium: Q-05 edges of answer 4 (G-150; default: PART remainders become
-    backlog items, no A4 grid tooling); Q-06 where run-time files live
-    (G-122; default: one data folder, `--data` > portable > per-user);
-    Q-07 repository layout (default: minimal moves plus git-ignored
-    `local/{game,rom,saves}`); Q-08 milestone 9 HD quality final? (default
-    yes); Q-09 four missing fuzz targets (default: add in stage 5 step 1);
-    Q-10 ini rewrite drops comments (default: fix in iteration 2).
-  - Blocking: Q-01, Q-02, Q-09 → stage 5 step 1; Q-04, Q-05, Q-08 → stage 4
-    backlog/plan; Q-06, Q-07 → the iteration-2 folder requirement; Q-03 →
-    publishing anything new. Stage 3 continues with batch 2 until every
-    High question is closed.
-  - R-65 (`kDoAvoider`) was not asked: the tested release does not
-    reference it (`docs/ASSUMPTIONS.md:1205-1208`).
+- **Stage 4 (at STOP), what the customer is asked:**
+  1. Approve `review/REFACTOR_PLAN.md` (steps 0-12), including the full
+     suite after every commit with the game-dependent checks (S4, S5) on
+     the game copy in this container, and the branch `refactor` from
+     `main` at `a0422d6`.
+  2. Accept or strike the 20 items marked "default — accept or strike"
+     and the 3 marked "default — strike" in `review/BACKLOG_V2.md`
+     (silence = accept the default). The plan uses B-21, B-24, B-23 (stage
+     5 part) and keeping SDL3's Apple back-ends (B-01).
+  3. Confirm or correct Q-03 (hint licensing, ASSUMED; B-12) before any
+     release tag.
+  4. Optional: CI minutes for one Windows draft-PR run and one `quick`
+     run during stage 5.
+- **Stage 4 decisions taken by the auditor (within the decided scope):**
+  the layout move (B-02) is a stage 5 step, not iteration 2, because it is
+  behaviour-neutral and blocks B-03 (reasons in `review/REFACTOR_PLAN.md`);
+  stage 5 restructures no sci-vm/render/vector/audio/app code; `review/`
+  files are not rewritten after the move (they cite `a0422d6`); after
+  stage 5, `src/app/platform` reads `src/sci-platform` and `reports/`
+  reads `docs/reports/`.
+- **New facts found in stage 4** (in BACKLOG_V2.md): `.gitignore` ignores
+  `analysis-cache/` while the program writes `cache/`, and does not ignore
+  `files/`, `saves/` or `*.sav` (B-15); 19 tracked `.py`/`.sh` files lack
+  an SPDX header, not 15 (B-26); assertion messages carry source paths
+  (`std::source_location`), so file moves change binaries but not outputs
+  (B-02).
+- **Stage 3, batch 1:** all ten answered on 2026-11-06 ("Defaults"); Q-03
+  ASSUMED. Batch 2 was not asked ("Move on to 4"); its candidates are
+  backlog items B-13, B-14, B-17, B-21, B-27 … B-31 with their defaults.
 
 - **Stage 2 results (`review/GAPS.md`):** 156 G-items (G-01 … G-156)
   covering spec v15 §1-§15 section by section, A1, A2 (withdrawn), A4 and
@@ -211,6 +220,9 @@ Waiting for the customer's answers to batch 1.
 1. `cd /home/user/sierra-hd && git checkout audit && git log --oneline -5`.
 2. Read `review/TASK.md` (the brief), this file, then `review/MAP.md`.
 3. Continue with the next stage only after the customer's "continue".
+   Stage 5 follows `review/REFACTOR_PLAN.md` exactly, on branch
+   `refactor` from `main` at `a0422d6`; bugs found go into
+   `review/BACKLOG_V2.md` as B-43 onward, unfixed.
    Stage 3 asks questions (Q-xx) in batches of 5-10, highest severity
    first, from `review/GAPS.md` (G-xx; its "Items with a severity"
    table), recording answers in `review/QUESTIONS.md` (its "Answers"

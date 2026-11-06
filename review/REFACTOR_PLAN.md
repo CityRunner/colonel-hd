@@ -102,7 +102,7 @@ of that commit (the steps are independent unless "after" is named).
 
 | # | What changes | Why (B) | How behaviour is shown unchanged | Effort | Risk | Rollback |
 |---|---|---|---|---|---|---|
-| 1 | SPDX header in the 15 tracked `.py`/`.sh` files without one; `SOURCE` in `scripts/check-repo-policy.py` also covers `.py` and `.sh` | B-26 | comment lines only; S6 identical binaries; each script's `--help` or dry output unchanged; S1 passes | S, 1.5 h | none | revert |
+| 1 | SPDX header in the 19 tracked `.py`/`.sh` files without one (scripts/ 6, tools/ 9, docker/ 3, tests/ 1; counted in stage 4); `SOURCE` in `scripts/check-repo-policy.py` also covers `.py` and `.sh` | B-26 | comment lines only; S6 identical binaries; each script's `--help` or dry output unchanged; S1 passes | S, 1.5 h | none | revert |
 | 2 | `scripts/check-vendored.py` checks every SHA-256 recorded in `THIRD_PARTY.md` / `VENDORED.md`; run in the lint job and `pre-push.sh`. Mismatches found → B-43+, not fixed (the check then lists them as known, so CI stays green) | B-25 | no build input changes; S6 identical | S, 3 h | none | revert |
 | 3 | Policy script and `.gitignore`: SCI0 patch files `TYPE.NNN`, `*.sav`, `sierra-hd.ini` anywhere, with a self-test of names to reject and to accept | B-15 (G-18) | S6 identical; self-test; policy passes on the tree | S, 2 h | a pattern too wide (the accept list catches it) | revert |
 | 4 | "Licensing" section in `hints/README.md`, marked ASSUMED (Q-03), and a `docs/ASSUMPTIONS.md` entry | B-12 | docs only; `scripts/check-hints.py` passes; S6 identical | S, 2 h | none | revert |

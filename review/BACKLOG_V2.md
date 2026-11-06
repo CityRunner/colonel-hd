@@ -812,7 +812,9 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-26 SPDX headers on scripts; the policy checks `.py` and `.sh`
 
 - **Kind:** maintainability. **Severity:** Low (MAP 8.10: 15 tracked
-  Python/shell files in `scripts/` and `tools/` have none). **Effort:** S,
+  Python/shell files in `scripts/` and `tools/` have none; a stage 4 count
+  over the whole tree outside `third_party/` finds 19: also 3 in `docker/`
+  and 1 in `tests/`). **Effort:** S,
   1.5 h. **When:** stage 5. **State:** in the plan.
 - **Acceptance criteria:** every tracked `.py`/`.sh` outside `third_party/`
   has `SPDX-License-Identifier: GPL-3.0-or-later` in its first three lines
@@ -967,7 +969,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 
 ### B-39 Trigonometry outside -360…360
 
-- **Kind:** defect (unverified). **Severity:** Low (V-5: the table is used
+- **Kind:** defect (unverified). **Severity:** Low (V-05: the table is used
   modulo 360 and "may differ from glibc's in the last bits", so from
   ScummVM; whether the game passes such angles is not known). **Effort:**
   S, 2 h. **When:** iteration 2. **State:** default — accept or strike.
@@ -1055,7 +1057,7 @@ B-24, B-25, B-26; iteration 2 the rest.
 
 Effort of the iteration-2 work with every default accepted (sum of the
 estimates of B-03, B-04, B-06, B-07, B-08 CI part, B-09, B-10, B-11, B-13,
-B-14, B-16 rest, B-17 scan, B-22, B-23 rest, B-27 … B-39): about 250 hours,
+B-14, B-16 rest, B-17 scan, B-22, B-23 rest, B-27 … B-39): about 190 hours,
 of which the VM net (B-06, B-07) is 72. Judgement, not measured.
 
 ### Top points for the customer
