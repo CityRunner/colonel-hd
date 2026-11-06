@@ -17,15 +17,23 @@ allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
   use binary identity. MT-32 ROMs are present (mount
   `/home/user/roms:/roms`). The docker daemon was down from the reboot at
   about 06:48 UTC until about 07:25 UTC (restarted by the main session).
-- Step 0.2 (baselines): in progress; see REFACTOR_REPORT.md, "Baselines
-  (before)".
 - Step 0.2: done (numbers in the report).
-- Step 0.3: in part (pictures, views, fonts, cursors: `tools/golden-resources`,
-  `tests/golden/resources.txt`); what remains is listed in the report,
-  "Step 0.3".
-- Step 0.4: done (`scripts/check-vm-hashes.sh`, `tests/golden/vm.txt`; full outputs in `build/vm-baseline/`; ScummVM comparison at the start: all match).
-- Next: finish 0.3 (HD/original screens of scenarios and checkpoints at N = 1, 2, 5, 10; MIDI per sound; pixel-diff helper; ARM64 run of the new tool; clang-tidy), then 0.5, 0.6, 0.7.
-- Steps 0.5-0.7 and 1-12: not started.
+- Step 0.3: in part. Done: pictures, views, fonts, cursors
+  (`tools/golden-resources`, `tests/golden/resources.txt`). In progress:
+  the screens (`scripts/check-screen-hashes.sh` with the new
+  `sci-hd-frames --hashes`, `tests/golden/screens.txt`). Remaining: MIDI
+  per sound, the pixel-diff helper, the ARM64 run (see the report).
+- Step 0.4: done (`scripts/check-vm-hashes.sh`, `tests/golden/vm.txt`;
+  full outputs in `build/vm-baseline/`; ScummVM comparison at the start:
+  all match).
+- Step 0.5: done with findings B-45 (script loader) and B-46 (music
+  player hang); B-44 (fuzz-save never fuzzed). **Open question for the
+  customer:** the fuzzing step of pre-push/CI fails on fuzz-script and
+  fuzz-sound until iteration 2 (options in the report, step 0.5).
+- Step 0.6: `scripts/check-local.sh` and "The local gate" in
+  `tests/README.md` written; committed once `screens.txt` exists.
+- Step 0.7 and steps 1-13: not started.
+
 
 Earlier: **stage 4 done** (2026-11-06). Files:
 `review/BACKLOG_V2.md` (42 items B-01 … B-42: High 7, Medium 12, Low 23,
