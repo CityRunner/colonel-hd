@@ -145,6 +145,27 @@ game-dependent run times).
   ("which items?" — listed to the customer), and Q-03 ("which options?"
   — explained to the customer).
 
+- **Customer's answers, 2026-11-06 (relayed by the main session at the
+  start of stage 5):**
+  1. Backlog defaults, "2 all approved": every item marked "default —
+     accept or strike" in `review/BACKLOG_V2.md` (B-13, B-14, B-17, B-21,
+     B-22, B-23's iteration-2 part, B-24, B-27 … B-39) is accepted;
+     B-40, B-41, B-42 ("default — strike") are struck. Keeping SDL3's
+     Apple back-ends (B-01's sub-default) is accepted with them.
+     **Decided (customer).**
+  2. Q-03 hint licensing, "1a 2b 3a": (1) the hints were made under the
+     customer's personal Claude subscription; (2) the customer did not
+     check whether those terms allow publishing the hints under
+     GPL-3.0-or-later and takes that risk; (3) showing the customer's own
+     game pictures to the model was allowed. Q-03 and B-12 are
+     **Decided (customer)**. Plan step 4 writes the "Licensing" section of
+     `hints/README.md` with exactly this (labels and geometry only, no
+     image data; made with Claude under the customer's personal
+     subscription; published under GPL-3.0-or-later at the customer's
+     risk, terms not checked; the customer's own game pictures shown to
+     the model with permission), not "marked ASSUMED" as the plan's step
+     4 row still reads (written before the answer).
+
 ## Open items
 
 - **Stage 4 (at STOP), what the customer is asked:**

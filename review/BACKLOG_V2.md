@@ -33,7 +33,8 @@ checks add their run time (not recorded so far, Q-01).
 - **Decided** — the customer decided it (answer named).
 - **ASSUMED** — taken from a default the customer did not confirm
   (Q-03).
-- **default — accept or strike** — a batch-2 candidate or a PART
+- **default — accept or strike** (none left: all decided by the customer
+  on 2026-11-06, "2 all approved") — a batch-2 candidate or a PART
   remainder (Q-05) that was never asked. It carries the default I would
   apply. The customer accepts or strikes it at this STOP; silence means
   accept.
@@ -61,37 +62,37 @@ found it.
 | B-09 | No frame over 16.7 ms at N = 10 (measured misses only) | performance | Medium | M (16 h) | iteration 2 | Decided | Q-04, G-123, R-92 |
 | B-10 | Scripted timing mode; customer's reference-laptop run | requirement | Medium | M (6 h) | iteration 2 | Decided | Q-04, G-123 |
 | B-11 | Peak memory ≤ baseline + 10 % (regression check) | performance | Low | S (3 h) | iteration 2 | Decided | Q-04 |
-| B-12 | Hint licensing section in `hints/README.md` | requirement | High | S (2 h) | stage 5 (docs) | ASSUMED | Q-03, G-24, HISTORY_CLEANUP E |
-| B-13 | `docs/ARCHITECTURE.md` brought up to date | maintainability | Medium | M (10 h) | iteration 2 | default — accept or strike | G-44, MAP 8.4 |
-| B-14 | Other stale docs, comments and missing READMEs | maintainability | Low | M (6 h) | iteration 2 | default — accept or strike | G-155, G-156, G-39, G-126, MAP 8.5, 8.6, 8.13, V-03, V-05, V-07, V-11 |
+| B-12 | Hint licensing section in `hints/README.md` | requirement | High | S (2 h) | stage 5 (docs) | Decided (Q-03) | Q-03, G-24, HISTORY_CLEANUP E |
+| B-13 | `docs/ARCHITECTURE.md` brought up to date | maintainability | Medium | M (10 h) | iteration 2 | accepted (customer, 2026-11-06) | G-44, MAP 8.4 |
+| B-14 | Other stale docs, comments and missing READMEs | maintainability | Low | M (6 h) | iteration 2 | accepted (customer, 2026-11-06) | G-155, G-156, G-39, G-126, MAP 8.5, 8.6, 8.13, V-03, V-05, V-07, V-11 |
 | B-15 | Policy script and `.gitignore`: SCI0 patch files, run-time folders | defect | Medium | S (2 h) | stage 5 | Decided (Q-07) | G-18, V-06, R-135 |
 | B-16 | Release workflow kept working without macOS; publishing is the customer's | requirement | Medium | S (3 h) | stage 5 (macOS part) / iteration 2 | Decided | G-125, R-141 |
-| B-17 | `kDoAvoider` stub: scan other releases if a copy turns up | defect (latent) | Low | S (1 h) | iteration 2, conditional | default — accept or strike | R-65, R-66 |
+| B-17 | `kDoAvoider` stub: scan other releases if a copy turns up | defect (latent) | Low | S (1 h) | iteration 2, conditional | accepted (customer, 2026-11-06) | R-65, R-66 |
 | B-18 | Golden outputs for all resources | maintainability (safety net) | High | M (16 h) | stage 5 step 0 | Decided | Q-02, V-04, R-57, MAP 8.3 |
 | B-19 | Hashes of every VM output | maintainability (safety net) | High | M (10 h) | stage 5 step 0 | Decided | Q-01, MAP 6.3 |
 | B-20 | Baselines: warnings, sanitizers, timings, memory, size, build time | maintainability (safety net) | Medium | M (6 h) | stage 5 step 0 | Decided | Q-04, brief 5.1 |
-| B-21 | Remove the four unused dependency edges | architecture | Low | S (1 h) | stage 5 | default — accept or strike | G-31, MAP 1.3, 8.7 |
-| B-22 | Check in lint that every declared edge is used | maintainability | Low | S (3 h) | iteration 2 | default — accept or strike | G-31, MAP 1.4 |
-| B-23 | Tests that include private `src/` folders | architecture | Low | S (2 h) stage 5; M (12 h) iteration 2 | stage 5 (make explicit) / iteration 2 | stage 5 part: plan; rest default — accept or strike | G-31, MAP 1.4, 8.9 |
-| B-24 | Remove the dead `component_name()` placeholders | tech debt | Low | S (0.5 h) | stage 5 | default — accept or strike | G-43, MAP 8.8 |
+| B-21 | Remove the four unused dependency edges | architecture | Low | S (1 h) | stage 5 | accepted (customer, 2026-11-06) | G-31, MAP 1.3, 8.7 |
+| B-22 | Check in lint that every declared edge is used | maintainability | Low | S (3 h) | iteration 2 | accepted (customer, 2026-11-06) | G-31, MAP 1.4 |
+| B-23 | Tests that include private `src/` folders | architecture | Low | S (2 h) stage 5; M (12 h) iteration 2 | stage 5 (make explicit) / iteration 2 | stage 5 part: plan; rest accepted (customer, 2026-11-06) | G-31, MAP 1.4, 8.9 |
+| B-24 | Remove the dead `component_name()` placeholders | tech debt | Low | S (0.5 h) | stage 5 | accepted (customer, 2026-11-06) | G-43, MAP 8.8 |
 | B-25 | Check the vendored files' SHA-256 | maintainability | Medium | S (3 h) | stage 5 | plan | MAP 5, 8.11 |
 | B-26 | SPDX headers on scripts; policy checks `.py`/`.sh` | maintainability | Low | S (1.5 h) | stage 5 | plan | MAP 8.10, R-135 |
-| B-27 | A reason on every `NOLINT` | maintainability | Low | S (2 h) | iteration 2 | default — accept or strike | G-36, R-136 |
-| B-28 | Switchable log categories in the program | requirement | Low | S (4 h) | iteration 2 | default — accept or strike | G-41, V-10, R-121 |
-| B-29 | The range of N (cap or keep 16) | requirement | Low | S (2 h) | iteration 2 | default — accept or strike | G-148, V-03, R-50 |
-| B-30 | Other sound devices | requirement | Low | — (0 h with the default) | — | default — accept or strike | G-145 |
-| B-31 | Hint files for pictures 55 and 992 | maintainability | Low | S (0.5 h) | iteration 2 | default — accept or strike | G-79 |
-| B-32 | Make the application layer testable (options, `GameHost`) | tech debt | Medium | M (14 h) | iteration 2 | default — accept or strike | MAP 8.2, R-110, MAP 6.4 |
-| B-33 | `-fwrapv` in some build types only | tech debt | Low | S (3 h) | iteration 2 | default — accept or strike | MAP 8.12 |
-| B-34 | Test hooks in the shipped program | requirement | Low | S (1 h) | iteration 2 | default — accept or strike | G-151, R-115…R-117 |
-| B-35 | Remove the unbuilt `SCI_WITHOUT_STROKE_INTEGRITY` option | tech debt | Low | S (1 h) | iteration 2 | default — accept or strike | G-153 |
-| B-36 | Remove relation-hint parsing; fix its comments | tech debt | Low | S (2 h) | iteration 2 | default — accept or strike | G-154, G-97, V-02, R-36 |
-| B-37 | List thin fallbacks in the replacement report | requirement | Low | S (2 h) | iteration 2 | default — accept or strike | G-69, R-128 |
-| B-38 | Check the `analyser_version` rule in CI | maintainability | Low | S (2 h) | iteration 2 | default — accept or strike | V-12, G-156 |
-| B-39 | Trigonometry outside -360…360: compare with glibc | defect (unverified) | Low | S (2 h) | iteration 2 | default — accept or strike | V-05, G-156 |
-| B-40 | 5.25" release: hint warning possibly false | defect (unverified) | Low | — | — | default — strike | V-01, V-14, R-06 |
-| B-41 | LGPL static linking note | maintainability | Low | — | — | default — strike | V-09 |
-| B-42 | `uint32_t` sums instead of `uint64_t` | tech debt | Low | — | — | default — strike | G-73, R-46 |
+| B-27 | A reason on every `NOLINT` | maintainability | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | G-36, R-136 |
+| B-28 | Switchable log categories in the program | requirement | Low | S (4 h) | iteration 2 | accepted (customer, 2026-11-06) | G-41, V-10, R-121 |
+| B-29 | The range of N (cap or keep 16) | requirement | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | G-148, V-03, R-50 |
+| B-30 | Other sound devices | requirement | Low | — (0 h with the default) | — | accepted (customer, 2026-11-06) | G-145 |
+| B-31 | Hint files for pictures 55 and 992 | maintainability | Low | S (0.5 h) | iteration 2 | accepted (customer, 2026-11-06) | G-79 |
+| B-32 | Make the application layer testable (options, `GameHost`) | tech debt | Medium | M (14 h) | iteration 2 | accepted (customer, 2026-11-06) | MAP 8.2, R-110, MAP 6.4 |
+| B-33 | `-fwrapv` in some build types only | tech debt | Low | S (3 h) | iteration 2 | accepted (customer, 2026-11-06) | MAP 8.12 |
+| B-34 | Test hooks in the shipped program | requirement | Low | S (1 h) | iteration 2 | accepted (customer, 2026-11-06) | G-151, R-115…R-117 |
+| B-35 | Remove the unbuilt `SCI_WITHOUT_STROKE_INTEGRITY` option | tech debt | Low | S (1 h) | iteration 2 | accepted (customer, 2026-11-06) | G-153 |
+| B-36 | Remove relation-hint parsing; fix its comments | tech debt | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | G-154, G-97, V-02, R-36 |
+| B-37 | List thin fallbacks in the replacement report | requirement | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | G-69, R-128 |
+| B-38 | Check the `analyser_version` rule in CI | maintainability | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | V-12, G-156 |
+| B-39 | Trigonometry outside -360…360: compare with glibc | defect (unverified) | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | V-05, G-156 |
+| B-40 | 5.25" release: hint warning possibly false | defect (unverified) | Low | — | — | struck (customer, 2026-11-06) | V-01, V-14, R-06 |
+| B-41 | LGPL static linking note | maintainability | Low | — | — | struck (customer, 2026-11-06) | V-09 |
+| B-42 | `uint32_t` sums instead of `uint64_t` | tech debt | Low | — | — | struck (customer, 2026-11-06) | G-73, R-46 |
 
 B-43 onward: reserved for bugs found in stage 5.
 
@@ -137,7 +138,7 @@ B-43 onward: reserved for bugs found in stage 5.
     `src/video/uikit`, `src/audio/coreaudio`, `src/haptic/darwin`,
     `src/joystick/darwin`, `src/misc/macos`, 44 `.m` files) are part of the
     upstream copy, which `third_party/SDL3/VENDORED.md` says is "copied
-    unchanged". **Default — accept or strike: keep them.** SDL's own CMake
+    unchanged". **Decided (customer, 2026-11-06, "2 all approved"): keep them.** SDL's own CMake
     builds them only on Apple; removing them saves no build time on Linux
     or Windows, breaks "copied unchanged" and makes the next SDL update a
     manual diff. If struck (prune), VENDORED.md lists the removed paths and
@@ -499,25 +500,27 @@ sierra-hd/                               sierra-hd/
 
 - **Kind:** requirement (documentation). **Severity:** High (G-24: the
   repository is public without the §15 licensing review recorded).
-  **Effort:** S, 2 h. **When:** stage 5 (docs only, as the Q-03 answer
-  says). **State:** **ASSUMED (unconfirmed)** (Q-03).
+  **Effort:** S, 2 h. **When:** stage 5, plan step 4 (docs only).
+  **State:** Decided (customer, 2026-11-06, Q-03 "1a 2b 3a").
 - **Refs:** Q-03, G-24, `review/HISTORY_CLEANUP.md` E, C, D.
-- **Content:** a "Licensing" section stating, as ASSUMED by the customer's
-  "Defaults" on 2026-11-06: the hint files were produced by the agent
-  (Claude) in the customer's own sessions, under the terms of that
-  account; they hold labels, integers and geometry only, no image data
-  (HISTORY_CLEANUP E); they are published under GPL-3.0-or-later; showing
-  renders of the customer's game pictures to the model is taken as
-  allowed; the legal risk is the customer's; the parser word files and
-  the old `.pyc` stay in history (C, D). Plus a `docs/ASSUMPTIONS.md`
-  entry pointing to it.
-- **Acceptance criteria:**
-  1. The section exists, says "ASSUMED, not confirmed by the account
-     holder", and names the date and Q-03.
-  2. It names what would change if the terms forbid publication (the
-     Q-03 consequences: removal and rewrite; no hints).
-  3. The customer confirms or corrects it before the next release
-     (B-16 depends on it).
+- **The customer's answer (2026-11-06, "1a 2b 3a"):** (1) the hints were
+  made under the customer's personal Claude subscription; (2) the customer
+  did not check whether those terms allow publishing the hints under
+  GPL-3.0-or-later and takes that risk; (3) showing the customer's own
+  game pictures to the model was allowed. The parser word files and the
+  old `.pyc` stay in history (C, D; no rewrite).
+- **Acceptance criteria:** `hints/README.md` gets a "Licensing" section
+  saying exactly this:
+  1. the hint files hold labels and geometry only, no image data
+     (`review/HISTORY_CLEANUP.md` E);
+  2. they were made with Claude under the customer's personal
+     subscription;
+  3. they are published under GPL-3.0-or-later at the customer's risk;
+     the subscription's terms were not checked for this;
+  4. the customer's own game pictures were shown to the model with the
+     customer's permission.
+  Plus a `docs/ASSUMPTIONS.md` entry pointing to it. Plan step 4 writes
+  the section.
 - **Risk:** none technical. Legal risk stays with the customer.
 
 ### B-13 `docs/ARCHITECTURE.md` brought up to date
@@ -525,7 +528,7 @@ sierra-hd/                               sierra-hd/
 - **Kind:** maintainability. **Severity:** Medium (G-44: stale since 4a,
   wrong for most of the code iteration 2 touches). **Effort:** M, 10 h.
   **When:** iteration 2, after B-02 (so its paths are final), before B-06.
-  **State:** default — accept or strike (batch-2 candidate; Q-05 makes it
+  **State:** Decided (customer, 2026-11-06): accepted (batch-2 candidate; Q-05 made it
   a PART remainder).
 - **Acceptance criteria:**
   1. Header states milestone 9 + iteration 2 and the date.
@@ -544,7 +547,7 @@ sierra-hd/                               sierra-hd/
 - **Kind:** maintainability. **Severity:** Low. **Effort:** M, 6 h.
   **When:** iteration 2 (comment-only edits in code are allowed there; in
   stage 5 only the path references B-01/B-02 touch are edited).
-  **State:** default — accept or strike.
+  **State:** Decided (customer, 2026-11-06): accepted.
 - **Refs and the list:** G-155, G-156, G-39, G-126; MAP 8.5, 8.6, 8.13;
   V-03, V-05, V-07, V-11:
   - `src/sci-vm/README.md:7`, `:11` (silent music, saves failing);
@@ -633,8 +636,8 @@ sierra-hd/                               sierra-hd/
   release does not reference it, `docs/ASSUMPTIONS.md:1205-1208`).
   **Effort:** S, 1 h (the scan, when a copy exists); porting from ScummVM
   `engines/sci/engine/kmovement.cpp:401` would be M, 6 h, only if a scan
-  finds a caller. **When:** iteration 2, conditional. **State:** default
-  — accept or strike (not asked; batch-1 notes).
+  finds a caller. **When:** iteration 2, conditional. **State:**
+  Decided (customer, 2026-11-06): accepted (not asked; batch-1 notes).
 - **Acceptance criteria:** if another accepted release turns up,
   `sci-vm-trace --scan-kernel` on it is run and recorded; DoAvoider absent
   → item closed; present → port it with a CI bytecode test (B-06).
@@ -736,7 +739,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-21 Remove the four unused dependency edges
 
 - **Kind:** architecture. **Severity:** Low (G-31; MAP 8.7). **Effort:**
-  S, 1 h. **When:** stage 5. **State:** default — accept or strike
+  S, 1 h. **When:** stage 5. **State:** Decided (customer, 2026-11-06): accepted
   (batch-2 candidate G-31); in the plan.
 - **What:** delete `sci-resource` from the `DEPENDS` of sci-pic, sci-view
   and sci-text, and `sci-view` from sci-render (MAP 1.3: no include, no
@@ -752,7 +755,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-22 Lint check that every declared edge is used
 
 - **Kind:** maintainability. **Severity:** Low. **Effort:** S, 3 h.
-  **When:** iteration 2. **State:** default — accept or strike.
+  **When:** iteration 2. **State:** Decided (customer, 2026-11-06): accepted.
 - **Acceptance criteria:** a script (in the lint job) parses each
   `sci_add_library(... DEPENDS ...)` and fails when a library includes no
   header of a declared dependency, or includes one it did not declare;
@@ -764,8 +767,8 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 - **Kind:** architecture. **Severity:** Low (MAP 1.4, 8.9; it matters when
   iteration 2 refactors sci-vm and sci-vector internals). **Effort:** S,
   2 h in stage 5; M, 12 h in iteration 2. **When:** both.
-  **State:** stage 5 part in the plan; iteration-2 part default — accept
-  or strike.
+  **State:** stage 5 part in the plan; iteration-2 part
+  Decided (customer, 2026-11-06): accepted.
 - **Stage 5 (behaviour-neutral):** replace the five ad-hoc
   `target_include_directories(... src)` lines
   (`tests/unit/CMakeLists.txt:49`, `:89`, `:98`, `:110`,
@@ -783,7 +786,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-24 Remove the dead `component_name()` placeholders
 
 - **Kind:** tech debt. **Severity:** Low (G-43, MAP 8.8). **Effort:** S,
-  0.5 h. **When:** stage 5. **State:** default — accept or strike; in the
+  0.5 h. **When:** stage 5. **State:** Decided (customer, 2026-11-06): accepted; in the
   plan.
 - **What:** delete `src/sci-audio/src/component.cpp`,
   `src/sci-vm/src/component.cpp` and their declarations; no caller (`grep
@@ -826,8 +829,8 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-27 A reason on every `NOLINT`
 
 - **Kind:** maintainability. **Severity:** Low (G-36: 20 of 137 without a
-  reason). **Effort:** S, 2 h. **When:** iteration 2. **State:** default —
-  accept or strike (batch-2 candidate).
+  reason). **Effort:** S, 2 h. **When:** iteration 2. **State:**
+  Decided (customer, 2026-11-06): accepted (batch-2 candidate).
 - **Default:** add the reason to each; a lint rule rejects a bare
   `NOLINT`. The macOS-only reason at `build_scene.cpp:499` (B-01) is
   re-examined: with macOS gone, `std::ranges::iota` may replace the
@@ -840,7 +843,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 
 - **Kind:** requirement. **Severity:** Low (G-41, V-10, R-121: `Resources`
   and `Vm` warnings can never be seen in the program). **Effort:** S, 4 h.
-  **When:** iteration 2. **State:** default — accept or strike
+  **When:** iteration 2. **State:** Decided (customer, 2026-11-06): accepted
   (batch-2 candidate).
 - **Default:** `--log vm,resources` and an ini key `log =`; off by default;
   release builds keep them (§5.1).
@@ -854,7 +857,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 
 - **Kind:** requirement. **Severity:** Low (G-148, V-03: N goes to 16, the
   goldens and targets stop at 10, a comment assumes 10). **Effort:** S,
-  2 h. **When:** iteration 2. **State:** default — accept or strike
+  2 h. **When:** iteration 2. **State:** Decided (customer, 2026-11-06): accepted
   (batch-2 candidate).
 - **Default:** keep N ≤ 16 (no behaviour change); B-18 already covers
   N = 11-16 in the goldens; recompute the flattening error at N = 16 for
@@ -869,14 +872,14 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-30 Other sound devices
 
 - **Kind:** requirement. **Severity:** Low (G-145). **Effort:** none with
-  the default. **State:** default — accept or strike: **no other device**
+  the default. **State:** Decided (customer, 2026-11-06): accepted: **no other device**
   (AdLib and MT-32 only, as built). If the customer wants one (e.g. PC
   speaker, General MIDI out), it becomes a new item with its own estimate.
 
 ### B-31 Hint files for pictures 55 and 992
 
 - **Kind:** maintainability. **Severity:** Low (G-79). **Effort:** S,
-  0.5 h. **When:** iteration 2. **State:** default — accept or strike.
+  0.5 h. **When:** iteration 2. **State:** Decided (customer, 2026-11-06): accepted.
 - **Default:** no files (the two pictures need no hints,
   `docs/ASSUMPTIONS.md:909`); `hints/README.md` says "one file per picture
   that needs hints" and names the two.
@@ -891,7 +894,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   state — and `viewer.cpp`, `file_store.cpp`, `hd_pictures.cpp`,
   `game_files.cpp` are in no test binary; R-110 untested; B-03, B-04 and
   B-10 all change this code). **Effort:** M, 14 h. **When:** iteration 2,
-  before B-03. **State:** default — accept or strike.
+  before B-03. **State:** Decided (customer, 2026-11-06): accepted.
 - **Default:** move `parse_options`, the data-folder resolution (B-03) and
   the ini persistence (B-04) into sci-platform functions with CTest tests
   (help, exit codes, invalid combinations of R-110); keep SDL code in app.
@@ -908,8 +911,8 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   builds do not, `cmake/SciCompilerFlags.cmake:91-96`). The goldens and
   the VM hashes run on Release, so a reliance on wrapping that UBSan would
   flag might hide there. **Effort:** S, 3 h. **When:** iteration 2 (a
-  flag change can change code generation). **State:** default — accept or
-  strike.
+  flag change can change code generation). **State:**
+  Decided (customer, 2026-11-06): accepted.
 - **Default:** B-20's UBSan run over the local game checks shows whether
   any signed overflow happens; if none, keep as is and document why; if
   some, a defect item per site.
@@ -921,7 +924,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 
 - **Kind:** requirement. **Severity:** Low (G-151 CREEP: `--replay`,
   `--seed`, `--fast`, `--end-state`). **Effort:** S, 1 h. **When:**
-  iteration 2. **State:** default — accept or strike.
+  iteration 2. **State:** Decided (customer, 2026-11-06): accepted.
 - **Default:** keep them (the program playthrough and B-10 need them);
   document them in `docs/USER-README.md` as testing options.
 - **Risk:** none.
@@ -930,7 +933,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 
 - **Kind:** tech debt. **Severity:** Low (G-153: a second code path that
   no preset builds, kept from a 3b measurement). **Effort:** S, 1 h.
-  **When:** iteration 2. **State:** default — accept or strike.
+  **When:** iteration 2. **State:** Decided (customer, 2026-11-06): accepted.
 - **Acceptance criteria:** the option and its `#if` branch
   (`build_scene.cpp:1257-1261`) are gone; default-build output unchanged
   (B-18).
@@ -939,8 +942,8 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-36 Remove relation-hint parsing; fix its comments
 
 - **Kind:** tech debt. **Severity:** Low (G-154, G-97 DROP, V-02).
-  **Effort:** S, 2 h. **When:** iteration 2. **State:** default — accept
-  or strike.
+  **Effort:** S, 2 h. **When:** iteration 2. **State:**
+  Decided (customer, 2026-11-06): accepted.
 - **Default:** relations are dropped (answer 3 after stage 1b), so their
   parsing and validation go, and `hints.hpp:78-80` and `hints/README.md`
   stop claiming they are used; region and symmetry hints stay (spec
@@ -953,7 +956,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-37 List thin fallbacks in the replacement report
 
 - **Kind:** requirement (tool). **Severity:** Low (G-69). **Effort:** S,
-  2 h. **When:** iteration 2. **State:** default — accept or strike.
+  2 h. **When:** iteration 2. **State:** Decided (customer, 2026-11-06): accepted.
 - **Acceptance criteria:** `sci-hd-report` lists every fallback block,
   thin faces included (§6.4), with a count per picture.
 - **Risk:** none (tool only).
@@ -961,7 +964,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-38 Check the `analyser_version` rule
 
 - **Kind:** maintainability. **Severity:** Low (V-12). **Effort:** S, 2 h.
-  **When:** iteration 2. **State:** default — accept or strike.
+  **When:** iteration 2. **State:** Decided (customer, 2026-11-06): accepted.
 - **Acceptance criteria:** a lint step fails when a change to
   `tests/golden/pictures.txt` (or B-18's picture files) has no matching
   bump of `analyser_version` (`build_scene.hpp:97-99`).
@@ -972,7 +975,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 - **Kind:** defect (unverified). **Severity:** Low (V-05: the table is used
   modulo 360 and "may differ from glibc's in the last bits", so from
   ScummVM; whether the game passes such angles is not known). **Effort:**
-  S, 2 h. **When:** iteration 2. **State:** default — accept or strike.
+  S, 2 h. **When:** iteration 2. **State:** Decided (customer, 2026-11-06): accepted.
 - **Default:** count, in B-19's playthrough and scenarios, the kernel
   calls with angles outside the range (trace grep); none → fix only the
   comment (B-14); some → compare with glibc and decide.
@@ -981,14 +984,14 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-40 5.25" release hint warning
 
 - **Kind:** defect (unverified). **Severity:** Low (V-01, V-14; R-06).
-  **State:** default — **strike**: the customer has no 5.25" copy and its
+  **State:** Decided (customer, 2026-11-06): struck: the customer has no 5.25" copy and its
   acceptance is untested scope (answer 2 after stage 1b). Reopen if a copy
   turns up.
 
 ### B-41 LGPL static-linking note
 
 - **Kind:** maintainability. **Severity:** Low (V-09, a hypothesis, not a
-  legal opinion). **State:** default — **strike**: out of the code's scope;
+  legal opinion). **State:** Decided (customer, 2026-11-06): struck: out of the code's scope;
   the customer decides whether to ask counsel. If kept: one paragraph in
   `THIRD_PARTY.md` on how users can relink (source is published under the
   GPL).
@@ -996,7 +999,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 ### B-42 `uint32_t` sums instead of `uint64_t`
 
 - **Kind:** tech debt. **Severity:** Low (G-73: a letter-only deviation; no
-  overflow possible, 33,553,920 < 2^32). **State:** default — **strike**,
+  overflow possible, 33,553,920 < 2^32). **State:** Decided (customer, 2026-11-06): struck;
   recorded as an accepted deviation in `docs/ASSUMPTIONS.md` (B-14).
   Changing the type would touch the rasteriser for no visible gain.
 
@@ -1006,7 +1009,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 |---|---|
 | G-07 | → B-01 (macOS dropped) |
 | G-18 | → B-15, B-02 |
-| G-24 | → B-12 (ASSUMED) |
+| G-24 | → B-12 (Decided, Q-03) |
 | G-29 | → B-02 (sci-platform gets its own folder), B-13 (docs) |
 | G-34 | decided and reasoned (audio mixing on the main thread) |
 | G-44, G-155, G-156, G-39, G-126 | → B-13, B-14 |
@@ -1046,10 +1049,14 @@ word).
 | maintainability | 0 | 2 (B-18, B-19) | 3 (B-13, B-20, B-25) | 7 (B-14, B-22, B-26, B-27, B-31, B-38, B-41) | **12** |
 | **Total** | **0** | **7** | **12** | **23** | **42** |
 
-By state: Decided 16 (B-01 … B-11, B-15, B-16, B-18, B-19, B-20); ASSUMED
-1 (B-12); in the plan without a separate decision 2 (B-25, B-26, both
+By state (updated 2026-11-06 after the customer's "2 all approved" and
+Q-03 "1a 2b 3a"): Decided 40 — 17 by earlier answers (B-01 … B-12,
+B-15, B-16, B-18, B-19, B-20), 20 defaults accepted (B-13, B-14, B-17,
+B-21, B-22, B-23 iteration-2 part, B-24, B-27 … B-39), 3 struck (B-40,
+B-41, B-42); in the plan without a separate decision 2 (B-25, B-26, both
 behaviour-free hygiene the brief's "significantly reduce risk" covers);
-default — accept or strike 20; default — strike 3 (B-40, B-41, B-42).
+ASSUMED 0; open 0. (Before: Decided 16, ASSUMED 1 (B-12), default — accept
+or strike 20, default — strike 3.)
 
 By timing: stage 5 (all or part) 15 — B-01, B-02, B-05, B-08 (local
 gate), B-12, B-15, B-16 (macOS part), B-18, B-19, B-20, B-21, B-23 (helper),
@@ -1069,7 +1076,7 @@ of which the VM net (B-06, B-07) is 72. Judgement, not measured.
    about 40 hours before the first refactoring commit.
 3. **The layout move (B-02) and the macOS removal (B-01) are done in stage
    5**, as behaviour-free steps, so iteration 2 starts on the final tree.
-4. **Hint licensing stays ASSUMED** (B-12, High): no release should be
+4. **Hint licensing: decided 2026-11-06** (B-12, Q-03 "1a 2b 3a"). Was: stays ASSUMED (B-12, High): no release should be
    tagged until you confirm it.
-5. **23 defaults to accept or strike** (batch-2 candidates and PART
+5. **23 defaults: all approved 2026-11-06** ("2 all approved"). Was: 23 defaults to accept or strike (batch-2 candidates and PART
    remainders): silence means accept; B-40, B-41, B-42 default to strike.
