@@ -95,3 +95,544 @@ found it.
 
 B-43 onward: reserved for bugs found in stage 5.
 
+## Iteration-2 requirements decided by the customer
+
+### B-01 Drop macOS completely
+
+- **Kind:** requirement. **Severity:** High (G-07 High: an in-scope
+  platform that did not build; now out of scope). **Effort:** M, 6 h.
+  **When:** stage 5 (no program behaviour on Linux or Windows changes).
+  **State:** Decided (answer 1 after stage 2, "drop macOS completely").
+- **Refs:** G-07, G-126, R-143, R-141; MAP 4 (CI, release).
+- **What is there today** (grep of the tree outside `third_party/`,
+  `reports/`, `review/`):
+  - `.github/workflows/ci.yml`: the `macos` dispatch option (`:34`), the
+    plan output and its case (`:74`, `:107`, `:122`, `:135`), the job
+    `macos` (`:372-403`), header comments (`:14`, `:17`).
+  - `.github/workflows/release.yml`: header (`:6-8`), the `macos` input
+    (`:15-18`), the job `macos` (`:110-142`). `publish` needs only
+    `[linux, windows]` (`:146`), so it is unaffected.
+  - `.github/actions/native-toolchain/action.yml`: description (`:3`), the
+    macOS branch (`:78-80`, `MACOSX_DEPLOYMENT_TARGET` `:152`).
+  - `CMakePresets.json:16-24`: display names "(Linux, macOS)".
+  - `cmake/SciCompilerFlags.cmake:48` (`NOT APPLE` around `-fuse-ld=lld`),
+    `:59` (message "Linux and macOS only").
+  - `scripts/ci-minutes.py:34`, `:65-66` (macOS price and label);
+    `scripts/package-release.sh:7` (comment).
+  - `README.md:36-40` (macOS build steps), `:75` ("Linux, Windows and
+    macOS").
+  - `src/sci-vector/src/build_scene.cpp:499`: a `NOLINTNEXTLINE` whose
+    reason is Apple's libc++ (no `std::ranges::iota`). Comment only; the
+    code it guards stays as it is in stage 5 (changing it to
+    `std::ranges::iota` is a code change, iteration 2 under B-27).
+  - `src/app/src/game_screen.hpp:35`, `docs/hd-composition.md:144`: HiDPI
+    remarks naming macOS as an example. They describe a general
+    pixel-density case (Wayland and Windows scaling have it too), so they
+    stay, reworded to not name macOS.
+  - `docs/ARCHITECTURE.md:320` (libc++ on macOS), `docs/ASSUMPTIONS.md`
+    (macOS decisions at `:114`, `:128`, `:137`, `:163-168`, `:235-264`,
+    `:324-327`, `:360-389`, `:410`, `:436`): the decision log is history
+    and is not rewritten; a new entry records the drop.
+  - `third_party/SDL3`: Apple back-ends (`src/video/cocoa`,
+    `src/video/uikit`, `src/audio/coreaudio`, `src/haptic/darwin`,
+    `src/joystick/darwin`, `src/misc/macos`, 44 `.m` files) are part of the
+    upstream copy, which `third_party/SDL3/VENDORED.md` says is "copied
+    unchanged". **Default — accept or strike: keep them.** SDL's own CMake
+    builds them only on Apple; removing them saves no build time on Linux
+    or Windows, breaks "copied unchanged" and makes the next SDL update a
+    manual diff. If struck (prune), VENDORED.md lists the removed paths and
+    B-25's checksums cover the rest.
+- **Acceptance criteria:**
+  1. `git grep -niE 'macos|apple|darwin|xcode|osx'` outside `third_party/`,
+     `reports/` (`docs/reports/` after B-02), `review/` and the dated
+     entries of `docs/ASSUMPTIONS.md` finds nothing but the new decision
+     entry.
+  2. `ci.yml` and `release.yml` have no macOS job, input or plan output;
+     `actionlint` (or a dry parse with `gh workflow view`) accepts both
+     files; a manual CI run with each remaining option (`quick`,
+     `linux-arm64`, `windows`) still starts the same jobs as before.
+  3. The release workflow still builds Linux x64/arm64 and Windows
+     x64/arm64 packages (B-16).
+  4. `README.md` names Linux and Windows as the platforms; `docs/ASSUMPTIONS.md`
+     has an entry "macOS dropped (customer, after stage 2)" pointing to
+     G-07.
+  5. Linux and Windows builds give the same binaries' outputs: all golden
+     and VM hashes of B-18/B-19 unchanged; CTest passes in every remaining
+     preset.
+- **Risk:** low. A YAML slip disables a CI job silently: criterion 2.
+  Removing `NOT APPLE` from the `-fuse-ld=lld` condition must keep it
+  exactly "not clang-cl" (Linux behaviour unchanged).
+
+### B-02 Logical repository layout
+
+- **Kind:** requirement. **Severity:** Medium (the customer's request,
+  answer 5 after stage 1a; it also blocks B-03, which needs `local/`).
+  **Effort:** M, 8 h. **When:** stage 5 (pure moves plus placeholders; see
+  `review/REFACTOR_PLAN.md` for why it is not deferred). **State:**
+  Decided (Q-07 default).
+- **Refs:** Q-07, Q-06, G-29, G-18, G-39, MAP 1.1.
+- **Before → after** (`←` moved, `+` new; everything not shown is
+  unchanged):
+
+```text
+BEFORE (main a0422d6)                    AFTER
+sierra-hd/                               sierra-hd/
+├── .github/                             ├── .github/              (paths edited)
+├── cmake/                               ├── cmake/
+├── docker/                              ├── docker/
+├── docs/                                ├── docs/
+│   ├── formats/                         │   ├── formats/
+│   ├── release-notes/                   │   ├── release-notes/
+│   └── *.md                             │   ├── reports/          ← reports/
+├── hints/                               │   │   ├── milestone-*.md, README.md
+├── reports/                             │   │   └── images/ dumps/  (git-ignored, local)
+│   ├── milestone-*.md, README.md        │   └── *.md
+│   └── images/ (git-ignored)            ├── hints/
+├── review/                              ├── review/               (stays while the audit runs)
+├── scripts/                             ├── scripts/
+├── src/                                 ├── src/
+│   ├── sci-core/ … sci-vm/  (9 libs)    │   ├── sci-core/ … sci-vm/  (9 libs)
+│   └── app/                             │   ├── sci-platform/      ← src/app/platform/
+│       ├── CMakeLists.txt               │   │   ├── CMakeLists.txt, include/, src/
+│       ├── README.md                    │   │   └── README.md      + (G-39)
+│       ├── platform/                    │   └── app/               the program only
+│       │   ├── CMakeLists.txt           │       ├── CMakeLists.txt
+│       │   ├── include/sci/platform/    │       ├── README.md
+│       │   └── src/                     │       └── src/
+│       └── src/                         ├── tests/
+├── tests/                               ├── third_party/
+├── third_party/                         ├── tools/
+├── tools/                               ├── local/                 + git-ignored except placeholders
+└── (top-level files)                    │   ├── README.md          +   what goes where; never commit
+                                         │   ├── game/.gitkeep      +   your game files
+                                         │   ├── rom/.gitkeep       +   MT-32 / CM-32L ROMs
+                                         │   └── saves/.gitkeep     +   save games
+                                         │   (sierra-hd.ini, cache/, files/ appear here
+                                         │    once B-03 makes local/ the development data folder)
+                                         └── (top-level files)
+```
+
+  The include path `sci/platform/…` and the CMake target `sci-platform`
+  do not change, so no `#include` changes. The executable stays at
+  `build/<preset>/src/app/sierra-hd`.
+- **Every reference that moves with it** (from `git grep` on `a0422d6`):
+  - **CMake:** `CMakeLists.txt:46` gains `add_subdirectory(src/sci-platform)`
+    before `src/app`; `src/app/CMakeLists.txt:2` loses
+    `add_subdirectory(platform)`. `src/app/platform/CMakeLists.txt` moves
+    unchanged (its paths are relative). No test or tool CMake file names
+    `src/app/platform` (they link the target `sci-platform`).
+    `tests/unit/CMakeLists.txt:96-110` names `src/app/src`, which stays.
+  - **CI:** `ci.yml:19`, `:28` (`paths-ignore: "reports/**"`), `:100`
+    (`docs/* | reports/*`): `reports/` becomes part of `docs/`, so the
+    `reports` entries are deleted (the `docs/**` rule covers them).
+  - **`.gitignore`:** `/reports/images/`, `/reports/dumps/` →
+    `/docs/reports/images/`, `/docs/reports/dumps/`; new
+    `/local/*` with `!/local/README.md`, `!/local/*/` and
+    `!/local/*/.gitkeep` (exact rules checked with `git check-ignore -v`).
+  - **Policy script:** `scripts/check-repo-policy.py:56` (message naming
+    `reports/images/`); new rule: under `local/` only `README.md` and
+    `*/.gitkeep` may be tracked (closes G-18 for that folder; B-15 covers
+    the rest).
+  - **Scripts and tools:** `tools/room-viewer/main.cpp:25` (comment),
+    `tools/room-viewer/README.md:26`, `tools/hd-frames/README.md:54`,
+    `tools/hd-report/README.md:30` (`--images reports/images/hd`). Local
+    check scripts that take a game folder keep their arguments; their
+    examples and the documented mount use `local/game` instead of
+    `/home/user/game/...` (`docs/ASSUMPTIONS.md:40-42` gets a new entry,
+    not an edit).
+  - **Docs:** `README.md:17`, `:103`, `:111`; `docs/ARCHITECTURE.md`,
+    `docs/SPEC_ADDENDA.md`, `docs/ASSUMPTIONS.md` (34 lines name
+    `reports/` outside `review/`, 2 name `src/app/platform`; each becomes
+    `docs/reports/…` or `src/sci-platform/…`); `reports/README.md` and the
+    milestone reports' own mentions of `reports/`. Reports have no relative
+    Markdown links (`git grep '](' reports`: none), so no link breaks.
+  - **Not edited:** `review/*.md` cite `file:line` on the audited commit
+    `a0422d6`; they stay as written, with one note at the top of
+    `review/STATUS.md` giving the path mapping. `THIRD_PARTY.md:59` names
+    `src/app/src/game_screen.cpp`, which does not move.
+- **Acceptance criteria:**
+  1. `git grep -n 'src/app/platform'` and `git grep -nE '(^|[^/])reports/'`
+     find hits only in `review/` and in dated decision-log entries.
+  2. `git status --ignored` after a run shows `local/game/*`,
+     `local/rom/*`, `local/saves/*` ignored; `git ls-files local` lists
+     exactly `local/README.md` and the three `.gitkeep` files.
+  3. The policy script fails on a test file `local/game/RESOURCE.000`
+     forced into the index (`git add -f`), and passes without it.
+  4. Every preset configures and builds; CTest passes; B-18/B-19 hashes
+     unchanged; `git log --follow` works on a moved file.
+- **Risk:** low-medium. Absolute source paths reach the binary through
+  `std::source_location` in `SCI_ASSERT` messages
+  (`src/sci-core/include/sci/core/assert.hpp:27`), so sci-platform's object
+  files change; only an assertion message's file name differs, never a
+  normal run's output. Binary hashes are therefore not the check; the
+  output goldens are. Open pull requests or branches that touch moved files
+  get conflicts (none are open as far as this audit knows).
+
+### B-03 One run-time data folder
+
+- **Kind:** requirement (behaviour change). **Severity:** Medium (G-122
+  AMB Medium; V-08). **Effort:** M, 14 h. **When:** iteration 2.
+  **State:** Decided (Q-06 default).
+- **Refs:** Q-06, G-122, R-125, R-114, V-08, B-02 (`local/`), B-16.
+- **Behaviour:** the program resolves one data folder:
+  1. `--data DIR` (new option, also accepted with `--viewer`);
+  2. else the executable's folder, if it holds `sierra-hd.ini` or `game/`
+     and is writable ("portable": today's behaviour and the unpacked
+     release archive);
+  3. else the per-user folder: `%APPDATA%\sierra-hd` on Windows,
+     `$XDG_DATA_HOME/sierra-hd` (default `~/.local/share/sierra-hd`) on
+     Linux, created on first use.
+
+  It holds `sierra-hd.ini`, `game/`, `rom/`, `saves/`, `cache/`, `files/`.
+  An empty `game_folder` means `game/`; MT-32 ROMs are searched in `rom/`
+  when `mt32_rom` is empty; `hints/` stays next to the executable.
+- **Acceptance criteria:**
+  1. Unit tests (CTest, no game data) for the resolution order with
+     temporary folders: `--data` wins; portable when the exe folder has
+     the ini or `game/` and is writable; per-user otherwise; a read-only
+     exe folder falls through to per-user (Linux: `chmod a-w`; Windows:
+     ACL in the Windows CI job, or documented as checked by hand).
+  2. A folder given on the command line is used for that run and not
+     saved (with B-04).
+  3. `scripts/package-release.sh` puts empty `game/`, `rom/`, `saves/`
+     (each with a short `README.txt`, never game data) into every archive;
+     a test of the script lists the archive and checks them.
+  4. Unpacking the archive, copying the game into `game/` and starting the
+     program with no argument runs the game (local check with the
+     customer's copy, Linux; the Windows run is part of the customer's
+     B-10 laptop run).
+  5. From a development build, `sierra-hd --data local` uses `local/`
+     (B-02); `tools/playthrough/program-run.sh` uses `--data` instead of
+     its symlinked run folder (`program-run.sh:71-76`).
+  6. `docs/USER-README.md`, `--help` and a `docs/ASSUMPTIONS.md` entry
+     describe the order; §10.2's "next to the executable" is recorded as
+     replaced (G-122 closed).
+  7. All B-18/B-19 hashes unchanged (no output change).
+- **Risk:** medium. Existing users' ini, saves and cache sit next to the
+  executable; rule 2 keeps finding them (the ini is there). A user whose
+  exe folder is writable but holds neither file gets the per-user folder on
+  first start (intended, new). Path handling on Windows (non-ASCII user
+  names) is a known trap: test with a non-ASCII temp path.
+
+### B-04 Ini updated in place
+
+- **Kind:** requirement (fixes a small data loss). **Severity:** Medium
+  (user edits lost silently). **Effort:** S, 4 h. **When:** iteration 2.
+  **State:** Decided (Q-10 default).
+- **Refs:** Q-10, R-114 (`config.cpp:163-190`, `main.cpp:1093`,
+  `:1133-1134`, `:1171`), V-08, V-11 (`config.cpp:184` writes a wrong
+  comment into the user's file).
+- **Acceptance criteria:**
+  1. The program writes the ini only when a value changed.
+  2. A round-trip test: a file with comments, blank lines, unknown keys and
+     a changed `mode` keeps every other line byte for byte, and only the
+     `mode` line changes.
+  3. A game folder given on the command line is never written.
+  4. The F12 mode and the viewer scale are still saved.
+  5. A failed write logs a `General` warning naming the path (test with an
+     unwritable path).
+  6. A new file (none existed) is written with the commented defaults as
+     today, with V-11's comment corrected ("empty: `saves/` next to this
+     file").
+  7. Fuzz target of B-05 for the ini still passes its corpus.
+- **Risk:** low. Line endings (CRLF files edited on Windows) must be kept:
+  include a CRLF case in criterion 2.
+
+### B-05 Fuzz targets for scripts, sound resources, patch resources and the ini
+
+- **Kind:** requirement (safety net). **Severity:** Medium (G-48).
+  **Effort:** M, 8 h. **When:** stage 5 step 0. **State:** Decided (Q-09).
+- **Refs:** Q-09, G-48, R-138; `src/sci-vm/src/script.cpp`,
+  `midi_parser.cpp`, `music.cpp`, `src/sci-audio/src/adlib.cpp` (patch
+  bank) and the MT-32 patch resource, `src/sci-platform/src/config.cpp`.
+- **Acceptance criteria:**
+  1. Four new libFuzzer targets `fuzz-script`, `fuzz-sound`,
+     `fuzz-patch` (AdLib and MT-32 banks), `fuzz-config` in
+     `tests/fuzz/`, each with a seed corpus made by hand or by a test-side
+     builder (never game data; policy script passes).
+  2. Each corpus replays as a CTest test in every preset, like the 12
+     existing ones (`cmake/SciTesting.cmake:31-37`).
+  3. `scripts/run-fuzzers.sh` and the CI `fuzz` job run all 16 targets
+     (60 s each in the gate).
+  4. Each target ran at least 10 minutes locally in the fuzz preset;
+     every crash, leak or timeout found is a new defect B-43+ with its
+     reproducer kept under `build/` (not committed if it contains a game
+     byte; synthetic ones may be committed to the corpus only after the
+     fix, in iteration 2).
+  5. No source file outside `tests/fuzz/` and its CMake changes.
+- **Risk:** low for behaviour (test-only). If a parser's entry point is
+  private (`script.cpp` is under sci-vm `src/`), the target needs the
+  private include path like `fuzz-save` does (`tests/fuzz/CMakeLists.txt:76`);
+  B-23 records that exception.
+
+### B-06 VM in CI: a test-side assembler and hand-built bytecode tests
+
+- **Kind:** requirement. **Severity:** High (MAP 8.1: CI cannot detect a
+  VM regression; sci-vm is 59 % of the code and `machine.cpp` 2.5 %
+  covered in CI). **Effort:** L, 32 h. **When:** iteration 2, before any
+  sci-vm refactoring beyond stage 5. **State:** Decided (Q-01).
+- **Refs:** Q-01, MAP 6.4, 8.1, G-03, R-66.
+- **Content:** a small assembler in `tests/support` (like `PicBuilder`)
+  that writes SCI0 script and heap resources from readable opcodes; unit
+  tests that run hand-built bytecode through `Machine::run_vm`: every
+  opcode group (arithmetic incl. the signed/unsigned cases, branches,
+  calls, sends, `super`, `self`, property access, stack ops, `rest`),
+  object and class lookup, GC across calls, kernel dispatch with stub
+  kernels, and the script patcher on assembled scripts.
+- **Acceptance criteria:**
+  1. Every SCI0 opcode the interpreter implements is executed by at least
+     one CI test (a list in the test file, checked against the opcode
+     table by a test).
+  2. `machine.cpp` line coverage in the CI suite ≥ 70 % (method of MAP 6.4).
+  3. The tests pass in all CI presets (Linux x64/arm64 release, asan,
+     tsan; Windows) and under qemu-user.
+  4. No game data in the tests; the assembler and its outputs are GPL
+     first-party code.
+- **Risk:** low for behaviour (tests only). The risk is false confidence:
+  hand-built tests encode the author's reading of SCI0; each test names
+  the ScummVM source it follows.
+
+### B-07 VM in CI: a small home-made game
+
+- **Kind:** requirement. **Severity:** High. **Effort:** L, 40 h.
+  **When:** iteration 2. **State:** Decided (Q-01).
+- **Refs:** Q-01, MAP 8.1, 6.4.
+- **Content:** a synthetic SCI0 "game" built at test time by the B-06
+  assembler and the existing builders: one or two rooms, one picture, a
+  view with loops, a font, a cursor, a vocabulary, a menu, a text window,
+  one sound, and scripts that walk an actor, open a window, parse input,
+  play the sound, save and restore. Replays drive it through
+  `run_deterministic` with goldens (hashes) of its traces and screens,
+  committed because the data is ours.
+- **Acceptance criteria:**
+  1. Built and run in CTest in every preset, under 60 s per preset.
+  2. Covers the kernel groups now at 0 % in CI (MAP 6.4: graphics,
+     animate, menu, controls, strings, lists, movement, math, GC) with at
+     least one call each.
+  3. A save/restore round trip on it gives equal state hashes (as
+     `run-round-trips.sh` does for the real game).
+  4. Its goldens are generated twice with identical results.
+  5. Together with B-06: sci-vm line coverage in CI ≥ 70 % (B-08).
+- **Risk:** the game is a test asset that must itself be maintained;
+  keep it small and generated, not a binary blob.
+
+### B-08 sci-vm coverage gate in CI, and the local VM gate until it is met
+
+- **Kind:** requirement. **Severity:** High. **Effort:** S, 4 h (the gate
+  doc and script in stage 5; the CI coverage job in iteration 2, 3 h of
+  the 4). **When:** stage 5 (local gate) / iteration 2 (CI job).
+  **State:** Decided (Q-01 item 3).
+- **Refs:** Q-01, MAP 6.4, B-06, B-07, B-19.
+- **Acceptance criteria:**
+  1. Stage 5: `docs/` (CONTRIBUTING or `tests/README.md`) states the gate:
+     any change to `main` that touches `src/sci-vm`, `src/sci-resource`,
+     `src/sci-text` or `src/sci-audio` passes `scripts/check-vm-hashes.sh`
+     (B-19) on the customer's game locally before merge, with the log
+     named in the pull request.
+  2. Iteration 2: a CI job (Linux x64, gate only) builds the coverage
+     configuration of MAP 6.4, prints per-module line coverage and fails
+     when sci-vm is below 70 %; the job's cost is recorded under the CI
+     cost policy (`docs/ASSUMPTIONS.md`).
+  3. Once criterion 2 passes, the local gate stays required for releases
+     only (written down).
+- **Risk:** low; CI minutes (one more Linux job per gate, estimated
+  10-15 min, not measured).
+
+### B-09 No frame over 16.7 ms at N = 10
+
+- **Kind:** performance. **Severity:** Medium (G-123; the one known miss:
+  a whole frame at N = 10 takes 20.7 ms on room entry and mode switch,
+  `reports/milestone-5.md:140-153`). **Effort:** M, 16 h (unknown until
+  B-20's profile; could be L). **When:** iteration 2, only for misses
+  B-20 measures. **State:** Decided (Q-04).
+- **Refs:** Q-04, G-123, R-92, B-20, B-10.
+- **Acceptance criteria:**
+  1. With B-10's timing mode in the development container (4 cores, as
+     the baseline), no frame of the 43-checkpoint playthrough and of a
+     room-entry sweep over every room exceeds 16.7 ms at N = 10, room entry
+     and F12 mode switch included (the analysis already cached, as today's
+     baseline; first launch is a separate target, 15 s).
+  2. Room entry ≤ 1 s at N = 10 and first launch ≤ 15 s still hold.
+  3. Every B-18/B-19 hash is unchanged (optimisation must not change a
+     pixel or a sample).
+  4. Before/after numbers recorded in a report (median and worst of 5
+     runs).
+- **Risk:** medium-high. Moving room-entry work to another thread or
+  frame (the likely fix, not measured) can change *when* a frame appears,
+  which the scenario screens capture at fixed ticks: any trace or screen
+  hash change stops the work. Determinism of parallel composition must be
+  kept (`tests/threads`).
+
+### B-10 Scripted timing mode and the customer's reference-laptop run
+
+- **Kind:** requirement. **Severity:** Medium (G-123: never measured on
+  reference-class hardware, Windows or ARM64). **Effort:** M, 6 h (the
+  mode and its doc; the run itself is the customer's).
+  **When:** iteration 2. **State:** Decided (Q-04).
+- **Acceptance criteria:**
+  1. `sierra-hd --timing <replay> --data <dir>` (or a tool sharing the
+     program's presentation path, to be decided in iteration 2 by what
+     measures the real presenter) plays a replay at full speed and writes
+     a CSV: room entry per room, frame time percentiles and the worst
+     frame, per N in {1, 2, 5, 10}, peak memory, first launch.
+  2. A one-page instruction for the customer: which build, which replay,
+     how to send the CSV.
+  3. The customer runs it once on a 4-core x86-64 laptop of about 2020
+     with integrated graphics, Windows (`docs/ASSUMPTIONS.md:854-857`);
+     the result is recorded. A miss of 1 s room entry or 16.7 ms frames
+     there raises B-09 to High (Q-04).
+- **Risk:** low (a new mode; must not change normal runs: B-18/B-19).
+
+### B-11 Peak memory at most baseline + 10 %
+
+- **Kind:** performance. **Severity:** Low (no memory problem known; a
+  regression limit). **Effort:** S, 3 h. **When:** iteration 2.
+  **State:** Decided (Q-04).
+- **Acceptance criteria:** B-20 records peak resident memory of the
+  playthrough at N = 1 and 10 (Linux, `/usr/bin/time -v` or the B-10
+  CSV); a local check script fails when a later run exceeds it by more
+  than 10 %; the numbers are recorded per release.
+- **Risk:** none for behaviour.
+
+### B-12 Hint licensing section in `hints/README.md`
+
+- **Kind:** requirement (documentation). **Severity:** High (G-24: the
+  repository is public without the §15 licensing review recorded).
+  **Effort:** S, 2 h. **When:** stage 5 (docs only, as the Q-03 answer
+  says). **State:** **ASSUMED (unconfirmed)** (Q-03).
+- **Refs:** Q-03, G-24, `review/HISTORY_CLEANUP.md` E, C, D.
+- **Content:** a "Licensing" section stating, as ASSUMED by the customer's
+  "Defaults" on 2026-11-06: the hint files were produced by the agent
+  (Claude) in the customer's own sessions, under the terms of that
+  account; they hold labels, integers and geometry only, no image data
+  (HISTORY_CLEANUP E); they are published under GPL-3.0-or-later; showing
+  renders of the customer's game pictures to the model is taken as
+  allowed; the legal risk is the customer's; the parser word files and
+  the old `.pyc` stay in history (C, D). Plus a `docs/ASSUMPTIONS.md`
+  entry pointing to it.
+- **Acceptance criteria:**
+  1. The section exists, says "ASSUMED, not confirmed by the account
+     holder", and names the date and Q-03.
+  2. It names what would change if the terms forbid publication (the
+     Q-03 consequences: removal and rewrite; no hints).
+  3. The customer confirms or corrects it before the next release
+     (B-16 depends on it).
+- **Risk:** none technical. Legal risk stays with the customer.
+
+### B-13 `docs/ARCHITECTURE.md` brought up to date
+
+- **Kind:** maintainability. **Severity:** Medium (G-44: stale since 4a,
+  wrong for most of the code iteration 2 touches). **Effort:** M, 10 h.
+  **When:** iteration 2, after B-02 (so its paths are final), before B-06.
+  **State:** default — accept or strike (batch-2 candidate; Q-05 makes it
+  a PART remainder).
+- **Acceptance criteria:**
+  1. Header states milestone 9 + iteration 2 and the date.
+  2. Every module of MAP 1.1, incl. sci-platform in `src/sci-platform`,
+     with its real dependency list (after B-21) and responsibilities
+     (music player and saves in sci-vm: G-29).
+  3. Data flows of MAP 3 (game files to resources, path 1, vector path, HD
+     render to presentation, VM, audio, configuration/cache/saves with
+     B-03's data folder) described as built, not "planned".
+  4. Every statement checked against the code by a reviewer pass; MAP 8.4's
+     five errors gone.
+- **Risk:** none for behaviour.
+
+### B-14 Other stale docs, comments and missing READMEs
+
+- **Kind:** maintainability. **Severity:** Low. **Effort:** M, 6 h.
+  **When:** iteration 2 (comment-only edits in code are allowed there; in
+  stage 5 only the path references B-01/B-02 touch are edited).
+  **State:** default — accept or strike.
+- **Refs and the list:** G-155, G-156, G-39, G-126; MAP 8.5, 8.6, 8.13;
+  V-03, V-05, V-07, V-11:
+  - `src/sci-vm/README.md:7`, `:11` (silent music, saves failing);
+  - `src/sci-vector/include/sci/vector/hints.hpp:78-80` and
+    `hints/README.md` (relations "used from milestone 3b"; with B-36);
+  - `cmake/SciThirdParty.cmake:5-6` (SDL3 "audio output of sci-audio");
+  - `docker/run.sh:8` (`--preset linux-debug` does not exist);
+  - `docs/ASSUMPTIONS.md:28` ("private"; a new entry, not an edit);
+  - `config.cpp:184` (V-11; the code fix is B-04);
+  - `trigonometry.hpp:3-7` (V-05; with B-39);
+  - `docs/formats/replay-and-trace.md:40` (V-07: the program's `--replay`
+    keeps host input);
+  - `fitting.cpp:15-17` (V-03; with B-29);
+  - a README for `src/sci-platform` (G-39), `tools/common`,
+    `tools/graphics-dump`, `tools/resource-dump`, `tools/playthrough`
+    (MAP 8.13; the last may point to `docs/playthrough.md`);
+  - `README.md`: configuration options or a pointer to
+    `docs/USER-README.md` (G-126), no claim of published binaries until
+    B-16 publishes.
+- **Acceptance criteria:** each line above fixed or struck with a reason;
+  `git grep` for the quoted stale phrases finds nothing; only comments and
+  docs change (B-18/B-19 hashes unchanged).
+- **Risk:** none.
+
+### B-15 Policy script and `.gitignore`: SCI0 patch files and run-time folders
+
+- **Kind:** defect (a guard that misses cases). **Severity:** Medium
+  (G-18, V-06). **Effort:** S, 2 h. **When:** stage 5. **State:** Decided
+  (G-18 folded into Q-07; the customer's rule "never commit game data").
+- **Refs:** G-18, V-06, R-135, B-02.
+- **Facts:** `scripts/check-repo-policy.py` `GAME_DATA` and `.gitignore`
+  do not match SCI0 patch files `TYPE.NNN` (`SCRIPT.052`, `TEXT.052`,
+  `PATCH.001`, `VIEW.123`, …), which the GOG release ships. `.gitignore`
+  also ignores `analysis-cache/` while the program writes `cache/`, and
+  does not ignore `files/`, `saves/` or `*.sav` (`main.cpp:1125`, `:1137`,
+  `config.cpp:194`; found in stage 4). Nothing of that kind is tracked
+  today (V-06 grep).
+- **Acceptance criteria:**
+  1. Both match (case-insensitive) `(script|text|pic|view|font|sound|vocab|cursor|patch|memory|heap|palette)\.\d{3}`
+     anywhere in the tree except `third_party/`.
+  2. `*.sav` and `sierra-hd.ini` are ignored everywhere; `cache/`,
+     `files/`, `saves/` under `local/` (B-02) are ignored by its rule.
+  3. A self-test (`scripts/check-repo-policy.py --self-test`, or a CTest
+     test) feeds a list of names, including `SCRIPT.052`, `text.052`,
+     `PATCH.001` and `local/game/RESOURCE.MAP`, and expects each rejected;
+     and a list of legitimate names (`tests/scenarios/*.txt`,
+     `hints/pic.052.json`) expects each accepted.
+  4. The policy script passes on the tree.
+- **Risk:** a pattern too wide flags a legitimate file (criterion 3's
+  accept list).
+
+### B-16 Release workflow kept working without macOS; publishing by the customer
+
+- **Kind:** requirement. **Severity:** Medium (G-125 was High; the
+  customer decided "we'll publish releases later", so the open part is
+  keeping the workflow able to publish). **Effort:** S, 3 h. **When:**
+  macOS removal in stage 5 (B-01); the rest iteration 2. **State:**
+  Decided.
+- **Refs:** G-125, R-141, B-01, B-03, B-12.
+- **Acceptance criteria:**
+  1. `release.yml` keeps the `push: tags: v*` trigger, the Linux x64/arm64
+     and Windows x64/arm64 jobs with tests, `package-release.sh` and the
+     `publish` job (`needs: [linux, windows]`).
+  2. A manual dispatch on `main` (no tag) builds, tests and uploads all
+     four archives as workflow artifacts and skips `publish`
+     (`if: github.event_name == 'push'`, today's condition); this run is
+     done once in iteration 2 and its run URL recorded.
+  3. The archives contain the program, `hints/`, `README.md`, licences and
+     the empty `game/`, `rom/`, `saves/` (B-03); a check lists the archive
+     and finds no game file (the B-15 patterns).
+  4. `docs/release-notes/<tag>.md` exists for the next tag before it is
+     pushed (`publish` reads it, `release.yml` `--notes-file`).
+  5. `README.md` says binaries are published on GitHub releases only once
+     one exists; until then it says how to build.
+  6. The customer pushes the tag (the session cannot push tags; the local
+     tags `v0.1.0`, `v0.9.0-rc.1` are the customer's to push or drop).
+- **Risk:** low. A tag pushed before B-12 is confirmed publishes the hint
+  files under the ASSUMED licensing.
+
+### B-17 `kDoAvoider` stub
+
+- **Kind:** defect (latent). **Severity:** Low (R-65, R-66: the tested
+  release does not reference it, `docs/ASSUMPTIONS.md:1205-1208`).
+  **Effort:** S, 1 h (the scan, when a copy exists); porting from ScummVM
+  `engines/sci/engine/kmovement.cpp:401` would be M, 6 h, only if a scan
+  finds a caller. **When:** iteration 2, conditional. **State:** default
+  — accept or strike (not asked; batch-1 notes).
+- **Acceptance criteria:** if another accepted release turns up,
+  `sci-vm-trace --scan-kernel` on it is run and recorded; DoAvoider absent
+  → item closed; present → port it with a CI bytecode test (B-06).
+- **Risk:** none until a copy turns up.
+
