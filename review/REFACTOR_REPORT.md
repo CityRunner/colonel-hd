@@ -458,7 +458,7 @@ section is not marked assumed.
 | Check | Result |
 |---|---|
 | Format, policy (with self-test), hints, vendored | pass |
-| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS4 |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-11, on `cc93268`): style and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64; S6: all 42 executables identical to the build before step 1 |
 
 Two documentation files changed, no build input, so by decision 1a S4
 screens and S5 are not needed, provided S6 shows identical binaries.
