@@ -5,7 +5,8 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Stage 5, refactoring: step 0 (safety net) in progress** (started
+**Stage 5, refactoring: step 0 (safety net) done; step 1 committed
+(2026-11-11), its long checks pending; next: step 2** (started
 2026-11-06 on branch `refactor` from `a0422d6`). The plan
 (`review/REFACTOR_PLAN.md`) was approved on 2026-11-06 ("1 approve"),
 with CI minutes for one Windows draft-PR run and one `quick` run ("4
@@ -29,7 +30,18 @@ allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
 - The two questions after step 0 are answered ("1a 2a", see the
   decisions); 2a is implemented. Next: the main session runs the full
   local checks and pushes; then step 1.
-- Steps 1-13: not started.
+- Step 1 (SPDX headers on the 19 scripts, policy script covers
+  `.py`/`.sh`, B-26): **committed** 2026-11-11. Quick checks (format,
+  policy, hints) pass; clang-tidy, S2/S3 and S6 for it are run by the
+  main session after the commit, and their results still have to be
+  added to the step's entry in `review/REFACTOR_REPORT.md`, "Steps".
+- Steps 2-13: not started. Notes for step 2 (B-25), read but not acted
+  on: `third_party/nuked-opl3/VENDORED.md` and
+  `third_party/mt32emu/VENDORED.md` record a SHA-256 per file;
+  `third_party/SDL3/VENDORED.md` records none (1,504 tracked files),
+  although `THIRD_PARTY.md` says each vendored file has one. Step 2 has
+  to decide how the check treats that (B-25 criterion 1) and log it
+  (next free number: B-48); nothing is logged yet.
 
 
 
@@ -306,13 +318,15 @@ game-dependent run times).
    (commits "Refactor step 0.N: ..."; nothing pushed).
 2. Read `review/REFACTOR_PLAN.md` (follow it exactly), then
    `review/REFACTOR_REPORT.md`: its "Step 0 progress" says which sub-step
-   is done and what is left; its "Baselines (before)" holds the numbers.
+   is done and what is left; its "Steps" has one entry per step 1-13 (what
+   changed, checks, results); its "Baselines (before)" holds the numbers.
 3. The reference build of the original code is `build/baseline-release`
    (kept for the whole stage; `build/baseline-release-2` is the second
    build of step 0.1). Large outputs stay under `build/` (git-ignored).
 4. Docker is shared: never start or stop the daemon; if `docker ps` fails,
    wait with an until-loop.
-5. Bugs found go into `review/BACKLOG_V2.md` as B-44 onward, unfixed.
+5. Bugs found go into `review/BACKLOG_V2.md` as B-44 onward, unfixed
+   (B-44 … B-47 are taken; the next is B-48).
 
 **Earlier stages (for reference):**
 

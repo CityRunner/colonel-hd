@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # The round-trip check of milestone 8 (docs/ASSUMPTIONS.md, "Milestone 8:
 # round trips") over the scenarios, in sci-vm alone (the reference is not
 # needed): each scenario runs once without and once with round trips at

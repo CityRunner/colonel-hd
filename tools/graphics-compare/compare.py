@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compares two graphics dumps (pictures, views and fonts).
 
     compare.py <reference dump> <sierra-hd dump>

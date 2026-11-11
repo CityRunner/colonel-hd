@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Runs a command inside the toolchain image with the repository mounted at
 # /work. Extra read-only mounts (game folder, ScummVM source) are passed with
 # SIERRA_HD_MOUNTS="host:container[,host:container...]". With

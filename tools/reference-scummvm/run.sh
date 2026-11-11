@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Runs the reference ScummVM with an isolated configuration that shows the
 # original 1x output: no scaler, no aspect-ratio correction, no filtering and
 # no EGA undithering, and the game's own save and restore dialogs (as

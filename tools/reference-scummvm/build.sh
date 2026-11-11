@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Builds the reference ScummVM (spec section 3.3) from a ScummVM checkout.
 #
 #   tools/reference-scummvm/build.sh <scummvm checkout> <build directory>

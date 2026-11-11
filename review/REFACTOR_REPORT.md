@@ -335,6 +335,49 @@ early (libFuzzer stops at its first failure).
   B-45 (crash)"; the other 15 ran their 30 s clean.
 - Style step: format, policy, hints and clang-tidy pass (no C++ changed).
 
+## Steps
+
+One entry per step of the plan (1-13): what changed, which checks ran and
+their results, effort. Which parts of the suite a step needs is the
+customer's decision 1a (`review/REFACTOR_PLAN.md`, end).
+
+### Step 1: SPDX headers on the scripts; the policy script checks `.py` and `.sh` (B-26)
+
+**What changed** (20 files, comment lines and the policy script only):
+
+- The line `# SPDX-License-Identifier: GPL-3.0-or-later` is added as line 2
+  (right after the shebang, as in the 24 scripts that already had it) to
+  the 19 tracked `.py`/`.sh` files without one: `docker/build-image.sh`,
+  `docker/image-tag.sh`, `docker/run.sh`; `scripts/check-format.sh`,
+  `check-hints.py`, `check-repo-policy.py`, `gen-trigonometry.py`,
+  `run-clang-tidy.sh`, `run-fuzzers.sh`; `tests/fuzz/make_seeds.py`;
+  `tools/audio-gaps/find_gaps.py`, `tools/graphics-compare/compare.py` and
+  `run.sh`, `tools/hint-tool/make_hints.py`,
+  `tools/reference-scummvm/build.sh` and `run.sh`,
+  `tools/resource-compare/compare.py` and `run.sh`,
+  `tools/vm-trace/run-round-trips.sh`. All are the project's own scripts,
+  so GPL-3.0-or-later as every other project file (400 identifiers, no
+  other licence, outside `third_party/`). Checked per file: exactly one
+  line added, at line 2; file modes unchanged; `bash -n` and Python
+  `ast.parse` pass. All 43 tracked `.py`/`.sh` files outside `third_party/`
+  now carry the header.
+- `scripts/check-repo-policy.py`: `SOURCE` covers `.cpp`, `.hpp`, `.py` and
+  `.sh` for the SPDX check (first three lines); the `float`/`long double`
+  check stays on `.cpp`/`.hpp` only (new `CPP_SOURCE`), since Python has a
+  `float` type of its own. The docstring says so.
+
+**Checks run for this step:**
+
+| Check | Result |
+|---|---|
+| `scripts/check-format.sh`, `python3 scripts/check-repo-policy.py`, `python3 scripts/check-hints.py` (container) | pass ("86 hint files, 0 problems") |
+| Policy script on three temporary files (removed again): a `.sh` and a `.py` without the header, a `.cpp` with `float` | the two scripts reported "missing SPDX licence identifier", the `.cpp` reported `float`; the `.py`'s own `float` not reported; exit 1; exit 0 again without them |
+| Outputs of the 19 scripts before and after, in an exported copy of the tree (safe invocations: `image-tag.sh`, `run.sh echo ok`, `check-hints.py`, `gen-trigonometry.py`, `test-run-fuzzers.sh`, `make_seeds.py`, `--help` or no arguments for the rest) | identical output, exit codes and generated files, except one expected difference: bash's own "usage" error of six shell scripts called without arguments names the line number, which is one higher (`run-clang-tidy.sh: line 8: 1: usage: …` instead of `line 7`) |
+| S1 clang-tidy, S2/S3 (release, asan, tsan), S6 (identical binaries, fixed SDL revision) | **not run by this session**: run by the main session after the commit (change of scope, 2026-11-11); results to be added here. S4 screens and S5 are not needed (decision 1a: comment lines in scripts and the policy script are no build input), provided S6 shows identical binaries |
+
+**Effort:** about 0.7 h (the edits of the session that was cut off, the
+checks above, this entry).
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so

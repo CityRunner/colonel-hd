@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Writes the synthetic seed corpora of the fuzz targets.
 
     python3 tests/fuzz/make_seeds.py

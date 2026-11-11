@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Runs every libFuzzer target of a fuzz build (preset "fuzz") for a fixed time
 # each, starting from its seed corpus. New inputs go to a scratch corpus
 # directory, never into the repository; with SCI_FUZZ_CORPUS=<dir> they are

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Prints the image tag: the name plus a hash of the Dockerfile, so a changed
 # toolchain always gets a new tag.
 set -euo pipefail

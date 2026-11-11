@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Builds the pinned toolchain image (docker/Dockerfile) for the host
 # architecture and tags it sierra-hd-toolchain:<content hash>.
 #

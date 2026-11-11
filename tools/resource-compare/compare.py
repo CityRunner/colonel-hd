@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compares two resource dumps (manifest.txt plus one file per resource).
 
     compare.py <reference dump> <sierra-hd dump>

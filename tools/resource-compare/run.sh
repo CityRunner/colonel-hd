@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Milestone 1 check: every resource decodes byte-identically to ScummVM's
 # resource loader. Runs inside the toolchain container with the game folder
 # mounted, for example:

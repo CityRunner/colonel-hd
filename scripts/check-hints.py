@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Checks the hint files in hints/ (spec section 6.7) without the game.
 
 Every hints/pic.NNN.json must satisfy hints/schema.json and the rules the

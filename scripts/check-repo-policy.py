@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Repository policy checks that are not covered by clang-tidy.
 
 1. No game resources, ROM files or images derived from the game art are
    tracked (spec sections 2 and 3.4). Images are allowed only where listed
    in ALLOWED_IMAGE_DIRS (none so far).
 2. No float or long double in project code (spec section 5.3: double only).
-3. Every project source file starts with an SPDX licence identifier.
+3. Every project source file and script (.cpp, .hpp, .py, .sh) starts with
+   an SPDX licence identifier (in its first three lines, so after a shebang).
 
 Run from anywhere; exits non-zero and lists every violation.
 """
@@ -23,7 +25,8 @@ GAME_DATA = re.compile(
 )
 IMAGE = re.compile(r"\.(png|ppm|pgm|bmp|gif|jpe?g|tga|webp)$", re.IGNORECASE)
 ALLOWED_IMAGE_DIRS: tuple[str, ...] = ()
-SOURCE = re.compile(r"\.(cpp|hpp)$")
+CPP_SOURCE = re.compile(r"\.(cpp|hpp)$")
+SOURCE = re.compile(r"\.(cpp|hpp|py|sh)$")
 FLOAT_TYPES = re.compile(r"\b(float|long\s+double)\b")
 SPDX = "SPDX-License-Identifier:"
 
@@ -58,6 +61,8 @@ def main() -> int:
             text = (ROOT / path).read_text(encoding="utf-8")
             if SPDX not in "\n".join(text.splitlines()[:3]):
                 problems.append(f"{path}: missing SPDX licence identifier in the first lines")
+            if not CPP_SOURCE.search(path):
+                continue
             for number, line in enumerate(strip_comments_and_strings(text).splitlines(), 1):
                 if FLOAT_TYPES.search(line):
                     problems.append(f"{path}:{number}: float and long double are not used (spec 5.3)")

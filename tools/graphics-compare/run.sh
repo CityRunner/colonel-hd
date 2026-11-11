@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Milestone 2 check: path 1 (pictures), views and fonts are bit-exact with
 # ScummVM, compared as palette-index buffers. Runs inside the toolchain
 # container with the game folder mounted, for example:
