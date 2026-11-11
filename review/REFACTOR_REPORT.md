@@ -494,6 +494,33 @@ workflows, 5b the build files and scripts, 5c the documentation.
 No build input changed (workflow files only), so by decision 1a S4 screens
 and S5 are not needed, provided S6 shows identical binaries.
 
+### Step 5b: macOS out of the build files and scripts (B-01)
+
+**What changed** (4 files):
+- `cmake/SciCompilerFlags.cmake`: the linker condition is
+  `if(NOT SCI_CLANG_CL)` (it was `... AND NOT APPLE`), and the fuzzing
+  message says "Linux only". On Linux and Windows the condition has the
+  same value as before.
+- `CMakePresets.json`: the five display names say "(Linux)".
+- `scripts/package-release.sh`: its header comment.
+- `scripts/ci-minutes.py`: the macOS rate **stays**, with a comment: the
+  script still reports the runs of earlier milestones, which had macOS
+  jobs, and without the rate it would count them as Linux. A deviation
+  from the plan's row for step 5, which lists this script for removal.
+
+SDL3's Apple back-ends stay in `third_party/` (B-01, vendored unchanged).
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Format, policy (with self-test), hints, vendored | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS5B |
+
+A CMake file changed, so S6 decides: identical executables mean no
+compile or link command changed on Linux, and S4 screens and S5 are not
+needed (decision 1a). Windows is checked by the CI run after step 5c.
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so

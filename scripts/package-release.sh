@@ -4,7 +4,7 @@
 # Packages a release build of sierra-hd (spec section 10.4):
 #   package-release.sh <build directory> <platform name> <output directory>
 # The archive holds the program, the hint files, the user README and the
-# licences; never any game data. Linux and macOS get .tar.gz, Windows .zip.
+# licences; never any game data. Linux gets .tar.gz, Windows .zip.
 set -euo pipefail
 
 build=$1

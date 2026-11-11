@@ -31,6 +31,8 @@ PLATFORMS = {
     "linux-arm64": (0.005, 1),
     "windows-x64": (0.010, 2),
     "windows-arm64": (0.010, 2),
+    # macOS left the workflows on 2026-11-11; the rate stays for the runs
+    # of earlier milestones, which this script still reports.
     "macos": (0.062, 10),
 }
 

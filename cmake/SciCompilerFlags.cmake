@@ -45,7 +45,7 @@ else()
 endif()
 
 # --- Linker -----------------------------------------------------------------
-if(NOT SCI_CLANG_CL AND NOT APPLE)
+if(NOT SCI_CLANG_CL)
     add_link_options(-fuse-ld=lld)
 endif()
 
@@ -56,7 +56,7 @@ set(SCI_FUZZ OFF CACHE BOOL "Build the libFuzzer targets (implies ASan and UBSan
 
 if(SCI_FUZZ)
     if(SCI_CLANG_CL)
-        message(FATAL_ERROR "Fuzzing is run on Linux and macOS only.")
+        message(FATAL_ERROR "Fuzzing is run on Linux only.")
     endif()
     set(SCI_SANITIZE "address;undefined" CACHE STRING "" FORCE)
     add_compile_options(-fsanitize=fuzzer-no-link)
