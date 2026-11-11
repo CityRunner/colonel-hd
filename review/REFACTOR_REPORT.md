@@ -464,6 +464,36 @@ Two documentation files changed, no build input, so by decision 1a S4
 screens and S5 are not needed, provided S6 shows identical binaries.
 Effort: about 0.3 h (plan: 2 h).
 
+### Step 5a: macOS out of the CI and release workflows (B-01, B-16)
+
+Step 5 is done in three parts (smaller tasks, 2026-11-11): 5a the
+workflows, 5b the build files and scripts, 5c the documentation.
+
+**What changed** (3 files):
+- `.github/workflows/ci.yml`: the `macos` choice of the manual run, the
+  `macos` plan output and the `macos` job are removed; the header comment
+  no longer mentions macOS. Jobs before: plan, hints, lint, wip-asan,
+  wip-tsan, quick, linux, fuzz, windows, macos. After: the same without
+  macos (compared from the parsed YAML).
+- `.github/workflows/release.yml`: the `macos` input and job are removed;
+  the manual run stays, without inputs (B-16's dry run). Jobs: linux,
+  windows, publish.
+- `.github/actions/native-toolchain/action.yml`: now for Windows runners
+  only: the macOS tool list, `SDKROOT`/`MACOSX_DEPLOYMENT_TARGET`, the
+  `shasum` fallback and the `.tar.gz` ccache branch are removed.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| The three files parse as YAML; job lists as above | pass |
+| Format, policy (with self-test), hints, vendored | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS5A |
+| A CI run on GitHub (one `quick`, one Windows; allowed by the customer) | after step 5c, for all of step 5 |
+
+No build input changed (workflow files only), so by decision 1a S4 screens
+and S5 are not needed, provided S6 shows identical binaries.
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so

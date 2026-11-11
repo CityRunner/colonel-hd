@@ -3,19 +3,12 @@ name: Release
 # Release binaries (spec section 10.4): Linux and Windows, x64 and ARM64,
 # built and tested with the release presets, packaged with the hint files
 # and published as a GitHub release for a pushed version tag (v*), under the
-# CI cost policy (docs/ASSUMPTIONS.md). macOS is optional (customer
-# decision, 2026-10-22): a manual run on a tag with "macos" builds the macOS
-# package as a workflow artifact.
+# CI cost policy (docs/ASSUMPTIONS.md).
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
-    inputs:
-      macos:
-        description: Build the macOS ARM64 package (run on a version tag)
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -97,39 +90,6 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sierra-hd-windows-${{ matrix.arch }}
-          path: dist/*
-          # The release keeps the files; the workflow copies are only for
-          # the publish job.
-          retention-days: 3
-          if-no-files-found: error
-      - if: failure()
-        uses: ./.github/actions/report-failure
-        with:
-          log: build.log
-
-  macos:
-    name: macos-arm64
-    if: github.event_name == 'workflow_dispatch' && inputs.macos
-    runs-on: macos-15
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/native-toolchain
-        with:
-          llvm-archive: LLVM-23.1.4-macOS-ARM64.tar.xz
-          llvm-sha256: 5d3179db39adeca5b17a34d82708fe976bc60e055b05fe557878fb3fb64d39ef
-          ninja-version: v1.13.2
-          ninja-archive: ninja-mac.zip
-          ninja-sha256: c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b
-      - name: Build and test
-        shell: bash
-        run: cmake --workflow --preset release 2>&1 | tee build.log
-      - name: Package
-        shell: bash
-        run: scripts/package-release.sh build/release macos-arm64 dist
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: sierra-hd-macos-arm64
           path: dist/*
           # The release keeps the files; the workflow copies are only for
           # the publish job.
