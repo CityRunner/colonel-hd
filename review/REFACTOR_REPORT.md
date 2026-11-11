@@ -404,7 +404,7 @@ checks above, this entry).
 | The new check on the repository | 0 problems, exit 0 |
 | Negative test on a scratch copy (one byte appended to `opl3.c`, `AUTHORS.txt` removed, an extra tracked file added) | all three reported, exit 1 |
 | Format, policy, hints (quick checks) | pass |
-| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS2 |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-11, on `cf15ee7`): style with the new check and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64; S6: all 42 executables identical to the build before step 1 |
 
 No build input changed (a script, a CI step, docs), so by decision 1a S4
 screens and S5 are not needed, provided S6 shows identical binaries.
