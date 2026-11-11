@@ -378,6 +378,38 @@ customer's decision 1a (`review/REFACTOR_PLAN.md`, end).
 **Effort:** about 0.7 h (the edits of the session that was cut off, the
 checks above, this entry).
 
+### Step 2: a check of the vendored files' SHA-256 (B-25)
+
+**What changed** (4 tracked files and the review notes):
+- `scripts/check-vendored.py` (new): for every component in
+  `third_party/`, each file named with a SHA-256 in a table of its
+  `VENDORED.md` must exist and have that hash, and every other tracked
+  file of the component must be `VENDORED.md` itself. It reports and never
+  changes a vendored file. Logged mismatches would go into its
+  `KNOWN_MISMATCHES` list (empty); components without records are in
+  `NOT_COVERED`.
+- Run by `scripts/pre-push.sh` (style step) and by the CI lint job
+  (`.github/workflows/ci.yml`, "Vendored files"); listed in `README.md`.
+
+**What the check found on the code as it is:**
+- nuked-opl3: 3 of 3 files match. mt32emu: 49 of 49 files match. No
+  mismatch, no unrecorded and no missing file.
+- SDL3: not covered, no SHA-256 is recorded for its 1,503 files. Logged
+  as **B-48**, not fixed; the check prints it and does not fail.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| The new check on the repository | 0 problems, exit 0 |
+| Negative test on a scratch copy (one byte appended to `opl3.c`, `AUTHORS.txt` removed, an extra tracked file added) | all three reported, exit 1 |
+| Format, policy, hints (quick checks) | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS2 |
+
+No build input changed (a script, a CI step, docs), so by decision 1a S4
+screens and S5 are not needed, provided S6 shows identical binaries.
+Effort: about 0.5 h (plan: 3 h).
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so

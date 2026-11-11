@@ -41,7 +41,7 @@ allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
   `third_party/SDL3/VENDORED.md` records none (1,504 tracked files),
   although `THIRD_PARTY.md` says each vendored file has one. Step 2 has
   to decide how the check treats that (B-25 criterion 1) and log it
-  (next free number: B-48); nothing is logged yet.
+  (logged as B-48 in step 2; next free number: B-49).
 
 
 

@@ -88,6 +88,7 @@ The development room viewer writes the same images to PNG files
     docker/run.sh scripts/check-format.sh              # clang-format
     docker/run.sh python3 scripts/check-repo-policy.py # no game data, no float
     docker/run.sh python3 scripts/check-hints.py       # hint files against their schema
+    docker/run.sh python3 scripts/check-vendored.py    # vendored files against their recorded SHA-256
     docker/run.sh scripts/run-clang-tidy.sh build/debug
 
 ## Documentation

@@ -98,6 +98,7 @@ found it.
 | B-45 | Script loader reads past an object's properties on a malformed script | defect | Low | S (2 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-script) | B-05 |
 | B-46 | The music player can loop forever on a malformed song | defect | Low | S (3 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-sound) | B-05 |
 | B-47 | The program embeds the repository's `git describe` as SDL's revision | defect | Low | S (1 h) | iteration 2 | open (found in stage 5 step 0.7) | B-20, step 0.1 |
+| B-48 | SDL3 has no per-file SHA-256 record | maintainability | Low | S (2 h) | iteration 2 | open (found in stage 5 step 2) | B-25, MAP 5 |
 
 B-43: the project rename (added by the customer, 2026-11-06). B-44 onward: reserved for bugs found in stage 5 (the range started at B-43 before the rename item took that number).
 
@@ -1251,3 +1252,20 @@ of which the VM net (B-06, B-07) is 72. Judgement, not measured.
    tagged until you confirm it.
 5. **23 defaults: all approved 2026-11-06** ("2 all approved"). Was: 23 defaults to accept or strike (batch-2 candidates and PART
    remainders): silence means accept; B-40, B-41, B-42 default to strike.
+
+### B-48 SDL3 has no per-file SHA-256 record
+
+- **Kind:** maintainability. **Severity:** Low. **Found in:** stage 5
+  step 2 (2026-11-11). **State:** open, not fixed (brief 5.3).
+- **What:** `THIRD_PARTY.md:15` says "The SHA-256 of each vendored file is
+  in the component's `VENDORED.md`". `third_party/nuked-opl3/VENDORED.md`
+  (3 files) and `third_party/mt32emu/VENDORED.md` (49 files) record one per
+  file; `third_party/SDL3/VENDORED.md` records the release tag and commit
+  only, no hash for any of its 1,503 files.
+- **Effect:** `scripts/check-vendored.py` (B-25) cannot check SDL3. It
+  prints "SDL3: not covered ... (B-48)" and does not fail.
+- **Proposal (iteration 2):** record SDL3's files in a manifest
+  (`third_party/SDL3/SHA256SUMS`, generated from the pinned tag and
+  compared with a fresh download of it) and let the check read it; then
+  remove SDL3 from `NOT_COVERED` in the script. **Effort:** S, 2 h.
+  **Risk:** none (no build input changes).
