@@ -410,6 +410,40 @@ No build input changed (a script, a CI step, docs), so by decision 1a S4
 screens and S5 are not needed, provided S6 shows identical binaries.
 Effort: about 0.5 h (plan: 3 h).
 
+### Step 3: policy script and `.gitignore` gaps (B-15)
+
+**What changed** (4 tracked files and the review notes):
+- `scripts/check-repo-policy.py`: `GAME_DATA` also matches the SCI0 patch
+  files, a whole file name `TYPE.NNN` of the ten SCI0 resource types
+  (`SCRIPT.052`, `TEXT.052`, `PATCH.001`, ...), in any letter case; a new
+  `USER_DATA` rule refuses `*.sav` and `sierra-hd.ini` anywhere. A new
+  `--self-test` checks the name rules against 12 names to refuse and 13
+  to accept (among them `hints/pic.052.json`, `script.0520`, the save
+  fuzz corpus and the sources named `font.cpp`, `script.cpp`).
+- `.gitignore`: the same ten `TYPE.NNN` patterns, case-insensitive;
+  `*.sav`; and the folders the program writes next to itself, `/cache/`,
+  `/files/`, `/saves/` (it ignored only `analysis-cache/`, a name the
+  program does not use).
+- `scripts/pre-push.sh` and the CI lint job run the self-test before the
+  policy check.
+
+`local/` (criterion 2's second half) comes with step 11, which adds the
+folder and its rule.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| `check-repo-policy.py --self-test` | 12 refused, 13 accepted, 0 failures |
+| `check-repo-policy.py` on the tree | passes |
+| `git check-ignore` on sample names | `SCRIPT.052`, `text.052`, `PATCH.001`, `a/View.123`, `x.sav`, `saves/`, `cache/`, `files/` ignored; `hints/pic.052.json`, `src/sci-text/src/font.cpp`, the save fuzz corpus kept |
+| No tracked file is ignored by the new rules (`git ls-files -ci --exclude-standard`) | none |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS3 |
+
+No build input changed, so by decision 1a S4 screens and S5 are not
+needed, provided S6 shows identical binaries. Effort: about 0.5 h (plan:
+2 h).
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so
