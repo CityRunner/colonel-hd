@@ -1108,6 +1108,10 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   its blocks fit the script, reporting a malformed script as for other
   load errors; ScummVM's behaviour on such data to be compared first.
   Then add the reproducer to `tests/fuzz/corpus/script`.
+- **Known fuzz failure (customer 2a, 2026-11-06):** listed in
+  `tests/fuzz/known-failures.txt`, so `scripts/run-fuzzers.sh` reports it
+  as known and the fuzz step passes; **remove its line from the
+  known-failures list when fixed.**
 - **Acceptance criteria:** the reproducer loads with an error message,
   no abort; `fuzz-script` runs 10 minutes without a crash.
 
@@ -1133,6 +1137,10 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   the events one timer call may process (or detect a loop that does not
   advance time) as ScummVM does if it does; add the reproducer to
   `tests/fuzz/corpus/sound`.
+- **Known fuzz failure (customer 2a, 2026-11-06):** listed in
+  `tests/fuzz/known-failures.txt`, so `scripts/run-fuzzers.sh` reports it
+  as known and the fuzz step passes; **remove its line from the
+  known-failures list when fixed.**
 - **Acceptance criteria:** the reproducer renders within the 0.2 s limit;
   `fuzz-sound` runs 10 minutes without a timeout.
 

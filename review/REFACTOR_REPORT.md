@@ -311,6 +311,30 @@ and CTest re-run: 31/31 pass. The screen generations running at the same
 time were not affected (their binary and inputs are the same in both
 trees: `hints/`, `tests/scenarios/`, `tests/playthrough/`).
 
+## Known fuzz failures (customer's decision 2a, 2026-11-06)
+
+`tests/fuzz/known-failures.txt` lists `fuzz-script B-45 crash` and
+`fuzz-sound B-46 timeout`, each with the stack frame of its bug
+(`Object::species() … object.hpp:53`, `MidiParser::on_timer() …
+midi_parser.cpp`). `scripts/run-fuzzers.sh` now keeps each target's log in
+`build/fuzz-logs/`; when a target fails, the failure counts as known only
+if the target is listed, the kind (crash or timeout, from libFuzzer's
+SUMMARY line) matches, and a stack frame *after* the failure report
+matches the pattern (libFuzzer's earlier coverage lines do not count);
+anything else fails the run as before. A known failure stops that target
+early (libFuzzer stops at its first failure).
+
+- `scripts/test-run-fuzzers.sh` (fake targets, no build needed): listed
+  crash passes, listed timeout passes; a different crash in a listed
+  target, the wrong kind for a listed target, an unlisted target's crash,
+  and an out-of-memory all fail, as does a matching frame that appears
+  only before the report. All 7 checks pass.
+- The real fuzz step, `scripts/run-fuzzers.sh build/stage5-fuzz 30` (all
+  17 targets, 30 s each as in `pre-push.sh`): **exit 0** in 441 s; "known
+  failure of fuzz-sound: B-46 (timeout)", "known failure of fuzz-script:
+  B-45 (crash)"; the other 15 ran their 30 s clean.
+- Style step: format, policy, hints and clang-tidy pass (no C++ changed).
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so

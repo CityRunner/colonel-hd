@@ -183,3 +183,24 @@ change the customer asked for); everything else must stay the same.
 | What changes | How behaviour other than names is shown unchanged | Effort | Rollback |
 |---|---|---|---|
 | The project name everywhere outside `third_party/` and `review/`: `sierra-hd` → `colonel-hd`, `sierra_hd`/`SIERRA_HD` → `colonel_hd`/`COLONEL_HD`, `sierraHd` → `colonelHd` (program and CMake target, CMake project name, `colonel-hd.ini` and its section, `colonel-hd-NNN.sav`, the save header's program string, window titles and messages, toolchain image tag, release archive names, the hint format id in all 86 hint files + schema + parser + fuzz corpora, the replay header in the replay files + reader + corpora, the `SIERRA_HD_*` variables, the `sierraHd…` identifiers in `tools/scummvm-patches`, docs, scripts, workflows). Not renamed: Sierra the company and its interpreter, `SIERRA.COM`, ScummVM's names. Clean rename: old file names are ignored, no migration code. The GitHub repository rename is the customer's; the local folder stays. | S2-S5 pass with **every committed golden unchanged**: checked in step 0 that no hash input holds the name: the picture, resource and sound goldens hash pixels and samples only (the hint format id is parsed and dropped; the analysis cache key includes the hint file bytes, so the first launch re-analyses once, which no golden hashes); the VM hashes hash `sci-vm-trace`'s outputs, whose saves carry the program string `sci-vm-trace` (`interpreter.cpp:233`, `:375`), not the project name, and the VM state hash has no program string (`state.cpp`); the replay header is only checked when a replay is read. The only expected re-baselines: S6 binary identity (every binary changes; S6 is replaced for this one commit by "compile commands identical after the name substitution") and the program's own save headers and file names (not in any golden). New unit tests: the ini and save names; the old names ignored. Acceptance grep of B-43. | M, 8 h + one full suite | `git revert` (one commit; the hint files and replays are inside it) |
+
+## The customer's decisions after step 0 (2026-11-06, "1a 2a")
+
+Added after step 0 measured one full suite at about 1 h 45 min per commit
+and found two fuzz failures (B-45, B-46); the text above is unchanged.
+
+- **1a — which parts of the suite run per step.** The screen hashes (the
+  screens part of S4, `scripts/check-screen-hashes.sh`) and the VM hashes
+  (S5) run only for steps that change build inputs: source compiled into
+  any target, CMake that changes compile or link commands, hint files, or
+  the inputs of `tests/golden/`. For docs-, CI-, script-comment- and
+  layout-only steps, S6 (identical binaries, built with the fixed
+  `-DSDL_REVISION=SDL-3.4.18-stage5`, B-47) plus S1-S3 show that nothing
+  changed. Each step's commit message and its entry in
+  `review/REFACTOR_REPORT.md` say which parts ran and why.
+- **2a — known fuzz failures.** `scripts/run-fuzzers.sh` reads
+  `tests/fuzz/known-failures.txt`: `fuzz-script` (B-45) and `fuzz-sound`
+  (B-46) still run; a crash or timeout whose report matches the logged
+  bug's stack frame is reported as known and does not fail the fuzz step;
+  any other failure still fails it. `scripts/test-run-fuzzers.sh` checks
+  this. A line is removed when its bug is fixed (iteration 2).

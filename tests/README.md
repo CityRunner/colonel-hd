@@ -23,7 +23,11 @@
 Seed corpora are hand-made; `fuzz/make_seeds.py` regenerates the
 sci-resource ones. libFuzzer runs write new inputs to a scratch directory
 (`scripts/run-fuzzers.sh`, or `SCI_FUZZ_CORPUS`, which CI caches), never
-into the corpora.
+into the corpora. Bugs the fuzzers found and that are not fixed yet are
+listed in `fuzz/known-failures.txt` (target, bug, kind, stack frame):
+`run-fuzzers.sh` reports such a failure as known instead of failing;
+any other failure fails. Remove a line when its bug is fixed;
+`scripts/test-run-fuzzers.sh` checks the logic.
 
 Tests that need the game files run locally, never in CI:
 

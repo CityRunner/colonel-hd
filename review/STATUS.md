@@ -26,11 +26,9 @@ allowed"). Progress and measured numbers: `review/REFACTOR_REPORT.md`.
 - Step 0.6: done (`scripts/check-local.sh`, `tests/README.md`).
 - Step 0.7: done, the gate passes on the original code; B-47 (SDL
   revision from git describe) found; S6 uses a fixed SDL_REVISION.
-- **Open questions for the customer before step 1:** (1) one full suite
-  takes about 1 h 45 min per commit: may S4's screens and S5 run only
-  for steps that touch build inputs? (2) the fuzzing step of pre-push/CI
-  fails on fuzz-script/fuzz-sound until B-45/B-46 are fixed: accept red,
-  a known-failures list, or other? (report, steps 0.5 and 0.7).
+- The two questions after step 0 are answered ("1a 2a", see the
+  decisions); 2a is implemented. Next: the main session runs the full
+  local checks and pushes; then step 1.
 - Steps 1-13: not started.
 
 
@@ -196,6 +194,19 @@ game-dependent run times).
   stays; (4) one extra step at the end of stage 5. Recorded as B-43 and
   plan step 13. The stage 5 bug range now starts at **B-44** (it was
   B-43). **Decided (customer).**
+
+- **After step 0, the customer's answers (2026-11-06, "1a 2a"):**
+  1a: the screen hashes (S4 screens) and the VM hashes (S5) run only for
+  steps that change build inputs (compiled source, CMake changing
+  compile/link commands, hint files, `tests/golden/` inputs); for docs-,
+  CI-, script-comment- and layout-only steps S6 (identical binaries with
+  the fixed SDL revision) plus S1-S3 suffice; each step says which parts
+  ran and why. 2a: a short known-failures list for the fuzz runner
+  (`tests/fuzz/known-failures.txt`, read by `scripts/run-fuzzers.sh`):
+  `fuzz-script` (B-45) and `fuzz-sound` (B-46) still run, a failure
+  matching the logged bug is reported and does not fail the step, any
+  other failure still fails; remove a line when its bug is fixed.
+  **Decided (customer).** Recorded in `review/REFACTOR_PLAN.md` (end).
 
 ## Open items
 

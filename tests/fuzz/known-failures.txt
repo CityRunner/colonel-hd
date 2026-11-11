@@ -1,0 +1,10 @@
+# Known fuzz failures (customer's decision 2a, 2026-11-06): bugs found by
+# the fuzz targets and logged in review/BACKLOG_V2.md, not yet fixed.
+# scripts/run-fuzzers.sh still runs these targets; a failure of the listed
+# kind whose report has a stack frame matching the pattern is reported as
+# known and does not fail the run. Any other failure still fails it.
+# Remove a line when its bug is fixed.
+#
+# <target> <bug> <crash|timeout> <extended regex matched against the stack frames of the report>
+fuzz-script B-45 crash in sci::vm::Object::species\(\) const .*/object\.hpp:53
+fuzz-sound B-46 timeout in sci::vm::MidiParser::on_timer\(\) .*/midi_parser\.cpp
