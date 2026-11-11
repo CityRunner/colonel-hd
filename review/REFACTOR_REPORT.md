@@ -438,7 +438,7 @@ folder and its rule.
 | `check-repo-policy.py` on the tree | passes |
 | `git check-ignore` on sample names | `SCRIPT.052`, `text.052`, `PATCH.001`, `a/View.123`, `x.sav`, `saves/`, `cache/`, `files/` ignored; `hints/pic.052.json`, `src/sci-text/src/font.cpp`, the save fuzz corpus kept |
 | No tracked file is ignored by the new rules (`git ls-files -ci --exclude-standard`) | none |
-| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS3 |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-11, on `8cf94b2`): style with the self-test and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64; S6: all 42 executables identical to the build before step 1 |
 
 No build input changed, so by decision 1a S4 screens and S5 are not
 needed, provided S6 shows identical binaries. Effort: about 0.5 h (plan:
