@@ -99,3 +99,20 @@ contain nothing derived from the game art beyond a description.
 
 `docs/ASSUMPTIONS.md` records how the committed hints were made
 (milestone 3a).
+
+## Licensing
+
+Recorded for spec section 15 (the licensing review of the hint files), as
+the customer decided on 2026-11-06 (`review/QUESTIONS.md`, Q-03).
+
+- **Content:** the hint files hold labels and geometry only: text, whole
+  numbers and true/false values under the keys of `schema.json`. They hold
+  no image data. This was checked for every hint file in every commit
+  (`review/HISTORY_CLEANUP.md`, section E).
+- **How they were made:** with Claude, Anthropic's AI model, under the
+  customer's personal Claude subscription.
+- **Licence:** they are published with the project under
+  GPL-3.0-or-later, at the customer's risk. The subscription's terms were
+  not checked for whether they allow this.
+- **Input:** pictures of the customer's own copy of the game were shown
+  to the model, with the customer's permission.

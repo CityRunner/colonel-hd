@@ -2893,3 +2893,13 @@ the old numbers to the new ones, so older references stay unambiguous:
   stages with a stop after each; stages 1 to 4 are read-only; refactoring
   starts only at stage 5, after the customer approves the plan. It audits
   `main`, the code as merged. **Decided (customer).**
+
+## Hint files: licensing (2026-11-11)
+
+- The licensing review of the hint files (spec section 15) is recorded in
+  `hints/README.md`, "Licensing": labels and geometry only, no image data;
+  made with Claude under the customer's personal subscription; published
+  under GPL-3.0-or-later at the customer's risk, the subscription's terms
+  not checked; the customer's own game pictures shown to the model with
+  the customer's permission. **Decided (customer, 2026-11-06, audit
+  question Q-03).**

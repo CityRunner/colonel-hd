@@ -444,6 +444,26 @@ No build input changed, so by decision 1a S4 screens and S5 are not
 needed, provided S6 shows identical binaries. Effort: about 0.5 h (plan:
 2 h).
 
+### Step 4: the "Licensing" section of `hints/README.md` (B-12)
+
+**What changed** (documentation only): `hints/README.md` has a new last
+section, "Licensing", with the four points of B-12's acceptance criteria
+in the customer's decided wording (Q-03, "1a 2b 3a"); `docs/ASSUMPTIONS.md`
+has an entry pointing to it. The plan's row for this step still says
+"marked ASSUMED"; that was superseded by the customer's answer, so the
+section is not marked assumed.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Format, policy (with self-test), hints, vendored | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS4 |
+
+Two documentation files changed, no build input, so by decision 1a S4
+screens and S5 are not needed, provided S6 shows identical binaries.
+Effort: about 0.3 h (plan: 2 h).
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so
