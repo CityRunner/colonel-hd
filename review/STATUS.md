@@ -220,6 +220,17 @@ game-dependent run times).
   other failure still fails; remove a line when its bug is fixed.
   **Decided (customer).** Recorded in `review/REFACTOR_PLAN.md` (end).
 
+- **Smaller tasks (2026-11-11)**, the customer's words: "Split tasks to
+  smaller ones to fit in limits". From step 1 on: one plan step per task
+  (steps 5 and 13 split further by area); a task makes its change, runs
+  only the quick checks (format, policy, hints), commits and reports
+  briefly; the long checks (S1 clang-tidy, S2/S3, fuzz, ARM64, S6, and
+  S4/S5 where 1a asks for them) are run by the main session as a plain
+  background script (`build/step-checks.sh`, git-ignored; S6 reference
+  `build/s6-ref.sha256`, the 42 executables built before step 1), and
+  their results are added to the step's entry in `REFACTOR_REPORT.md`
+  before the push; one task at a time. **Decided (customer).**
+
 ## Open items
 
 - **Stage 4 (at STOP), what the customer is asked:**
