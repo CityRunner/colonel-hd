@@ -588,8 +588,8 @@ includes a header of the removed dependency. The module table of
 |---|---|
 | Release build and tests after the change | builds; all tests pass |
 | Format, policy, hints | pass |
-| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS7 |
-| S4 and S5 on the game | GAMECHECKS7 |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-12, on `bda2e47`): style and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64. S6: 39 of 42 executables identical, among them `sierra-hd` and every test; three tools differ, `sci-hd-frames`, `sci-sound-render` and `sci-vm-trace`: their link lines changed order with the removed edges, as the plan expected. The S6 reference for the next steps is the build of this commit |
+| S4 and S5 on the game | **all pass**, run with the three rebuilt tools: resources 392 s, pictures 39 s, sounds 21 s, screens 1190 s, VM hashes 79 s |
 
 Build inputs changed (include paths and link lines), so by decision 1a
 the game checks run too.
