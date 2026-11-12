@@ -637,6 +637,38 @@ and the milestone reports keep the old path: they describe their time.
 Source paths changed, so the binaries can differ (file names in
 assertion messages); by decision 1a the game checks run too.
 
+### Step 10: `reports/` moved to `docs/reports/` (B-02)
+
+**What changed:** the 20 tracked report files are moved with `git mv`
+(history follows them), and the git-ignored `reports/images/` folder (3.1
+GB of local review images) is moved with them. References updated:
+`.gitignore` (`/docs/reports/images/`, `/docs/reports/dumps/`); the CI
+workflow (`docs/**` already covers the reports: `reports/**` is dropped
+from `paths-ignore` and the plan job's file filter, and the header comment
+says so); `README.md` (three places); `docs/ARCHITECTURE.md`;
+`scripts/check-repo-policy.py` (a message); the READMEs of room-viewer,
+hd-frames and hd-report; `docs/reports/README.md`; the comment in
+`tools/room-viewer/main.cpp`, rewritten on the same two lines so that
+line numbers do not change.
+
+Not changed, on purpose: `docs/SPEC_ADDENDA.md` (the customer's text,
+which names `reports/images/`), the earlier entries of
+`docs/ASSUMPTIONS.md` and the milestone reports themselves (they describe
+their time), and `review/` (it cites the audited commit `a0422d6`).
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| `git grep` for `reports/` outside those files | none left |
+| `git check-ignore docs/reports/images/...` | ignored |
+| Format, policy (with self-test), hints, vendored | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS10 |
+
+No build input changed except a comment (same line numbers), so S6 decides
+(decision 1a): identical executables mean S4 screens and S5 are not
+needed.
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so

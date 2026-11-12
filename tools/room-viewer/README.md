@@ -23,4 +23,4 @@ for scripted and pixel-exact output.
 - `all` writes every picture, view and font into the directory.
 
 The output is derived from the game art. Write it only to git-ignored
-places such as `build/` or `reports/images/`; never commit it.
+places such as `build/` or `docs/reports/images/`; never commit it.

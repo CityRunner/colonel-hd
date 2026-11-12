@@ -353,7 +353,7 @@ when off, so they stay in release builds.
   built, so faces, fitting and acceptance stay as they were and every
   change is recorded with its evidence. The cost: it works with 1 pixel
   wide round strokes and cannot change how such strokes meet the 1x pixel
-  pattern, so some A1 cases remain (`reports/milestone-3b.md`).
+  pattern, so some A1 cases remain (`docs/reports/milestone-3b.md`).
 - **A parsed command stream instead of drawing while decoding.** ScummVM
   draws as it decodes. Parsing first costs one allocation per picture, and
   in return the parser and the rasteriser are tested separately and path 2

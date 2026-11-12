@@ -14,7 +14,7 @@
 #   (release). Linux is the first priority and Windows the second;
 # - manual runs (workflow_dispatch): one fast Linux job, or a single
 #   platform between gates for a fix only that platform reproduces.
-# A push that changes only docs/, reports/ or Markdown files runs nothing;
+# A push that changes only docs/ (with docs/reports/) or Markdown files runs nothing;
 # one that changes only hints/ runs only the hint-file check.
 
 name: CI
@@ -23,7 +23,7 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore: ["docs/**", "reports/**", "**/*.md"]
+    paths-ignore: ["docs/**", "**/*.md"]
   workflow_dispatch:
     inputs:
       scope:
@@ -94,7 +94,7 @@ jobs:
               while IFS= read -r file; do
                 case "$file" in
                   "") ;;
-                  docs/* | reports/* | *.md) ;;
+                  docs/* | *.md) ;;
                   hints/*) hints=true ;;
                   *) code=true ;;
                 esac

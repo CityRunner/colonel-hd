@@ -14,7 +14,7 @@ integer factor. Game logic behaves exactly as in the original.
 - Music and sound on an emulated AdLib (Nuked OPL3) or Roland MT-32
   (mt32emu, with your own ROMs).
 - The game's own dialogs save and restore, in a documented, versioned format.
-- The milestone reports are in `reports/`.
+- The milestone reports are in `docs/reports/`.
 
 You need your own copy of the game (English DOS EGA release; the GOG
 release works). No game files are included, and none are ever committed.
@@ -95,7 +95,7 @@ The development room viewer writes the same images to PNG files
 - `docs/hd-pipeline.md`: how pictures become HD backgrounds
 - `hints/README.md`: the scene-analysis hints and their format
 - `tools/reference-scummvm/README.md`: the reference ScummVM build
-- `reports/`: milestone reports
+- `docs/reports/`: milestone reports
 - `THIRD_PARTY.md`: third-party components and their licences
 
 ## How it is developed
@@ -103,7 +103,7 @@ The development room viewer writes the same images to PNG files
 The project is built milestone by milestone against a written
 specification, with ScummVM as the behavioural reference. The changes to
 that specification are in `docs/SPEC_ADDENDA.md`, every decision is in
-`docs/ASSUMPTIONS.md`, and each milestone ends with a report in `reports/`.
+`docs/ASSUMPTIONS.md`, and each milestone ends with a report in `docs/reports/`.
 Most of the code is written by Claude, Anthropic's AI model, through Claude
 Code. See `CONTRIBUTING.md` before opening an issue or a pull request.
 

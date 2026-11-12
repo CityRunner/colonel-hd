@@ -39,8 +39,8 @@ compile_commands.json
 *.[Bb][Ii][Nn]
 
 # Images derived from the game art and resource dumps stay local.
-/reports/images/
-/reports/dumps/
+/docs/reports/images/
+/docs/reports/dumps/
 
 # What the program writes next to itself: its configuration, saved games,
 # the analysis cache and the game's own files.

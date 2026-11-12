@@ -378,3 +378,8 @@ game-dependent run times).
    `review/MAP.md`, section 6.4. The toolchain image is
    `sierra-hd-toolchain:fa237f3eeea06223` (`docker/image-tag.sh`); docker
    is shared, do not start or stop the daemon.
+
+- **Path mapping after step 10 (2026-11-12):** the milestone reports are in
+  `docs/reports/` (they were in `reports/`); review images are in the
+  git-ignored `docs/reports/images/`. Files in `review/` that cite
+  `reports/...` mean the audited commit `a0422d6`.

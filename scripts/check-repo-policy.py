@@ -117,7 +117,7 @@ def main() -> int:
         if problem:
             problems.append(f"{path}: {problem}")
         if IMAGE.search(path) and not path.startswith(ALLOWED_IMAGE_DIRS or ("\0",)):
-            problems.append(f"{path}: images are not committed (reports/images/ is ignored)")
+            problems.append(f"{path}: images are not committed (docs/reports/images/ is ignored)")
         if SOURCE.search(path):
             text = (ROOT / path).read_text(encoding="utf-8")
             if SPDX not in "\n".join(text.splitlines()[:3]):

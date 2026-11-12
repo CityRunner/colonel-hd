@@ -9,5 +9,5 @@ measured with `scripts/ci-minutes.py --branch <branch>`, with the included
 minutes and list price; any run of macOS, Windows or native ARM64 between
 gates and why; and what could reduce the minutes further.
 
-Images derived from the game art go to `reports/images/`. That directory is
+Images derived from the game art go to `docs/reports/images/`. That directory is
 git-ignored and never committed.

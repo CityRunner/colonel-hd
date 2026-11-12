@@ -55,4 +55,4 @@ run is deterministic: a replay file, a seed and virtual time.
 
 The run ends at the last tick asked for (or `--stop-tick`) with a quit
 event. The output is derived from the game art: write it only to
-git-ignored places such as `build/` or `reports/images/`; never commit it.
+git-ignored places such as `build/` or `docs/reports/images/`; never commit it.
