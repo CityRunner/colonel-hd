@@ -1085,7 +1085,7 @@ sci::core::Result<std::vector<sci::vm::InputEvent>> read_replay(const fs::path& 
 
 int run(const Options& options) {
     const fs::path base = base_path();
-    const fs::path config_path = base / "colonel-hd.ini";
+    const fs::path config_path = base / sci::platform::config_file_name;
     auto config = load_config(config_path);
     if (!config) {
         return 1;

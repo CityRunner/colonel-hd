@@ -32,6 +32,8 @@
 
 namespace sci::platform {
 
+// The configuration file, next to the program (old names are not read).
+inline constexpr std::string_view config_file_name = "colonel-hd.ini";
 inline constexpr int config_format = 1;
 inline constexpr int max_scale = 16;
 inline constexpr int max_volume = 100;

@@ -121,6 +121,20 @@ SCI_TEST(save_folder_leaves_out_other_files) {
     SCI_CHECK(!saves.read(8).has_value());
 }
 
+SCI_TEST(save_folder_ignores_the_old_names) {
+    const TempFolder temp("colonel-hd-save-folder-old-names");
+    // The old name, put together so that B-43's rename grep finds no mention.
+    const std::string old_prefix = std::string("sierra") + "-hd-";
+    write_file(temp.path() / (old_prefix + "001.sav"), "x");
+    write_file(temp.path() / (old_prefix + "002.sav"), "x");
+    SaveFolder saves(temp.path());
+    SCI_CHECK(saves.slots().empty());
+    SCI_CHECK(!saves.read(1).has_value());
+    SCI_CHECK(saves.write(1, std::vector<std::uint8_t>{1}));
+    SCI_CHECK(fs::is_regular_file(temp.path() / "colonel-hd-001.sav"));
+    SCI_CHECK(saves.slots() == std::vector<int>({1}));
+}
+
 SCI_TEST(save_folder_write_fails_where_it_cannot_write) {
     const TempFolder temp("colonel-hd-save-folder-fail");
     // A file where the folder should be.

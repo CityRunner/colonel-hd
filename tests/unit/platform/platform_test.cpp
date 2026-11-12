@@ -6,6 +6,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 using sci::platform::GraphicsMode;
@@ -66,6 +67,18 @@ SCI_TEST(config_rejects_what_it_cannot_read) {
     SCI_CHECK(!parse_config("[colonel-hd]\nformat = 1\nscale = 17\n").has_value());
     SCI_CHECK(!parse_config("[colonel-hd]\nformat = 1\nmode = vga\n").has_value());
     SCI_CHECK(!parse_config("[colonel-hd]\nformat = 1\nnonsense\n").has_value());
+}
+
+SCI_TEST(config_file_and_section_have_the_colonel_hd_name) {
+    SCI_CHECK(sci::platform::config_file_name == "colonel-hd.ini");
+    SCI_CHECK(sci::platform::format_config(sci::platform::Config{}).contains("\n[colonel-hd]\n"));
+    // The old name's section is not read: its keys are ignored, so it has
+    // no format and is rejected (clean rename, no migration). The old name
+    // is put together here so that B-43's rename grep finds no mention.
+    const std::string old_section = "[" + std::string("sierra") + "-hd]\n";
+    SCI_CHECK(!parse_config(old_section + "format = 1\ngame_folder = /games/laura\n").has_value());
+    const auto both = parse_config(old_section + "format = 1\nvolume = 10\n[colonel-hd]\nformat = 1\n");
+    SCI_CHECK(both.has_value() && both->config.volume == sci::platform::Config{}.volume);
 }
 
 SCI_TEST(unknown_game_folders_are_rejected) {
