@@ -12,7 +12,7 @@
 #
 # Run it inside the toolchain container with the game at /game. The saves
 # hold the game's identity: they load only with the same release of the
-# game. SIERRA_HD_VM_TRACE names sci-vm-trace (default the release build).
+# game. COLONEL_HD_VM_TRACE names sci-vm-trace (default the release build).
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -20,7 +20,7 @@ root="${here}/../.."
 replay="${root}/tests/playthrough/playthrough.txt"
 table="${root}/tests/playthrough/act-saves.txt"
 romans=(- I II III IV V VI VII VIII)
-vm_trace="${SIERRA_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
+vm_trace="${COLONEL_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
 out="${1:-${root}/build/act-saves}"
 work="$(mktemp -d)"
 trap 'rm -rf "${work}"' EXIT

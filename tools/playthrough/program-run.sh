@@ -17,7 +17,7 @@
 # Run it inside the toolchain container with the game at /game (and the
 # MT-32 ROMs at /roms for --music mt32):
 #
-#   SIERRA_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh \
+#   COLONEL_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh \
 #       tools/playthrough/program-run.sh --mode hd --scale 4 --music adlib --out build/program-run/hd4
 #
 # Options:
@@ -34,8 +34,8 @@
 #   --limit <seconds>      wall-time limit (default 3600, real time 7200)
 #   --out <folder>         output folder (default build/program-run/<mode><N>-<music>)
 #
-# SIERRA_HD_PROGRAM names the sierra-hd to run (default the release build),
-# SIERRA_HD_VM_TRACE the sci-vm-trace for the reference end state (default
+# COLONEL_HD_PROGRAM names the sierra-hd to run (default the release build),
+# COLONEL_HD_VM_TRACE the sci-vm-trace for the reference end state (default
 # the release build). The reference end state is kept in
 # build/program-run/reference-<music>.txt and made when missing.
 set -euo pipefail
@@ -43,8 +43,8 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "${here}/../.." && pwd)"
 replay="${root}/tests/playthrough/playthrough.txt"
-program="${SIERRA_HD_PROGRAM:-${root}/build/release/src/app/sierra-hd}"
-vm_trace="${SIERRA_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
+program="${COLONEL_HD_PROGRAM:-${root}/build/release/src/app/sierra-hd}"
+vm_trace="${COLONEL_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
 base="${root}/build/program-run"
 
 mode=hd scale=4 music=adlib rom=/roms/roland cache=warm audio=dummy fast=1 limit="" out=""

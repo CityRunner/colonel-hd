@@ -6,7 +6,7 @@
 
 Both folders hold <tick>.ppm files (the screen the player sees) and
 <tick>.priority.pgm and <tick>.control.pgm files (the 1x maps the logic
-reads): the reference's from SIERRA_HD_SCREENS, ours from sci-vm-trace
+reads): the reference's from COLONEL_HD_SCREENS, ours from sci-vm-trace
 --screens. The files of the ticks both runs wrote are compared pixel by
 pixel. Prints the first difference of the screens and of the maps (or, with
 --all, every one) and exits with 1 if any differs or a file is missing on

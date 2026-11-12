@@ -5,23 +5,23 @@
 # maps, the actor positions of every kAnimate call, the parser results of
 # every kParse and kSaid call, the window layout (windows, text,
 # controls, menus and the cursor in 1x) and the OPL register writes of the
-# AdLib driver (skipped with SIERRA_HD_COMPARE_OPL=0).
+# AdLib driver (skipped with COLONEL_HD_COMPARE_OPL=0).
 #
-# With SIERRA_HD_MUSIC=mt32 both engines play the music on the MT-32 driver
+# With COLONEL_HD_MUSIC=mt32 both engines play the music on the MT-32 driver
 # instead and the MIDI messages it sends are compared in place of the OPL
 # writes. The reference needs MT32_CONTROL.ROM and MT32_PCM.ROM (under those
-# names) in SIERRA_HD_MT32_SCUMMVM (default /roms/mt32-scummvm), sci-vm-trace
-# a ROM folder as the program reads it in SIERRA_HD_MT32_ROMS (default
+# names) in COLONEL_HD_MT32_SCUMMVM (default /roms/mt32-scummvm), sci-vm-trace
+# a ROM folder as the program reads it in COLONEL_HD_MT32_ROMS (default
 # /roms/roland; empty: the messages are only logged):
 #
-#   SIERRA_HD_MOUNTS=/path/to/game:/game,/home/user/roms:/roms docker/run.sh \
-#       env SIERRA_HD_MUSIC=mt32 tools/vm-trace/run-scenario.sh tests/scenarios/boot.txt 3600 build/scenarios/boot-mt32
+#   COLONEL_HD_MOUNTS=/path/to/game:/game,/home/user/roms:/roms docker/run.sh \
+#       env COLONEL_HD_MUSIC=mt32 tools/vm-trace/run-scenario.sh tests/scenarios/boot.txt 3600 build/scenarios/boot-mt32
 #
 #   tools/vm-trace/run-scenario.sh <replay> <stop tick> <output folder> [seed]
 #
 # Run it inside the toolchain container with the game mounted at /game:
 #
-#   SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+#   COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
 #       tools/vm-trace/run-scenario.sh tests/scenarios/menu-keys.txt 3600 build/scenarios/menu-keys
 #
 # The output folder receives the traces (reference.txt, sci-vm.txt), the actor
@@ -40,27 +40,27 @@ out="${3:?usage: run-scenario.sh <replay> <stop tick> <output folder> [seed]}"
 seed="${4:-0}"
 here="$(cd "$(dirname "$0")" && pwd)"
 root="${here}/../.."
-reference_build="${SIERRA_HD_REFERENCE:-${root}/build/reference-scummvm}"
-vm_trace="${SIERRA_HD_VM_TRACE:-${root}/build/debug/tools/vm-trace/sci-vm-trace}"
-compare_opl="${SIERRA_HD_COMPARE_OPL:-1}"
-music="${SIERRA_HD_MUSIC:-adlib}"
+reference_build="${COLONEL_HD_REFERENCE:-${root}/build/reference-scummvm}"
+vm_trace="${COLONEL_HD_VM_TRACE:-${root}/build/debug/tools/vm-trace/sci-vm-trace}"
+compare_opl="${COLONEL_HD_COMPARE_OPL:-1}"
+music="${COLONEL_HD_MUSIC:-adlib}"
 reference_opl=()
 sci_vm_opl=()
 reference_driver=(--music-driver=adlib)
 if [[ "${music}" == mt32 ]]; then
     compare_opl=0
-    reference_opl=(SIERRA_HD_MIDI="${out}/reference-midi.txt")
-    reference_driver=(--music-driver=mt32 --extrapath="${SIERRA_HD_MT32_SCUMMVM:-/roms/mt32-scummvm}")
+    reference_opl=(COLONEL_HD_MIDI="${out}/reference-midi.txt")
+    reference_driver=(--music-driver=mt32 --extrapath="${COLONEL_HD_MT32_SCUMMVM:-/roms/mt32-scummvm}")
     sci_vm_opl=(--music mt32 --midi "${out}/sci-vm-midi.txt")
-    sci_vm_roms="${SIERRA_HD_MT32_ROMS-/roms/roland}"
+    sci_vm_roms="${COLONEL_HD_MT32_ROMS-/roms/roland}"
     if [[ -n "${sci_vm_roms}" ]]; then
         sci_vm_opl+=(--roms "${sci_vm_roms}")
     fi
 elif [[ "${music}" != adlib ]]; then
-    echo "SIERRA_HD_MUSIC must be adlib or mt32" >&2
+    echo "COLONEL_HD_MUSIC must be adlib or mt32" >&2
     exit 2
 elif [[ "${compare_opl}" != 0 ]]; then
-    reference_opl=(SIERRA_HD_OPL="${out}/reference-opl.txt")
+    reference_opl=(COLONEL_HD_OPL="${out}/reference-opl.txt")
     sci_vm_opl=(--opl "${out}/sci-vm-opl.txt")
 fi
 
@@ -68,10 +68,10 @@ mkdir -p "${out}"
 rm -rf "${out}/reference" "${out}/sci-vm" "${out}/reference-saves" "${out}/sci-vm-saves"
 mkdir -p "${out}/reference" "${out}/sci-vm" "${out}/reference-saves" "${out}/sci-vm-saves"
 
-env SIERRA_HD_TRACE="${out}/reference.txt" SIERRA_HD_STOP_TICK="${stop_tick}" \
-    SIERRA_HD_SEED="${seed}" SIERRA_HD_REPLAY="${replay}" SIERRA_HD_SCREENS="${out}/reference" \
-    SIERRA_HD_ACTORS="${out}/reference-actors.txt" SIERRA_HD_PARSER="${out}/reference-parser.txt" \
-    SIERRA_HD_LAYOUT="${out}/reference-layout.txt" SIERRA_HD_SAVEPATH="${out}/reference-saves" "${reference_opl[@]}" \
+env COLONEL_HD_TRACE="${out}/reference.txt" COLONEL_HD_STOP_TICK="${stop_tick}" \
+    COLONEL_HD_SEED="${seed}" COLONEL_HD_REPLAY="${replay}" COLONEL_HD_SCREENS="${out}/reference" \
+    COLONEL_HD_ACTORS="${out}/reference-actors.txt" COLONEL_HD_PARSER="${out}/reference-parser.txt" \
+    COLONEL_HD_LAYOUT="${out}/reference-layout.txt" COLONEL_HD_SAVEPATH="${out}/reference-saves" "${reference_opl[@]}" \
     xvfb-run -a env SDL_AUDIODRIVER=dummy \
     "${root}/tools/reference-scummvm/run.sh" "${reference_build}" /game "${reference_driver[@]}" \
     > "${out}/reference.log" 2>&1 || true

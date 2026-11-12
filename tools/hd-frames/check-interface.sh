@@ -14,7 +14,7 @@
 # replay once, at its longest stop tick). Run it inside the toolchain
 # container with the game mounted at /game and a release build:
 #
-#   SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/hd-frames/check-interface.sh --jobs 4
+#   COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/hd-frames/check-interface.sh --jobs 4
 set -uo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -28,8 +28,8 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
     *) echo "usage: check-interface.sh [--jobs <n>] [--scales <from>-<to>] [scenario file...]" >&2; exit 2 ;;
     esac
 done
-frames="${SIERRA_HD_HD_FRAMES:-${root}/build/release/tools/hd-frames/sci-hd-frames}"
-cache="${SIERRA_HD_ANALYSIS_CACHE:-${root}/build/analysis-cache}"
+frames="${COLONEL_HD_HD_FRAMES:-${root}/build/release/tools/hd-frames/sci-hd-frames}"
+cache="${COLONEL_HD_ANALYSIS_CACHE:-${root}/build/analysis-cache}"
 
 # A replay and its stop tick: runs the check, prints its summary line.
 check_one() {

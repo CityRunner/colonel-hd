@@ -4,7 +4,7 @@
 # ScummVM, compared as palette-index buffers. Runs inside the toolchain
 # container with the game folder mounted, for example:
 #
-#   SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/graphics-compare/run.sh /game
+#   COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/graphics-compare/run.sh /game
 #
 # Needs the reference ScummVM built with the patches in tools/scummvm-patches
 # (build/reference-scummvm) and a configured build tree (default build/release).
@@ -19,7 +19,7 @@ cmake --build "${build}" --target sci-graphics-dump
 rm -rf "${out}/scummvm-gfx" "${out}/sierra-hd-gfx"
 mkdir -p "${out}/scummvm-gfx" "${out}/sierra-hd-gfx"
 
-SIERRA_HD_DUMP_GRAPHICS="${PWD}/${out}/scummvm-gfx" SDL_AUDIODRIVER=dummy \
+COLONEL_HD_DUMP_GRAPHICS="${PWD}/${out}/scummvm-gfx" SDL_AUDIODRIVER=dummy \
     xvfb-run -a tools/reference-scummvm/run.sh build/reference-scummvm "${game}" > "${out}/scummvm-gfx.log" 2>&1
 "${build}/tools/graphics-dump/sci-graphics-dump" "${game}" "${out}/sierra-hd-gfx" 2> "${out}/sierra-hd-gfx.log"
 

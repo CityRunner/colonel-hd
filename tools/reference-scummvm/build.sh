@@ -14,7 +14,7 @@
 # sound comparisons of milestone 7. Run it inside the toolchain container so
 # the reference is built with the same compiler as the project:
 #
-#   SIERRA_HD_MOUNTS=/path/to/scummvm:/scummvm \
+#   COLONEL_HD_MOUNTS=/path/to/scummvm:/scummvm \
 #       docker/run.sh tools/reference-scummvm/build.sh /scummvm build/reference-scummvm
 set -euo pipefail
 

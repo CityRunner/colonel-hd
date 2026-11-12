@@ -39,14 +39,14 @@ Status markers: **decided** (final unless the customer objects),
   installer's `tmp/` folder was left out), to a read-only directory outside
   the repository: `/home/user/game/colonels-bequest-gog` in the agent's
   container. It is mounted read-only into the toolchain container, for
-  example `SIERRA_HD_MOUNTS=/home/user/game/colonels-bequest-gog:/game`.
+  example `COLONEL_HD_MOUNTS=/home/user/game/colonels-bequest-gog:/game`.
   **Decided.**
 - **Environment.** The agent works in a Linux x86-64 cloud container, not on a
   local machine (spec section 3.1). Docker is available (its daemon is started
   by hand in the session), so podman is not used; the customer allowed
   installing podman if needed, and it was not. Outbound HTTPS goes through a
   TLS-intercepting proxy; `docker/build-image.sh` supports that through
-  `SIERRA_HD_EXTRA_CA` without affecting the image (see "Toolchain").
+  `COLONEL_HD_EXTRA_CA` without affecting the image (see "Toolchain").
 
 ## Accepted game releases (milestone 0)
 
@@ -143,7 +143,7 @@ releases are (spec section 10.2):
   `--target=aarch64-linux-gnu` and runs the tests under qemu. **Decided.**
 - **Proxy support.** `docker/build-image.sh` passes an extra CA bundle as a
   BuildKit secret, so it never reaches an image layer, and switches the
-  Ubuntu archive to HTTPS. Without `SIERRA_HD_EXTRA_CA` the image builds over
+  Ubuntu archive to HTTPS. Without `COLONEL_HD_EXTRA_CA` the image builds over
   plain HTTP. Integrity is still guaranteed by the archive's GPG signatures
   and the LLVM SHA-256. **Decided.**
 
@@ -362,7 +362,7 @@ CI confirms, it does not discover. **Decided** (customer instruction).
 4. **Each minute cheaper.**
    - **ccache:**
      - In the toolchain image (pinned Ubuntu package) for the Linux jobs,
-       through `docker/run.sh` with `SIERRA_HD_CCACHE=1`.
+       through `docker/run.sh` with `COLONEL_HD_CCACHE=1`.
      - From pinned ccache 4.14.2 release archives (SHA-256 recorded in the
        workflow) for Windows and macOS.
      - Each job kind keeps its own cache: the newest is restored, and each
@@ -689,7 +689,7 @@ Milestone 1 was approved and merged
 - **Reference tooling: a second ScummVM patch.** As in milestone 1, the
   reference is the patched engine, not a harness.
   `tools/scummvm-patches/0002-dump-graphics.patch` hooks in after
-  `initGraphics()`. With `SIERRA_HD_DUMP_GRAPHICS=<dir>` it draws every
+  `initGraphics()`. With `COLONEL_HD_DUMP_GRAPHICS=<dir>` it draws every
   picture through `GfxPaint16::drawPicture` and the picture port, as
   `kDrawPic` does. It dumps the visual, priority and control maps as
   palette-index buffers, then dumps every view cel (`GfxView::getBitmap`)
@@ -1791,7 +1791,7 @@ scripts' bytecode (after the script patches), not from runs:
 
 - **OPL register logs in both engines.** Patch 0003 writes every register
   write of ScummVM's AdLib driver (`MidiDriver_AdLib::setRegister`) to
-  `SIERRA_HD_OPL=<file>`; `sci-vm-trace --opl <file>` plays the music on
+  `COLONEL_HD_OPL=<file>`; `sci-vm-trace --opl <file>` plays the music on
   `AdlibDriver` (otherwise the silent driver) and writes ours from the
   driver's write hook, at the same level: the value the driver writes to
   the port, before the dual OPL2's masks. Format and time key in
@@ -1815,7 +1815,7 @@ scripts' bytecode (after the script patches), not from runs:
   ticks: 1040 writes over timer calls 0 to 13141, 118 key-ons), with all
   six other comparisons matching too. No port bug showed up. The
   comparison is the seventh in `run-scenario.sh` (on by default,
-  `SIERRA_HD_COMPARE_OPL=0` skips it). **Decided.**
+  `COLONEL_HD_COMPARE_OPL=0` skips it). **Decided.**
 - **No per-sound comparison with the reference:** ScummVM cannot play one
   sound resource alone without new engine code (a sound object, kDoSound
   calls, the main loop), so the in-game comparison stands for it; the
@@ -2085,9 +2085,9 @@ scripts' bytecode (after the script patches), not from runs:
   zeros; a released note decays to a floor of about 2 steps that stays;
   master volume 0 attenuates by about 44 dB, not to silence; a key struck
   again while its note still sounds keeps that note's level.
-- **ROMs in the tests:** `SIERRA_HD_MT32_ROMS` names the folder; without it
+- **ROMs in the tests:** `COLONEL_HD_MT32_ROMS` names the folder; without it
   the ROM tests pass with a "skipped" note (CI). Locally the folder is
-  mounted read-only (`SIERRA_HD_MOUNTS=/home/user/roms/roland:/roms`); no
+  mounted read-only (`COLONEL_HD_MOUNTS=/home/user/roms/roland:/roms`); no
   file from it is in the worktree. **Decided.**
 - **Since done:** the SCI0 MT-32 driver, the ROM folder in the
   configuration and the fallback to the AdLib ("Milestone 7: the MT-32
@@ -2204,7 +2204,7 @@ scripts' bytecode (after the script patches), not from runs:
 
 - **MIDI logs in both engines.** Patch 0003 writes every message
   `MidiPlayer_Midi` hands to its MIDI driver (`_driver->send`, and
-  `_driver->sysEx` in `sysExNoDelay`) to `SIERRA_HD_MIDI=<file>`, before
+  `_driver->sysEx` in `sysExNoDelay`) to `COLONEL_HD_MIDI=<file>`, before
   `MidiDriver_MT32` and mt32emu's queue, keyed by the music timer call as
   the OPL log (0 for the driver's open). `sci-vm-trace --music mt32
   [--roms <folder>] [--midi <file>]` runs the deterministic VM on
@@ -2223,7 +2223,7 @@ scripts' bytecode (after the script patches), not from runs:
   `/home/user/roms/roland`, mounted as `/roms` (its log: "Falling back to
   MT32"). No CM-32L names there, so the MT-32 1.07 plays, as on our side.
   **Decided.**
-- **`run-scenario.sh` with `SIERRA_HD_MUSIC=mt32`** runs both engines on
+- **`run-scenario.sh` with `COLONEL_HD_MUSIC=mt32`** runs both engines on
   the MT-32 (`--music-driver=mt32`) and compares the MIDI logs
   (`compare-midi.py`) in place of the OPL writes, with the other six
   comparisons unchanged. **Decided.**
@@ -2546,7 +2546,7 @@ kRestoreGame on the project's format; their behaviour in detail is in
   **Decided.**
 - **Scenario saves:** `run-scenario.sh` gives each engine an empty save
   folder per run (`reference-saves/`, `sci-vm-saves/` in the output
-  folder; `tools/reference-scummvm/run.sh` takes `SIERRA_HD_SAVEPATH`).
+  folder; `tools/reference-scummvm/run.sh` takes `COLONEL_HD_SAVEPATH`).
   Before this the reference kept its saves in the build folder between
   runs, so a scenario that saves changed the next run's dialogs.
   **Decided.**
@@ -2612,7 +2612,7 @@ room 74 on restore, two saves restored older then newer),
 ## Milestone 8: restores on the MT-32 (2026-10-29)
 
 The five save scenarios matched on the AdLib but not on the MT-32
-(`SIERRA_HD_MUSIC=mt32`). Two causes, neither in patch 0003; the
+(`COLONEL_HD_MUSIC=mt32`). Two causes, neither in patch 0003; the
 reference was not rebuilt.
 
 - **Parallel reference runs shared their settings.** `run.sh` wrote the
@@ -2622,7 +2622,7 @@ reference was not rebuilt.
   attic-restore and inventory-restore then found a save before their first
   one (kGetSaveFiles 1 instead of 0, tick 6724 and 21702, the save
   dialog's box differing in the layout), and everything after differed.
-  With `SIERRA_HD_SAVEPATH` the settings now go next to the save folder
+  With `COLONEL_HD_SAVEPATH` the settings now go next to the save folder
   (`<folder>.ini`). **Decided.**
 - **What the device sees on a restore** (save-restore, outdoors-restore,
   restart-restore: everything matched but the MIDI log, from the restore

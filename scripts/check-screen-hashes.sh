@@ -14,14 +14,14 @@
 #
 # Without --check it writes the hash file; with --check it compares and
 # names, per run and N, the first tick and mode that differ. Inside the
-# toolchain container with the game at /game. SIERRA_HD_FRAMES names
+# toolchain container with the game at /game. COLONEL_HD_FRAMES names
 # sci-hd-frames (default the release build); the analysis cache is
 # build/screen-hashes-cache (made on the first run; the hashes do not
 # depend on it).
 set -uo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-frames="${SIERRA_HD_FRAMES:-${root}/build/release/tools/hd-frames/sci-hd-frames}"
+frames="${COLONEL_HD_FRAMES:-${root}/build/release/tools/hd-frames/sci-hd-frames}"
 file="${root}/tests/golden/screens.txt"
 check=false jobs=4
 while [[ $# -gt 0 ]]; do

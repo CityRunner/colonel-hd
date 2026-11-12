@@ -31,7 +31,7 @@ with CMake 3.28 or later and Ninja.
 
 The other presets are `debug`, `asan` (ASan + UBSan), `tsan`, `fuzz` and
 `cross-aarch64` (ARM64 under qemu-user). Behind a TLS-intercepting proxy, set
-`SIERRA_HD_EXTRA_CA=/path/to/ca-bundle.crt` for `docker/build-image.sh`.
+`COLONEL_HD_EXTRA_CA=/path/to/ca-bundle.crt` for `docker/build-image.sh`.
 
 ### Windows
 

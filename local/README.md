@@ -11,4 +11,4 @@ here is ever committed.
 The program does not look here by itself yet: give it the game folder on
 the command line or in `sierra-hd.ini` (`game_folder`, `mt32_rom`,
 `saves`). The development tools take these folders as their examples, for
-instance `SIERRA_HD_MOUNTS=$PWD/local/game:/game docker/run.sh ...`.
+instance `COLONEL_HD_MOUNTS=$PWD/local/game:/game docker/run.sh ...`.

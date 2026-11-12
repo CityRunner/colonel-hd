@@ -6,7 +6,7 @@ that a refactoring that changes any pixel of any resource is caught. Local
 only (it needs the game); the committed list is
 `tests/golden/resources.txt`, made with the repository's hints.
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         build/release/tools/golden-resources/sci-golden-resources /game tests/golden/resources.txt --hints hints --check
 
 Lines (`<kind> <id> <layer> <hash>`):

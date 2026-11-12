@@ -42,12 +42,12 @@ Tests that need the game files run locally, never in CI:
   scenario runs (`tools/vm-trace/README.md`).
 - MT-32 (milestone 7): the tests of `sci::audio::Mt32` in
   `sci-audio-tests` need the user's Roland ROMs, which are never in the
-  repository or in CI. Without `SIERRA_HD_MT32_ROMS` they pass with a
+  repository or in CI. Without `COLONEL_HD_MT32_ROMS` they pass with a
   "skipped" note; with it, they use the ROMs in that folder
   (`src/sci-audio/README.md`):
 
-      SIERRA_HD_MOUNTS=/path/to/roms:/roms docker/run.sh \
-          env SIERRA_HD_MT32_ROMS=/roms build/debug/tests/unit/sci-audio-tests
+      COLONEL_HD_MOUNTS=/path/to/roms:/roms docker/run.sh \
+          env COLONEL_HD_MT32_ROMS=/roms build/debug/tests/unit/sci-audio-tests
 - Hints (milestone 3a): the hint-anchor check, `sci-hint-tool <game> check
   hints` (`tools/hint-tool/README.md`). CI checks the hint files against
   their schema without the game (`scripts/check-hints.py`).
@@ -67,7 +67,7 @@ the gate for changes that touch the game's behaviour:
   ROMs), before merge, and the pull request names the log.
 - **What:** `scripts/check-local.sh` (S4 and S5 of the stage 5 plan):
 
-      SIERRA_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh \
+      COLONEL_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh \
           scripts/check-local.sh build/release
 
   It checks every committed golden file of `golden/`: `resources.txt`
@@ -91,7 +91,7 @@ kernel-call traces, the screens they show, the 1x priority and control maps
 and the actor positions of every kAnimate call (milestone 5) must match.
 `scenarios/scenarios.txt` lists the runs (file, stop tick, seed), and
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/vm-trace/run-all-scenarios.sh
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/vm-trace/run-all-scenarios.sh
 
 runs them all (`tools/vm-trace/run-scenario.sh` runs one).
 

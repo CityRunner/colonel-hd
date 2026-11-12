@@ -9,10 +9,10 @@
 #
 # Run it inside the toolchain container with the game at /game:
 #
-#   SIERRA_HD_MOUNTS=/path/to/game:/game,/path/to/reference-build:/ref docker/run.sh \
-#       env SIERRA_HD_REFERENCE=/ref tools/playthrough/check.sh [<stop tick>] [<output folder>]
+#   COLONEL_HD_MOUNTS=/path/to/game:/game,/path/to/reference-build:/ref docker/run.sh \
+#       env COLONEL_HD_REFERENCE=/ref tools/playthrough/check.sh [<stop tick>] [<output folder>]
 #
-# SIERRA_HD_VM_TRACE names the sci-vm-trace to run (default the debug build),
+# COLONEL_HD_VM_TRACE names the sci-vm-trace to run (default the debug build),
 # as for run-scenario.sh.
 set -euo pipefail
 
@@ -20,7 +20,7 @@ here="$(cd "$(dirname "$0")" && pwd)"
 root="${here}/../.."
 replay="${root}/tests/playthrough/playthrough.txt"
 checkpoints="${root}/tests/playthrough/checkpoints.txt"
-vm_trace="${SIERRA_HD_VM_TRACE:-${root}/build/debug/tools/vm-trace/sci-vm-trace}"
+vm_trace="${COLONEL_HD_VM_TRACE:-${root}/build/debug/tools/vm-trace/sci-vm-trace}"
 ticks="$(grep -v '^#' "${checkpoints}" | awk 'NF >= 4 {print $2}' | sort -n | paste -sd, -)"
 stop_tick="${1:-${ticks##*,}}"
 out="${2:-${root}/build/playthrough}"

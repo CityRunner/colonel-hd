@@ -16,7 +16,7 @@
 # Inside the toolchain container with the game at /game and the MT-32 ROMs
 # at /roms (folder roland/ inside):
 #
-#   SIERRA_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh scripts/check-local.sh build/release
+#   COLONEL_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh scripts/check-local.sh build/release
 #
 # Runs every check, prints one line per check with its time, and exits with
 # 1 if any failed. About 25-45 minutes on 4 cores (review/REFACTOR_REPORT.md).
@@ -46,9 +46,9 @@ check() {
 check resources "${build}/tools/golden-resources/sci-golden-resources" /game tests/golden/resources.txt --hints hints --check
 check pictures "${build}/tools/golden-hashes/sci-golden-hashes" /game tests/golden/pictures.txt --check --hints hints
 check sounds "${build}/tools/sound-render/sci-sound-render" /game --golden tests/golden/sounds.txt --check
-check screens env SIERRA_HD_FRAMES="${PWD}/${build}/tools/hd-frames/sci-hd-frames" scripts/check-screen-hashes.sh --check
-check vm env SIERRA_HD_VM_TRACE="${PWD}/${build}/tools/vm-trace/sci-vm-trace" \
-    SIERRA_HD_PROGRAM="${PWD}/${build}/src/app/sierra-hd" scripts/check-vm-hashes.sh --check
+check screens env COLONEL_HD_FRAMES="${PWD}/${build}/tools/hd-frames/sci-hd-frames" scripts/check-screen-hashes.sh --check
+check vm env COLONEL_HD_VM_TRACE="${PWD}/${build}/tools/vm-trace/sci-vm-trace" \
+    COLONEL_HD_PROGRAM="${PWD}/${build}/src/app/sierra-hd" scripts/check-vm-hashes.sh --check
 
 if [[ ${failed} -ne 0 ]]; then
     echo "The local gate FAILED: see the logs above."

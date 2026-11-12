@@ -2,7 +2,7 @@
 //
 // Choosing the music device (spec section 8): the MT-32 needs the user's
 // ROMs in the configured folder and falls back to the AdLib without them.
-// The tests that find real ROMs read SIERRA_HD_MT32_ROMS and pass with a
+// The tests that find real ROMs read COLONEL_HD_MT32_ROMS and pass with a
 // note without it (as in CI); the ROMs are never in the repository.
 
 #include "sci/audio/mt32.hpp"
@@ -100,9 +100,9 @@ SCI_TEST(mt32_control_ranks_prefer_the_mt32_1_07) {
 }
 
 SCI_TEST(music_choice_opens_the_users_mt32) {
-    const char* roms = std::getenv("SIERRA_HD_MT32_ROMS"); // NOLINT(concurrency-mt-unsafe): no threads here
+    const char* roms = std::getenv("COLONEL_HD_MT32_ROMS"); // NOLINT(concurrency-mt-unsafe): no threads here
     if (roms == nullptr || *roms == '\0') {
-        std::println("  skipped: SIERRA_HD_MT32_ROMS is not set");
+        std::println("  skipped: COLONEL_HD_MT32_ROMS is not set");
         return;
     }
     // The customer's folder holds the MT-32 1.07, a patched MT-32 control

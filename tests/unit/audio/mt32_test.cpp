@@ -2,7 +2,7 @@
 //
 // The MT-32 synthesiser (sci::audio::Mt32 on mt32emu). The ROMs are the
 // user's and never in the repository: the tests that need them read them from
-// the folder named by SIERRA_HD_MT32_ROMS and pass, with a note, when it is
+// the folder named by COLONEL_HD_MT32_ROMS and pass, with a note, when it is
 // not set or a file is missing (as in CI). The folder holds the files under
 // the names below (src/sci-audio/README.md).
 
@@ -33,7 +33,7 @@ using sci::core::ErrorCode;
 
 namespace {
 
-constexpr const char* roms_variable = "SIERRA_HD_MT32_ROMS";
+constexpr const char* roms_variable = "COLONEL_HD_MT32_ROMS";
 
 using Rom = std::optional<std::vector<std::uint8_t>>;
 

@@ -20,15 +20,15 @@
 # outputs (traces, lists of screen hashes) there, e.g. build/vm-baseline,
 # to diff a later mismatch; the screens themselves are always deleted once
 # hashed (disk). Inside the toolchain container with the game at /game;
-# SIERRA_HD_VM_TRACE names sci-vm-trace (default the release build),
-# SIERRA_HD_MT32_ROMS the ROM folder for --music mt32 (default /roms/roland
-# when it exists; empty: the messages are only logged), SIERRA_HD_PROGRAM
+# COLONEL_HD_VM_TRACE names sci-vm-trace (default the release build),
+# COLONEL_HD_MT32_ROMS the ROM folder for --music mt32 (default /roms/roland
+# when it exists; empty: the messages are only logged), COLONEL_HD_PROGRAM
 # the sierra-hd whose playthrough under Xvfb gives the end state (default
 # the release build; tools/playthrough/program-run.sh, AdLib, N = 4).
 set -uo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-vm_trace="${SIERRA_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
+vm_trace="${COLONEL_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
 file="${root}/tests/golden/vm.txt"
 check=false keep="" jobs=4
 while [[ $# -gt 0 ]]; do
@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
 done
 work="$(mktemp -d "${root}/build/vm-hashes.XXXXXX")"
 trap 'rm -rf "${work}"' EXIT
-roms="${SIERRA_HD_MT32_ROMS-/roms/roland}"
+roms="${COLONEL_HD_MT32_ROMS-/roms/roland}"
 if [[ -n "${roms}" && ! -d "${roms}" ]]; then roms=""; fi
 export vm_trace work keep root
 
@@ -101,7 +101,7 @@ xargs -P "${jobs}" -L 1 bash -c 'run_line "$@"' _ < "${work}/jobs.txt"
 
 # The program's own playthrough (Xvfb, --fast): its end state, which
 # program-run.sh also checks against sci-vm-trace's.
-SIERRA_HD_VM_TRACE="${vm_trace}" "${root}/tools/playthrough/program-run.sh" --out "${work}/program" \
+COLONEL_HD_VM_TRACE="${vm_trace}" "${root}/tools/playthrough/program-run.sh" --out "${work}/program" \
     > "${work}/program.log" 2>&1
 program_code=$?
 {

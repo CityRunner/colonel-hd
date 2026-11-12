@@ -9,7 +9,7 @@ add-to). They catch changes, not quality. The committed list is
 files (`--hints hints`; spec section 6.7 asks for golden hashes of a fixed,
 versioned set of hints).
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         build/release/tools/golden-hashes/sci-golden-hashes /game tests/golden/pictures.txt --check --hints hints
 
 One line per picture and kind (`hd1`, `hd2`, `hd5`, `hd10`, `original1`):
@@ -33,7 +33,7 @@ stacks").
 
 Without `--check` it writes the file. On ARM64 under qemu-user:
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         qemu-aarch64 build/cross-aarch64/tools/golden-hashes/sci-golden-hashes /game tests/golden/pictures.txt --check --hints hints
 
 Regenerate the file only for an intended change of the output, and say why

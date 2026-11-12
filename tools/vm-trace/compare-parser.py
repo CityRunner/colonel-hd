@@ -9,7 +9,7 @@ Both files hold one line per kParse and kSaid call (docs/formats/replay-and-trac
     <tick> <call> parse "<input>" <outcome> [word=...] [words=...] [tree=...] type=<n> claimed=<n>
     <tick> <call> said <spec> <outcome> claimed=<n>
 
-the reference's from SIERRA_HD_PARSER, ours from sci-vm-trace --parser.
+the reference's from COLONEL_HD_PARSER, ours from sci-vm-trace --parser.
 Prints the first difference (tick, call, input or spec, and the field that
 differs) and exits with 1, or prints "parser match: <n> parses, <m> said
 calls (<full> full, <partial> partial matches)".

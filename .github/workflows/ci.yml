@@ -52,7 +52,7 @@ concurrency:
 
 env:
   # Linux jobs cache compiler output in .ccache (docker/run.sh).
-  SIERRA_HD_CCACHE: "1"
+  COLONEL_HD_CCACHE: "1"
 
 jobs:
   # What this run has to do: the tier, and whether anything but documents

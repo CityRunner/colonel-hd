@@ -1,9 +1,9 @@
 # sierra-hd: dump pictures, views and fonts as ScummVM's SCI engine draws them.
 #
-# With SIERRA_HD_DUMP_GRAPHICS=<directory> set, the engine draws every picture
+# With COLONEL_HD_DUMP_GRAPHICS=<directory> set, the engine draws every picture
 # in several variants into cleared maps and writes the visual, priority and
 # control maps, writes every view cel bitmap and every font glyph
-# (engines/sci/sierra_hd_dump_graphics.cpp), then exits. Used by
+# (engines/sci/colonel_hd_dump_graphics.cpp), then exits. Used by
 # tools/graphics-compare to check sci-pic, sci-view and the fonts in sci-text
 # (milestone 2).
 diff -ruN a/engines/sci/module.mk b/engines/sci/module.mk
@@ -13,7 +13,7 @@ diff -ruN a/engines/sci/module.mk b/engines/sci/module.mk
  	event.o \
  	metaengine.o \
  	sci.o \
-+	sierra_hd_dump_graphics.o \
++	colonel_hd_dump_graphics.o \
  	util.o \
  	engine/features.o \
  	engine/file.o \
@@ -24,7 +24,7 @@ diff -ruN a/engines/sci/sci.cpp b/engines/sci/sci.cpp
  #include "sci/graphics/picture.h"
  #include "sci/graphics/ports.h"
  #include "sci/graphics/palette16.h"
-+#include "sci/sierra_hd_dump_graphics.h"
++#include "sci/colonel_hd_dump_graphics.h"
  #include "sci/graphics/remap.h"
  #include "sci/graphics/screen.h"
  #include "sci/graphics/text16.h"
@@ -33,15 +33,15 @@ diff -ruN a/engines/sci/sci.cpp b/engines/sci/sci.cpp
  	initGraphics();
  
 +	// sierra-hd reference tooling: dump pictures, views and fonts and exit.
-+	if (sierraHdDumpGraphicsDirectory())
-+		sierraHdDumpGraphicsAndExit();
++	if (colonelHdDumpGraphicsDirectory())
++		colonelHdDumpGraphicsAndExit();
 +
  	// Sound must be initialized after graphics because SysEx transfers at the
  	// start of the game must pump the event loop to avoid making the OS think
  	// that ScummVM is hanged, and pumping the event loop requires GfxCursor to
-diff -ruN a/engines/sci/sierra_hd_dump_graphics.cpp b/engines/sci/sierra_hd_dump_graphics.cpp
---- a/engines/sci/sierra_hd_dump_graphics.cpp	1970-01-01 00:00:00.000000000 +0000
-+++ b/engines/sci/sierra_hd_dump_graphics.cpp	2026-10-20 19:14:02.633612688 +0000
+diff -ruN a/engines/sci/colonel_hd_dump_graphics.cpp b/engines/sci/colonel_hd_dump_graphics.cpp
+--- a/engines/sci/colonel_hd_dump_graphics.cpp	1970-01-01 00:00:00.000000000 +0000
++++ b/engines/sci/colonel_hd_dump_graphics.cpp	2026-10-20 19:14:02.633612688 +0000
 @@ -0,0 +1,202 @@
 +/* sierra-hd reference tooling for ScummVM's SCI engine.
 + *
@@ -76,7 +76,7 @@ diff -ruN a/engines/sci/sierra_hd_dump_graphics.cpp b/engines/sci/sierra_hd_dump
 +#include "common/array.h"
 +
 +#include "sci/sci.h"
-+#include "sci/sierra_hd_dump_graphics.h"
++#include "sci/colonel_hd_dump_graphics.h"
 +#include "sci/resource/resource.h"
 +#include "sci/graphics/cache.h"
 +#include "sci/graphics/paint16.h"
@@ -232,12 +232,12 @@ diff -ruN a/engines/sci/sierra_hd_dump_graphics.cpp b/engines/sci/sierra_hd_dump
 +
 +} // End of anonymous namespace
 +
-+const char *sierraHdDumpGraphicsDirectory() {
-+	return getenv("SIERRA_HD_DUMP_GRAPHICS");
++const char *colonelHdDumpGraphicsDirectory() {
++	return getenv("COLONEL_HD_DUMP_GRAPHICS");
 +}
 +
-+void sierraHdDumpGraphicsAndExit() {
-+	Writer writer(sierraHdDumpGraphicsDirectory());
++void colonelHdDumpGraphicsAndExit() {
++	Writer writer(colonelHdDumpGraphicsDirectory());
 +	dumpPictures(writer);
 +	dumpViews(writer);
 +	dumpFonts(writer);
@@ -245,9 +245,9 @@ diff -ruN a/engines/sci/sierra_hd_dump_graphics.cpp b/engines/sci/sierra_hd_dump
 +}
 +
 +} // End of namespace Sci
-diff -ruN a/engines/sci/sierra_hd_dump_graphics.h b/engines/sci/sierra_hd_dump_graphics.h
---- a/engines/sci/sierra_hd_dump_graphics.h	1970-01-01 00:00:00.000000000 +0000
-+++ b/engines/sci/sierra_hd_dump_graphics.h	2026-10-20 19:04:27.592214753 +0000
+diff -ruN a/engines/sci/colonel_hd_dump_graphics.h b/engines/sci/colonel_hd_dump_graphics.h
+--- a/engines/sci/colonel_hd_dump_graphics.h	1970-01-01 00:00:00.000000000 +0000
++++ b/engines/sci/colonel_hd_dump_graphics.h	2026-10-20 19:04:27.592214753 +0000
 @@ -0,0 +1,26 @@
 +/* sierra-hd reference tooling for ScummVM's SCI engine.
 + *
@@ -257,20 +257,20 @@ diff -ruN a/engines/sci/sierra_hd_dump_graphics.h b/engines/sci/sierra_hd_dump_g
 + * (at your option) any later version.
 + */
 +
-+#ifndef SCI_SIERRA_HD_DUMP_GRAPHICS_H
-+#define SCI_SIERRA_HD_DUMP_GRAPHICS_H
++#ifndef SCI_COLONEL_HD_DUMP_GRAPHICS_H
++#define SCI_COLONEL_HD_DUMP_GRAPHICS_H
 +
 +namespace Sci {
 +
-+/** The directory named by SIERRA_HD_DUMP_GRAPHICS, or nullptr if it is not set. */
-+const char *sierraHdDumpGraphicsDirectory();
++/** The directory named by COLONEL_HD_DUMP_GRAPHICS, or nullptr if it is not set. */
++const char *colonelHdDumpGraphicsDirectory();
 +
 +/**
 + * Draws every picture, decodes every view and font with the engine's own
-+ * code, writes the results to sierraHdDumpGraphicsDirectory() and exits the
++ * code, writes the results to colonelHdDumpGraphicsDirectory() and exits the
 + * process: status 0 on success, 1 if a file cannot be written.
 + */
-+void sierraHdDumpGraphicsAndExit();
++void colonelHdDumpGraphicsAndExit();
 +
 +} // End of namespace Sci
 +
