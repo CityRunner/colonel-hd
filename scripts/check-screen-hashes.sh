@@ -81,6 +81,7 @@ diff <(printf '%s\n' "${hashes}") "${file}" | grep '^[<>]' | awk '
     { key = $2 " " ($3 ~ /^exit/ ? $3 : "N" substr($4, 9)) }
     !(key in seen) { seen[key] = 1; print "DIFFERS " $0; n++ }
     END { if (n) { print n " differences (first per run and N)"; exit 1 } }'
-code=$?
+# awk's status: with pipefail, grep's "no line matched" would count as a failure.
+code=${PIPESTATUS[2]}
 [[ ${code} -eq 0 ]] && echo "all screen hashes match"
 exit ${code}

@@ -540,7 +540,7 @@ it falls under B-27.
 |---|---|
 | Format, policy (with self-test), hints, vendored | pass |
 | S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-12, on `e82ae07`): style and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64; S6: all 42 executables identical to the build before step 1 |
-| CI on GitHub: one `quick` run and one Windows run | CIRUNS5 |
+| CI on GitHub: one `quick` run and one Windows run | **both pass** (2026-11-12, on `e82ae07`): run 43161682914 `quick` (plan, style and static analysis, linux-x64 release); run 43161685610 `windows` (plan, windows-x64, windows-arm64). No macOS job; every other job skipped as its scope says |
 
 A source file changed, in a comment only; S6 decides: identical
 executables mean no build output changed, and S4 screens and S5 are not
@@ -558,11 +558,21 @@ entries in the libraries' `CMakeLists.txt`. Nothing called
 | Check | Result |
 |---|---|
 | Format, policy (with self-test), hints, vendored | pass |
-| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS6 |
-| S4 (resources, pictures, sounds, screens) and S5 (VM hashes), on the game | GAMECHECKS6 |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-12, on `96c6f82`): style and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64; S6: all 42 executables identical to the build before step 1 (an unreferenced object of a static library is not linked) |
+| S4 (resources, pictures, sounds, screens) and S5 (VM hashes), on the game | **all pass**: resources 395 s, pictures 39 s, sounds 22 s, VM hashes 97 s; screens: "all screen hashes match" (re-run, about 20 min), after a fix of the check script, see below |
 
 Build inputs changed (two translation units removed), so by decision 1a
 the game checks run too.
+
+**A fault in the check tooling, fixed here** (test tooling of step 0.6,
+not product code): `scripts/check-screen-hashes.sh --check` exited with 1
+and printed nothing when no screen differed. Its last pipeline is
+`diff | grep | awk` under `pipefail`; with no difference `grep` matches no
+line and exits 1, which became the script's status. Step 0.7 had only
+generated the file twice and compared the files, so the `--check` path had
+not been run on a clean result. Fix: the status is `awk`'s
+(`${PIPESTATUS[2]}`). Checked with identical inputs (0) and differing
+inputs (1), then by the full re-run above.
 
 ## Run times of the game-dependent checks (for the per-commit suite)
 
