@@ -710,6 +710,49 @@ Logs: `build/stage5/scummvm-scenarios-end.log`,
 `build/stage5/scummvm-playthrough-end.log`. The run times differ by less
 than 1 %, within the noise of the container.
 
+### Step 13: the project renamed to colonel-hd (B-43)
+
+Done before the rest of step 12 (12b-12e), so that the long fuzzing and
+the final measurements run on the final code.
+
+**What changed** (commits 13a-13d):
+- 13a: `SIERRA_HD_*` → `COLONEL_HD_*`, `sierraHd` → `colonelHd`,
+  `sierra_hd` → `colonel_hd` (environment variables; identifiers and file
+  names inside `tools/scummvm-patches`).
+- 13b: `sierra-hd` → `colonel-hd` in 199 files: program and CMake project,
+  window titles and messages, `colonel-hd.ini` and its section, saves
+  `colonel-hd-NNN.sav`, the save header's program string, the hint format
+  id in the 86 hint files, schema, parser and fuzz corpora, the replay
+  header in the replay files, reader, ScummVM patch and corpora, the
+  toolchain image name, release archive names, docs (`docs/reports/`
+  included) and CI. Changed C++ lines re-formatted.
+- 13c: `sci::platform::config_file_name` (used by the program) and two
+  unit tests: the ini file and section names, an old-named section not
+  read; old-named saves neither listed nor read, new ones written under the
+  new name. The tests put the old name together from two pieces so that
+  the acceptance grep finds no mention.
+- 13d: the name mapping in `review/STATUS.md`; `docs/ASSUMPTIONS.md`,
+  "Project renamed to colonel-hd (2026-11-12)".
+- Outside the repository: the toolchain image re-tagged
+  `colonel-hd-toolchain:7b1506c8dc53d5cd` (the same image; the tag hash
+  changed with the Dockerfile's comment, so CI builds it once); the
+  reference ScummVM rebuilt from the renamed patches (old build kept in
+  `build/reference-scummvm-sierra`); the git remote set to
+  `CityRunner/colonel-hd`.
+
+**Checks** (main session, 2026-11-12, on `673fb25`):
+
+| Check | Result |
+|---|---|
+| B-43 criterion 1: `git grep -i -E 'sierra[-_ ]?hd\|sierrahd'` outside `third_party/` and `review/` | **nothing found** |
+| B-43 criterion 2: goldens | **all unchanged**: resources (423 s), pictures (41 s), sounds (22 s), screens (1255 s), VM hashes (97 s); no file in `tests/golden/` changed |
+| B-43 criterion 3: unit tests | `config_file_and_section_have_the_colonel_hd_name`, `save_folder_ignores_the_old_names` **pass** (33 platform tests) |
+| S1, S2/S3, fuzz (30 s per target), ARM64 | **pass** (style and clang-tidy; release, asan, tsan; B-45 and B-46 known) |
+| Format, policy (self-test 16/17), hints (86 files, 0 problems) | **pass** |
+| S6 replacement for this step (plan): compile commands of `1a8539e` and `673fb25` after the name substitution | **identical**: 539 commands each, 0 differences |
+| S6 binaries | differ, as expected (the program's name and strings); new reference `review/stage5/s6-ref-after-step13.sha256` |
+| ScummVM comparison with the rebuilt reference | SCUMMVM13 |
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so
