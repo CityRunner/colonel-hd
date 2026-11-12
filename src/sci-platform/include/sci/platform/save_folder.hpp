@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // The saved games in a folder (docs/formats/save-format.md, "Slots and the
-// save folder"): slot n is the file `sierra-hd-<nnn>.sav`, as ScummVM names
+// save folder"): slot n is the file `colonel-hd-<nnn>.sav`, as ScummVM names
 // a game's saves `<target>.<nnn>`. The program keeps them in `saves` next to
 // its configuration; sci-vm-trace in a folder of its own per run.
 #pragma once
@@ -23,7 +23,7 @@ public:
 
     [[nodiscard]] const std::filesystem::path& folder() const { return folder_; }
 
-    // The file name of a slot: sierra-hd-001.sav for slot 1.
+    // The file name of a slot: colonel-hd-001.sav for slot 1.
     [[nodiscard]] static std::string file_name(int slot);
 
     [[nodiscard]] std::vector<int> slots() override;

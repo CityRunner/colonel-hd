@@ -8,7 +8,7 @@ are in `sci-platform` (`sci/platform/analysis_cache.hpp`).
 
 ## Location and file names
 
-The cache is the directory `cache/` next to `sierra-hd.ini`. Each entry is
+The cache is the directory `cache/` next to `colonel-hd.ini`. Each entry is
 one file named after its variant:
 
 ```

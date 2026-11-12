@@ -44,8 +44,8 @@ compile_commands.json
 
 # What the program writes next to itself: its configuration, saved games,
 # the analysis cache and the game's own files.
-sierra-hd.ini
-sierra-hd.toml
+colonel-hd.ini
+colonel-hd.toml
 *.[Ss][Aa][Vv]
 analysis-cache/
 /cache/

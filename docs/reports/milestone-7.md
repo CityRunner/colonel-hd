@@ -68,10 +68,10 @@ comparison, gaps in the music) and "MT-32 ROMs (2026-10-28)".
 
    Nothing the interpreter sees depends on the HD images.
 6. **Comparisons with ScummVM** (the reference, patch 0003):
-   - an OPL register log (`SIERRA_HD_OPL`), the seventh comparison of every
+   - an OPL register log (`COLONEL_HD_OPL`), the seventh comparison of every
      scenario on AdLib;
-   - a MIDI log (`SIERRA_HD_MIDI`), compared instead when a scenario runs
-     on the MT-32 (`SIERRA_HD_MUSIC=mt32`).
+   - a MIDI log (`COLONEL_HD_MIDI`), compared instead when a scenario runs
+     on the MT-32 (`COLONEL_HD_MUSIC=mt32`).
 
    Both logs are keyed by music timer call. In deterministic mode the
    reference ages its AdLib notes on the virtual clock, as ours does.

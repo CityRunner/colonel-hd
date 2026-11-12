@@ -46,7 +46,7 @@ the structure in `docs/ARCHITECTURE.md` and `src/sci-vm/README.md`.
    `compare-screens.py` compares them pixel for pixel. A kernel-call trace
    cannot see drawing: a wrongly signed colour once filled every text box
    white while the traces matched.
-4. **The game in the program** (`sierra-hd`, the default; `--viewer` keeps
+4. **The game in the program** (`colonel-hd`, the default; `--viewer` keeps
    the room viewer of v0.1):
    - the interpreter runs on the main thread; wherever virtual time passes,
      the program presents the frame, reads input and waits that long in

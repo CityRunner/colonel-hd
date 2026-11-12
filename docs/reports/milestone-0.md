@@ -8,7 +8,7 @@ Spec: version 15. All decisions and assumptions are in `docs/ASSUMPTIONS.md`.
 
 1. **Inputs.** Asked the customer for the game folder, the ScummVM source
    and the repository hosting.
-   - Repository: `github.com/CityRunner/sierra-hd` (private).
+   - Repository: `github.com/CityRunner/colonel-hd` (private).
    - ScummVM: cloned from GitHub and pinned at
      `ed949213a23440447ea402e263daa871394b6bf9` (version `2026.4.1git`).
    - Game files: the customer's GOG copy, the English DOS 3.5" floppy
@@ -37,7 +37,7 @@ Spec: version 15. All decisions and assumptions are in `docs/ASSUMPTIONS.md`.
      and `reports/`.
    - The ten library targets of spec section 4.1, each with a README. Their
      dependency graph is acyclic by construction, checked at configure time.
-   - The `sierra-hd` program stub, which prints the libraries it links.
+   - The `colonel-hd` program stub, which prints the libraries it links.
 5. **Error-handling scheme.** The project builds without exceptions.
    Input-driven failures return `sci::core::Result<T>`
    (`std::expected<T, Error>`); bugs stop the program through `SCI_ASSERT`,

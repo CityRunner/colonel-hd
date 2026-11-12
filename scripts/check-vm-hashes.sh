@@ -23,7 +23,7 @@
 # COLONEL_HD_VM_TRACE names sci-vm-trace (default the release build),
 # COLONEL_HD_MT32_ROMS the ROM folder for --music mt32 (default /roms/roland
 # when it exists; empty: the messages are only logged), COLONEL_HD_PROGRAM
-# the sierra-hd whose playthrough under Xvfb gives the end state (default
+# the colonel-hd whose playthrough under Xvfb gives the end state (default
 # the release build; tools/playthrough/program-run.sh, AdLib, N = 4).
 set -uo pipefail
 

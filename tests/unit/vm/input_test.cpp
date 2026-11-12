@@ -32,13 +32,13 @@ std::vector<InputEvent> parsed(std::string_view text) {
 
 SCI_TEST(replay_needs_the_version_header) {
     SCI_CHECK(!parse_replay("").has_value());
-    SCI_CHECK(!parse_replay("sierra-hd replay 2\n").has_value());
+    SCI_CHECK(!parse_replay("colonel-hd replay 2\n").has_value());
     SCI_CHECK(!parse_replay("10 key 13\n").has_value());
-    SCI_CHECK(parse_replay("# comment\n\nsierra-hd replay 1\r\n").has_value());
+    SCI_CHECK(parse_replay("# comment\n\ncolonel-hd replay 1\r\n").has_value());
 }
 
 SCI_TEST(replay_text_types_each_character_then_enter) {
-    const auto events = parsed("sierra-hd replay 1\n600 text ab\n");
+    const auto events = parsed("colonel-hd replay 1\n600 text ab\n");
     SCI_CHECK(events.size() == 3);
     SCI_CHECK(events[0].tick == 600 && events[0].event.type == sci::vm::event_key_down);
     SCI_CHECK(events[0].event.character == 'a' && events[1].event.character == 'b');
@@ -48,7 +48,7 @@ SCI_TEST(replay_text_types_each_character_then_enter) {
 // As the reference reads it (sscanf "%15s %n"): all white space before the
 // text is skipped, the spaces inside and after it are typed.
 SCI_TEST(replay_text_starts_after_the_white_space) {
-    const auto events = parsed("sierra-hd replay 1\n600 text \t  a b \n700 text\n800 text   \n");
+    const auto events = parsed("colonel-hd replay 1\n600 text \t  a b \n700 text\n800 text   \n");
     SCI_CHECK(events.size() == 7);
     SCI_CHECK(events[0].event.character == 'a' && events[1].event.character == ' ');
     SCI_CHECK(events[2].event.character == 'b' && events[3].event.character == ' ');
@@ -58,7 +58,7 @@ SCI_TEST(replay_text_starts_after_the_white_space) {
 }
 
 SCI_TEST(replay_mouse_events_carry_their_position) {
-    const auto events = parsed("sierra-hd replay 1\n5 move 50 60\n9 down 120 150 3\n10 up 120 150\n12 key 27\n");
+    const auto events = parsed("colonel-hd replay 1\n5 move 50 60\n9 down 120 150 3\n10 up 120 150\n12 key 27\n");
     SCI_CHECK(events.size() == 4);
     SCI_CHECK(events[0].move_only && events[0].event.mouse == sci::vm::Point{.x = 50, .y = 60});
     SCI_CHECK(events[1].event.type == sci::vm::event_mouse_press && events[1].event.modifiers == 3);
@@ -67,15 +67,15 @@ SCI_TEST(replay_mouse_events_carry_their_position) {
 }
 
 SCI_TEST(replay_rejects_bad_lines) {
-    SCI_CHECK(!parse_replay("sierra-hd replay 1\n-1 key 13\n").has_value());
-    SCI_CHECK(!parse_replay("sierra-hd replay 1\n10 jump 13\n").has_value());
-    SCI_CHECK(!parse_replay("sierra-hd replay 1\n10 down 5\n").has_value());
-    SCI_CHECK(!parse_replay("sierra-hd replay 1\nten key 13\n").has_value());
+    SCI_CHECK(!parse_replay("colonel-hd replay 1\n-1 key 13\n").has_value());
+    SCI_CHECK(!parse_replay("colonel-hd replay 1\n10 jump 13\n").has_value());
+    SCI_CHECK(!parse_replay("colonel-hd replay 1\n10 down 5\n").has_value());
+    SCI_CHECK(!parse_replay("colonel-hd replay 1\nten key 13\n").has_value());
 }
 
 SCI_TEST(queue_delivers_input_when_due_and_peeks_without_removing) {
     EventQueue queue;
-    for (const InputEvent& event : parsed("sierra-hd replay 1\n10 key 97\n20 down 30 40 0\n")) {
+    for (const InputEvent& event : parsed("colonel-hd replay 1\n10 key 97\n20 down 30 40 0\n")) {
         queue.schedule(event);
     }
     SCI_CHECK(queue.get(0x7FFF, 9).type == sci::vm::event_none);

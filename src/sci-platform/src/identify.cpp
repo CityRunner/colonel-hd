@@ -128,13 +128,13 @@ core::Result<Identification> identify_game(std::span<const resource::GameFile> f
             .name = "The Colonel's Bequest, English DOS 5.25\" release 1.000.046",
             .warnings =
                 {
-                    "This release has not been tested with sierra-hd. The HD hints are made for the 3.5\" "
+                    "This release has not been tested with colonel-hd. The HD hints are made for the 3.5\" "
                     "release and are not used.",
                 },
         };
     }
     return core::make_error(core::ErrorCode::Unsupported,
-                            "This is not a supported release of The Colonel's Bequest. sierra-hd runs the English "
+                            "This is not a supported release of The Colonel's Bequest. colonel-hd runs the English "
                             "DOS EGA releases (see the README).");
 }
 

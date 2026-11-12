@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Up to the attic (room 74), with seed 0 and stop tick 9400 (milestone 5:
 # the picture stacks of room 74, see docs/ASSUMPTIONS.md "Milestone 5: the
 # picture stacks").

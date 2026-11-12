@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Out of the house onto the grounds, with seed 0 and stop tick 12600.
 # Passes the copy protection (seed 0) and answers "Yes" to "Have you
 # previously attended?", which starts Act I in Laura's bedroom (room 44;

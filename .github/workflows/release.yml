@@ -43,7 +43,7 @@ jobs:
         run: scripts/package-release.sh build/release linux-${{ matrix.arch }} dist
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: sierra-hd-linux-${{ matrix.arch }}
+          name: colonel-hd-linux-${{ matrix.arch }}
           path: dist/*
           # The release keeps the files; the workflow copies are only for
           # the publish job.
@@ -89,7 +89,7 @@ jobs:
         run: scripts/package-release.sh build/windows-release windows-${{ matrix.arch }} dist
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: sierra-hd-windows-${{ matrix.arch }}
+          name: colonel-hd-windows-${{ matrix.arch }}
           path: dist/*
           # The release keeps the files; the workflow copies are only for
           # the publish job.
@@ -120,6 +120,6 @@ jobs:
         run: |
           (cd dist && sha256sum * > SHA256SUMS)
           gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "sierra-hd ${GITHUB_REF_NAME#v}" \
+            --title "colonel-hd ${GITHUB_REF_NAME#v}" \
             --notes-file "docs/release-notes/$GITHUB_REF_NAME.md" \
             --prerelease

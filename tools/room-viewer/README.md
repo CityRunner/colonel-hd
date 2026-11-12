@@ -2,7 +2,7 @@
 
 A development tool that renders pictures (at 1x through path 1, or in HD
 through the vector path), views and fonts, and writes PNG files. The window
-version is the program itself (`sierra-hd`, release v0.1); this tool stays
+version is the program itself (`colonel-hd`, release v0.1); this tool stays
 for scripted and pixel-exact output.
 
     sci-room-viewer <game> pic <n>[+<n>...] [--map visual|priority|control|all]

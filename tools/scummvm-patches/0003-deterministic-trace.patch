@@ -1,4 +1,4 @@
-# sierra-hd: the deterministic mode and kernel-call trace (milestone 4).
+# colonel-hd: the deterministic mode and kernel-call trace (milestone 4).
 #
 # With COLONEL_HD_TRACE=<file> set, the SCI engine runs on a virtual clock
 # (time passes only where the engine sleeps or waits), drives the music timer
@@ -65,7 +65,7 @@ diff -ruN a/engines/sci/engine/kgraphics.cpp b/engines/sci/engine/kgraphics.cpp
  	rect = kControlCreateRect(x, y,
  				readSelectorValue(s->_segMan, controlObject, SELECTOR(nsRight)),
  				readSelectorValue(s->_segMan, controlObject, SELECTOR(nsBottom)));
-+	// sierra-hd: the control, for the layout file.
++	// colonel-hd: the control, for the layout file.
 +	if (colonelHdLayoutOn())
 +		colonelHdLayout("control %d %04x:%04x rect=%s state=%04x font=%d hilite=%d", type, PRINT_REG(controlObject),
 +		               colonelHdRect(rect, g_sci->_gfxPorts->_curPort).c_str(), (uint16)style, fontId, hilite ? 1 : 0);
@@ -87,7 +87,7 @@ diff -ruN a/engines/sci/engine/kmisc.cpp b/engines/sci/engine/kmisc.cpp
  	KGETTIME_DATE = 3
  };
  
-+// sierra-hd: in the deterministic mode the day starts at Monday 1990-01-01,
++// colonel-hd: in the deterministic mode the day starts at Monday 1990-01-01,
 +// 12:00:00 and runs with the virtual clock.
 +static void colonelHdTimeAndDate(TimeDate &timeDate) {
 +	if (!colonelHdDeterministic()) {
@@ -171,7 +171,7 @@ diff -ruN a/engines/sci/engine/kparse.cpp b/engines/sci/engine/kparse.cpp
  		warning("Said on non-string, pointer %04x:%04x", PRINT_REG(heap_said_block));
  		return NULL_REG;
  	}
-+	// sierra-hd: the size of the spec's block, for the parser file.
++	// colonel-hd: the size of the spec's block, for the parser file.
 +	const int saidSize = s->_segMan->dereference(heap_said_block).maxSize;
  
  #ifdef DEBUG_PARSER
@@ -186,7 +186,7 @@ diff -ruN a/engines/sci/engine/kparse.cpp b/engines/sci/engine/kparse.cpp
  	}
  
  	new_lastmatch = said(said_block, debug_parser);
-+	// sierra-hd: the match and the claimed flag this call leaves.
++	// colonel-hd: the match and the claimed flag this call leaves.
 +	if (colonelHdDeterministic()) {
 +		const char *outcome = new_lastmatch == SAID_NO_MATCH ? "none" : new_lastmatch == SAID_PARTIAL_MATCH ? "partial" : "full";
 +		colonelHdSaid(said_block, saidSize, outcome, new_lastmatch == SAID_FULL_MATCH ? 1 : 0);
@@ -198,7 +198,7 @@ diff -ruN a/engines/sci/engine/kparse.cpp b/engines/sci/engine/kparse.cpp
  	ResultWordListList words;
  	bool res = voc->tokenizeString(words, string.c_str(), &error);
  	voc->parserIsValid = false; /* not valid */
-+	// sierra-hd: the input and its outcome, for the parser file.
++	// colonel-hd: the input and its outcome, for the parser file.
 +	if (colonelHdDeterministic())
 +		colonelHdParseBegin(string.c_str(), event);
  
@@ -239,7 +239,7 @@ diff -ruN a/engines/sci/engine/savegame.cpp b/engines/sci/engine/savegame.cpp
  	// Time state:
 -	s->lastWaitTime = g_system->getMillis();
 -	s->_screenUpdateTime = g_system->getMillis();
-+	// sierra-hd: in the deterministic mode on the virtual clock.
++	// colonel-hd: in the deterministic mode on the virtual clock.
 +	s->lastWaitTime = colonelHdDeterministic() ? colonelHdMillis() : g_system->getMillis();
 +	s->_screenUpdateTime = colonelHdDeterministic() ? colonelHdMillis() : g_system->getMillis();
  	if (meta.version >= 34) {
@@ -304,7 +304,7 @@ diff -ruN a/engines/sci/engine/vm.cpp b/engines/sci/engine/vm.cpp
  		s->_executionStack.pop_back();
  }
  
-+// sierra-hd: in the deterministic mode, every kernel call is traced with
++// colonel-hd: in the deterministic mode, every kernel call is traced with
 +// its arguments (as the script passed them) and its result.
 +static void callKernelFunc(EngineState *s, int kernelCallNr, int argc) {
 +	if (!colonelHdDeterministic()) {
@@ -348,7 +348,7 @@ diff -ruN a/engines/sci/event.cpp b/engines/sci/event.cpp
  	// Throttle the screen update rate to 60fps.
  	EngineState *s = g_sci->getEngineState();
 -	if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
-+	// sierra-hd: on the virtual clock in the deterministic mode.
++	// colonel-hd: on the virtual clock in the deterministic mode.
 +	const uint32 now = colonelHdDeterministic() ? colonelHdMillis() : g_system->getMillis();
 +	if (now - s->_screenUpdateTime >= 1000 / 60) {
  		g_system->updateScreen();
@@ -362,7 +362,7 @@ diff -ruN a/engines/sci/event.cpp b/engines/sci/event.cpp
  	}
  
 +	if (colonelHdDeterministic()) {
-+		// sierra-hd: host input is drained and ignored except for quitting;
++		// colonel-hd: host input is drained and ignored except for quitting;
 +		// the replayed events due at this tick are queued instead.
 +		Common::Event hostEvent;
 +		while (g_system->getEventManager()->pollEvent(hostEvent)) {
@@ -405,7 +405,7 @@ diff -ruN a/engines/sci/graphics/animate.cpp b/engines/sci/graphics/animate.cpp
  }
  
  void GfxAnimate::kernelAnimate(reg_t listReference, bool cycle, int argc, reg_t *argv) {
-+	// sierra-hd: the cast of this call, written with its trace line.
++	// colonel-hd: the cast of this call, written with its trace line.
 +	if (colonelHdDeterministic())
 +		colonelHdCastBegin();
 +
@@ -416,7 +416,7 @@ diff -ruN a/engines/sci/graphics/animate.cpp b/engines/sci/graphics/animate.cpp
  	updateScreen(old_picNotValid);
  	restoreAndDelete(argc, argv);
  
-+	// sierra-hd: the cast in drawing order, with the values drawn.
++	// colonel-hd: the cast in drawing order, with the values drawn.
 +	if (colonelHdDeterministic()) {
 +		for (AnimateList::iterator it = _list.begin(); it != _list.end(); ++it)
 +			colonelHdCastEntry(it->object, it->x, it->y, it->z, it->priority, it->viewId, it->loopNo, it->celNo, it->signal);
@@ -441,7 +441,7 @@ diff -ruN a/engines/sci/graphics/controls16.cpp b/engines/sci/graphics/controls1
  
  void GfxControls16::texteditSetBlinkTime() {
 -	_texteditBlinkTime = g_system->getMillis() + (30 * 1000 / 60);
-+	// sierra-hd: on the virtual clock in the deterministic mode.
++	// colonel-hd: on the virtual clock in the deterministic mode.
 +	_texteditBlinkTime = (colonelHdDeterministic() ? colonelHdMillis() : g_system->getMillis()) + (30 * 1000 / 60);
  }
  
@@ -470,7 +470,7 @@ diff -ruN a/engines/sci/graphics/cursor.cpp b/engines/sci/graphics/cursor.cpp
  }
  
  void GfxCursor::kernelShow() {
-+	// sierra-hd: the cursor, for the layout file.
++	// colonel-hd: the cursor, for the layout file.
 +	if (colonelHdLayoutOn())
 +		colonelHdLayout("cursor show");
  	CursorMan.showMouse(true);
@@ -487,7 +487,7 @@ diff -ruN a/engines/sci/graphics/cursor.cpp b/engines/sci/graphics/cursor.cpp
  				resourceId, hotspot.x, hotspot.y, heightWidth, heightWidth);
  	}
  
-+	// sierra-hd: the shape, row by row: 0 black, f white, . transparent.
++	// colonel-hd: the shape, row by row: 0 black, f white, . transparent.
 +	if (colonelHdLayoutOn()) {
 +		Common::String image;
 +		const byte *pixel = rawBitmap->getUnsafeDataAt(0, heightWidth * heightWidth);
@@ -546,7 +546,7 @@ diff -ruN a/engines/sci/graphics/menu.cpp b/engines/sci/graphics/menu.cpp
  
  		listIterator++;
  	}
-+	// sierra-hd: the bar, for the layout file (its titles are text lines).
++	// colonel-hd: the bar, for the layout file (its titles are text lines).
 +	if (colonelHdLayoutOn())
 +		colonelHdLayout("menubar %s", colonelHdRect(_ports->_menuBarRect, _ports->_curPort).c_str());
  }
@@ -574,7 +574,7 @@ diff -ruN a/engines/sci/graphics/menu.cpp b/engines/sci/graphics/menu.cpp
  	}
  	_menuRect.bottom++;
  	_paint16->bitsShow(_menuRect);
-+	// sierra-hd: the open menu, for the layout file (its items are text lines).
++	// colonel-hd: the open menu, for the layout file (its items are text lines).
 +	if (colonelHdLayoutOn())
 +		colonelHdLayout("menu %d %s", newMenuId, colonelHdRect(_menuRect, _ports->_curPort).c_str());
  }
@@ -595,7 +595,7 @@ diff -ruN a/engines/sci/graphics/paint16.cpp b/engines/sci/graphics/paint16.cpp
  }
  
  void GfxPaint16::invertRect(const Common::Rect &rect) {
-+	// sierra-hd: a selection or the edit cursor, for the layout file.
++	// colonel-hd: a selection or the edit cursor, for the layout file.
 +	if (colonelHdLayoutOn())
 +		colonelHdLayout("invert %s", colonelHdRect(rect, _ports->_curPort).c_str());
  	int16 oldpenmode = _ports->_curPort->penMode;
@@ -607,7 +607,7 @@ diff -ruN a/engines/sci/graphics/paint16.cpp b/engines/sci/graphics/paint16.cpp
  reg_t GfxPaint16::kernelGraphSaveBox(const Common::Rect &rect, uint16 screenMask, bool hiresFlag) {
 -	return bitsSave(rect, screenMask, hiresFlag);
 +	const reg_t handle = bitsSave(rect, screenMask, hiresFlag);
-+	// sierra-hd: the area saved (in screen coordinates), for the layout file.
++	// colonel-hd: the area saved (in screen coordinates), for the layout file.
 +	if (colonelHdLayoutOn()) {
 +		Common::Rect saved;
 +		bitsGetRect(handle, &saved);
@@ -638,7 +638,7 @@ diff -ruN a/engines/sci/graphics/paint16.cpp b/engines/sci/graphics/paint16.cpp
  		bitsShow(rect);
  
  	_text16->Box(text, languageSplitter, needCJKFix, rect, alignment, -1);
-+	// sierra-hd: the text's rectangle, for the layout file.
++	// colonel-hd: the text's rectangle, for the layout file.
 +	if (colonelHdLayoutOn())
 +		colonelHdLayout("display %s align=%d font=%d back=%d saved=%d", colonelHdRect(rect, _ports->getPort()).c_str(),
 +		               alignment, _text16->GetFontId(), colorBack, doSaveUnder ? 1 : 0);
@@ -669,7 +669,7 @@ diff -ruN a/engines/sci/graphics/ports.cpp b/engines/sci/graphics/ports.cpp
  	wnd->penClr = colorPen;
  	wnd->backClr = colorBack;
  	drawWindow(wnd);
-+	// sierra-hd: the window's layout, for the layout file (the frame and
++	// colonel-hd: the window's layout, for the layout file (the frame and
 +	// the restored area are in the window manager port's coordinates).
 +	if (colonelHdLayoutOn())
 +		colonelHdLayout("window %d port=%s dims=%s restore=%s style=%04x priority=%d pen=%d back=%d title=%s", wnd->id,
@@ -704,7 +704,7 @@ diff -ruN a/engines/sci/graphics/text16.cpp b/engines/sci/graphics/text16.cpp
  		rect.bottom = totalHeight;
  		rect.right = maxWidth ? maxWidth : MIN(rect.right, maxTextWidth);
  	}
-+	// sierra-hd: the size, for the layout file.
++	// colonel-hd: the size, for the layout file.
 +	if (colonelHdLayoutOn())
 +		colonelHdLayout("size %s font=%d max=%d = %dx%d", colonelHdQuoted(text).c_str(), fontId, maxWidth, rect.width(),
 +		               rect.height());
@@ -715,7 +715,7 @@ diff -ruN a/engines/sci/graphics/text16.cpp b/engines/sci/graphics/text16.cpp
  	rect.top = _ports->_curPort->curTop;
  	rect.bottom = rect.top + _ports->_curPort->fontHeight;
  	text += from;
-+	// sierra-hd: the text drawn, for the layout file.
++	// colonel-hd: the text drawn, for the layout file.
 +	const char *colonelHdText = text;
 +	const int16 colonelHdLen = len;
 +	const int16 colonelHdLeft = _ports->_curPort->curLeft;
@@ -738,7 +738,7 @@ diff -ruN a/engines/sci/graphics/text16.cpp b/engines/sci/graphics/text16.cpp
  	_codeRefRects.clear();
  	_codeRefTempRect.left = _codeRefTempRect.top = -1;
  
-+	// sierra-hd: the text's box, for the layout file.
++	// colonel-hd: the text's box, for the layout file.
 +	if (colonelHdLayoutOn())
 +		colonelHdLayout("box %s align=%d font=%d show=%d %s", colonelHdRect(rect, _ports->_curPort).c_str(), alignment,
 +		               fontId, show ? 1 : 0, colonelHdQuoted(text).c_str());
@@ -783,7 +783,7 @@ diff -ruN a/engines/sci/sci.cpp b/engines/sci/sci.cpp
  		return;
  	}
  
-+	// sierra-hd: virtual time passes at once; the event queue is still
++	// colonel-hd: virtual time passes at once; the event queue is still
 +	// pumped once, as on every pass of the loop below.
 +	if (colonelHdDeterministic()) {
 +		_eventMan->getSciEvent(kSciEventPeek);
@@ -798,7 +798,7 @@ diff -ruN a/engines/sci/sci.cpp b/engines/sci/sci.cpp
  	}
  }
  
-+// sierra-hd: in the deterministic mode the play time runs on the virtual
++// colonel-hd: in the deterministic mode the play time runs on the virtual
 +// clock, from the virtual time it was last set at (Engine::setTotalPlayTime
 +// on the host clock).
 +static uint32 colonelHdPlayTimeStart = 0;
@@ -820,7 +820,7 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 --- a/engines/sci/colonel_hd_trace.cpp
 +++ b/engines/sci/colonel_hd_trace.cpp
 @@ -0,0 +1,700 @@
-+/* sierra-hd reference tooling for ScummVM's SCI engine.
++/* colonel-hd reference tooling for ScummVM's SCI engine.
 + *
 + * This program is free software: you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -844,7 +844,7 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 + *   virtual clock. The screen-update throttle (and its quit check) and the
 + *   text-edit cursor blink run on the virtual clock too.
 + * - Input comes only from COLONEL_HD_REPLAY (docs/formats/replay.md in
-+ *   sierra-hd); host input other than quitting is ignored. The mouse
++ *   colonel-hd); host input other than quitting is ignored. The mouse
 + *   position is virtual too.
 + * - Every kernel call is written to the trace file, one line each:
 + *     <call> <tick> <name>(<arguments>) = <result>
@@ -902,7 +902,7 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 + *     <tick> <call> <kind> <fields>
 + *   Rectangles are left,top,right,bottom (right and bottom exclusive),
 + *   strings are quoted as the parser's input. The kinds are listed in
-+ *   docs/formats/replay-and-trace.md of sierra-hd, "Layout files".
++ *   docs/formats/replay-and-trace.md of colonel-hd, "Layout files".
 + *
 + * Milestone 7 adds:
 + *
@@ -1071,11 +1071,11 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 +	return event;
 +}
 +
-+// Reads the replay file: "sierra-hd replay 1", then one event per line.
++// Reads the replay file: "colonel-hd replay 1", then one event per line.
 +void readReplay(State &s, const char *path) {
 +	FILE *file = fopen(path, "r");
 +	if (!file)
-+		error("sierra-hd: cannot read the replay file %s", path);
++		error("colonel-hd: cannot read the replay file %s", path);
 +	char line[1024];
 +	bool header = false;
 +	Common::Point position;
@@ -1084,8 +1084,8 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 +		if (!line[0] || line[0] == '#')
 +			continue;
 +		if (!header) {
-+			if (strcmp(line, "sierra-hd replay 1") != 0)
-+				error("sierra-hd: %s is not a version 1 replay file", path);
++			if (strcmp(line, "colonel-hd replay 1") != 0)
++				error("colonel-hd: %s is not a version 1 replay file", path);
 +			header = true;
 +			continue;
 +		}
@@ -1093,7 +1093,7 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 +		char kind[16] = {0};
 +		int consumed = 0;
 +		if (sscanf(line, "%lu %15s %n", &tick, kind, &consumed) < 2)
-+			error("sierra-hd: bad replay line: %s", line);
++			error("colonel-hd: bad replay line: %s", line);
 +		const char *rest = line + consumed;
 +		unsigned int a = 0, b = 0, c = 0;
 +		ReplayEvent replayEvent;
@@ -1117,7 +1117,7 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 +			replayEvent.event = makeEvent(kSciEventNone, 0, 0, position);
 +			s.replay.push_back(replayEvent);
 +		} else {
-+			error("sierra-hd: bad replay line: %s", line);
++			error("colonel-hd: bad replay line: %s", line);
 +		}
 +	}
 +	fclose(file);
@@ -1132,7 +1132,7 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 +			s.on = true;
 +			s.trace = fopen(trace, "w");
 +			if (!s.trace)
-+				error("sierra-hd: cannot write the trace file %s", trace);
++				error("colonel-hd: cannot write the trace file %s", trace);
 +			s.seed = numberFrom("COLONEL_HD_SEED", 0);
 +			s.stopTick = numberFrom("COLONEL_HD_STOP_TICK", 0xFFFFFFFF);
 +			s.stopCalls = numberFrom("COLONEL_HD_STOP_CALLS", 0xFFFFFFFF);
@@ -1149,31 +1149,31 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 +			if (actors && *actors) {
 +				s.actors = fopen(actors, "w");
 +				if (!s.actors)
-+					error("sierra-hd: cannot write the actors file %s", actors);
++					error("colonel-hd: cannot write the actors file %s", actors);
 +			}
 +			const char *layout = getenv("COLONEL_HD_LAYOUT");
 +			if (layout && *layout) {
 +				s.layout = fopen(layout, "w");
 +				if (!s.layout)
-+					error("sierra-hd: cannot write the layout file %s", layout);
++					error("colonel-hd: cannot write the layout file %s", layout);
 +			}
 +			const char *opl = getenv("COLONEL_HD_OPL");
 +			if (opl && *opl) {
 +				s.opl = fopen(opl, "w");
 +				if (!s.opl)
-+					error("sierra-hd: cannot write the OPL file %s", opl);
++					error("colonel-hd: cannot write the OPL file %s", opl);
 +			}
 +			const char *midi = getenv("COLONEL_HD_MIDI");
 +			if (midi && *midi) {
 +				s.midi = fopen(midi, "w");
 +				if (!s.midi)
-+					error("sierra-hd: cannot write the MIDI file %s", midi);
++					error("colonel-hd: cannot write the MIDI file %s", midi);
 +			}
 +			const char *parser = getenv("COLONEL_HD_PARSER");
 +			if (parser && *parser) {
 +				s.parser = fopen(parser, "w");
 +				if (!s.parser)
-+					error("sierra-hd: cannot write the parser file %s", parser);
++					error("colonel-hd: cannot write the parser file %s", parser);
 +			}
 +		}
 +	}
@@ -1216,7 +1216,7 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 +			fclose(s.opl);
 +		if (s.midi)
 +			fclose(s.midi);
-+		warning("sierra-hd: the game did not stop at the limit; ending the process");
++		warning("colonel-hd: the game did not stop at the limit; ending the process");
 +		exit(0);
 +	}
 +}
@@ -1230,7 +1230,7 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 +	snprintf(path, sizeof(path), "%s/%06u.%s.pgm", s.screens, tick, name);
 +	FILE *file = fopen(path, "wb");
 +	if (!file)
-+		error("sierra-hd: cannot write %s", path);
++		error("colonel-hd: cannot write %s", path);
 +	fprintf(file, "P5\n%d %d\n15\n", width, height);
 +	for (int16 y = 0; y < height; ++y) {
 +		for (int16 x = 0; x < width; ++x)
@@ -1249,14 +1249,14 @@ diff -ruN a/engines/sci/colonel_hd_trace.cpp b/engines/sci/colonel_hd_trace.cpp
 +	if (!surface)
 +		return;
 +	if (surface->format.bytesPerPixel != 1)
-+		error("sierra-hd: the screen is not 8 bits per pixel");
++		error("colonel-hd: the screen is not 8 bits per pixel");
 +	byte palette[256 * 3];
 +	g_system->getPaletteManager()->grabPalette(palette, 0, 256);
 +	char path[1024];
 +	snprintf(path, sizeof(path), "%s/%06u.ppm", s.screens, tick);
 +	FILE *file = fopen(path, "wb");
 +	if (!file)
-+		error("sierra-hd: cannot write %s", path);
++		error("colonel-hd: cannot write %s", path);
 +	fprintf(file, "P6\n%d %d\n255\n", surface->w, surface->h);
 +	for (int y = 0; y < surface->h; ++y) {
 +		const byte *row = (const byte *)surface->getBasePtr(0, y);
@@ -1524,7 +1524,7 @@ diff -ruN a/engines/sci/colonel_hd_trace.h b/engines/sci/colonel_hd_trace.h
 --- a/engines/sci/colonel_hd_trace.h
 +++ b/engines/sci/colonel_hd_trace.h
 @@ -0,0 +1,94 @@
-+/* sierra-hd reference tooling for ScummVM's SCI engine.
++/* colonel-hd reference tooling for ScummVM's SCI engine.
 + *
 + * This program is free software: you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -1633,7 +1633,7 @@ diff -ruN a/engines/sci/sound/drivers/adlib.cpp b/engines/sci/sound/drivers/adli
  	void setTimerCallback(void *timerParam, Common::TimerManager::TimerProc timerProc) override;
  
  	void onTimer();
-+	// sierra-hd: the note ageing of onTimer, which the virtual clock runs in
++	// colonel-hd: the note ageing of onTimer, which the virtual clock runs in
 +	// the deterministic mode.
 +	static void colonelHdTimer(void *driver);
 +	void ageNotes();
@@ -1644,7 +1644,7 @@ diff -ruN a/engines/sci/sound/drivers/adlib.cpp b/engines/sci/sound/drivers/adli
  	_isOpen = true;
  
  	_opl->start(new Common::Functor0Mem<void, MidiDriver_AdLib>(this, &MidiDriver_AdLib::onTimer));
-+	// sierra-hd: in the deterministic mode the notes age on the virtual
++	// colonel-hd: in the deterministic mode the notes age on the virtual
 +	// clock, after each music timer call, not on the OPL callback.
 +	if (colonelHdDeterministic())
 +		colonelHdSetDriverTimer(&MidiDriver_AdLib::colonelHdTimer, this);
@@ -1697,7 +1697,7 @@ diff -ruN a/engines/sci/sound/drivers/midi.cpp b/engines/sci/sound/drivers/midi.
  
  namespace Sci {
  
-+// sierra-hd: every channel message MidiPlayer_Midi hands to the MIDI driver
++// colonel-hd: every channel message MidiPlayer_Midi hands to the MIDI driver
 +// is written to COLONEL_HD_MIDI first (sysExNoDelay does the same for SysEx).
 +static void colonelHdSend(MidiDriver *driver, uint32 b) {
 +	colonelHdMidiSend(b);
@@ -1841,7 +1841,7 @@ diff -ruN a/engines/sci/sound/music.cpp b/engines/sci/sound/music.cpp
  	if (_pMidiDrv && !_pMidiDrv->open()) {
 -		_pMidiDrv->setTimerCallback(this, &miditimerCallback);
  		_dwTempo = _pMidiDrv->getBaseTempo();
-+		// sierra-hd: in the deterministic mode the virtual clock runs the
++		// colonel-hd: in the deterministic mode the virtual clock runs the
 +		// music timer, not the driver.
 +		if (colonelHdDeterministic())
 +			colonelHdSetMusic(this, _dwTempo);

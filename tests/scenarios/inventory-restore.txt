@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # A save with something in the inventory, a change, and the restore
 # (milestone 8), with seed 0 and stop tick 25000. Starts as
 # inventory-and-actions.txt up to the kitchen (room 35), where "open the

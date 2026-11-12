@@ -80,7 +80,7 @@ def make(number, sha, candidates, decisions, analyser):
     if not chains and not regions:
         return None
     hints = {
-        "format": "sierra-hd-hints",
+        "format": "colonel-hd-hints",
         "version": 1,
         "picture": number,
         "pic_sha256": sha,

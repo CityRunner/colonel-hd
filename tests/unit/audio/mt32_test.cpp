@@ -248,7 +248,7 @@ SCI_TEST(mt32_accepts_sysex) {
         return;
     }
     // Display text (system area 0x20 00 00).
-    constexpr std::string_view text = "sierra-hd";
+    constexpr std::string_view text = "colonel-hd";
     const std::vector<std::uint8_t> characters(text.begin(), text.end());
     synth->play_sysex_now(data_set({0x20, 0x00, 0x00}, characters));
     SCI_CHECK(synth->display_message() == text);

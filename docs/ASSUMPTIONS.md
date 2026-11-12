@@ -25,7 +25,7 @@ Status markers: **decided** (final unless the customer objects),
   document's tab title still says "Custom Rust SCI0 Interpreter"; the
   customer confirmed this is legacy naming and that C++23 (spec section 2)
   applies. **Decided.**
-- **Repository.** `github.com/CityRunner/sierra-hd`, private. **Decided** by
+- **Repository.** `github.com/CityRunner/colonel-hd`, private. **Decided** by
   the customer.
 - **ScummVM source.** Cloned from `https://github.com/scummvm/scummvm`, as
   agreed with the customer. Kept outside the repository. **Decided.**
@@ -606,7 +606,7 @@ finish between limits, so that each limit costs at most one small task.
 ## Milestone 0 approval (2026-10-20)
 
 Milestone 0 was approved and merged
-([CityRunner/sierra-hd#1](https://github.com/CityRunner/sierra-hd/pull/1)),
+([CityRunner/colonel-hd#1](https://github.com/CityRunner/colonel-hd/pull/1)),
 together with the copy-protection approach and the change to make macOS CI
 optional (both above).
 
@@ -682,7 +682,7 @@ optional (both above).
 ## Milestone 1 approval (2026-10-20)
 
 Milestone 1 was approved and merged
-([CityRunner/sierra-hd#2](https://github.com/CityRunner/sierra-hd/pull/2)).
+([CityRunner/colonel-hd#2](https://github.com/CityRunner/colonel-hd/pull/2)).
 
 ## Milestone 2: path 1, views, fonts and the room viewer (2026-10-20)
 
@@ -745,7 +745,7 @@ Milestone 1 was approved and merged
 ## Milestone 2 approval (2026-10-20)
 
 Milestone 2 was approved and merged
-([CityRunner/sierra-hd#3](https://github.com/CityRunner/sierra-hd/pull/3)).
+([CityRunner/colonel-hd#3](https://github.com/CityRunner/colonel-hd/pull/3)).
 The milestone 2 report and docs had called the vector path "milestone 3a";
 it is milestone 3 (the HD picture pipeline), and 3a is the separate gate
 after it (hints, release v0.1 with the window). The labels are corrected.
@@ -843,7 +843,7 @@ decisions.
 ## Milestone 3 approval (2026-10-20)
 
 Milestone 3 was approved and merged
-([CityRunner/sierra-hd#4](https://github.com/CityRunner/sierra-hd/pull/4)).
+([CityRunner/colonel-hd#4](https://github.com/CityRunner/colonel-hd/pull/4)).
 The customer decided:
 
 - **Fitting tolerance: 0.5 original pixels** (spec section 15, open question
@@ -941,8 +941,8 @@ The customer decided:
   - MD5 is implemented in sci-core for this alone.
 
   **Decided.**
-- **Configuration.** The file is `sierra-hd.ini` next to the executable,
-  section `[sierra-hd]`, `format = 1`, with these keys:
+- **Configuration.** The file is `colonel-hd.ini` next to the executable,
+  section `[colonel-hd]`, `format = 1`, with these keys:
   - `game_folder`;
   - `mode` (hd or original);
   - `scale` (auto, or 1 to 16);
@@ -955,7 +955,7 @@ The customer decided:
 - **Release v0.1** (spec section 12; moved to after milestone 3b by
   addendum A1). The program and its release workflow are built at 3a;
   the `v0.1.0` tag that publishes them follows the 3b gate.
-  - The program `sierra-hd` is the room viewer in an SDL3 window:
+  - The program `colonel-hd` is the room viewer in an SDL3 window:
     - pictures in HD or original mode, with the visual or priority map;
     - views with their animation, and fonts;
     - N automatic (the largest that fits in physical pixels) or chosen;
@@ -1059,7 +1059,7 @@ change spec section 2. Its effect on the plan:
 ## Milestone 3b approval (2026-10-21)
 
 Milestone 3b was approved and merged
-([CityRunner/sierra-hd#6](https://github.com/CityRunner/sierra-hd/pull/6)).
+([CityRunner/colonel-hd#6](https://github.com/CityRunner/colonel-hd/pull/6)).
 The customer decided:
 
 - **Option 1 of the trade-off**: the remaining A1 cases are accepted as
@@ -1284,7 +1284,7 @@ Scope:
   - The scene serialization is in sci-vector, as bytes in and bytes out.
   - The cache with its file I/O is in sci-platform (app's library), because
     spec section 4.2 keeps the libraries free of OS files.
-  - The files are in `cache/` next to `sierra-hd.ini`.
+  - The files are in `cache/` next to `colonel-hd.ini`.
   - **Decided.**
 - **The key** is the SHA-256 of the game digest, `analyser_version`,
   `scene_format_version`, the bytes of the picture's hint file and the
@@ -2482,7 +2482,7 @@ kRestoreGame on the project's format; their behaviour in detail is in
 `docs/formats/save-format.md`, "Slots and the save folder".
 
 - **Slots and folder:** slots 1 to 99 (virtual ids 101 to 199), files
-  `sierra-hd-<nnn>.sav` in `saves/` next to the configuration, apart from
+  `colonel-hd-<nnn>.sav` in `saves/` next to the configuration, apart from
   the `files/` folder of the game's own files; `sci-vm-trace --saves
   <folder>`, by default a new empty folder per run. **Decided.**
 - **The save folder key:** the configuration takes an optional
@@ -2858,7 +2858,7 @@ the old numbers to the new ones, so older references stay unambiguous:
   unchanged. **Decided.**
 - **The state hash at a tick past the end.** `sci-vm-trace --state-hash`
   reports a requested tick the run does not reach with the state as the
-  game ended (as `--globals` did), so that `sierra-hd --end-state` can be
+  game ended (as `--globals` did), so that `colonel-hd --end-state` can be
   compared with it. **Decided.**
 - **The window opens at the configured N** (`scale` 1 to 16; at most what
   the display's usable area holds), not at 3: the frame is never larger

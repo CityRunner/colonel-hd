@@ -118,7 +118,7 @@ core::Result<ParsedConfig> parse_config(std::string_view text) {
             continue;
         }
         if (line.front() == '[') {
-            in_section = line == "[sierra-hd]";
+            in_section = line == "[colonel-hd]";
             continue;
         }
         const auto equals = line.find('=');
@@ -165,8 +165,8 @@ std::string format_config(const Config& config) {
         const std::u8string text = p.u8string();
         return text.empty() ? std::string() : " " + std::string(text.begin(), text.end());
     };
-    return std::format("; sierra-hd configuration\n"
-                       "[sierra-hd]\n"
+    return std::format("; colonel-hd configuration\n"
+                       "[colonel-hd]\n"
                        "format = {}\n"
                        "game_folder ={}\n"
                        "; hd or original\n"

@@ -102,7 +102,7 @@ core::Result<SaveHeader> parse_header(std::span<const std::uint8_t> file, const 
     if (file.size() < prefix ||
         !std::ranges::equal(file.first(save_magic.size()), save_magic,
                             [](std::uint8_t byte, char c) { return byte == static_cast<std::uint8_t>(c); })) {
-        return core::make_error(core::ErrorCode::InvalidData, "This is not a sierra-hd saved game.");
+        return core::make_error(core::ErrorCode::InvalidData, "This is not a colonel-hd saved game.");
     }
     SaveHeader header;
     StateReader version(file.subspan(save_magic.size(), 4));

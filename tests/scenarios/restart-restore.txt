@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Restoring after a restart (milestone 8), with seed 0 and stop tick 9000.
 # The game offers no restore before Act I: F7 on the title (tick 300) and
 # on "Have you previously attended?" (tick 920) does nothing. Passes the

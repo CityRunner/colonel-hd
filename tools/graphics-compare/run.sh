@@ -16,11 +16,11 @@ build="${2:-build/release}"
 out="build/dumps"
 
 cmake --build "${build}" --target sci-graphics-dump
-rm -rf "${out}/scummvm-gfx" "${out}/sierra-hd-gfx"
-mkdir -p "${out}/scummvm-gfx" "${out}/sierra-hd-gfx"
+rm -rf "${out}/scummvm-gfx" "${out}/colonel-hd-gfx"
+mkdir -p "${out}/scummvm-gfx" "${out}/colonel-hd-gfx"
 
 COLONEL_HD_DUMP_GRAPHICS="${PWD}/${out}/scummvm-gfx" SDL_AUDIODRIVER=dummy \
     xvfb-run -a tools/reference-scummvm/run.sh build/reference-scummvm "${game}" > "${out}/scummvm-gfx.log" 2>&1
-"${build}/tools/graphics-dump/sci-graphics-dump" "${game}" "${out}/sierra-hd-gfx" 2> "${out}/sierra-hd-gfx.log"
+"${build}/tools/graphics-dump/sci-graphics-dump" "${game}" "${out}/colonel-hd-gfx" 2> "${out}/colonel-hd-gfx.log"
 
-python3 tools/graphics-compare/compare.py "${out}/scummvm-gfx" "${out}/sierra-hd-gfx"
+python3 tools/graphics-compare/compare.py "${out}/scummvm-gfx" "${out}/colonel-hd-gfx"

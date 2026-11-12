@@ -375,8 +375,8 @@ core::Result<PictureHints> parse_hints(std::string_view text) {
     PictureHints hints;
     if (in.members(file, "file", {"format", "version", "picture", "pic_sha256", "analyser"},
                    {"regions", "chains", "gaps", "symmetry", "relations"})) {
-        if (in.text(file.member("format"), "format") != "sierra-hd-hints") {
-            in.fail("format", "\"sierra-hd-hints\" expected");
+        if (in.text(file.member("format"), "format") != "colonel-hd-hints") {
+            in.fail("format", "\"colonel-hd-hints\" expected");
         }
         in.integer(*file.member("version"), "version", hints_version, hints_version);
         hints.picture = static_cast<int>(in.integer(*file.member("picture"), "picture", 0, max_picture));

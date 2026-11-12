@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Two saves in the attic stairway (room 74) and their restores (milestone
 # 8), with seed 0 and stop tick 14500. Starts as attic.txt (the same
 # route to room 74, about tick 5460, where the stairway shows picture 174

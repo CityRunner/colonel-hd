@@ -5,7 +5,7 @@
 # "<act number> <tick>" of tests/playthrough/act-saves.txt, the replay runs
 # up to that tick, then the game's own save dialog is used as a player would:
 # F5, the description ("Act I", "Act II", ...) and Enter. The save is
-# written as <output folder>/sierra-hd-<n>.sav, the slot the program would
+# written as <output folder>/colonel-hd-<n>.sav, the slot the program would
 # give it, so the whole folder can be copied into the program's saves folder.
 #
 #   tools/playthrough/act-saves.sh [output folder]
@@ -56,7 +56,7 @@ while read -r number tick _; do
         status=1
         continue
     fi
-    cp "${save}" "${out}/$(printf 'sierra-hd-%03d.sav' "${number}")"
-    echo "${description}: tick ${tick}, $(printf 'sierra-hd-%03d.sav' "${number}"), $(stat -c %s "${save}") bytes"
+    cp "${save}" "${out}/$(printf 'colonel-hd-%03d.sav' "${number}")"
+    echo "${description}: tick ${tick}, $(printf 'colonel-hd-%03d.sav' "${number}"), $(stat -c %s "${save}") bytes"
 done < <(grep -v '^#' "${table}")
 exit "${status}"

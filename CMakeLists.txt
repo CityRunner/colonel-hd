@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required(VERSION 3.28)
 
-project(sierra-hd
+project(colonel-hd
     VERSION 0.9.0
     DESCRIPTION "HD version of The Colonel's Bequest on a custom SCI0 interpreter"
     LANGUAGES CXX)
@@ -13,7 +13,7 @@ endif()
 option(SCI_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 option(SCI_BUILD_TESTS "Build the unit and fuzz tests" ON)
 option(SCI_BUILD_TOOLS "Build the development tools under tools/" ON)
-option(SCI_BUILD_APP "Build the program (sierra-hd) and SDL3; off for the ARM64 tests under qemu-user" ON)
+option(SCI_BUILD_APP "Build the program (colonel-hd) and SDL3; off for the ARM64 tests under qemu-user" ON)
 option(SCI_DEBUG_HIGHLIGHT "Development only: let the room viewer highlight vector replacements" OFF)
 option(SCI_WITHOUT_STROKE_INTEGRITY
        "Development only: build scenes without the stroke integrity pass (the A1 baseline; golden tests fail)" OFF)

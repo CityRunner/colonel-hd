@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # The opening, with seed 0 and stop tick 6000.
 # Leaves the title with Enter and passes the copy protection (the answer
 # for seed 0), then clicks "No" to "Have you previously attended a

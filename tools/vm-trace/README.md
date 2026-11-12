@@ -57,7 +57,7 @@ does.
   `<tick> <reached> <component> <bytes> <sha-256>` for each component, so
   that two files show which part of the state differs. A tick the run does
   not reach because the game quit gets the state as the game ended, with
-  `<reached>` the tick it ended at (`sierra-hd --end-state` writes the
+  `<reached>` the tick it ended at (`colonel-hd --end-state` writes the
   same). Two runs of the same scenario, and runs on x86-64 and ARM64, give
   the same file:
 

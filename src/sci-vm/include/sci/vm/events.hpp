@@ -57,7 +57,7 @@ struct InputEvent {
     bool move_only = false;
 };
 
-// Reads a replay file (`sierra-hd replay 1`).
+// Reads a replay file (`colonel-hd replay 1`).
 [[nodiscard]] core::Result<std::vector<InputEvent>> parse_replay(std::string_view text);
 
 } // namespace sci::vm

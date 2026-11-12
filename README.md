@@ -1,4 +1,4 @@
-# sierra-hd
+# colonel-hd
 
 An HD version of Sierra's *The Colonel's Bequest* (DOS, EGA, SCI0), running
 on its own SCI0 interpreter written in C++23. The vector backgrounds are
@@ -26,7 +26,7 @@ with CMake 3.28 or later and Ninja.
 
 ### Linux, in the pinned toolchain container (recommended)
 
-    docker/build-image.sh                       # once; tags sierra-hd-toolchain:<hash>
+    docker/build-image.sh                       # once; tags colonel-hd-toolchain:<hash>
     docker/run.sh cmake --workflow --preset release
 
 The other presets are `debug`, `asan` (ASan + UBSan), `tsan`, `fuzz` and
@@ -41,8 +41,8 @@ From a Visual Studio developer prompt with LLVM 23.1.4 first on `PATH`, run
 
 ## Running
 
-    build/release/src/app/sierra-hd /path/to/game            # the game
-    build/release/src/app/sierra-hd --viewer /path/to/game   # the room viewer of release 0.1
+    build/release/src/app/colonel-hd /path/to/game            # the game
+    build/release/src/app/colonel-hd --viewer /path/to/game   # the room viewer of release 0.1
 
 - **In the game:** F12 switches between HD and the original look, and F11
   or Alt+Enter toggles fullscreen.
@@ -50,20 +50,20 @@ From a Visual Studio developer prompt with LLVM 23.1.4 first on `PATH`, run
   priority map), every view with its animation, and every font.
 - **Analysis:** the first launch analyses all pictures for HD, behind a
   progress bar, and keeps the result in `cache/`.
-- **Files:** the program reads `sierra-hd.ini` and `hints/` next to the
+- **Files:** the program reads `colonel-hd.ini` and `hints/` next to the
   executable. In a build tree, copy `hints/` next to it, or the HD pictures
   are drawn without hints.
 - **Saves:** the game's own File menu saves and restores; the saves go to
   `saves/` next to the configuration, one file per slot
-  (`sierra-hd-001.sav` to `sierra-hd-099.sav`,
+  (`colonel-hd-001.sav` to `colonel-hd-099.sav`,
   `docs/formats/save-format.md`), and the files the game itself writes to
   `files/`.
 - **Music:** `music = adlib` (default), `mt32` or `off` in
-  `sierra-hd.ini`. For the MT-32, put a control ROM and a PCM ROM of the
+  `colonel-hd.ini`. For the MT-32, put a control ROM and a PCM ROM of the
   MT-32 or CM-32L (files ending in `.rom`, recognised by their contents) in
   a folder and set `mt32_rom` to it; without usable ROMs the music plays
   on the AdLib.
-- **Help:** `sierra-hd --help` lists the keys and options.
+- **Help:** `colonel-hd --help` lists the keys and options.
   `docs/USER-README.md` is the user guide that ships with the binaries.
 
 Release binaries for Linux and Windows are built by the release

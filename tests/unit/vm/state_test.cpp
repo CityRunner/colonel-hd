@@ -128,7 +128,7 @@ SCI_TEST(the_state_has_the_components_in_order) {
                                                  "files", "parser", "sound", "graphics"}));
 }
 
-// What sierra-hd --end-state writes (milestone 9): a game's tick, globals
+// What colonel-hd --end-state writes (milestone 9): a game's tick, globals
 // and state hash, as sci-vm-trace reports them from the machine.
 SCI_TEST(a_game_reports_the_state_of_its_machine) {
     struct Host final : sci::vm::GameHost {

@@ -48,7 +48,7 @@ check pictures "${build}/tools/golden-hashes/sci-golden-hashes" /game tests/gold
 check sounds "${build}/tools/sound-render/sci-sound-render" /game --golden tests/golden/sounds.txt --check
 check screens env COLONEL_HD_FRAMES="${PWD}/${build}/tools/hd-frames/sci-hd-frames" scripts/check-screen-hashes.sh --check
 check vm env COLONEL_HD_VM_TRACE="${PWD}/${build}/tools/vm-trace/sci-vm-trace" \
-    COLONEL_HD_PROGRAM="${PWD}/${build}/src/app/sierra-hd" scripts/check-vm-hashes.sh --check
+    COLONEL_HD_PROGRAM="${PWD}/${build}/src/app/colonel-hd" scripts/check-vm-hashes.sh --check
 
 if [[ ${failed} -ne 0 ]]; then
     echo "The local gate FAILED: see the logs above."

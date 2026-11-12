@@ -101,7 +101,7 @@ I re-ran three of these after the last merge; they took 26 s, 26 s and
 ### For the customer's playtest
 
 These files are local only, not committed:
-- **Saves at the start of each act:** `sierra-hd-001.sav` to `-008.sav`,
+- **Saves at the start of each act:** `colonel-hd-001.sav` to `-008.sav`,
   made through the game's own save dialog, named "Act I" to "Act VIII".
   Copy them into the program's `saves/` folder.
 - **Two images of each act:** 16 images, in HD at N = 4, sent in the chat.

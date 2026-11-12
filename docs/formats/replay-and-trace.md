@@ -91,9 +91,9 @@ and compares the traces; the reference side is the patch
 
 Plain text (UTF-8, ASCII but for a few typed commands), one event per
 line. The first line that is neither empty nor a comment (`#`) must be
-`sierra-hd replay 1`.
+`colonel-hd replay 1`.
 
-    sierra-hd replay 1
+    colonel-hd replay 1
     # tick  kind  data
     120 key 13
     300 text look at the desk

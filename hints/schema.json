@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/CityRunner/sierra-hd/hints/schema.json",
-  "title": "sierra-hd scene-analysis hints, version 1",
+  "$id": "https://github.com/CityRunner/colonel-hd/hints/schema.json",
+  "title": "colonel-hd scene-analysis hints, version 1",
   "description": "One file per picture, hints/pic.NNN.json. See hints/README.md. Checked by scripts/check-hints.py; the program's own reader (sci-vector, parse_hints) applies the same rules.",
   "type": "object",
   "additionalProperties": false,
   "required": ["format", "version", "picture", "pic_sha256", "analyser"],
   "properties": {
-    "format": {"const": "sierra-hd-hints"},
+    "format": {"const": "colonel-hd-hints"},
     "version": {"const": 1},
     "picture": {"type": "integer", "minimum": 0, "maximum": 999},
     "pic_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},

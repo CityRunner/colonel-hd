@@ -29,7 +29,7 @@ GAME_DATA = re.compile(
     re.IGNORECASE,
 )
 # Files the program writes next to itself: saved games and its configuration.
-USER_DATA = re.compile(r"(^|/)([^/]+\.sav|sierra-hd\.ini)$", re.IGNORECASE)
+USER_DATA = re.compile(r"(^|/)([^/]+\.sav|colonel-hd\.ini)$", re.IGNORECASE)
 # local/ holds the user's own files; only its README and placeholders are tracked.
 LOCAL_ALLOWED = re.compile(r"^local/(README\.md|(game|rom|saves)/\.gitkeep)$")
 IMAGE = re.compile(r"\.(png|ppm|pgm|bmp|gif|jpe?g|tga|webp)$", re.IGNORECASE)
@@ -78,10 +78,10 @@ SELF_TEST_REJECTED = (
     "local/game/resource.001",
     "local/rom/MT32_CONTROL.ROM",
     "local/game/ADL.DRV",
-    "local/saves/sierra-hd-001.sav",
+    "local/saves/colonel-hd-001.sav",
     "tests/Act1.SAV",
-    "sierra-hd.ini",
-    "build-tree/Sierra-HD.ini",
+    "colonel-hd.ini",
+    "build-tree/Colonel-HD.ini",
     "local/game/RESOURCE.000",
     "local/game/README",
     "local/rom/notes.txt",

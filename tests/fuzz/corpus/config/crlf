@@ -1,5 +1,5 @@
-; sierra-hd configuration
-[sierra-hd]
+; colonel-hd configuration
+[colonel-hd]
 format = 1
 game_folder = /games/cb;1#x
 mode = original

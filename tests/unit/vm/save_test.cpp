@@ -102,7 +102,7 @@ SCI_TEST(a_resume_takes_the_execution_too) {
 
 SCI_TEST(the_header_comes_back) {
     SaveWorld source = world();
-    const std::vector<std::uint8_t> file = sci::vm::write_save(*source.machine, "Under the stairs", "sierra-hd 0.1.0");
+    const std::vector<std::uint8_t> file = sci::vm::write_save(*source.machine, "Under the stairs", "colonel-hd 0.1.0");
     const sci::core::Sha256Digest game = sci::vm::game_identity(source.resources);
     const auto header = sci::vm::read_save_header(file, &game);
     SCI_CHECK(header.has_value());
@@ -110,7 +110,7 @@ SCI_TEST(the_header_comes_back) {
         SCI_CHECK(header->version == sci::vm::save_format_version);
         SCI_CHECK(header->game == game);
         SCI_CHECK(header->description == "Under the stairs");
-        SCI_CHECK(header->program == "sierra-hd 0.1.0");
+        SCI_CHECK(header->program == "colonel-hd 0.1.0");
         SCI_CHECK(header->ticks == 0);
         // The deterministic clock's day.
         SCI_CHECK(header->saved_at.year == 90 && header->saved_at.month == 0 && header->saved_at.day == 1);
@@ -122,8 +122,8 @@ SCI_TEST(the_header_comes_back) {
 SCI_TEST(a_file_that_is_not_a_save_is_refused) {
     std::vector<std::uint8_t> file = saved();
     file[0] ^= 1U;
-    SCI_CHECK(contains(restore_error(file), "not a sierra-hd saved game"));
-    SCI_CHECK(contains(restore_error(std::vector<std::uint8_t>{}), "not a sierra-hd saved game"));
+    SCI_CHECK(contains(restore_error(file), "not a colonel-hd saved game"));
+    SCI_CHECK(contains(restore_error(std::vector<std::uint8_t>{}), "not a colonel-hd saved game"));
 }
 
 SCI_TEST(another_format_version_is_refused_naming_both) {
@@ -140,7 +140,7 @@ SCI_TEST(a_truncated_save_is_refused) {
          {std::size_t{4}, std::size_t{12}, std::size_t{30}, file.size() / 2, file.size() - 1}) {
         const std::vector<std::uint8_t> part(file.begin(), file.begin() + static_cast<std::ptrdiff_t>(size));
         const std::string error = restore_error(part);
-        SCI_CHECK(contains(error, "not a sierra-hd saved game") || contains(error, "truncated") ||
+        SCI_CHECK(contains(error, "not a colonel-hd saved game") || contains(error, "truncated") ||
                   contains(error, "damaged"));
     }
 }

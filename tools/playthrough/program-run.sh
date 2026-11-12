@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Runs the playthrough (tests/playthrough/playthrough.txt, seed 0) in the
-# program, sierra-hd, headless under Xvfb, from the boot to QUIT on the last
+# program, colonel-hd, headless under Xvfb, from the boot to QUIT on the last
 # screen, with a configuration of its own (docs/playthrough.md, "The
 # playthrough in the program"), and checks:
 #   - the program ends by itself with status 0 when the game quits, within
@@ -34,7 +34,7 @@
 #   --limit <seconds>      wall-time limit (default 3600, real time 7200)
 #   --out <folder>         output folder (default build/program-run/<mode><N>-<music>)
 #
-# COLONEL_HD_PROGRAM names the sierra-hd to run (default the release build),
+# COLONEL_HD_PROGRAM names the colonel-hd to run (default the release build),
 # COLONEL_HD_VM_TRACE the sci-vm-trace for the reference end state (default
 # the release build). The reference end state is kept in
 # build/program-run/reference-<music>.txt and made when missing.
@@ -43,7 +43,7 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "${here}/../.." && pwd)"
 replay="${root}/tests/playthrough/playthrough.txt"
-program="${COLONEL_HD_PROGRAM:-${root}/build/release/src/app/sierra-hd}"
+program="${COLONEL_HD_PROGRAM:-${root}/build/release/src/app/colonel-hd}"
 vm_trace="${COLONEL_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
 base="${root}/build/program-run"
 
@@ -68,18 +68,18 @@ name="${mode}${scale}-${music}-${cache}$([[ "${fast}" == 1 ]] && echo -fast || e
 out="${out:-${base}/${name}}"
 limit="${limit:-$([[ "${fast}" == 1 ]] && echo 3600 || echo 7200)}"
 
-# The run folder: the program reads sierra-hd.ini, hints/ and cache/ next
+# The run folder: the program reads colonel-hd.ini, hints/ and cache/ next
 # to its executable (src/app/README.md), so it gets a copy of its own.
 rm -rf "${out}"
 mkdir -p "${out}/run" "${cache_dir}"
-cp "${program}" "${out}/run/sierra-hd"
+cp "${program}" "${out}/run/colonel-hd"
 ln -s "${root}/hints" "${out}/run/hints"
 if [[ "${cache}" == cold ]]; then
     rm -rf "${cache_dir:?}"/*
 fi
 ln -s "$(cd "${cache_dir}" && pwd)" "${out}/run/cache"
-cat > "${out}/run/sierra-hd.ini" <<EOF
-[sierra-hd]
+cat > "${out}/run/colonel-hd.ini" <<EOF
+[colonel-hd]
 format = 1
 game_folder = /game
 mode = ${mode}
@@ -118,7 +118,7 @@ fi
 start="$(date +%s)"
 status=0
 timeout "${limit}" xvfb-run -a -s "-screen 0 1920x1200x24" \
-    env "${audio_env[@]}" "${out}/run/sierra-hd" "${args[@]}" /game > "${out}/log.txt" 2>&1 || status=$?
+    env "${audio_env[@]}" "${out}/run/colonel-hd" "${args[@]}" /game > "${out}/log.txt" 2>&1 || status=$?
 wall=$(( $(date +%s) - start ))
 rm -f "${out}/audio.raw"
 

@@ -73,7 +73,7 @@ in-game restores, restores on the MT-32). The format is in
      cut to 35 characters, as in ScummVM.
    - **Saves that cannot be restored** are listed but refused, and the
      game's own dialog says so.
-   - **Where saves go:** `saves/sierra-hd-<nnn>.sav` next to the
+   - **Where saves go:** `saves/colonel-hd-<nnn>.sav` next to the
      configuration. The new configuration key `saves = <folder>` changes
      the folder.
    - **A restore follows ScummVM's restore:**

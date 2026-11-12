@@ -254,14 +254,14 @@ def scripts() -> dict[str, bytes]:
 def configs() -> dict[str, bytes]:
     """Configuration files: every key, comments, CRLF, unknown keys."""
     full = (
-        "; sierra-hd configuration\n[sierra-hd]\nformat = 1\ngame_folder = /games/cb;1#x\nmode = original\n"
+        "; colonel-hd configuration\n[colonel-hd]\nformat = 1\ngame_folder = /games/cb;1#x\nmode = original\n"
         "scale = 5\npriority_snap = on\nmt32_rom = /roms\nmusic = mt32\nvolume = 40\nsaves = saves\n"
     )
     return {
         "full": full.encode(),
         "crlf": full.replace("\n", "\r\n").encode(),
-        "defaults": b"[sierra-hd]\nformat = 1\n",
-        "odd": b"# comment\n[other]\nx = 1\n[sierra-hd]\nformat = 1\nscale = auto ; the largest\nnew_key = 3\nvolume = 101\n",
+        "defaults": b"[colonel-hd]\nformat = 1\n",
+        "odd": b"# comment\n[other]\nx = 1\n[colonel-hd]\nformat = 1\nscale = auto ; the largest\nnew_key = 3\nvolume = 101\n",
     }
 
 

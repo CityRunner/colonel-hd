@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Laura walks while Lillian comes into the bedroom, with seed 0 and stop
 # tick 17400 (milestone 5: two actors moving at once, actor collisions,
 # priorities, frame by frame).

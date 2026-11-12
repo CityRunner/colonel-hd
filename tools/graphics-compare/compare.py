@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Compares two graphics dumps (pictures, views and fonts).
 
-    compare.py <reference dump> <sierra-hd dump>
+    compare.py <reference dump> <colonel-hd dump>
 
 Both dumps use the layout of tools/scummvm-patches/0002-dump-graphics.patch.
 Exits 0 if the manifests are identical and every file matches byte for byte.
@@ -31,7 +31,7 @@ def describe(name: str, reference: bytes, candidate: bytes) -> str:
             counts.append(f"{label} {differing}")
         return f"{name}: pixels differ ({', '.join(counts)})"
     if len(reference) != len(candidate):
-        return f"{name}: {len(reference)} bytes in the reference, {len(candidate)} in sierra-hd"
+        return f"{name}: {len(reference)} bytes in the reference, {len(candidate)} in colonel-hd"
     first = next(i for i, (a, b) in enumerate(zip(reference, candidate)) if a != b)
     return f"{name}: first difference at byte {first}"
 
@@ -46,7 +46,7 @@ def main() -> int:
 
     problems = []
     for line in sorted(set(ref_lines) ^ set(cand_lines)):
-        side = "reference" if line in ref_lines else "sierra-hd"
+        side = "reference" if line in ref_lines else "colonel-hd"
         problems.append(f"manifest line only in {side}: {line}")
 
     compared = Counter()

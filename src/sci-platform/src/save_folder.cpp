@@ -13,7 +13,7 @@ namespace sci::platform {
 
 namespace {
 
-constexpr std::string_view prefix = "sierra-hd-";
+constexpr std::string_view prefix = "colonel-hd-";
 constexpr std::string_view suffix = ".sav";
 
 // The slot of a file name of the folder, or nothing.

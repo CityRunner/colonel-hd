@@ -1,4 +1,4 @@
-# sierra-hd: dump pictures, views and fonts as ScummVM's SCI engine draws them.
+# colonel-hd: dump pictures, views and fonts as ScummVM's SCI engine draws them.
 #
 # With COLONEL_HD_DUMP_GRAPHICS=<directory> set, the engine draws every picture
 # in several variants into cleared maps and writes the visual, priority and
@@ -32,7 +32,7 @@ diff -ruN a/engines/sci/sci.cpp b/engines/sci/sci.cpp
  	// Initialize all graphics related subsystems
  	initGraphics();
  
-+	// sierra-hd reference tooling: dump pictures, views and fonts and exit.
++	// colonel-hd reference tooling: dump pictures, views and fonts and exit.
 +	if (colonelHdDumpGraphicsDirectory())
 +		colonelHdDumpGraphicsAndExit();
 +
@@ -43,7 +43,7 @@ diff -ruN a/engines/sci/colonel_hd_dump_graphics.cpp b/engines/sci/colonel_hd_du
 --- a/engines/sci/colonel_hd_dump_graphics.cpp	1970-01-01 00:00:00.000000000 +0000
 +++ b/engines/sci/colonel_hd_dump_graphics.cpp	2026-10-20 19:14:02.633612688 +0000
 @@ -0,0 +1,202 @@
-+/* sierra-hd reference tooling for ScummVM's SCI engine.
++/* colonel-hd reference tooling for ScummVM's SCI engine.
 + *
 + * This program is free software: you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -249,7 +249,7 @@ diff -ruN a/engines/sci/colonel_hd_dump_graphics.h b/engines/sci/colonel_hd_dump
 --- a/engines/sci/colonel_hd_dump_graphics.h	1970-01-01 00:00:00.000000000 +0000
 +++ b/engines/sci/colonel_hd_dump_graphics.h	2026-10-20 19:04:27.592214753 +0000
 @@ -0,0 +1,26 @@
-+/* sierra-hd reference tooling for ScummVM's SCI engine.
++/* colonel-hd reference tooling for ScummVM's SCI engine.
 + *
 + * This program is free software: you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by

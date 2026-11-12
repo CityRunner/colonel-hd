@@ -51,7 +51,7 @@ sci-vector) applies the same rules and rejects unknown members.
 
 ```json
 {
-  "format": "sierra-hd-hints",
+  "format": "colonel-hd-hints",
   "version": 1,
   "picture": 44,
   "pic_sha256": "745a7dec953b8deb7cef18f3a3a1f3fc7a04750b439837b34a3dc506861978d8",

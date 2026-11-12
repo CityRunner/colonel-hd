@@ -21,7 +21,7 @@ purpose and invariants:
 | sci-render | HD rasteriser (done, milestone 3), original mode, acceptance check, A1 checks (milestone 3b), composition of the game screen (milestone 5) | sci-core, sci-pic, sci-vector |
 | sci-vm | Bytecode interpreter, objects, kernel functions, the 1x graphics they drive, the music player with a silent driver or a sci-audio device (milestone 7), events, virtual clock, random source (boot gate, milestone 4a) | sci-core, sci-resource, sci-pic, sci-view, sci-text, sci-audio |
 | sci-platform | The parts of app without a window, shared with the tools: thread executor, game-folder reading, release identification, configuration file, hint loading (done, milestone 3a), analysis cache (milestone 4b), the HD images of the picture shown and the game's frame (milestone 5) | sci-core, sci-resource, sci-pic, sci-vector, sci-render, sci-vm |
-| app (`sierra-hd`) | Window, input, presentation (the room viewer at release v0.1), saves, cache | all libraries |
+| app (`colonel-hd`) | Window, input, presentation (the room viewer at release v0.1), saves, cache | all libraries |
 
 `tests/` holds the unit tests (`tests/unit`), the fuzz targets
 (`tests/fuzz`) and the golden tests (`tests/golden`: synthetic scenes in
@@ -232,7 +232,7 @@ Two entry points run the game:
 ## The program
 
 `src/app/src/main.cpp` does the following:
-1. reads `sierra-hd.ini`;
+1. reads `colonel-hd.ini`;
 2. identifies the game folder (`sci-platform`);
 3. opens an SDL3 window and prepares the analysis cache;
 4. runs the game (`sci::vm::Game`, milestone 4b), or with `--viewer` drives
@@ -280,7 +280,7 @@ The vector scenes are kept in files (spec section 10.2;
 - `sci-vector` writes and reads a scene as bytes (`scene_io.hpp`), so it
   stays free of I/O.
 - `sci-platform`'s `AnalysisCache` names, keys, reads and writes the
-  entries in `cache/` next to `sierra-hd.ini`.
+  entries in `cache/` next to `colonel-hd.ini`.
 - On launch, `main.cpp` has the cache analyse the missing entries on the
   executor, behind a progress bar.
 - `Viewer` and the game mode's `HdPictures` ask `AnalysisCache::scene`

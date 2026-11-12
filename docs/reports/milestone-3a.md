@@ -57,7 +57,7 @@ The decisions are in `docs/ASSUMPTIONS.md`, "Milestone 3a".
      - 508 region labels.
    - The files hold labels and line numbers only, no image data.
 4. **The window: release v0.1** (`src/app`).
-   - `sierra-hd` is the room viewer in an SDL3 window:
+   - `colonel-hd` is the room viewer in an SDL3 window:
      - every picture in HD or original mode, with the visual or priority
        map;
      - every view with its animation, and every font;
@@ -66,7 +66,7 @@ The decisions are in `docs/ASSUMPTIONS.md`, "Milestone 3a".
      - fullscreen, and a status line in the game's own font.
    - Only changed rectangles go to the texture.
    - On start, it:
-     - reads `sierra-hd.ini` next to the executable;
+     - reads `colonel-hd.ini` next to the executable;
      - asks for the game folder the first time;
      - identifies the release by its hashes;
      - loads the hints from `hints/` next to the executable.

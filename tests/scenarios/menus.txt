@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # The menu bar and the dialogs it opens, in Laura's bedroom (room 44),
 # with seed 0 and stop tick 9030.
 # Passes the copy protection (seed 0) and answers "Yes" to "Have you

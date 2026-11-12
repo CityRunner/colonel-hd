@@ -7,7 +7,7 @@
 
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     message(FATAL_ERROR
-        "sierra-hd is built with upstream LLVM Clang only (spec section 2); "
+        "colonel-hd is built with upstream LLVM Clang only (spec section 2); "
         "found ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}.")
 endif()
 

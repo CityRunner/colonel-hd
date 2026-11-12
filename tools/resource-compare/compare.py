@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Compares two resource dumps (manifest.txt plus one file per resource).
 
-    compare.py <reference dump> <sierra-hd dump>
+    compare.py <reference dump> <colonel-hd dump>
 
 Both dumps use the layout of tools/scummvm-patches/0001-dump-resources.patch.
 Exits 0 if the manifests are identical and every data file matches byte for
@@ -35,7 +35,7 @@ def main() -> int:
 
     problems = 0
     ref_set, cand_set = set(ref_lines), set(cand_lines)
-    for label, missing in (("only in the reference", ref_set - cand_set), ("only in sierra-hd", cand_set - ref_set)):
+    for label, missing in (("only in the reference", ref_set - cand_set), ("only in colonel-hd", cand_set - ref_set)):
         for line in sorted(missing)[:LIMIT]:
             print(f"manifest line {label}: {line}")
         problems += len(missing)
@@ -55,7 +55,7 @@ def main() -> int:
 
     failed = sum(1 for line in ref_lines if data_name(line) is None)
     print(
-        f"{len(ref_lines)} resources in the reference, {len(cand_lines)} in sierra-hd; "
+        f"{len(ref_lines)} resources in the reference, {len(cand_lines)} in colonel-hd; "
         f"{compared} compared byte for byte, {len(differing)} differ; "
         f"{failed} failed in the reference; {problems} problems"
     )

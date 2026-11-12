@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # The playthrough of The Colonel's Bequest, with seed 0: one replay from
 # the start to the ending, built one act at a time (milestone 9,
 # docs/playthrough.md). tests/playthrough/checkpoints.txt says where the

@@ -1,4 +1,4 @@
-# Pinned toolchain image for sierra-hd (docs/ASSUMPTIONS.md, "Toolchain").
+# Pinned toolchain image for colonel-hd (docs/ASSUMPTIONS.md, "Toolchain").
 #
 # Everything that can change a build is pinned here:
 #   - the base image by digest,
