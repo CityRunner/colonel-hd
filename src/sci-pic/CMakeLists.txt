@@ -5,4 +5,4 @@ sci_add_library(NAME sci-pic
         src/draw_pic.cpp
         src/parse_pic.cpp
         src/patterns.cpp
-    DEPENDS sci-core sci-resource)
+    DEPENDS sci-core)

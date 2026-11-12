@@ -574,6 +574,26 @@ not been run on a clean result. Fix: the status is `awk`'s
 (`${PIPESTATUS[2]}`). Checked with identical inputs (0) and differing
 inputs (1), then by the full re-run above.
 
+### Step 7: the four unused dependency edges removed (B-21)
+
+**What changed:** `DEPENDS` of sci-pic, sci-view and sci-text no longer
+names sci-resource, and that of sci-render no longer names sci-view
+(four `CMakeLists.txt`, one line each). No source of those libraries
+includes a header of the removed dependency. The module table of
+`docs/ARCHITECTURE.md` is updated to match.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Release build and tests after the change | builds; all tests pass |
+| Format, policy, hints | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS7 |
+| S4 and S5 on the game | GAMECHECKS7 |
+
+Build inputs changed (include paths and link lines), so by decision 1a
+the game checks run too.
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so

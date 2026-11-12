@@ -7,4 +7,4 @@ sci_add_library(NAME sci-render
         src/original.cpp
         src/rasterize.cpp
         src/reference.cpp
-    DEPENDS sci-core sci-pic sci-vector sci-view)
+    DEPENDS sci-core sci-pic sci-vector)
