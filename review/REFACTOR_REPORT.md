@@ -546,6 +546,24 @@ A source file changed, in a comment only; S6 decides: identical
 executables mean no build output changed, and S4 screens and S5 are not
 needed (decision 1a).
 
+### Step 6: the dead `component_name()` placeholders deleted (B-24)
+
+**What changed:** `component.hpp` and `component.cpp` are deleted from
+`src/sci-audio` and `src/sci-vm` (four files, 46 lines), with their two
+entries in the libraries' `CMakeLists.txt`. Nothing called
+`component_name()` (`git grep`: only the declarations and definitions).
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Format, policy (with self-test), hints, vendored | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS6 |
+| S4 (resources, pictures, sounds, screens) and S5 (VM hashes), on the game | GAMECHECKS6 |
+
+Build inputs changed (two translation units removed), so by decision 1a
+the game checks run too.
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so
