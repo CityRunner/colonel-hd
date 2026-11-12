@@ -615,6 +615,28 @@ interface; removing them is B-23's iteration-2 part.
 CMake files changed; S6 decides (decision 1a): identical executables mean
 the compile commands are the same, and S4 screens and S5 are not needed.
 
+### Step 9: `src/app/platform` moved to `src/sci-platform` (B-02)
+
+**What changed:** the folder is moved with `git mv` (history follows the
+files). The top-level `CMakeLists.txt` adds `src/sci-platform` before
+`src/app`; `src/app/CMakeLists.txt` no longer adds `platform`. The target
+name, the include paths (`sci/platform/...`) and the program's path in the
+build tree are unchanged. `docs/ARCHITECTURE.md`'s module table no longer
+says "(in `src/app/platform`)". Earlier entries of `docs/ASSUMPTIONS.md`
+and the milestone reports keep the old path: they describe their time.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Release build and tests after the move | builds; all tests pass |
+| Format, policy, hints | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS9 |
+| S4 and S5 on the game | GAMECHECKS9 |
+
+Source paths changed, so the binaries can differ (file names in
+assertion messages); by decision 1a the game checks run too.
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so

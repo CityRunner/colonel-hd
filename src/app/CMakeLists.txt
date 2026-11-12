@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-add_subdirectory(platform)
 
 # The ARM64 build for qemu-user (preset cross-aarch64) runs the tests; its
 # sysroot has no ARM64 window-system libraries for SDL3.
