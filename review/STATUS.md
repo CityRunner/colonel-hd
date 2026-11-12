@@ -231,6 +231,22 @@ game-dependent run times).
   their results are added to the step's entry in `REFACTOR_REPORT.md`
   before the push; one task at a time. **Decided (customer).**
 
+- **Where stage 5 stands (2026-11-12 11:50 UTC), for resuming:** steps
+  0-8 done and pushed. Step 9 (`dbd471d`, move to `src/sci-platform`)
+  committed with B-49 logged (`297ed21`); its long checks pass (a first
+  asan failure was B-49, the re-run passed); S6: 7 executables differ, as
+  expected (source paths in assertion messages); game checks: resources,
+  pictures, sounds match, screens and VM hashes were still running. Pushed
+  before they finished, to keep the work safe at a usage limit (customer's
+  request); if they fail, step 9 is reverted. To resume: run
+  `build/step-checks.sh game` (git-ignored helper: pre-push pieces, S6
+  against `build/s6-ref.sha256`, the local gate), then record the results
+  in REFACTOR_REPORT.md (placeholders LONGCHECKS9/GAMECHECKS9), copy
+  `build/s6-now.sha256` to `build/s6-ref.sha256`, and go on with step 10.
+  If `build/` is lost, the helper is described in this file's
+  "Smaller tasks" entry. Docker: if `docker ps` fails, kill dockerd and
+  containerd, remove their pid/sock files, start `setsid nohup dockerd`.
+
 ## Open items
 
 - **Stage 4 (at STOP), what the customer is asked:**
