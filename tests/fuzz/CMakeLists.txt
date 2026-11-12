@@ -85,7 +85,8 @@ sci_add_fuzz_target(NAME fuzz-script
     SOURCE fuzz_script.cpp
     DEPENDS sci-vm
     CORPUS ${CMAKE_CURRENT_SOURCE_DIR}/corpus/script)
-target_include_directories(fuzz-script PRIVATE ${PROJECT_SOURCE_DIR}/src/sci-vm/src
+sci_test_private_includes(fuzz-script sci-vm)
+target_include_directories(fuzz-script PRIVATE
     ${PROJECT_SOURCE_DIR}/tests/unit/vm ${PROJECT_SOURCE_DIR}/tests/unit/resource)
 
 # The list of fuzz targets and their seed corpora, for scripts/run-fuzzers.sh.
@@ -102,5 +103,6 @@ sci_add_fuzz_target(NAME fuzz-save
     SOURCE fuzz_save.cpp
     DEPENDS sci-vm
     CORPUS ${CMAKE_CURRENT_SOURCE_DIR}/corpus/save)
-target_include_directories(fuzz-save PRIVATE ${PROJECT_SOURCE_DIR}/src/sci-vm/src
+sci_test_private_includes(fuzz-save sci-vm)
+target_include_directories(fuzz-save PRIVATE
     ${PROJECT_SOURCE_DIR}/tests/unit/vm ${PROJECT_SOURCE_DIR}/tests/unit/resource)

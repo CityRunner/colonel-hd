@@ -46,7 +46,8 @@ sci_add_unit_test(NAME sci-vector-tests
         vector/stroke_integrity_test.cpp
     DEPENDS sci-vector sci-render)
 # The fitting tests reach into sci-vector's internals.
-target_include_directories(sci-vector-tests PRIVATE pic ${PROJECT_SOURCE_DIR}/src/sci-vector/src)
+target_include_directories(sci-vector-tests PRIVATE pic)
+sci_test_private_includes(sci-vector-tests sci-vector)
 
 sci_add_unit_test(NAME sci-audio-tests
     SOURCES audio/adlib_test.cpp audio/mixer_test.cpp audio/mt32_driver_test.cpp audio/mt32_test.cpp audio/opl3_test.cpp
@@ -86,7 +87,8 @@ sci_add_unit_test(NAME sci-vm-tests
     DEPENDS sci-vm)
 # The tests reach into sci-vm's internals; the state tests build a resource
 # folder.
-target_include_directories(sci-vm-tests PRIVATE ${PROJECT_SOURCE_DIR}/src/sci-vm/src resource)
+sci_test_private_includes(sci-vm-tests sci-vm)
+target_include_directories(sci-vm-tests PRIVATE resource)
 
 # The window layer's key and cursor conversion, compiled from the program's
 # sources (the program itself is no library).
@@ -95,7 +97,7 @@ sci_add_unit_test(NAME sci-app-tests
         app/game_screen_test.cpp
         ${PROJECT_SOURCE_DIR}/src/app/src/game_screen.cpp
     DEPENDS sci-vm sci-render sci-platform sci-view sci-text sci-resource sci-core)
-target_include_directories(sci-app-tests PRIVATE ${PROJECT_SOURCE_DIR}/src/app/src)
+sci_test_private_includes(sci-app-tests app)
 
 # The music's hand-off to SDL's audio thread (milestone 7), on SDL's dummy
 # audio driver; label "threads" for the TSan job. Not in the ARM64 test
@@ -107,6 +109,6 @@ if(SCI_BUILD_APP)
             ${PROJECT_SOURCE_DIR}/src/app/src/audio_output.cpp
         DEPENDS sci-audio sci-core
         LABELS threads)
-    target_include_directories(sci-audio-output-tests PRIVATE ${PROJECT_SOURCE_DIR}/src/app/src)
+    sci_test_private_includes(sci-audio-output-tests app)
     target_link_libraries(sci-audio-output-tests PRIVATE SDL3::SDL3-static)
 endif()

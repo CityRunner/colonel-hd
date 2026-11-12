@@ -4,8 +4,8 @@
 # scaling is the program's own (src/app/src/game_screen.cpp), compiled in
 # as the app tests do.
 add_library(sci_golden_layers STATIC layers.cpp ${PROJECT_SOURCE_DIR}/src/app/src/game_screen.cpp)
-target_include_directories(sci_golden_layers PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-                                             PRIVATE ${PROJECT_SOURCE_DIR}/src/app/src)
+target_include_directories(sci_golden_layers PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+sci_test_private_includes(sci_golden_layers app)
 target_link_libraries(sci_golden_layers PUBLIC sci-core sci-view sci-text sci-render PRIVATE sci-vm)
 sci_target_defaults(sci_golden_layers)
 

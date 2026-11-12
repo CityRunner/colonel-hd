@@ -594,6 +594,27 @@ includes a header of the removed dependency. The module table of
 Build inputs changed (include paths and link lines), so by decision 1a
 the game checks run too.
 
+### Step 8: one helper for the tests' private includes (B-23, stage 5 part)
+
+**What changed:** `cmake/SciTesting.cmake` has a new function,
+`sci_test_private_includes(<target> <component>...)`, which adds
+`src/<component>/src` to a test target's include path. The seven ad-hoc
+lines use it: sci-vector-tests (sci-vector), sci-vm-tests, fuzz-script and
+fuzz-save (sci-vm), sci-app-tests, sci-audio-output-tests and the
+`sci_golden_layers` test library (app). The order of the include paths is
+kept. The calls are now the list of tests that reach behind a public
+interface; removing them is B-23's iteration-2 part.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Format, policy, hints | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS8 |
+
+CMake files changed; S6 decides (decision 1a): identical executables mean
+the compile commands are the same, and S4 screens and S5 are not needed.
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so
