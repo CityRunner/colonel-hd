@@ -691,7 +691,7 @@ needed.
 | Self-test | 16 refused, 17 accepted, 0 failures |
 | `git check-ignore` | `local/game/RESOURCE.MAP`, `local/rom/MT32_PCM.ROM`, `local/saves/a.sav` ignored; the placeholders and README tracked |
 | Format, policy, hints, vendored | pass |
-| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS11 |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-12, on `dccd337`): style and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64; S6: all 42 executables identical to the build after step 9 |
 
 No build input changed, so by decision 1a S6 decides.
 
