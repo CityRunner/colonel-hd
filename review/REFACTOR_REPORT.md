@@ -695,6 +695,21 @@ needed.
 
 No build input changed, so by decision 1a S6 decides.
 
+### Step 12: closing checks
+
+**12a, ScummVM comparison at the end** (B-19 criterion 5; main session,
+2026-11-12, on the head of step 11), the same reference build and commands
+as at the start:
+
+| Comparison | Start of stage 5 | End of stage 5 |
+|---|---|---|
+| `tools/vm-trace/run-all-scenarios.sh --jobs 4` | 39 ok, 0 FAIL, 423 s | **39 ok, 0 FAIL**, 429 s |
+| `tools/playthrough/check.sh` | matches to tick 338000, 933 s | **matches to tick 338000** (the game quits at tick 337613 in room 786), 927 s |
+
+Logs: `build/stage5/scummvm-scenarios-end.log`,
+`build/stage5/scummvm-playthrough-end.log`. The run times differ by less
+than 1 %, within the noise of the container.
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so
