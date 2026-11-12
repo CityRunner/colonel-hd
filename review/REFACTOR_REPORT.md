@@ -521,6 +521,31 @@ A CMake file changed, so S6 decides: identical executables mean no
 compile or link command changed on Linux, and S4 screens and S5 are not
 needed (decision 1a). Windows is checked by the CI run after step 5c.
 
+### Step 5c: macOS out of the documentation and comments (B-01)
+
+**What changed** (5 files): `README.md` (the macOS build section, and
+"Linux and Windows" for the release binaries), `docs/ARCHITECTURE.md` (two
+standard libraries, not three), `docs/hd-composition.md` and the comment
+in `src/app/src/game_screen.hpp` (the pixel-density examples), and a
+`docs/ASSUMPTIONS.md` entry, "macOS dropped".
+
+Left as it is: the `NOLINT` in `src/sci-vector/src/build_scene.cpp:499`,
+whose reason names Apple's libc++. Its reason is now out of date, but
+removing it changes code (`std::ranges::iota`), which is not in the plan;
+it falls under B-27.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Format, policy (with self-test), hints, vendored | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS5C |
+| CI on GitHub: one `quick` run and one Windows run | CIRUNS5 |
+
+A source file changed, in a comment only; S6 decides: identical
+executables mean no build output changed, and S4 screens and S5 are not
+needed (decision 1a).
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so

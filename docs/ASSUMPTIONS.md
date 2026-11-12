@@ -2903,3 +2903,19 @@ the old numbers to the new ones, so older references stay unambiguous:
   not checked; the customer's own game pictures shown to the model with
   the customer's permission. **Decided (customer, 2026-11-06, audit
   question Q-03).**
+
+## macOS dropped (2026-11-11)
+
+- **The customer's decision** (2026-11-05, audit stage 2): "drop macOS
+  completely". macOS is no longer a platform of the project: its CI and
+  release jobs, the toolchain setup for it, the `APPLE` case of the linker
+  flag, the preset names and the README's build steps are removed (audit
+  stage 5, step 5). The platforms are Linux and Windows, x64 and ARM64.
+  Earlier sections that speak of macOS describe the state of their time.
+  **Decided (customer).**
+- **What stays:** the Apple back-ends inside the vendored SDL3, which is
+  kept unchanged; the macOS rate in `scripts/ci-minutes.py`, for the runs
+  of earlier milestones; and one `NOLINT` in
+  `src/sci-vector/src/build_scene.cpp` whose reason names Apple's libc++
+  (the reason is out of date; changing the code is left to the backlog,
+  B-27). **Decided.**

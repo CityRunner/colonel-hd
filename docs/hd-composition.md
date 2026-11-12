@@ -141,8 +141,8 @@ at the mouse's position on screen (spec section 6.9):
   window's pixel density is 1 and the cursor is at most 256 pixels a side
   (N up to 16);
 - else drawn by the presenter over the frame, at 1:1, its hotspot on the
-  mouse's physical pixel (a pixel density other than 1, as on macOS or
-  scaled Wayland, where SDL would size the cursor in points; or when the
+  mouse's physical pixel (a pixel density other than 1, as on scaled
+  Wayland, where SDL would size the cursor in points; or when the
   system cannot make the cursor).
 
 The game gets the mouse in 1x: the physical pixel under it, minus the

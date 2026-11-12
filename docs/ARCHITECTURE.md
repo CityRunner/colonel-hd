@@ -316,9 +316,9 @@ when off, so they stay in release builds.
   ScummVM computes in binary32 round each step to binary32 in `double`
   (`docs/ASSUMPTIONS.md`, "Milestone 4a"). The kernel-call traces match on
   x86-64, under ASan and UBSan, and on ARM64 under qemu-user.
-- CI builds with three standard library implementations: libstdc++ on
-  Linux, libc++ on macOS, and the MSVC STL on Windows. Differences between
-  them therefore show up early.
+- CI builds with two standard library implementations: libstdc++ on
+  Linux and the MSVC STL on Windows. Differences between them therefore
+  show up early.
 
 ## Trade-offs
 

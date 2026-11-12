@@ -33,12 +33,6 @@ The other presets are `debug`, `asan` (ASan + UBSan), `tsan`, `fuzz` and
 `cross-aarch64` (ARM64 under qemu-user). Behind a TLS-intercepting proxy, set
 `SIERRA_HD_EXTRA_CA=/path/to/ca-bundle.crt` for `docker/build-image.sh`.
 
-### macOS
-
-Install LLVM 23.1.4 from the official release archive, put its `bin`
-directory first on `PATH`, set `SDKROOT=$(xcrun --show-sdk-path)`, and run
-`cmake --workflow --preset release`.
-
 ### Windows
 
 From a Visual Studio developer prompt with LLVM 23.1.4 first on `PATH`, run
@@ -72,7 +66,7 @@ From a Visual Studio developer prompt with LLVM 23.1.4 first on `PATH`, run
 - **Help:** `sierra-hd --help` lists the keys and options.
   `docs/USER-README.md` is the user guide that ships with the binaries.
 
-Release binaries for Linux, Windows and macOS are built by the release
+Release binaries for Linux and Windows are built by the release
 workflow (`.github/workflows/release.yml`) for version tags and attached to
 the GitHub releases.
 
