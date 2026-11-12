@@ -631,8 +631,8 @@ and the milestone reports keep the old path: they describe their time.
 |---|---|
 | Release build and tests after the move | builds; all tests pass |
 | Format, policy, hints | pass |
-| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS9 |
-| S4 and S5 on the game | GAMECHECKS9 |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-12, on `297ed21`, second run): style and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64. The first run failed once in asan on `sci-audio-output-tests` (B-49, timing under load; 5 of 5 alone passed). S6: 35 of 42 executables identical; 7 differ, as expected: `sierra-hd`, `sci-thread-tests`, `sci-golden-hashes`, `sci-golden-resources`, `sci-hd-frames`, `sci-hd-report`, `sci-room-viewer`, the targets that link sci-platform, whose source paths appear in assertion messages. The S6 reference for the next steps is the build of this commit |
+| S4 and S5 on the game | **all pass**, with the rebuilt program and tools: resources 425 s, pictures 41 s, sounds 25 s, screens 1296 s, VM hashes (the program's end state included) 105 s |
 
 Source paths changed, so the binaries can differ (file names in
 assertion messages); by decision 1a the game checks run too.

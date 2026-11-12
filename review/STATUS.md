@@ -235,8 +235,8 @@ game-dependent run times).
   0-8 done and pushed. Step 9 (`dbd471d`, move to `src/sci-platform`)
   committed with B-49 logged (`297ed21`); its long checks pass (a first
   asan failure was B-49, the re-run passed); S6: 7 executables differ, as
-  expected (source paths in assertion messages); game checks: resources,
-  pictures, sounds match, screens and VM hashes were still running. Pushed
+  expected (source paths in assertion messages); game checks: all pass (resources, pictures, sounds,
+  screens, VM hashes); step 9 is done. Pushed
   before they finished, to keep the work safe at a usage limit (customer's
   request); if they fail, step 9 is reverted. To resume: run
   `build/step-checks.sh game` (git-ignored helper: pre-push pieces, S6
