@@ -53,3 +53,8 @@ analysis-cache/
 /saves/
 build.log
 __pycache__/
+
+# Your own files: the game, MT-32 ROMs and saves (local/README.md). Only the
+# folders' placeholders and the README are tracked.
+/local/*/*
+!/local/*/.gitkeep

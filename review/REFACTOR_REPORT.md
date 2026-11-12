@@ -663,11 +663,37 @@ their time), and `review/` (it cites the audited commit `a0422d6`).
 | `git grep` for `reports/` outside those files | none left |
 | `git check-ignore docs/reports/images/...` | ignored |
 | Format, policy (with self-test), hints, vendored | pass |
-| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS10 |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-12, on `89197c6`): style and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64; S6: all 42 executables identical to the build after step 9 |
 
 No build input changed except a comment (same line numbers), so S6 decides
 (decision 1a): identical executables mean S4 screens and S5 are not
 needed.
+
+### Step 11: `local/` for the user's own files (B-02, B-15)
+
+**What changed:**
+- `local/README.md` and the placeholders `local/game/.gitkeep`,
+  `local/rom/.gitkeep`, `local/saves/.gitkeep`: empty folders for the game,
+  the MT-32 ROMs and saved games (the customer's request "prepare empty
+  folders for files: game, rom, saves"). The README says the program does
+  not look there by itself yet (that is B-03, iteration 2).
+- `.gitignore`: everything under `local/*/` is ignored except the
+  placeholders.
+- `scripts/check-repo-policy.py`: anything under `local/` other than the
+  README and the three placeholders is refused; the self-test has four
+  more names to refuse (`local/game/RESOURCE.000`, `local/game/README`,
+  `local/rom/notes.txt`, `local/extra.txt`) and four more to accept.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Self-test | 16 refused, 17 accepted, 0 failures |
+| `git check-ignore` | `local/game/RESOURCE.MAP`, `local/rom/MT32_PCM.ROM`, `local/saves/a.sav` ignored; the placeholders and README tracked |
+| Format, policy, hints, vendored | pass |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS11 |
+
+No build input changed, so by decision 1a S6 decides.
 
 ## Run times of the game-dependent checks (for the per-commit suite)
 

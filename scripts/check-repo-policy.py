@@ -30,6 +30,8 @@ GAME_DATA = re.compile(
 )
 # Files the program writes next to itself: saved games and its configuration.
 USER_DATA = re.compile(r"(^|/)([^/]+\.sav|sierra-hd\.ini)$", re.IGNORECASE)
+# local/ holds the user's own files; only its README and placeholders are tracked.
+LOCAL_ALLOWED = re.compile(r"^local/(README\.md|(game|rom|saves)/\.gitkeep)$")
 IMAGE = re.compile(r"\.(png|ppm|pgm|bmp|gif|jpe?g|tga|webp)$", re.IGNORECASE)
 ALLOWED_IMAGE_DIRS: tuple[str, ...] = ()
 CPP_SOURCE = re.compile(r"\.(cpp|hpp)$")
@@ -61,6 +63,8 @@ def name_problem(path: str) -> str | None:
         return "looks like a game resource or ROM file"
     if USER_DATA.search(path):
         return "saved games and the program's configuration are not committed"
+    if path.startswith("local/") and not LOCAL_ALLOWED.match(path):
+        return "local/ holds your own files; they are not committed"
     return None
 
 
@@ -78,6 +82,10 @@ SELF_TEST_REJECTED = (
     "tests/Act1.SAV",
     "sierra-hd.ini",
     "build-tree/Sierra-HD.ini",
+    "local/game/RESOURCE.000",
+    "local/game/README",
+    "local/rom/notes.txt",
+    "local/extra.txt",
 )
 SELF_TEST_ACCEPTED = (
     "hints/pic.052.json",
@@ -93,6 +101,10 @@ SELF_TEST_ACCEPTED = (
     "tests/unit/resource/patch_file_test.cpp",
     "script.0520",
     "view.12",
+    "local/README.md",
+    "local/game/.gitkeep",
+    "local/rom/.gitkeep",
+    "local/saves/.gitkeep",
 )
 
 
