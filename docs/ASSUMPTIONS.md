@@ -2919,3 +2919,23 @@ the old numbers to the new ones, so older references stay unambiguous:
   `src/sci-vector/src/build_scene.cpp` whose reason names Apple's libc++
   (the reason is out of date; changing the code is left to the backlog,
   B-27). **Decided.**
+
+## Project renamed to colonel-hd (2026-11-12)
+
+- **The name:** the customer asked to "rename repo and all files/mentions:
+  sierra -> colonel" and agreed to the proposals (review/BACKLOG_V2.md,
+  B-43). The project, the program, its configuration file `colonel-hd.ini`
+  (section `[colonel-hd]`), the saves `colonel-hd-NNN.sav`, the hint format
+  id `colonel-hd-hints`, the replay header `colonel-hd replay 1`, the
+  `COLONEL_HD_*` environment variables and the toolchain image are named
+  `colonel-hd` (audit stage 5, step 13). Sierra the company, its
+  interpreter (SCI) and the game's files keep their names; `third_party/`
+  and `review/` are unchanged. **Decided (customer).**
+- **Clean rename:** the program reads only the new names; an old
+  `sierra-hd.ini`, old saves and hint or replay files with the old ids are
+  not read. Users rename their own files once by hand. No migration code.
+  **Decided (customer).**
+- **Repository:** the customer renamed the GitHub repository to
+  `CityRunner/colonel-hd`; links to earlier pull requests in this file are
+  rewritten to the new name (GitHub redirects the old one). **Decided
+  (customer).**

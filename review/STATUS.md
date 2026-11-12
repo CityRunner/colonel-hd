@@ -383,3 +383,19 @@ game-dependent run times).
   `docs/reports/` (they were in `reports/`); review images are in the
   git-ignored `docs/reports/images/`. Files in `review/` that cite
   `reports/...` mean the audited commit `a0422d6`.
+- **Name mapping after step 13 (2026-11-12, B-43):** the project is now
+  `colonel-hd`. Files in `review/` cite the audited commit `a0422d6` and
+  keep the old names; read them with this mapping:
+  `sierra-hd` → `colonel-hd` (program, CMake project and target,
+  `colonel-hd.ini` and its section, saves `colonel-hd-NNN.sav`, the save
+  header's program string, the hint format id `colonel-hd-hints`, the
+  replay header `colonel-hd replay 1`, release archives),
+  `SIERRA_HD_*` → `COLONEL_HD_*` (environment variables, for example
+  `COLONEL_HD_MOUNTS`), `sierra_hd` → `colonel_hd` and `sierraHd` →
+  `colonelHd` (ScummVM patch files and identifiers), the toolchain image
+  `sierra-hd-toolchain:…` → `colonel-hd-toolchain:…` (the tag hash changed
+  with the Dockerfile's comment; locally the same image was re-tagged). The
+  GitHub repository is `CityRunner/colonel-hd`; the local folder stays
+  `/home/user/sierra-hd`. The reference ScummVM was rebuilt from the
+  renamed patches in `build/reference-scummvm` (the old build is kept in
+  `build/reference-scummvm-sierra`).
