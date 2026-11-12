@@ -610,7 +610,7 @@ interface; removing them is B-23's iteration-2 part.
 | Check | Result |
 |---|---|
 | Format, policy, hints | pass |
-| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | LONGCHECKS8 |
+| S1 clang-tidy, S2/S3, fuzz, ARM64, S6 | **all pass** (main session, 2026-11-12, on `62de863`): style and clang-tidy; release, asan and tsan workflows; fuzz (B-45, B-46 known); cross-aarch64; S6: all 42 executables identical to the build after step 7 |
 
 CMake files changed; S6 decides (decision 1a): identical executables mean
 the compile commands are the same, and S4 screens and S5 are not needed.
