@@ -99,6 +99,7 @@ found it.
 | B-46 | The music player can loop forever on a malformed song | defect | Low | S (3 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-sound) | B-05 |
 | B-47 | The program embeds the repository's `git describe` as SDL's revision | defect | Low | S (1 h) | iteration 2 | open (found in stage 5 step 0.7) | B-20, step 0.1 |
 | B-48 | SDL3 has no per-file SHA-256 record | maintainability | Low | S (2 h) | iteration 2 | open (found in stage 5 step 2) | B-25, MAP 5 |
+| B-49 | `sci-audio-output-tests` fails now and then on a loaded machine | defect (test) | Low | S (2 h) | iteration 2 | open (found in stage 5 step 9) | R-92, MAP 6 |
 
 B-43: the project rename (added by the customer, 2026-11-06). B-44 onward: reserved for bugs found in stage 5 (the range started at B-43 before the rename item took that number).
 
@@ -1269,3 +1270,20 @@ of which the VM net (B-06, B-07) is 72. Judgement, not measured.
   compared with a fresh download of it) and let the check read it; then
   remove SDL3 from `NOT_COVERED` in the script. **Effort:** S, 2 h.
   **Risk:** none (no build input changes).
+
+### B-49 `sci-audio-output-tests` fails now and then on a loaded machine
+
+- **Kind:** defect (a test that depends on real time). **Severity:** Low.
+  **Found in:** stage 5 step 9 (2026-11-12): the asan workflow of the
+  long checks failed once at `tests/unit/app/audio_output_test.cpp:86`
+  (`queued_frames() >= target_frames() * 3 / 4` after `recover()`), while
+  other containers were building. The same test then passed 5 of 5 times
+  alone. It had failed once the same way during milestone 10. **State:**
+  open, not fixed (brief 5.3).
+- **What:** `audio_output_tops_the_queue_up_after_an_underrun` sleeps in
+  real time, lets SDL's dummy audio thread drain the queue, and then
+  expects the queue to be three quarters full right after `recover()`;
+  under load SDL's thread can take frames in between.
+- **Proposal (iteration 2):** read the queue through a clock or a device
+  the test controls, or check the frames `recover()` queued rather than
+  the queue's length afterwards. **Risk:** none (test only).
