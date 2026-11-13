@@ -1,12 +1,12 @@
-# colonel-hd 0.9
+# colonel-hd 1.0
 
 colonel-hd is a new interpreter for Sierra's *The Colonel's Bequest*
 (1989), with an HD mode that redraws the backgrounds as sharp vector art
 at any whole-number scale. The game itself plays exactly as the original.
 
-**Release 0.9 is a release candidate.** The whole game plays from the
-start to the ending, with music and sound, saving and restoring. It also
-contains the room viewer of release 0.1.
+**Release 1.0.** The whole game plays from the start to the ending, with
+music and sound, saving and restoring. It also contains the room viewer of
+release 0.1.
 
 ## What you need
 
