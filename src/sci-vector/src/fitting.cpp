@@ -12,9 +12,10 @@ namespace sci::vector::detail {
 
 namespace {
 
-// Curves are flattened into chords this long at most (in original pixels):
-// at the largest scale, N = 10, a chord is 2.5 screen pixels, and its
-// distance from a curve of radius 2 or more is below 0.05 pixels.
+// Curves are flattened into chords this long at most (in original pixels).
+// Against a curve of radius 2 or more, a chord's largest distance from the
+// curve is 0.0039 original pixels: 0.039 screen pixels at N = 10 (chord 2.5
+// screen pixels) and 0.063 at the largest scale, N = 16 (chord 4; B-29).
 constexpr double max_chord = 0.25;
 
 // Fixed-end-point fits split a chain at most this many times.

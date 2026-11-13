@@ -2974,3 +2974,17 @@ the old numbers to the new ones, so older references stay unambiguous:
 - **Decision:** no code change; the comment in `trigonometry.cpp` says
   so (B-39 closed with the customer's default). **Decided (default
   accepted by the customer, 2026-11-06).**
+
+## The range of N: 1 to 16, targets up to 10 (2026-11-13, B-29)
+
+- **Range:** the scale N stays 1 to 16 (`scale` in `colonel-hd.ini`, the
+  viewer's + and -); no cap at 10. The golden hashes cover every N from 1
+  to 16 for the picture layers (`tests/golden/resources.txt`) and N = 1, 2,
+  5, 10 for pictures and screens.
+- **Targets:** the performance targets of spec section 10.3 (room entry,
+  frame composition, memory) are measured and apply up to N = 10 only;
+  above 10 the program works but is not held to them.
+- **Flattening:** curves are flattened into chords of at most 0.25 original
+  pixels; against a curve of radius 2 or more the error is 0.039 screen
+  pixels at N = 10 and 0.063 at N = 16 (`src/sci-vector/src/fitting.cpp`).
+- **Decided (default accepted by the customer, 2026-11-06).**
