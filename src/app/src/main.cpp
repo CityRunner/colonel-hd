@@ -23,6 +23,7 @@
 #include "sci/core/sha256.hpp"
 #include "sci/platform/analysis_cache.hpp"
 #include "sci/platform/config.hpp"
+#include "sci/platform/data_folder.hpp"
 #include "sci/platform/game_files.hpp"
 #include "sci/platform/game_frame.hpp"
 #include "sci/platform/hd_pictures.hpp"
@@ -71,7 +72,7 @@ namespace fs = std::filesystem;
 using sci::app::Command;
 
 constexpr std::string_view help_text =
-    "usage: colonel-hd [--viewer] [--log <categories>] [game folder]\n"
+    "usage: colonel-hd [--viewer] [--data <folder>] [--log <categories>] [game folder]\n"
     "       colonel-hd [--replay <file>] [--seed <n>] [--fast] [--end-state <file>]\n"
     "                 [game folder]\n"
     "       colonel-hd --version | --help\n"
@@ -82,6 +83,10 @@ constexpr std::string_view help_text =
     "--fast runs the game as fast as it can instead of in real time\n"
     "(the game plays the same; the screen is shown about 60 times a\n"
     "second of real time and most of the music is dropped).\n"
+    "--data names the folder for colonel-hd.ini, game/, rom/, saves/,\n"
+    "cache/ and files/. Without it: the program's folder if it holds\n"
+    "colonel-hd.ini or game/ and can be written, else the per-user folder\n"
+    "(%APPDATA%\\colonel-hd on Windows, ~/.local/share/colonel-hd on Linux).\n"
     "--log shows more messages on the console, for these categories\n"
     "(comma-separated): vm (script problems the interpreter works\n"
     "around), resources (resource loading); it overrides the log key of\n"
@@ -995,6 +1000,7 @@ struct Options {
     bool fast = false;
     std::optional<fs::path> end_state;
     std::optional<std::vector<sci::core::LogCategory>> log;
+    std::optional<fs::path> data;
 };
 
 // The command line, or nothing if it is not valid.
@@ -1009,6 +1015,8 @@ std::optional<Options> parse_options(std::span<char*> args) {
             options.replay = fs::path(args[++i]);
         } else if (arg == "--fast") {
             options.fast = true;
+        } else if (arg == "--data" && has_value) {
+            options.data = fs::path(args[++i]);
         } else if (arg == "--log" && has_value) {
             options.log = sci::core::parse_log_categories(args[++i]);
             if (!options.log) {
@@ -1131,8 +1139,30 @@ sci::core::Result<std::vector<sci::vm::InputEvent>> read_replay(const fs::path& 
 }
 
 int run(const Options& options) {
+    // The hints are next to the executable; everything else is in the data
+    // folder (B-03): --data, the executable's folder (portable) or the
+    // per-user folder.
     const fs::path base = base_path();
-    const fs::path config_path = base / sci::platform::config_file_name;
+    const sci::platform::DataFolder data =
+        sci::platform::resolve_data_folder(options.data, base, sci::platform::per_user_data_folder());
+    if (data.folder.empty()) {
+        show_error(nullptr, "No folder for the configuration and saves: start colonel-hd with --data <folder>.");
+        return 1;
+    }
+    {
+        std::error_code error;
+        fs::create_directories(data.folder, error);
+        if (error) {
+            show_error(nullptr, std::format("Cannot create {}: {}", data.folder.string(), error.message()));
+            return 1;
+        }
+    }
+    sci::core::log(sci::core::LogLevel::Info, sci::core::LogCategory::General,
+                   std::format("data folder: {} ({})", data.folder.string(),
+                               data.kind == sci::platform::DataFolderKind::Option     ? "--data"
+                               : data.kind == sci::platform::DataFolderKind::Portable ? "next to the program"
+                                                                                      : "per user"));
+    const fs::path config_path = data.folder / sci::platform::config_file_name;
     const auto loaded = load_config(config_path);
     if (!loaded) {
         return 1;
@@ -1145,6 +1175,15 @@ int run(const Options& options) {
     }
     if (options.game_folder) {
         config->game_folder = *options.game_folder;
+    } else if (config->game_folder.empty()) {
+        // An empty game_folder means game/ in the data folder, if it holds
+        // the game; this is not written to the ini.
+        if (auto game_folder = sci::platform::data_game_folder(data.folder)) {
+            config->game_folder = std::move(*game_folder);
+        }
+    }
+    if (config->mt32_rom.empty()) {
+        config->mt32_rom = data.folder / "rom"; // For this run only.
     }
     const bool viewer_mode = options.viewer;
     std::vector<sci::vm::InputEvent> replay;
@@ -1176,7 +1215,7 @@ int run(const Options& options) {
     SDL_SetRenderVSync(renderer.get(), 1);
     SDL_SetWindowTitle(window.get(), std::format("colonel-hd {} - {}", SCI_VERSION, game->identification.name).c_str());
     sci::platform::ThreadExecutor executor;
-    sci::platform::AnalysisCache analysis(game->manager, hint_directory(base), base / "cache", executor);
+    sci::platform::AnalysisCache analysis(game->manager, hint_directory(base), data.folder / "cache", executor);
     if (!prepare_analysis(renderer.get(), analysis)) {
         return 0;
     }
@@ -1188,7 +1227,7 @@ int run(const Options& options) {
         config->scale = viewer.chosen_scale();
     } else {
         sci::platform::HdPictures pictures(analysis, executor);
-        sci::app::DirectoryFileStore files(base / "files", game->files);
+        sci::app::DirectoryFileStore files(data.folder / "files", game->files);
         GameHost host(window.get(), renderer.get(), game->manager, pictures, *config);
         // Before the game, which sends it note-offs when it goes.
         const auto audio = open_audio(game->manager, *config);
@@ -1200,7 +1239,7 @@ int run(const Options& options) {
         sci::vm::Game running(game->manager, host, &files, seed);
         // The saves next to the configuration, or in the configured folder
         // (docs/formats/save-format.md).
-        sci::platform::SaveFolder saves(sci::platform::saves_folder(*config, base));
+        sci::platform::SaveFolder saves(sci::platform::saves_folder(*config, data.folder));
         running.set_saves(&saves, std::format("colonel-hd {}", SCI_VERSION));
         running.set_music_device(audio.get());
         host.set_audio(audio.get());
