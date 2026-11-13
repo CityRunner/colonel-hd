@@ -3,7 +3,9 @@ name: Release
 # Release binaries (spec section 10.4): Linux and Windows, x64 and ARM64,
 # built and tested with the release presets, packaged with the hint files
 # and published as a GitHub release for a pushed version tag (v*), under the
-# CI cost policy (docs/ASSUMPTIONS.md).
+# CI cost policy (docs/ASSUMPTIONS.md). A manual run (workflow_dispatch)
+# builds, tests and uploads the four archives as workflow artifacts and does
+# not publish (B-16).
 
 on:
   push:
@@ -27,7 +29,6 @@ concurrency:
 jobs:
   linux:
     name: linux-${{ matrix.arch }}
-    if: github.event_name == 'push'
     runs-on: ${{ matrix.arch == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     timeout-minutes: 20
     strategy:
@@ -58,7 +59,6 @@ jobs:
 
   windows:
     name: windows-${{ matrix.arch }}
-    if: github.event_name == 'push'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 25
     strategy:
