@@ -2988,3 +2988,41 @@ the old numbers to the new ones, so older references stay unambiguous:
   pixels; against a curve of radius 2 or more the error is 0.039 screen
   pixels at N = 10 and 0.063 at N = 16 (`src/sci-vector/src/fitting.cpp`).
 - **Decided (default accepted by the customer, 2026-11-06).**
+
+## One data folder (2026-11-13, B-03; replaces "next to the executable")
+
+- **The folder:** the program keeps `colonel-hd.ini`, `game/`, `rom/`,
+  `saves/`, `cache/` and `files/` in one data folder, chosen in this order:
+  `--data <folder>`; else the executable's folder if it holds
+  `colonel-hd.ini` or `game/` and is writable ("portable", the unpacked
+  release archive and every earlier installation); else the per-user
+  folder, `%APPDATA%\colonel-hd` on Windows (read from the wide
+  environment), `$XDG_DATA_HOME/colonel-hd` or
+  `~/.local/share/colonel-hd` on Linux, created on first use. The hints
+  stay next to the executable. Spec section 10.2's "next to the
+  executable" for the cache and the configuration is replaced by this
+  (G-122 closed). **Decided (Q-06 default, accepted by the customer).**
+- **Defaults inside it:** an empty `game_folder` means `game/` when it
+  holds a resource map; an empty `mt32_rom` means `rom/`; empty `saves`
+  means `saves/`. Neither the game folder found in `game/` nor the ROM
+  folder is written to the ini. The release archives hold empty `game/`,
+  `rom/` and `saves/`, each with a `README.txt`
+  (`scripts/test-package-release.sh` checks the layout).
+- **Existing users:** an installation with `colonel-hd.ini` next to the
+  program keeps using that folder (rule 2). One whose program folder holds
+  neither the ini nor `game/` gets the per-user folder on first start.
+- **Checked:** unit tests of the order on temporary folders (a non-ASCII
+  folder name included; a read-only program folder, run as an unprivileged
+  user); the whole playthrough in the program with `--data`. Not checked
+  here: the Windows per-user folder on a real Windows account (part of the
+  customer's laptop run, B-10).
+
+## The ini updated in place (2026-11-13, B-04)
+
+- The program writes `colonel-hd.ini` only when a value it keeps changed
+  (the mode, the viewer's scale, a game folder chosen in the dialog), and
+  then changes only those lines' values; comments, blank lines, unknown
+  keys, other sections and LF or CR LF line endings stay byte for byte. A
+  game folder given on the command line is never written. A failed write
+  is logged as a warning naming the file. With no file, it writes the
+  commented defaults. **Decided (Q-10 default).**

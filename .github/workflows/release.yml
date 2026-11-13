@@ -39,6 +39,8 @@ jobs:
       - uses: ./.github/actions/toolchain-image
       - name: Build and test
         run: docker/run.sh cmake --workflow --preset release 2>&1 | tee build.log
+      - name: Archive layout
+        run: scripts/test-package-release.sh build/release
       - name: Package
         run: scripts/package-release.sh build/release linux-${{ matrix.arch }} dist
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

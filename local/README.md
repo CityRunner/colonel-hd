@@ -8,7 +8,9 @@ here is ever committed.
 - `rom/`: your MT-32 or CM-32L ROM files, if you want MT-32 music.
 - `saves/`: saved games.
 
-The program does not look here by itself yet: give it the game folder on
-the command line or in `colonel-hd.ini` (`game_folder`, `mt32_rom`,
-`saves`). The development tools take these folders as their examples, for
-instance `COLONEL_HD_MOUNTS=$PWD/local/game:/game docker/run.sh ...`.
+Start a development build with this folder as its data folder:
+`colonel-hd --data local`. It then keeps `colonel-hd.ini`, `cache/` and
+`files/` here too, finds the game in `game/` and the ROMs in `rom/`, and
+saves to `saves/` (B-03). The development tools take these folders as
+their examples, for instance
+`COLONEL_HD_MOUNTS=$PWD/local/game:/game docker/run.sh ...`.
