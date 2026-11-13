@@ -3050,3 +3050,8 @@ the old numbers to the new ones, so older references stay unambiguous:
   (B-10). The customer chose this over releasing now or a release
   candidate. Pushing the tag is the customer's step. **Decided
   (customer).**
+- Changed on 2026-11-13 after P7: the customer deferred the laptop run
+  ("Skip this step for now, proceed for the next one"). v1.0.0 is tagged
+  without it; the release notes state the limit as measured in the
+  container. The laptop run (B-10 criterion 3) and B-09 by its result come
+  after the release, in 1.0.x. **Decided (customer).**
