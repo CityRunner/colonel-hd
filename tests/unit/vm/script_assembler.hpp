@@ -138,6 +138,24 @@ public:
         return *this;
     }
 
+    // lofsa or lofss: the address of an object of the script (by its index
+    // in the ScriptBuilder), relative to the next instruction; resolved
+    // when the script is built.
+    CodeAssembler& object_address(int opcode, std::size_t object) {
+        bytes_.push_back(opcode_byte(opcode, false));
+        object_fixups_.push_back(ObjectFixup{.at = bytes_.size(), .object = object, .next = bytes_.size() + 2});
+        append_u16le(bytes_, 0);
+        return *this;
+    }
+
+    struct ObjectFixup {
+        std::size_t at;
+        std::size_t object;
+        std::size_t next;
+    };
+
+    [[nodiscard]] const std::vector<ObjectFixup>& object_fixups() const { return object_fixups_; }
+
     // The code with every label resolved.
     [[nodiscard]] Bytes finish() const {
         Bytes out = bytes_;
@@ -164,6 +182,7 @@ private:
     Bytes bytes_;
     std::vector<std::optional<std::size_t>> labels_;
     std::vector<Fixup> fixups_;
+    std::vector<ObjectFixup> object_fixups_;
 };
 
 // An object or class of a script: its properties (selector and value, the
@@ -207,7 +226,13 @@ public:
             offset += object_size(object);
         }
         const std::size_t code_at = offset + 4; // After the code block's header.
-        const Bytes code_bytes = code_.finish();
+        Bytes code_bytes = code_.finish();
+        for (const CodeAssembler::ObjectFixup& fixup : code_.object_fixups()) {
+            const auto relative = static_cast<std::uint16_t>(static_cast<std::int64_t>(object_at[fixup.object]) -
+                                                             static_cast<std::int64_t>(code_at + fixup.next));
+            code_bytes[fixup.at] = static_cast<std::uint8_t>(relative & 0xFFU);
+            code_bytes[fixup.at + 1] = static_cast<std::uint8_t>(relative >> 8U);
+        }
 
         Bytes out;
         if (!exports_.empty()) {

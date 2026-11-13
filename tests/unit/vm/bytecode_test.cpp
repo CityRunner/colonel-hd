@@ -7,12 +7,16 @@
 // ports.
 
 #include "bytecode_world.hpp"
+#include "kernel.hpp"
 #include "sci_test.hpp"
 
 #include <cstdint>
 #include <cstdio>
+#include <map>
 #include <memory>
 #include <print>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 using sci::test::BytecodeWorld;
@@ -324,4 +328,191 @@ SCI_TEST(bytecode_local_calls_and_rest) {
         SCI_CHECK(world->global(0) == 7 && world->global(1) == 2);
         SCI_CHECK(world->global(2) == 3 && world->global(3) == 60);
     }
+}
+
+namespace {
+
+// The kernel number of a function, from the SCI0 kernel table.
+int kernel_number(std::string_view name) {
+    sci::vm::Kernel kernel;
+    kernel.init(false);
+    for (std::size_t i = 0; i < kernel.size(); ++i) {
+        if (kernel.function(i).name == name) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
+std::unique_ptr<BytecodeWorld> run_game(const std::map<int, sci::test::Bytes>& scripts,
+                                        const std::vector<int>& classes) {
+    auto game = sci::test::assembled_game(scripts, classes);
+    SCI_CHECK(game.has_value());
+    if (!game) {
+        return nullptr;
+    }
+    auto world = std::make_unique<BytecodeWorld>(std::move(*game));
+    const bool ran = world->run();
+    if (!ran) {
+        std::println(stderr, "fault: {}", world->machine->faults().message());
+    }
+    SCI_CHECK(ran);
+    return world;
+}
+
+} // namespace
+
+// Objects, classes and sends (vm.cpp op_send, op_self, op_super, op_class,
+// send_selector; selector.cpp lookupSelector): methods found on the
+// object's class and its super class, property selectors read and written
+// by a send, the property opcodes on self, and the other calls (callb,
+// calle, callk) and addresses (lofsa, lofss, lea, selfID, pushSelf,
+// pprev).
+SCI_TEST(bytecode_objects_sends_and_calls) {
+    namespace sel = sci::test::sel;
+    using sci::test::ObjectSpec;
+    constexpr int value = 8; // Property 4 (value) as a byte offset; property 5 (other) is 10.
+    constexpr int other = 10;
+    const int abs_number = kernel_number("Abs");
+    SCI_CHECK(abs_number >= 0);
+
+    ScriptBuilder script;
+    CodeAssembler& code = script.code();
+    const auto play = code.label();
+    const auto base_twice = code.label();
+    const auto base_sum = code.label();
+    const auto derived_twice = code.label();
+    const auto exported = code.label();
+    const std::vector<std::pair<int, int>> properties{{sel::value, 3}, {sel::other, 0}};
+    script.add(ObjectSpec{.is_class = true,
+                          .species = 0,
+                          .super_class = -1,
+                          .extra_properties = properties,
+                          .methods = {{sel::twice, base_twice}, {sel::sum, base_sum}}});
+    script.add(ObjectSpec{.is_class = true,
+                          .species = 1,
+                          .super_class = 0,
+                          .extra_properties = properties,
+                          .methods = {{sel::twice, derived_twice}}});
+    const std::size_t game = script.add(ObjectSpec{.is_class = false,
+                                                   .species = 1,
+                                                   .super_class = 1,
+                                                   .extra_properties = {{sel::value, 10}, {sel::other, 0}},
+                                                   .methods = {{sel::play, play}}});
+    const std::size_t thing = script.add(ObjectSpec{.is_class = false,
+                                                    .species = 0,
+                                                    .super_class = 0,
+                                                    .extra_properties = {{sel::value, 4}, {sel::other, 0}},
+                                                    .methods = {}});
+    script.export_object(game);
+    script.export_code(exported);
+    script.set_locals(std::vector<std::uint16_t>(32, 0));
+
+    const auto store = [&code](int global) { code.var(VarOp::Store, Var::Global, global); };
+    code.bind(play);
+    // 0: self twice: the derived method calls super's, then adds 1.
+    code.op_b(op::pushi, sel::twice).op(op::push0).self(2);
+    store(0);
+    // 1: thing twice (the base class's method).
+    code.op_b(op::pushi, sel::twice).op(op::push0).object_address(op::lofsa, thing).send(2);
+    store(1);
+    // 2: thing sum: 5 + 6.
+    code.op_b(op::pushi, sel::sum).op(op::push2).op_b(op::pushi, 5).op_b(op::pushi, 6);
+    code.object_address(op::lofsa, thing).send(4);
+    store(2);
+    // 3, 4: a property selector read by a send, then written and read again.
+    code.op_b(op::pushi, sel::value).op(op::push0).object_address(op::lofsa, thing).send(2);
+    store(3);
+    code.op_b(op::pushi, sel::value).op(op::push1).op_b(op::pushi, 9).object_address(op::lofsa, thing).send(3);
+    code.op_b(op::pushi, sel::value).op(op::push0).object_address(op::lofsa, thing).send(2);
+    store(4);
+    // 5: class 0 itself receives twice: its value is 3.
+    code.op_b(op::pushi, sel::twice).op(op::push0).op_b(op::klass, 0).send(2);
+    store(5);
+    // 6 to 12: the property opcodes on self.
+    code.op_b(op::p_toa, value);
+    store(6);
+    load(code, 50);
+    code.op_b(op::a_top, other).op_b(op::p_tos, other);
+    load(code, 1);
+    code.op(op::add);
+    store(7);
+    code.op_b(op::pushi, 60).op_b(op::s_top, other).op_b(op::p_toa, other);
+    store(8);
+    code.op_b(op::ip_toa, other);
+    store(9);
+    code.op_b(op::dp_toa, other);
+    store(10);
+    code.op_b(op::ip_tos, other);
+    load(code, 0);
+    code.op(op::add);
+    store(11);
+    code.op_b(op::dp_tos, other);
+    load(code, 0);
+    code.op(op::add);
+    store(12);
+    // 13, 14: selfID against pushSelf and lofss of the game object.
+    code.op(op::push_self).op(op::self_id).op(op::eq);
+    store(13);
+    code.object_address(op::lofss, game).op(op::self_id).op(op::eq);
+    store(14);
+    // 15: pprev pushes the accumulator a comparison started with.
+    load(code, 3);
+    code.op(op::push);
+    load(code, 9);
+    code.op(op::gt).op(op::pprev);
+    load(code, 1);
+    code.op(op::add);
+    store(15);
+    // 16: callb, export 1 of script 0, with one argument.
+    code.op(op::push1).op_b(op::pushi, 5).raw({sci::test::opcode_byte(op::callb, true), 1, 2});
+    store(16);
+    // 17: calle, export 0 of script 1.
+    code.op(op::push1).op_b(op::pushi, 7).raw({sci::test::opcode_byte(op::calle, true), 1, 0, 2});
+    store(17);
+    // 18: callk Abs(-5).
+    code.op(op::push1).op_b(op::pushi, -5).callk(abs_number, 1);
+    store(18);
+    // 19: lea of global 3: its address in the globals' segment.
+    code.raw({sci::test::opcode_byte(op::lea, true), 0, 3});
+    store(19);
+    code.op(op::ret);
+
+    code.bind(base_twice);
+    code.op_b(op::p_toa, value).op(op::push);
+    load(code, 2);
+    code.op(op::mul).op(op::ret);
+    code.bind(base_sum);
+    code.var(VarOp::Load, Var::Param, 1).op(op::push).var(VarOp::Load, Var::Param, 2).op(op::add).op(op::ret);
+    code.bind(derived_twice);
+    code.op_b(op::pushi, sel::twice).op(op::push0).super(0, 2).op(op::push);
+    load(code, 1);
+    code.op(op::add).op(op::ret);
+    code.bind(exported);
+    code.var(VarOp::Load, Var::Param, 1).op(op::push);
+    load(code, 100);
+    code.op(op::add).op(op::ret);
+
+    ScriptBuilder script1;
+    const auto times_three = script1.code().label();
+    script1.code().bind(times_three);
+    script1.code().var(VarOp::Load, Var::Param, 1).op(op::push);
+    load(script1.code(), 3);
+    script1.code().op(op::mul).op(op::ret);
+    script1.export_code(times_three);
+
+    const auto world = run_game({{0, script.build()}, {1, script1.build()}}, {0, 0});
+    SCI_CHECK(world != nullptr);
+    if (world == nullptr) {
+        return;
+    }
+    const std::vector<int> expected{21, 8, 11, 4, 9, 6, 10, 51, 60, 61, 60, 61, 60, 1, 1, 10, 105, 21, 5};
+    for (std::size_t i = 0; i < expected.size(); ++i) {
+        if (world->global(i) != expected[i]) {
+            std::println(stderr, "global {}: {} instead of {}", i, world->global(i), expected[i]);
+        }
+        SCI_CHECK(world->global(i) == expected[i]);
+    }
+    const sci::vm::Reg address = world->machine->global(19);
+    SCI_CHECK(address.is_pointer() && address.offset == 6);
 }
