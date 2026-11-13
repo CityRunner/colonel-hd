@@ -256,8 +256,8 @@ milliseconds) is what the customer's laptop run (B-10 criterion 3) shows.
 | Check | Result |
 |---|---|
 | New tests: the timing statistics (nearest-rank percentiles), the CSV, peak memory read; `--timing`/`--scale` rules | pass (sci-platform-tests 56) |
-| Pre-push on `3edaad9` | PREPUSH_RESULT |
-| Local gate on `3edaad9` | GATE_RESULT |
+| Pre-push on `3edaad9` | all pass: style and clang-tidy over the tree, release, asan, tsan, fuzz, ARM64 under qemu |
+| Local gate on `3edaad9` | **all match the committed goldens**: resources, pictures, sounds, 14,731 screens, VM hashes and the program's playthrough end state (normal runs unchanged) |
 | Windows CI on `3edaad9` ([run 43486277989](https://github.com/CityRunner/colonel-hd/actions/runs/43486277989)) | **success**: windows-x64 (release, ASan) and windows-arm64 (release); `peak_memory_kib` compiles on Windows (psapi) |
 
 ### Deviations and open points

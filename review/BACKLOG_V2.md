@@ -59,9 +59,9 @@ found it.
 | B-06 | VM in CI: test assembler and hand-built bytecode tests | requirement | High | L (32 h) | iteration 2 | done 2026-11-13 (`04badd1`..`2503817`, iteration 2 P5) | Q-01, MAP 8.1, G-03 |
 | B-07 | VM in CI: a small home-made game | requirement | High | L (40 h) | iteration 2 | done 2026-11-13 (`b5916dd`..`8654f37`, iteration 2 P5) | Q-01, MAP 8.1 |
 | B-08 | sci-vm line coverage in CI ≥ 70 %, local VM gate until then | requirement | High | S (4 h) | stage 5 (gate) / iteration 2 (CI) | done 2026-11-13 (`8dcfb7c` local gate, `3afa581` CI job, iteration 2 P5) | Q-01, MAP 6.4 |
-| B-09 | No frame over 16.7 ms at N = 10 (measured misses only) | performance | Medium | M (16 h) | iteration 2 | Decided | Q-04, G-123, R-92 |
-| B-10 | Scripted timing mode; customer's reference-laptop run | requirement | Medium | M (6 h) | iteration 2 | Decided | Q-04, G-123 |
-| B-11 | Peak memory ≤ baseline + 10 % (regression check) | performance | Low | S (3 h) | iteration 2 | Decided | Q-04 |
+| B-09 | No frame over 16.7 ms at N = 10 (measured misses only) | performance | Medium | M (16 h) | iteration 2 | measured 2026-11-13 (P7): waits for the customer's run | Q-04, G-123, R-92 |
+| B-10 | Scripted timing mode; customer's reference-laptop run | requirement | Medium | M (6 h) | iteration 2 | mode and doc done 2026-11-13 (P7); the customer's run open | Q-04, G-123 |
+| B-11 | Peak memory ≤ baseline + 10 % (regression check) | performance | Low | S (3 h) | iteration 2 | done 2026-11-13 (`42c2e60`, `354d682`, P7) | Q-04 |
 | B-12 | Hint licensing section in `hints/README.md` | requirement | High | S (2 h) | stage 5 (docs) | Decided (Q-03) | Q-03, G-24, HISTORY_CLEANUP E |
 | B-13 | `docs/ARCHITECTURE.md` brought up to date | maintainability | Medium | M (10 h) | iteration 2 | done 2026-11-13 (`24e52ed`, iteration 2) | G-44, MAP 8.4 |
 | B-14 | Other stale docs, comments and missing READMEs | maintainability | Low | M (6 h) | iteration 2 | done 2026-11-13 (`575b096`, iteration 2) | G-155, G-156, G-39, G-126, MAP 8.5, 8.6, 8.13, V-03, V-05, V-07, V-11 |

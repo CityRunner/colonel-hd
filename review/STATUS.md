@@ -5,10 +5,10 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Iteration 2: P1 to P5 done and merged into `main` (P5 merged 2026-11-13, customer: "Merge P5, proceed with P6"); P6 done on `iteration-2`, at STOP (not merged yet).** Version 1.0.0 is set; the tag waits until P5 to P7 and the customer's laptop run are done (customer's choice). Stage 5
+**Iteration 2: P1 to P5 done and merged into `main` (P5 merged 2026-11-13, customer: "Merge P5, proceed with P6"); P6 merged (`1bc8ce8`); P7 done on `iteration-2`, at STOP (not merged): B-10 mode and doc, B-11 done, B-09 measured and waiting for the customer's laptop run.** Version 1.0.0 is set; the tag waits until P5 to P7 and the customer's laptop run are done (customer's choice). Stage 5
 is merged into `main` (`b531169`). Iteration 2 runs on branch
 `iteration-2`: order in `review/ITERATION2_PLAN.md`, results in
-`review/ITERATION2_REPORT.md`. Next: P7, performance (B-10, B-09, B-11). Stage 5
+`review/ITERATION2_REPORT.md`. Next: the customer's laptop run (`docs/timing.md`), then B-09 by its result, then the v1.0.0 tag. Stage 5
 (started
 2026-11-06 on branch `refactor` from `a0422d6`). The plan
 (`review/REFACTOR_PLAN.md`) was approved on 2026-11-06 ("1 approve"),
