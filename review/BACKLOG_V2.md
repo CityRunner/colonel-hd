@@ -63,10 +63,10 @@ found it.
 | B-10 | Scripted timing mode; customer's reference-laptop run | requirement | Medium | M (6 h) | iteration 2 | Decided | Q-04, G-123 |
 | B-11 | Peak memory ≤ baseline + 10 % (regression check) | performance | Low | S (3 h) | iteration 2 | Decided | Q-04 |
 | B-12 | Hint licensing section in `hints/README.md` | requirement | High | S (2 h) | stage 5 (docs) | Decided (Q-03) | Q-03, G-24, HISTORY_CLEANUP E |
-| B-13 | `docs/ARCHITECTURE.md` brought up to date | maintainability | Medium | M (10 h) | iteration 2 | accepted (customer, 2026-11-06) | G-44, MAP 8.4 |
-| B-14 | Other stale docs, comments and missing READMEs | maintainability | Low | M (6 h) | iteration 2 | accepted (customer, 2026-11-06) | G-155, G-156, G-39, G-126, MAP 8.5, 8.6, 8.13, V-03, V-05, V-07, V-11 |
+| B-13 | `docs/ARCHITECTURE.md` brought up to date | maintainability | Medium | M (10 h) | iteration 2 | done 2026-11-13 (`24e52ed`, iteration 2) | G-44, MAP 8.4 |
+| B-14 | Other stale docs, comments and missing READMEs | maintainability | Low | M (6 h) | iteration 2 | done 2026-11-13 (`575b096`, iteration 2) | G-155, G-156, G-39, G-126, MAP 8.5, 8.6, 8.13, V-03, V-05, V-07, V-11 |
 | B-15 | Policy script and `.gitignore`: SCI0 patch files, run-time folders | defect | Medium | S (2 h) | stage 5 | Decided (Q-07) | G-18, V-06, R-135 |
-| B-16 | Release workflow kept working without macOS; publishing is the customer's | requirement | Medium | S (3 h) | stage 5 (macOS part) / iteration 2 | Decided | G-125, R-141 |
+| B-16 | Release workflow kept working without macOS; publishing is the customer's | requirement | Medium | S (3 h) | stage 5 (macOS part) / iteration 2 | done 2026-11-13 (`03e1404 (release notes and tag: customer)`, iteration 2) | G-125, R-141 |
 | B-17 | `kDoAvoider` stub: scan other releases if a copy turns up | defect (latent) | Low | S (1 h) | iteration 2, conditional | accepted (customer, 2026-11-06) | R-65, R-66 |
 | B-18 | Golden outputs for all resources | maintainability (safety net) | High | M (16 h) | stage 5 step 0 | Decided | Q-02, V-04, R-57, MAP 8.3 |
 | B-19 | Hashes of every VM output | maintainability (safety net) | High | M (10 h) | stage 5 step 0 | Decided | Q-01, MAP 6.3 |

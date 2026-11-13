@@ -89,3 +89,43 @@ sees; the package report will list every visible change.
 
 P4: the docs (B-13 ARCHITECTURE, B-14 other docs, B-16 the release
 workflow's rest).
+
+## Package P4 (2026-11-13), at STOP
+
+### What was done
+
+| Item | Commits | What changed |
+|---|---|---|
+| B-14 | `575b096` | Every line of the item's list fixed: `src/sci-vm/README.md` (music player and saves), SDL3's users in `cmake/SciThirdParty.cmake`, the `docker/run.sh` example, `trigonometry.hpp` and its generator (angles outside -360..360; the generator still reproduces both files), `docs/formats/replay-and-trace.md` (the program's `--replay` keeps host input, V-07), `config.hpp` and `analysis_cache.hpp` (the data folder); `hints.hpp`/`hints/README.md`, `config.cpp`'s comment and `fitting.cpp` were done with B-36, B-04 and B-29. New READMEs: `src/sci-platform`, `tools/common`, `tools/graphics-dump`, `tools/resource-dump`, `tools/playthrough`. `README.md`: the data folder, the configuration keys in the user guide, and no claim of published binaries (none is published: GitHub lists 0 releases). `docs/ASSUMPTIONS.md`: the repository is public (GitHub reports it so), a new entry. |
+| B-13 | `24e52ed` | `docs/ARCHITECTURE.md`: state milestone 9 and iteration 2 P1-P3 with the date; every library with its dependencies as `check-deps.py` checks them and its responsibilities (music player and saves in sci-vm, data folder and more in sci-platform, audio output in app); the full tools list; the data flow as built (no longer "planned"); the dependency rules with `check-deps.py`; logging with `Resources`, `Vm` and `--log`; the executor's floating-point check as built; the removed placeholders and the old fallback count gone. MAP 8.4's five errors are gone. The new statements were checked against the code. |
+| B-16 | `03e1404` | The release workflow's linux and windows jobs ran only for a pushed tag, so a manual run built nothing; now a manual run builds, tests and uploads the four archives, and only `publish` keeps the tag condition. The Linux job checks the archive layout first (`test-package-release.sh`, P3). |
+
+### Checks
+
+| Check | Result |
+|---|---|
+| Manual release run on `iteration-2` at `03e1404`: [run 43405956452](https://github.com/CityRunner/colonel-hd/actions/runs/43405956452) | **success**: linux-x64, linux-arm64, windows-x64, windows-arm64 built, tested and packaged (archive artifacts 2.9, 2.9, 2.0 and 1.9 MB); `publish` skipped |
+| Pre-push on `03e1404`: style and clang-tidy, release, asan, tsan, fuzz, ARM64 | all pass |
+| Local gate with the game | not run: P4 changes only docs, comments and a workflow (decision 1a); the last gate, on `626da91`, passed |
+
+### Deviations and open points
+
+- B-16 criterion 2 names a run on `main`; the run was made on
+  `iteration-2`, which holds the workflow change and the P1-P3 code
+  (`main` has neither yet).
+- The Windows archives' contents could not be listed here: downloading
+  workflow artifacts is blocked by this session's network policy. They are
+  made by the same `package-release.sh` as the Linux ones, whose layout is
+  tested.
+- B-16 criterion 4: `docs/release-notes/<tag>.md` must exist before the
+  next tag is pushed; it waits for the customer to name the tag.
+- B-16 criterion 6: pushing tags is the customer's (this session cannot
+  push tags); the local tags `v0.1.0` and `v0.9.0-rc.1` are the customer's
+  to push or drop.
+
+### What is next
+
+P5: the VM in CI (B-06 a test assembler and hand-built bytecode tests,
+B-07 a small home-made game, B-08 sci-vm line coverage of at least 70 % in
+CI). It is the largest package (about 76 hours) and will be split into
+small steps, each with a STOP-free commit and the local gate at the end.
