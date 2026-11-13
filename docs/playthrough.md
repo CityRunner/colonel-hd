@@ -17,7 +17,7 @@ ScummVM, and every comparison of `tools/vm-trace/run-scenario.sh` must
 match (traces, screens, maps, actors, parser, layout, OPL).
 
 **Done in the program too** (section "The playthrough in the program"):
-`sierra-hd --replay` with `--fast` plays the replay to QUIT and exits with
+`colonel-hd --replay` with `--fast` plays the replay to QUIT and exits with
 0 in HD and original mode, N = 4 and 2, AdLib and MT-32, without errors or
 warnings, in about 30 s each, and ends in sci-vm-trace's state (tick,
 globals and state hash). Open: a run in real time and the customer's
@@ -713,11 +713,11 @@ tests/playthrough/playthrough.txt` (original | HD side by side):
 
 ## The playthrough in the program
 
-The same replay, seed 0, in `sierra-hd` itself (`src/app`), headless:
+The same replay, seed 0, in `colonel-hd` itself (`src/app`), headless:
 `tools/playthrough/program-run.sh` (inside the toolchain container, the
 game at `/game`, the MT-32 ROMs at `/roms` for `--music mt32`) gives the
 program a run folder of its own (a copy of the executable, `hints/`, a
-`sierra-hd.ini` with the mode, N, music device and ROM folder, and the
+`colonel-hd.ini` with the mode, N, music device and ROM folder, and the
 analysis cache, shared and warm or emptied first), runs it under Xvfb
 (1920 x 1200 screen; `SDL_AUDIODRIVER=dummy`, or `disk`) with
 `--replay tests/playthrough/playthrough.txt --seed 0 --fast --end-state

@@ -8,6 +8,12 @@
 #   With SCI_FUZZ=ON: a libFuzzer binary, run by scripts/run-fuzzers.sh.
 #   Otherwise: the same entry point linked to a small driver that replays the
 #   seed corpus, registered with CTest, so every platform runs the inputs.
+#
+# sci_test_private_includes(<target> <component>...)
+#   Lets a test, fuzz target or test tool include the private headers of a
+#   component: src/<component>/src, for a library (sci-vm) or the program
+#   (app). Every use is a test that reaches behind a public interface; the
+#   calls are the list of them.
 
 function(sci_add_unit_test)
     cmake_parse_arguments(PARSE_ARGV 0 arg "" "NAME" "SOURCES;DEPENDS;LABELS")
@@ -18,6 +24,12 @@ function(sci_add_unit_test)
     if(arg_LABELS)
         set_tests_properties(${arg_NAME} PROPERTIES LABELS "${arg_LABELS}")
     endif()
+endfunction()
+
+function(sci_test_private_includes target)
+    foreach(component IN LISTS ARGN)
+        target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/src/${component}/src)
+    endforeach()
 endfunction()
 
 function(sci_add_fuzz_target)

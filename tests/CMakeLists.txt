@@ -9,6 +9,14 @@ sci_add_unit_test(NAME sci-golden-tests
     DEPENDS sci-pic sci-vector sci-render)
 target_include_directories(sci-golden-tests PRIVATE unit/pic unit/render)
 
+# The layers of tools/golden-resources (stage 5 step 0.3): a one-pixel
+# change changes every layer's hash. Only with the tools, which hold them.
+if(SCI_BUILD_TOOLS)
+    sci_add_unit_test(NAME sci-golden-layers-tests
+        SOURCES golden/layers_test.cpp
+        DEPENDS sci_golden_layers)
+endif()
+
 # The code that runs on worker threads (label "threads": the TSan job of
 # work-in-progress CI runs only these).
 sci_add_unit_test(NAME sci-thread-tests

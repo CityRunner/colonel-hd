@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Writes the synthetic seed corpora of the fuzz targets.
 
     python3 tests/fuzz/make_seeds.py
@@ -78,6 +79,22 @@ def main() -> None:
     for name, data in scenes().items():
         (scene_corpus / name).write_bytes(data)
 
+    patch_corpus = HERE / "corpus" / "patch"
+    patch_corpus.mkdir(exist_ok=True)
+    for name, data in patches().items():
+        (patch_corpus / name).write_bytes(data)
+    sound_corpus = HERE / "corpus" / "sound"
+    sound_corpus.mkdir(exist_ok=True)
+    for name, data in sounds().items():
+        (sound_corpus / name).write_bytes(data)
+    script_corpus = HERE / "corpus" / "script"
+    script_corpus.mkdir(exist_ok=True)
+    for name, data in scripts().items():
+        (script_corpus / name).write_bytes(data)
+    config_corpus = HERE / "corpus" / "config"
+    config_corpus.mkdir(exist_ok=True)
+    for name, data in configs().items():
+        (config_corpus / name).write_bytes(data)
     game_folder = HERE / "corpus" / "game_folder"
     (game_folder / "volume").write_bytes(folder({"RESOURCE.MAP": resource_map, "RESOURCE.001": volume}))
     (game_folder / "patches").write_bytes(
@@ -147,6 +164,105 @@ def scenes() -> dict[str, bytes]:
     layers = struct.pack("<I", 4) + stroke + ellipse + box + block_layer
     full = header(1) + faces + edges + blocks + layers
     return {"empty": empty, "layers": full}
+
+
+# One AdLib instrument: two operators of 13 bytes, then the waveforms
+# (tests/unit/audio/adlib_test.cpp).
+ADLIB_INSTRUMENT = bytes([1, 2, 3, 4, 5, 1, 6, 7, 8, 1, 0, 1, 1, 2, 3, 0, 9, 10, 0, 11, 12, 20, 0, 1, 0, 0, 1, 2])
+
+
+def mt32_patch(timbres: int, patches_49_96: bool, rhythm: bool) -> bytes:
+    """A patch.001 as tests/unit/audio/mt32_driver_test.cpp builds it."""
+    data = bytearray(491)
+    for at, text in ((0, b"After"), (20, b"Before"), (40, b"Goodbye")):
+        data[at : at + 20] = text.ljust(20, b" ")
+    data[60] = 120
+    data[62] = 2
+    for i in range(11):
+        data[74 + i] = i
+        data[85 + i] = 10 + i
+        data[96 + i] = 20 + i
+    data[107:491] = b"\x11" * 384
+    data.append(timbres)
+    for t in range(timbres):
+        data += bytes([t]) * 246
+    if patches_49_96:
+        data += b"\xab\xcd" + b"\x49" * 384
+    if rhythm:
+        data += b"\xdc\xba" + b"\x52" * 256 + bytes(range(1, 10))
+    return bytes(data)
+
+
+def patches() -> dict[str, bytes]:
+    """AdLib banks of 48 and 96 instruments, and MT-32 patches."""
+    bank48 = bytearray(1344)
+    bank48[0:28] = ADLIB_INSTRUMENT
+    bank96 = bytearray(2690)
+    bank96[0:28] = ADLIB_INSTRUMENT
+    bank96[1346 : 1346 + 28] = ADLIB_INSTRUMENT
+    return {
+        "adlib-48": bytes(bank48),
+        "adlib-96": bytes(bank96),
+        "mt32-plain": mt32_patch(2, False, False),
+        "mt32-full": mt32_patch(3, True, True),
+    }
+
+
+def sci0_sound(adlib_channels: list[int], song: bytes) -> bytes:
+    """The 0x21-byte SCI0 header (channels played on AdLib), then the song
+    (tests/unit/vm/music_device_test.cpp)."""
+    header = bytearray(0x21)
+    for channel in adlib_channels:
+        header[1 + channel * 2] = 1
+        header[2 + channel * 2] = 0x04
+    return bytes(header) + song
+
+
+def sounds() -> dict[str, bytes]:
+    """A note with a signal, a cue and the end; a loop point; two channels."""
+    one_note = bytes([0x00, 0xC0, 0x00, 0x00, 0x90, 0x3C, 0x7F, 0x1E, 0x80, 0x3C,
+                      0x00, 0x00, 0xCF, 0x05, 0x1E, 0xBF, 0x60, 0x02, 0x1E, 0xFC])
+    looped = bytes([0x00, 0xBF, 0x60, 0x7F, 0x00, 0x90, 0x40, 0x60, 0x0F, 0x80, 0x40,
+                    0x00, 0x0F, 0xB0, 0x07, 0x50, 0x00, 0xE0, 0x00, 0x50, 0x0F, 0xFC])
+    two = bytes([0x00, 0xC0, 0x01, 0x00, 0xC1, 0x02, 0x00, 0x90, 0x30, 0x40, 0x00, 0x91, 0x37, 0x40,
+                 0x20, 0x80, 0x30, 0x00, 0x00, 0x81, 0x37, 0x00, 0x00, 0xFC])
+    return {
+        "one-note": sci0_sound([0], one_note),
+        "loop": sci0_sound([0], looped),
+        "two-channels": sci0_sound([0, 1], two),
+    }
+
+
+def scripts() -> dict[str, bytes]:
+    """SCI0 scripts as blocks (type, size including the 4-byte head, body),
+    then the terminator: script 0 of tests/unit/vm/save_world.hpp (exports
+    and four locals), and the same with code and strings blocks."""
+
+    def block(type_: int, body: bytes) -> bytes:
+        return struct.pack("<HH", type_, len(body) + 4) + body
+
+    exports = block(7, struct.pack("<HH", 1, 0))
+    locals_ = block(10, bytes(8))
+    code = block(2, bytes([0x35, 0x01, 0x48]))  # ldi 1; ret
+    strings = block(5, b"hello\x00world\x00")
+    return {
+        "script0": exports + locals_ + b"\x00\x00",
+        "code-strings": exports + locals_ + code + strings + b"\x00\x00",
+    }
+
+
+def configs() -> dict[str, bytes]:
+    """Configuration files: every key, comments, CRLF, unknown keys."""
+    full = (
+        "; colonel-hd configuration\n[colonel-hd]\nformat = 1\ngame_folder = /games/cb;1#x\nmode = original\n"
+        "scale = 5\npriority_snap = on\nmt32_rom = /roms\nmusic = mt32\nvolume = 40\nsaves = saves\n"
+    )
+    return {
+        "full": full.encode(),
+        "crlf": full.replace("\n", "\r\n").encode(),
+        "defaults": b"[colonel-hd]\nformat = 1\n",
+        "odd": b"# comment\n[other]\nx = 1\n[colonel-hd]\nformat = 1\nscale = auto ; the largest\nnew_key = 3\nvolume = 101\n",
+    }
 
 
 if __name__ == "__main__":

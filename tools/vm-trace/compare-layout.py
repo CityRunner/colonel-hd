@@ -10,7 +10,7 @@ operation in 1x screen coordinates (docs/formats/replay-and-trace.md,
 
     <tick> <call> <kind> <fields>
 
-the reference's from SIERRA_HD_LAYOUT, ours from sci-vm-trace --layout.
+the reference's from COLONEL_HD_LAYOUT, ours from sci-vm-trace --layout.
 Prints the first difference (tick, call, kind and the fields that differ)
 and exits with 1, or prints "layout match: <n> lines (...)" with the count
 of each kind.

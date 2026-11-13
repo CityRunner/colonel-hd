@@ -2,7 +2,7 @@ name: ccache
 description: >
   Restores the compiler cache of a Linux job (.ccache in the workspace,
   which docker/run.sh hands to ccache inside the toolchain image when
-  SIERRA_HD_CCACHE is set) and saves it when the job ends. The newest cache
+  COLONEL_HD_CCACHE is set) and saves it when the job ends. The newest cache
   with the same key prefix is restored; each run saves its own.
 inputs:
   key:

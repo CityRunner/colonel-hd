@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # A walk through the mansion with mouse clicks only, with seed 0 and stop
 # tick 12600.
 # Passes the copy protection (seed 0) and answers "Yes" to "Have you

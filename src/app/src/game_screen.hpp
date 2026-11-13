@@ -32,8 +32,8 @@ struct CursorImage {
 
 // How the program shows the cursor. The system's cursor moves without
 // waiting for a frame, but systems size it in their own units: SDL takes
-// its pixels as points where the window's pixel density is not 1 (macOS,
-// scaled Wayland), and Windows cursor files hold at most 256 pixels per
+// its pixels as points where the window's pixel density is not 1 (scaled
+// Wayland), and Windows cursor files hold at most 256 pixels per
 // side. Elsewhere the program draws the cursor over the frame itself.
 enum class CursorMode : std::uint8_t {
     System,

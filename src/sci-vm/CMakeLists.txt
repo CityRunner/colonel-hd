@@ -2,7 +2,6 @@
 sci_add_library(NAME sci-vm
     SOURCES
         src/bytecode.cpp
-        src/component.cpp
         src/events.cpp
         src/files.cpp
         src/game.cpp

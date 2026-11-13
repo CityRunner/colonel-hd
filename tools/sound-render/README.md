@@ -7,7 +7,7 @@ whether the song ended (`ended`) or was cut at the limit (`cut`), the peak
 sample and the SHA-256 of the samples (two bytes little-endian each, left
 then right).
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         build/debug/tools/sound-render/sci-sound-render /game <sound number | all> [seconds] [--raw <file>] [--opl <file>]
 
 `<seconds>` (default 60) limits each sound; looping songs play once, at
@@ -28,13 +28,13 @@ sooner):
 
     sound <n> adlib20 <SHA-256 of the samples>
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         build/release/tools/sound-render/sci-sound-render /game --golden tests/golden/sounds.txt --check
 
 prints each difference and `all 119 sound golden hashes match` (about 35 s
 in release, 3 minutes on ARM64 under qemu-user):
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         qemu-aarch64 build/cross-aarch64/tools/sound-render/sci-sound-render /game --golden tests/golden/sounds.txt --check
 
 Without `--check` it writes the file. Regenerate it only for an intended

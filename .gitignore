@@ -22,18 +22,39 @@ compile_commands.json
 *.[Vv]56
 *.[Ss][Cc][Ii]
 [Pp][Aa][Tt][Cc][Hh][Ee][Ss]/
+# SCI0 patch files hold one resource each: SCRIPT.052, TEXT.052, PATCH.001.
+[Vv][Ii][Ee][Ww].[0-9][0-9][0-9]
+[Pp][Ii][Cc].[0-9][0-9][0-9]
+[Ss][Cc][Rr][Ii][Pp][Tt].[0-9][0-9][0-9]
+[Tt][Ee][Xx][Tt].[0-9][0-9][0-9]
+[Ss][Oo][Uu][Nn][Dd].[0-9][0-9][0-9]
+[Mm][Ee][Mm][Oo][Rr][Yy].[0-9][0-9][0-9]
+[Vv][Oo][Cc][Aa][Bb].[0-9][0-9][0-9]
+[Ff][Oo][Nn][Tt].[0-9][0-9][0-9]
+[Cc][Uu][Rr][Ss][Oo][Rr].[0-9][0-9][0-9]
+[Pp][Aa][Tt][Cc][Hh].[0-9][0-9][0-9]
 
 # MT-32 and CM-32L ROM files are never committed.
 *.[Rr][Oo][Mm]
 *.[Bb][Ii][Nn]
 
 # Images derived from the game art and resource dumps stay local.
-/reports/images/
-/reports/dumps/
+/docs/reports/images/
+/docs/reports/dumps/
 
-# Local configuration and caches of the program.
-sierra-hd.ini
-sierra-hd.toml
+# What the program writes next to itself: its configuration, saved games,
+# the analysis cache and the game's own files.
+colonel-hd.ini
+colonel-hd.toml
+*.[Ss][Aa][Vv]
 analysis-cache/
+/cache/
+/files/
+/saves/
 build.log
 __pycache__/
+
+# Your own files: the game, MT-32 ROMs and saves (local/README.md). Only the
+# folders' placeholders and the README are tracked.
+/local/*/*
+!/local/*/.gitkeep

@@ -5,7 +5,7 @@ ScummVM and in sci-vm and must give the same kernel-call trace, screens,
 1x priority and control maps, actor positions, parser results and window
 layout:
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         tools/vm-trace/run-scenario.sh tests/scenarios/<name>.txt <stop tick> build/scenarios/<name>
 
 `scenarios.txt` lists every run with its stop tick and seed;

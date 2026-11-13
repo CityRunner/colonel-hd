@@ -57,7 +57,7 @@ does.
   `<tick> <reached> <component> <bytes> <sha-256>` for each component, so
   that two files show which part of the state differs. A tick the run does
   not reach because the game quit gets the state as the game ended, with
-  `<reached>` the tick it ended at (`sierra-hd --end-state` writes the
+  `<reached>` the tick it ended at (`colonel-hd --end-state` writes the
   same). Two runs of the same scenario, and runs on x86-64 and ARM64, give
   the same file:
 
@@ -115,10 +115,10 @@ does.
   alone. One result file per scenario in `build/round-trips`
   (`<replay>-<stop>-<seed>.ok` or `.fail`; a scenario with a `.ok` is
   skipped), the work folder kept only for failures. In the container with
-  the game at `/game`; `SIERRA_HD_VM_TRACE` (default the release build) and
-  `SIERRA_HD_JOBS` (default 4):
+  the game at `/game`; `COLONEL_HD_VM_TRACE` (default the release build) and
+  `COLONEL_HD_JOBS` (default 4):
 
-      SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/vm-trace/run-round-trips.sh
+      COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/vm-trace/run-round-trips.sh
 - `--vocabulary` lists the parser's vocabulary as sci-text reads it:
   `word <spelling> <class> <group>` for every word of vocab.000,
   `suffix <typed> <stored> <class mask> <class>` for vocab.901 and
@@ -134,15 +134,15 @@ does.
 
 The reference side, with the same options as environment variables:
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh env \
-        SIERRA_HD_TRACE=build/traces/ref.txt SIERRA_HD_STOP_TICK=3600 \
-        [SIERRA_HD_SEED=<n>] [SIERRA_HD_REPLAY=<file>] \
-        [SIERRA_HD_SCREENS=<folder>] [SIERRA_HD_ACTORS=<file>] [SIERRA_HD_PARSER=<file>] \
-        [SIERRA_HD_LAYOUT=<file>] [SIERRA_HD_OPL=<file>] \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh env \
+        COLONEL_HD_TRACE=build/traces/ref.txt COLONEL_HD_STOP_TICK=3600 \
+        [COLONEL_HD_SEED=<n>] [COLONEL_HD_REPLAY=<file>] \
+        [COLONEL_HD_SCREENS=<folder>] [COLONEL_HD_ACTORS=<file>] [COLONEL_HD_PARSER=<file>] \
+        [COLONEL_HD_LAYOUT=<file>] [COLONEL_HD_OPL=<file>] \
         xvfb-run -a env SDL_AUDIODRIVER=dummy \
         tools/reference-scummvm/run.sh build/reference-scummvm /game --music-driver=adlib
 
-On the MT-32, `SIERRA_HD_MIDI=<file>` in place of `SIERRA_HD_OPL` and
+On the MT-32, `COLONEL_HD_MIDI=<file>` in place of `COLONEL_HD_OPL` and
 `--music-driver=mt32 --extrapath=<folder>`, where the folder holds the ROMs
 under the names ScummVM opens, `MT32_CONTROL.ROM` and `MT32_PCM.ROM` (it
 tries `CM32L_CONTROL.ROM` and `CM32L_PCM.ROM` first). Keep that folder
@@ -152,7 +152,7 @@ outside the repository, for example symbolic links next to the ROM folder:
     ln -s ../roland/MT32_CONTROL.1987-10-07.v1.07.ROM MT32_CONTROL.ROM
     ln -s ../roland/MT32_PCM.ROM MT32_PCM.ROM
 
-and mount the parent (`SIERRA_HD_MOUNTS=...,/home/user/roms:/roms`), so
+and mount the parent (`COLONEL_HD_MOUNTS=...,/home/user/roms:/roms`), so
 that the relative links resolve in the container.
 
 Then:
@@ -163,7 +163,7 @@ prints the first differing call with the calls before it, or
 `traces match: <n> calls`. `--prefix` accepts a trace of ours that stops
 early. `compare-screens.py <reference folder> <sci-vm folder>` compares the
 screens and the maps (the reference writes them with
-`SIERRA_HD_SCREENS=<folder>`) and prints `screens match: <n>` and
+`COLONEL_HD_SCREENS=<folder>`) and prints `screens match: <n>` and
 `maps match: <n>` (ticks), or the first difference of each.
 `compare-actors.py <reference file> <sci-vm file>` compares the actor
 positions and prints the first difference (tick, call, object and field)
@@ -183,11 +183,11 @@ MIDI messages and prints the first difference or `midi match: <n> messages
 
 `run-scenario.sh <replay> <stop tick> <output folder> [seed]` runs a replay
 in both engines and compares traces, screens, maps, actor positions,
-parser results, layout and OPL register writes (`SIERRA_HD_COMPARE_OPL=0`
-skips the last; with `SIERRA_HD_MUSIC=mt32` both engines play on the MT-32
+parser results, layout and OPL register writes (`COLONEL_HD_COMPARE_OPL=0`
+skips the last; with `COLONEL_HD_MUSIC=mt32` both engines play on the MT-32
 and the MIDI messages are compared instead, the reference with the ROMs of
-`SIERRA_HD_MT32_SCUMMVM`, default `/roms/mt32-scummvm`, sci-vm with those
-of `SIERRA_HD_MT32_ROMS`, default `/roms/roland`); `run-all-scenarios.sh [--jobs <n>]` does so
+`COLONEL_HD_MT32_SCUMMVM`, default `/roms/mt32-scummvm`, sci-vm with those
+of `COLONEL_HD_MT32_ROMS`, default `/roms/roland`); `run-all-scenarios.sh [--jobs <n>]` does so
 for every run listed in `tests/scenarios/scenarios.txt`, one line per run,
 n runs at a time (four on four cores take about 10 minutes for all).
 
@@ -197,6 +197,6 @@ and `parser-words-*.txt`) from the output of `sci-vm-trace --vocabulary` and
 prints their lines for `scenarios.txt` (file, stop tick, seed); `--words`
 lists the scenario and command that first types each word:
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         build/debug/tools/vm-trace/sci-vm-trace --vocabulary /game build/vocabulary.txt
     tools/vm-trace/make-parser-scenarios.py build/vocabulary.txt tests/scenarios

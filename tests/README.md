@@ -23,7 +23,11 @@
 Seed corpora are hand-made; `fuzz/make_seeds.py` regenerates the
 sci-resource ones. libFuzzer runs write new inputs to a scratch directory
 (`scripts/run-fuzzers.sh`, or `SCI_FUZZ_CORPUS`, which CI caches), never
-into the corpora.
+into the corpora. Bugs the fuzzers found and that are not fixed yet are
+listed in `fuzz/known-failures.txt` (target, bug, kind, stack frame):
+`run-fuzzers.sh` reports such a failure as known instead of failing;
+any other failure fails. Remove a line when its bug is fixed;
+`scripts/test-run-fuzzers.sh` checks the logic.
 
 Tests that need the game files run locally, never in CI:
 
@@ -38,15 +42,46 @@ Tests that need the game files run locally, never in CI:
   scenario runs (`tools/vm-trace/README.md`).
 - MT-32 (milestone 7): the tests of `sci::audio::Mt32` in
   `sci-audio-tests` need the user's Roland ROMs, which are never in the
-  repository or in CI. Without `SIERRA_HD_MT32_ROMS` they pass with a
+  repository or in CI. Without `COLONEL_HD_MT32_ROMS` they pass with a
   "skipped" note; with it, they use the ROMs in that folder
   (`src/sci-audio/README.md`):
 
-      SIERRA_HD_MOUNTS=/path/to/roms:/roms docker/run.sh \
-          env SIERRA_HD_MT32_ROMS=/roms build/debug/tests/unit/sci-audio-tests
+      COLONEL_HD_MOUNTS=/path/to/roms:/roms docker/run.sh \
+          env COLONEL_HD_MT32_ROMS=/roms build/debug/tests/unit/sci-audio-tests
 - Hints (milestone 3a): the hint-anchor check, `sci-hint-tool <game> check
   hints` (`tools/hint-tool/README.md`). CI checks the hint files against
   their schema without the game (`scripts/check-hints.py`).
+
+## The local gate
+
+CI has no game files, and its unit tests cover only part of sci-vm (38 %
+of its lines, `review/MAP.md` 6.4). Until the VM has a CI net of its own
+(`review/BACKLOG_V2.md` B-06, B-07, B-08), the game-dependent checks are
+the gate for changes that touch the game's behaviour:
+
+- **Who runs it:** the author of any change to `main` that touches
+  `src/sci-vm`, `src/sci-resource`, `src/sci-text` or `src/sci-audio`
+  (B-08), and of any change to `src/sci-pic`, `src/sci-view`,
+  `src/sci-vector`, `src/sci-render`, `src/app` or `hints/` (the golden
+  outputs). It runs locally on the customer's game copy (and the MT-32
+  ROMs), before merge, and the pull request names the log.
+- **What:** `scripts/check-local.sh` (S4 and S5 of the stage 5 plan):
+
+      COLONEL_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh \
+          scripts/check-local.sh build/release
+
+  It checks every committed golden file of `golden/`: `resources.txt`
+  (every picture layer at N = 1 to 16, every view cel, font glyph and
+  cursor; `tools/golden-resources`), `pictures.txt` and `sounds.txt` (as
+  above), `screens.txt` (every scenario and playthrough screen, original
+  and HD at N = 1, 2, 5, 10; `scripts/check-screen-hashes.sh`) and
+  `vm.txt` (every output of `sci-vm-trace` over the scenarios, the
+  playthrough and the round trips, and the program's own end state;
+  `scripts/check-vm-hashes.sh`). A change that is meant to change an
+  output regenerates exactly the affected file, generated twice with the
+  same result, and says why in the commit.
+- **Also before a release:** the comparison with the reference ScummVM,
+  `tools/vm-trace/run-all-scenarios.sh` and `tools/playthrough/check.sh`.
 
 ## Scenario recordings
 
@@ -56,7 +91,7 @@ kernel-call traces, the screens they show, the 1x priority and control maps
 and the actor positions of every kAnimate call (milestone 5) must match.
 `scenarios/scenarios.txt` lists the runs (file, stop tick, seed), and
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/vm-trace/run-all-scenarios.sh
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/vm-trace/run-all-scenarios.sh
 
 runs them all (`tools/vm-trace/run-scenario.sh` runs one).
 

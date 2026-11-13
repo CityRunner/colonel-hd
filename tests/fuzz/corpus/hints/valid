@@ -1,5 +1,5 @@
 {
-  "format": "sierra-hd-hints",
+  "format": "colonel-hd-hints",
   "version": 1,
   "picture": 44,
   "pic_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",

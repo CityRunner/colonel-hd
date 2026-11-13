@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Every menu and item of the menu bar chosen with the mouse, in Laura's
 # bedroom (room 44), with seed 0. The start is that of menus.txt (copy
 # protection, then "Yes" to "Have you previously attended?"). A press on

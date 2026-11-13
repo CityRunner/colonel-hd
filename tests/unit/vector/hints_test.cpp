@@ -15,7 +15,7 @@ namespace {
 
 // A valid file with one of everything; the tests below break it in turn.
 const std::string valid = R"({
-  "format": "sierra-hd-hints",
+  "format": "colonel-hd-hints",
   "version": 1,
   "picture": 44,
   "pic_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
@@ -66,7 +66,7 @@ SCI_TEST(hints_read_a_complete_file) {
 }
 
 SCI_TEST(hints_arrays_are_optional) {
-    const auto hints = parse_hints(R"({"format": "sierra-hd-hints", "version": 1, "picture": 0,
+    const auto hints = parse_hints(R"({"format": "colonel-hd-hints", "version": 1, "picture": 0,
         "pic_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "analyser": ""})");
     SCI_CHECK(hints.has_value() && hints->chains.empty() && hints->gaps.empty());
 }
@@ -75,7 +75,7 @@ SCI_TEST(hints_reject_invalid_files) {
     const std::array<std::pair<const char*, const char*>, 22> breakages{
         {
             {R"("version": 1)", R"("version": 2)"},
-            {R"("sierra-hd-hints")", R"("other")"},
+            {R"("colonel-hd-hints")", R"("other")"},
             {R"("picture": 44)", R"("picture": 1000)"},
             {"0123456789abcdef\",", "0123456789abcdeF\","},
             {R"("analyser": "test")", R"("analyser": "t\u0001")"},

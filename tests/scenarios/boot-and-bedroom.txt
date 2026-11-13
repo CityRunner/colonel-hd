@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Boot to Laura's bedroom with seed 7 and stop tick 5000.
 # The fingerprint on the copy-protection screen depends on the seed; with
 # seed 7 the right name is Dr. Feels (seed 0 shows another fingerprint).

@@ -84,14 +84,14 @@ platform layer (`sci/platform/mt32_roms.hpp`).
 The tests of `Mt32` and `Mt32Driver` (`tests/unit/audio/mt32_test.cpp`,
 `mt32_driver_test.cpp`) and of the ROM folder
 (`tests/unit/platform/mt32_roms_test.cpp`) that need ROMs read
-them from the folder in `SIERRA_HD_MT32_ROMS`, and pass with a "skipped"
+them from the folder in `COLONEL_HD_MT32_ROMS`, and pass with a "skipped"
 note when it is not set or a file is missing (CI has no ROMs). Files:
 `MT32_CONTROL.1987-10-07.v1.07.ROM` (or `MT32_CONTROL.ROM`),
 `MT32_PCM.ROM`, `CM32L_CONTROL.1989-12-05.v1.02.ROM` (or
 `CM32L_CONTROL.ROM`) and `CM32L_PCM.ROM`. In the container the folder is
 mounted read-only:
 
-    SIERRA_HD_MOUNTS=/path/to/roms:/roms docker/run.sh \
-        env SIERRA_HD_MT32_ROMS=/roms build/debug/tests/unit/sci-audio-tests
+    COLONEL_HD_MOUNTS=/path/to/roms:/roms docker/run.sh \
+        env COLONEL_HD_MT32_ROMS=/roms build/debug/tests/unit/sci-audio-tests
 
 The ROMs are Roland's and never committed or uploaded.

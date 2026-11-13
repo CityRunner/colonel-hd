@@ -1,4 +1,4 @@
-# Code style of sierra-hd. Checked in CI by scripts/check-format.sh with the
+# Code style of colonel-hd. Checked in CI by scripts/check-format.sh with the
 # clang-format of the pinned toolchain (docker/Dockerfile).
 BasedOnStyle: LLVM
 Language: Cpp

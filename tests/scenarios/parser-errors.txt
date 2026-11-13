@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Input the parser rejects or has to clean up: unknown words, broken sentences, punctuation, case and numbers.
 # Copy protection (seed 0): leaves the title, moves the pointer to the
 # right answer and confirms; Enter on the message that follows.

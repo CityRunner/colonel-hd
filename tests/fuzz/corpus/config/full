@@ -1,0 +1,11 @@
+; colonel-hd configuration
+[colonel-hd]
+format = 1
+game_folder = /games/cb;1#x
+mode = original
+scale = 5
+priority_snap = on
+mt32_rom = /roms
+music = mt32
+volume = 40
+saves = saves

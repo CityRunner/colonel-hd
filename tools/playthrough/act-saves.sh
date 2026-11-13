@@ -5,14 +5,14 @@
 # "<act number> <tick>" of tests/playthrough/act-saves.txt, the replay runs
 # up to that tick, then the game's own save dialog is used as a player would:
 # F5, the description ("Act I", "Act II", ...) and Enter. The save is
-# written as <output folder>/sierra-hd-<n>.sav, the slot the program would
+# written as <output folder>/colonel-hd-<n>.sav, the slot the program would
 # give it, so the whole folder can be copied into the program's saves folder.
 #
 #   tools/playthrough/act-saves.sh [output folder]
 #
 # Run it inside the toolchain container with the game at /game. The saves
 # hold the game's identity: they load only with the same release of the
-# game. SIERRA_HD_VM_TRACE names sci-vm-trace (default the release build).
+# game. COLONEL_HD_VM_TRACE names sci-vm-trace (default the release build).
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -20,7 +20,7 @@ root="${here}/../.."
 replay="${root}/tests/playthrough/playthrough.txt"
 table="${root}/tests/playthrough/act-saves.txt"
 romans=(- I II III IV V VI VII VIII)
-vm_trace="${SIERRA_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
+vm_trace="${COLONEL_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
 out="${1:-${root}/build/act-saves}"
 work="$(mktemp -d)"
 trap 'rm -rf "${work}"' EXIT
@@ -56,7 +56,7 @@ while read -r number tick _; do
         status=1
         continue
     fi
-    cp "${save}" "${out}/$(printf 'sierra-hd-%03d.sav' "${number}")"
-    echo "${description}: tick ${tick}, $(printf 'sierra-hd-%03d.sav' "${number}"), $(stat -c %s "${save}") bytes"
+    cp "${save}" "${out}/$(printf 'colonel-hd-%03d.sav' "${number}")"
+    echo "${description}: tick ${tick}, $(printf 'colonel-hd-%03d.sav' "${number}"), $(stat -c %s "${save}") bytes"
 done < <(grep -v '^#' "${table}")
 exit "${status}"

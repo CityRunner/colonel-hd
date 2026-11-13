@@ -2,7 +2,7 @@
 //
 // Choosing the music device (spec section 8): the MT-32 needs the user's
 // ROMs in the configured folder and falls back to the AdLib without them.
-// The tests that find real ROMs read SIERRA_HD_MT32_ROMS and pass with a
+// The tests that find real ROMs read COLONEL_HD_MT32_ROMS and pass with a
 // note without it (as in CI); the ROMs are never in the repository.
 
 #include "sci/audio/mt32.hpp"
@@ -71,7 +71,7 @@ SCI_TEST(music_choice_keeps_adlib_and_off) {
 }
 
 SCI_TEST(music_choice_falls_back_without_a_rom_folder) {
-    for (const fs::path& folder : {fs::path(), fs::path("/nowhere/sierra-hd-roms")}) {
+    for (const fs::path& folder : {fs::path(), fs::path("/nowhere/colonel-hd-roms")}) {
         const auto choice = sci::platform::choose_music_device(mt32_config(folder));
         SCI_CHECK(choice.device == MusicDevice::Adlib && choice.mt32 == nullptr);
         SCI_CHECK(choice.warning && choice.log.contains("playing on the AdLib"));
@@ -79,7 +79,7 @@ SCI_TEST(music_choice_falls_back_without_a_rom_folder) {
 }
 
 SCI_TEST(music_choice_falls_back_on_wrong_roms) {
-    const TempFolder folder("sierra-hd-mt32-roms-test");
+    const TempFolder folder("colonel-hd-mt32-roms-test");
     // Files under the usual names that are no ROMs mt32emu knows, a file
     // that is too large and one without the extension are all passed over.
     std::ofstream(folder.path() / "MT32_CONTROL.ROM", std::ios::binary) << std::string(65536, 'x');
@@ -100,9 +100,9 @@ SCI_TEST(mt32_control_ranks_prefer_the_mt32_1_07) {
 }
 
 SCI_TEST(music_choice_opens_the_users_mt32) {
-    const char* roms = std::getenv("SIERRA_HD_MT32_ROMS"); // NOLINT(concurrency-mt-unsafe): no threads here
+    const char* roms = std::getenv("COLONEL_HD_MT32_ROMS"); // NOLINT(concurrency-mt-unsafe): no threads here
     if (roms == nullptr || *roms == '\0') {
-        std::println("  skipped: SIERRA_HD_MT32_ROMS is not set");
+        std::println("  skipped: COLONEL_HD_MT32_ROMS is not set");
         return;
     }
     // The customer's folder holds the MT-32 1.07, a patched MT-32 control
@@ -117,7 +117,7 @@ SCI_TEST(music_choice_opens_the_users_mt32) {
     std::println("  {}", choice.log);
 
     // With only the CM-32L's ROMs, the CM-32L.
-    const TempFolder cm32l("sierra-hd-mt32-roms-cm32l");
+    const TempFolder cm32l("colonel-hd-mt32-roms-cm32l");
     std::error_code error;
     for (const char* name : {"CM32L_CONTROL.1989-12-05.v1.02.ROM", "CM32L_PCM.ROM"}) {
         fs::copy_file(fs::path(roms) / name, cm32l.path() / name, error);

@@ -9,7 +9,7 @@ Both files hold one line per message the SCI MT-32 driver sends
 
     <timer call> <byte> <byte> ...
 
-the reference's from SIERRA_HD_MIDI, ours from sci-vm-trace --midi. Prints
+the reference's from COLONEL_HD_MIDI, ours from sci-vm-trace --midi. Prints
 the first difference (line, timer call and bytes) and exits with 1, or
 prints "midi match: <n> messages (...)" with the timer calls they span, the
 note-ons and the SysEx messages among them.

@@ -4,7 +4,7 @@
 // a synthetic patch.001, the SysEx messages sent when it opens, the routing
 // of notes and programs, the volume and the parts of a song. Most tests run
 // without ROMs (the driver then only logs what it sends); those that render
-// read the ROMs from SIERRA_HD_MT32_ROMS and pass with a note without it.
+// read the ROMs from COLONEL_HD_MT32_ROMS and pass with a note without it.
 
 #include "sci/audio/mt32.hpp"
 #include "sci/audio/mt32_driver.hpp"
@@ -101,9 +101,9 @@ std::optional<Mt32Patch> parsed(const std::vector<std::uint8_t>& data) {
 
 // An MT-32 on the 1.07 control ROM, or nothing (and a note) without ROMs.
 std::unique_ptr<Mt32> open_mt32() {
-    const char* folder = std::getenv("SIERRA_HD_MT32_ROMS"); // NOLINT(concurrency-mt-unsafe): no threads here
+    const char* folder = std::getenv("COLONEL_HD_MT32_ROMS"); // NOLINT(concurrency-mt-unsafe): no threads here
     if (folder == nullptr || *folder == '\0') {
-        std::println("  skipped: SIERRA_HD_MT32_ROMS is not set");
+        std::println("  skipped: COLONEL_HD_MT32_ROMS is not set");
         return nullptr;
     }
     const auto read = [&](std::initializer_list<std::string_view> names) -> std::vector<std::uint8_t> {

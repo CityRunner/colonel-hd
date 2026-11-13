@@ -1,9 +1,8 @@
 name: Native toolchain
 description: >
-  Installs the pinned upstream LLVM release and Ninja on macOS and Windows
-  runners (Linux jobs use the toolchain image instead), verifies their
-  SHA-256, and on Windows sets up the MSVC and Windows SDK environment that
-  clang-cl needs. With a ccache archive, also installs ccache, makes it
+  Installs the pinned upstream LLVM release and Ninja on Windows runners
+  (Linux jobs use the toolchain image instead), verifies their SHA-256, and
+  sets up the MSVC and Windows SDK environment that clang-cl needs. With a ccache archive, also installs ccache, makes it
   CMake's compiler launcher and restores and saves its cache.
 inputs:
   llvm-archive:
@@ -68,18 +67,10 @@ runs:
         version="$(sed -E 's/^(LLVM-|clang\+llvm-)([0-9.]+).*/\2/' <<< "$LLVM_ARCHIVE")"
         curl -fsSL -o llvm.tar.xz "https://github.com/llvm/llvm-project/releases/download/llvmorg-${version}/${LLVM_ARCHIVE}"
         curl -fsSL -o ninja.zip "https://github.com/ninja-build/ninja/releases/download/${NINJA_VERSION}/${NINJA_ARCHIVE}"
-        sha256() { if command -v sha256sum > /dev/null; then sha256sum "$@"; else shasum -a 256 "$@"; fi; }
-        echo "$LLVM_SHA256  llvm.tar.xz" | sha256 -c -
-        echo "$NINJA_SHA256  ninja.zip" | sha256 -c -
+        echo "$LLVM_SHA256  llvm.tar.xz" | sha256sum -c -
+        echo "$NINJA_SHA256  ninja.zip" | sha256sum -c -
         top="${LLVM_ARCHIVE%.tar.xz}"
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          tools=(clang-cl.exe clang.exe lld-link.exe llvm-lib.exe llvm-rc.exe llvm-mt.exe llvm-symbolizer.exe)
-        else
-          # macOS links with the Xcode linker and the SDK's libc++. The
-          # archive's libc++ headers are left out on purpose: binaries must be
-          # compiled against the headers of the libc++ they run with.
-          tools=(clang clang++ "clang-${version%%.*}" llvm-symbolizer)
-        fi
+        tools=(clang-cl.exe clang.exe lld-link.exe llvm-lib.exe llvm-rc.exe llvm-mt.exe llvm-symbolizer.exe)
         members=("$top/lib/clang")
         for tool in "${tools[@]}"; do members+=("$top/bin/$tool"); done
         tar -xJf llvm.tar.xz -C "$ROOT/llvm" --strip-components=1 "${members[@]}"
@@ -89,18 +80,13 @@ runs:
           ccache_version="$(sed -E 's/^ccache-([0-9.]+)-.*/\1/' <<< "$CCACHE_ARCHIVE")"
           curl -fsSL -o "$CCACHE_ARCHIVE" \
             "https://github.com/ccache/ccache/releases/download/v${ccache_version}/${CCACHE_ARCHIVE}"
-          echo "$CCACHE_SHA256  $CCACHE_ARCHIVE" | sha256 -c -
+          echo "$CCACHE_SHA256  $CCACHE_ARCHIVE" | sha256sum -c -
           mkdir -p "$ROOT/ccache"
-          if [[ "$CCACHE_ARCHIVE" == *.zip ]]; then
-            unzip -q -j "$CCACHE_ARCHIVE" '*/ccache.exe' -d "$ROOT/ccache"
-          else
-            tar -xzf "$CCACHE_ARCHIVE" -C "$ROOT/ccache" --strip-components=1 "${CCACHE_ARCHIVE%.tar.gz}/ccache"
-          fi
+          unzip -q -j "$CCACHE_ARCHIVE" '*/ccache.exe' -d "$ROOT/ccache"
           rm "$CCACHE_ARCHIVE"
         fi
 
-    - if: runner.os == 'Windows'
-      shell: pwsh
+    - shell: pwsh
       env:
         MSVC_ARCH: ${{ inputs.msvc-arch }}
       run: |
@@ -144,16 +130,11 @@ runs:
             echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache"
           } >> "$GITHUB_ENV"
         fi
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          # The ASan runtime DLL is loaded from PATH.
-          echo "$(cygpath -w "$ROOT/llvm/lib/clang")\\$(ls "$ROOT/llvm/lib/clang")\\lib\\windows" >> "$GITHUB_PATH"
-        else
-          echo "SDKROOT=$(xcrun --show-sdk-path)" >> "$GITHUB_ENV"
-          echo "MACOSX_DEPLOYMENT_TARGET=14.0" >> "$GITHUB_ENV"
-        fi
+        # The ASan runtime DLL is loaded from PATH.
+        echo "$(cygpath -w "$ROOT/llvm/lib/clang")\\$(ls "$ROOT/llvm/lib/clang")\\lib\\windows" >> "$GITHUB_PATH"
 
     - shell: bash
       run: |
         command -v clang clang-cl ninja 2>/dev/null || true
-        if [[ "$RUNNER_OS" == "Windows" ]]; then clang-cl --version; else clang++ --version; fi
+        clang-cl --version
         ninja --version

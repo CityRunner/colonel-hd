@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # A save while two songs play, with the MT-32's reverb away from its
 # default, and its restore in another room (milestone 9), with seed 0 and
 # stop tick 13600. Starts as outdoors-restore.txt up to room 22 (the

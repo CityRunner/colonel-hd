@@ -1,6 +1,6 @@
-# sierra-hd 0.9
+# colonel-hd 0.9
 
-sierra-hd is a new interpreter for Sierra's *The Colonel's Bequest*
+colonel-hd is a new interpreter for Sierra's *The Colonel's Bequest*
 (1989), with an HD mode that redraws the backgrounds as sharp vector art
 at any whole-number scale. The game itself plays exactly as the original.
 
@@ -11,7 +11,7 @@ contains the room viewer of release 0.1.
 ## What you need
 
 - Your own copy of *The Colonel's Bequest*, English DOS version (the GOG
-  release works). sierra-hd contains no game data.
+  release works). colonel-hd contains no game data.
 - One of:
   - Windows 10 or 11 (x64 or ARM64);
   - Linux with glibc 2.38 or newer, for example Ubuntu 24.04, Debian 13 or
@@ -21,11 +21,11 @@ contains the room viewer of release 0.1.
 
 ## Starting
 
-Unpack the archive anywhere and start `sierra-hd` (on Windows
-`sierra-hd.exe`). The first time, it asks for the game folder: the one that
+Unpack the archive anywhere and start `colonel-hd` (on Windows
+`colonel-hd.exe`). The first time, it asks for the game folder: the one that
 contains `RESOURCE.MAP`. You can also give the folder on the command line:
 
-    sierra-hd "C:\GOG Games\Colonel's Bequest"
+    colonel-hd "C:\GOG Games\Colonel's Bequest"
 
 The program checks that the folder holds a supported release. The tested
 release is the English DOS 3.5" floppy version 1.000.046. The 5.25"
@@ -55,8 +55,8 @@ where the window is larger.
 ## Saves
 
 The game's own save and restore dialogs work as in the original. Each
-save is one file, `saves/sierra-hd-001.sav` to `sierra-hd-099.sav`, next
-to `sierra-hd.ini`. A save holds the game's identity: it restores only with
+save is one file, `saves/colonel-hd-001.sav` to `colonel-hd-099.sav`, next
+to `colonel-hd.ini`. A save holds the game's identity: it restores only with
 the same release of the game. Files the game itself writes go to `files/`.
 
 ## Music: AdLib or MT-32
@@ -66,14 +66,14 @@ The music plays on an emulated AdLib by default. For the Roland MT-32:
 1. Put the ROM files in a folder: a control ROM and a PCM ROM, of the
    MT-32 or the CM-32L, with names ending in `.rom` (any names; the
    program recognises the contents).
-2. In `sierra-hd.ini`, set `mt32_rom` to that folder and `music = mt32`.
+2. In `colonel-hd.ini`, set `mt32_rom` to that folder and `music = mt32`.
 
 If the ROMs are missing or not recognised, the program says so and plays
 on the AdLib.
 
 ## Configuration
 
-`sierra-hd.ini` next to the program is written when you quit. Delete it
+`colonel-hd.ini` next to the program is written when you quit. Delete it
 to be asked for the game folder again. Its keys:
 
 | Key | Values |
@@ -92,7 +92,7 @@ next to the program; without it, HD pictures are drawn without them.
 
 ## The room viewer
 
-    sierra-hd --viewer "C:\GOG Games\Colonel's Bequest"
+    colonel-hd --viewer "C:\GOG Games\Colonel's Bequest"
 
 shows every background picture, every animated view (sprite) and every
 font, in HD or in the original look.
@@ -109,12 +109,12 @@ font, in HD or in the original look.
 | F11 or Alt+Enter | Fullscreen |
 | Escape | Quit |
 
-`sierra-hd --help` lists the keys and options.
+`colonel-hd --help` lists the keys and options.
 
 ## Licence
 
-sierra-hd is free software under the GNU General Public License, version 3
+colonel-hd is free software under the GNU General Public License, version 3
 or later; see `licenses/`. It includes SDL 3 (zlib licence), Nuked OPL3
 (LGPL 2.1 or later) and Munt mt32emu (LGPL 2.1 or later). *The Colonel's
-Bequest* is a trademark of its owners; sierra-hd is not affiliated with
+Bequest* is a trademark of its owners; colonel-hd is not affiliated with
 them.

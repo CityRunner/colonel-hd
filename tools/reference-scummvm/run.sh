@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Runs the reference ScummVM with an isolated configuration that shows the
 # original 1x output: no scaler, no aspect-ratio correction, no filtering and
 # no EGA undithering, and the game's own save and restore dialogs (as
 # sci-vm runs them) instead of ScummVM's. Settings stay inside the build
-# directory, and so do the saves unless SIERRA_HD_SAVEPATH names another
+# directory, and so do the saves unless COLONEL_HD_SAVEPATH names another
 # folder (run-scenario.sh gives each run an empty one); the settings then go
 # next to that folder (<folder>.ini), so that runs in parallel do not take
 # each other's save folder.
@@ -18,8 +19,8 @@ set -euo pipefail
 build_dir="$(cd "${1:?usage: run.sh <build directory> [<game folder>] [options...]}" && pwd)"
 shift
 binary="${build_dir}/src/scummvm"
-if [[ -n "${SIERRA_HD_SAVEPATH:-}" ]]; then
-    saves="${SIERRA_HD_SAVEPATH%/}"
+if [[ -n "${COLONEL_HD_SAVEPATH:-}" ]]; then
+    saves="${COLONEL_HD_SAVEPATH%/}"
     config="${saves}.ini"
 else
     saves="${build_dir}/saves"

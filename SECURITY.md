@@ -1,6 +1,6 @@
 # Security
 
-sierra-hd reads game files that users supply, so malformed game data is
+colonel-hd reads game files that users supply, so malformed game data is
 its main attack surface. The parsers are fuzzed (`tests/fuzz/`), and the
 whole test suite runs under ASan, UBSan and TSan.
 

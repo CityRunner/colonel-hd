@@ -22,8 +22,8 @@
 //   sci-room-viewer <game> all <directory>
 //       Every picture (all maps), view and font.
 //
-// Images derived from the game art are never committed (reports/images/ is
-// git-ignored).
+// Images derived from the game art are never committed (docs/reports/images/
+// is git-ignored).
 
 #include "game_folder.hpp"
 #include "picture.hpp"

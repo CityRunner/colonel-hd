@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Runs clang-tidy on every project source in a configured build tree.
 #   scripts/run-clang-tidy.sh build/debug
 set -euo pipefail

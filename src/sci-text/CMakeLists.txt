@@ -5,4 +5,4 @@ sci_add_library(NAME sci-text
         src/grammar.cpp
         src/said.cpp
         src/vocabulary.cpp
-    DEPENDS sci-core sci-resource)
+    DEPENDS sci-core)

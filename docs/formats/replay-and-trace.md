@@ -42,11 +42,11 @@ and compares the traces; the reference side is the patch
   centre of the screen (160, 100), follows replayed mouse events and is
   moved by `kSetCursor`.
 
-- **Screens.** With `SIERRA_HD_SCREENS=<folder>` (reference) or
+- **Screens.** With `COLONEL_HD_SCREENS=<folder>` (reference) or
   `--screens <folder>` (sci-vm-trace), the screen the player sees is
   written as `<tick>.ppm` (binary PPM, 320 x 200, EGA colours, without the
   mouse cursor) whenever virtual time passes and the tick has reached the
-  next multiple of `SIERRA_HD_SCREEN_EVERY` / `--screen-every` (default 60).
+  next multiple of `COLONEL_HD_SCREEN_EVERY` / `--screen-every` (default 60).
   `tools/vm-trace/compare-screens.py` compares the two folders.
 - **Maps** (milestone 5). At the same ticks, the 1x priority and control
   maps are written as `<tick>.priority.pgm` and `<tick>.control.pgm`
@@ -58,15 +58,15 @@ and compares the traces; the reference side is the patch
   their control rectangles). Moving actors are not in them, since kAnimate
   restores what was under them before it returns. `compare-screens.py`
   compares them as well.
-- **Actors** (milestone 5). With `SIERRA_HD_ACTORS=<file>` (reference) or
+- **Actors** (milestone 5). With `COLONEL_HD_ACTORS=<file>` (reference) or
   `--actors <file>` (sci-vm-trace), every kAnimate call writes its cast,
   in the format below. `tools/vm-trace/compare-actors.py` compares two
   such files.
-- **Parser** (milestone 6a). With `SIERRA_HD_PARSER=<file>` (reference) or
+- **Parser** (milestone 6a). With `COLONEL_HD_PARSER=<file>` (reference) or
   `--parser <file>` (sci-vm-trace), every kParse and kSaid call writes what
   the parser made of the input, in the format below.
   `tools/vm-trace/compare-parser.py` compares two such files.
-- **Layout** (milestone 6b). With `SIERRA_HD_LAYOUT=<file>` (reference) or
+- **Layout** (milestone 6b). With `COLONEL_HD_LAYOUT=<file>` (reference) or
   `--layout <file>` (sci-vm-trace), every window, text, control, menu,
   saved box and cursor operation writes its layout in 1x screen
   coordinates, in the format below. `tools/vm-trace/compare-layout.py`
@@ -75,12 +75,12 @@ and compares the traces; the reference side is the patch
   notes (`MidiDriver_AdLib::onTimer`, by which it picks the voice a new
   note takes) right after each music timer call of the virtual clock,
   instead of on the OPL chip's callback in the audio thread.
-- **OPL** (milestone 7). With `SIERRA_HD_OPL=<file>` (reference) or
+- **OPL** (milestone 7). With `COLONEL_HD_OPL=<file>` (reference) or
   `--opl <file>` (sci-vm-trace, which then plays the music on its AdLib
   driver), every OPL register write the AdLib driver makes is written in
   the format below. `tools/vm-trace/compare-opl.py` compares two such
   files.
-- **MIDI** (milestone 7). With `SIERRA_HD_MIDI=<file>` (reference, run with
+- **MIDI** (milestone 7). With `COLONEL_HD_MIDI=<file>` (reference, run with
   `--music-driver=mt32`) or `--music mt32 --midi <file>` (sci-vm-trace,
   which then plays the music on its MT-32 driver), every message the SCI
   MT-32 driver sends towards the synthesiser is written in the format of
@@ -91,9 +91,9 @@ and compares the traces; the reference side is the patch
 
 Plain text (UTF-8, ASCII but for a few typed commands), one event per
 line. The first line that is neither empty nor a comment (`#`) must be
-`sierra-hd replay 1`.
+`colonel-hd replay 1`.
 
-    sierra-hd replay 1
+    colonel-hd replay 1
     # tick  kind  data
     120 key 13
     300 text look at the desk

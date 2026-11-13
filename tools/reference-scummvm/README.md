@@ -10,7 +10,7 @@ the repository and is mounted read-only):
 
     git clone https://github.com/scummvm/scummvm /path/to/scummvm
     git -C /path/to/scummvm checkout "$(cat tools/reference-scummvm/REVISION)"
-    SIERRA_HD_MOUNTS=/path/to/scummvm:/scummvm \
+    COLONEL_HD_MOUNTS=/path/to/scummvm:/scummvm \
         docker/run.sh tools/reference-scummvm/build.sh /scummvm build/reference-scummvm
 
 Run it, headless if needed:

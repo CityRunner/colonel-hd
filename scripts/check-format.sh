@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Checks (or with --fix, applies) clang-format on all project C++ sources.
 set -euo pipefail
 cd "$(dirname "$0")/.."

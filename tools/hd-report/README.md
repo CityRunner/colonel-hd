@@ -26,8 +26,8 @@ lists:
 It exits with 1 if any picture fails the acceptance check.
 
     docker/run.sh cmake --build build/release --target sci-hd-report
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
-        build/release/tools/hd-report/sci-hd-report /game build/hd-report.md [--scale 10] [--images reports/images/hd] [--hints hints] [--changes build/changes.txt]
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+        build/release/tools/hd-report/sci-hd-report /game build/hd-report.md [--scale 10] [--images docs/reports/images/hd] [--hints hints] [--changes build/changes.txt]
 
 The report holds numbers only. `--images` writes, per picture, the original
 and the HD frame side by side at scale 3; they are derived from the game

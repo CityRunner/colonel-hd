@@ -11,9 +11,9 @@ interface.
   - the thread executor (it checks the floating-point profile in every
     worker);
   - reading the game folder and identifying the release by its hashes;
-  - the configuration file `sierra-hd.ini`;
+  - the configuration file `colonel-hd.ini`;
   - loading the hint files.
-- `src/`: the program `sierra-hd`. At release v0.1 (built at milestone 3a,
+- `src/`: the program `colonel-hd`. At release v0.1 (built at milestone 3a,
   released after 3b) it is the room viewer in an SDL3 window:
   - `viewer.cpp` composes the 320N x 200N frame (pictures in HD or original
     mode, views with their animation, fonts) and tracks the changed
@@ -32,13 +32,13 @@ interface.
 
 ## Running
 
-    sierra-hd [game folder]
+    colonel-hd [game folder]
 
-Without a folder argument, the folder comes from `sierra-hd.ini` next to the
+Without a folder argument, the folder comes from `colonel-hd.ini` next to the
 executable; on the first start, the program asks for it. The hint files are
-read from `hints/` next to the executable. `sierra-hd --help` lists the keys.
+read from `hints/` next to the executable. `colonel-hd --help` lists the keys.
 
-    sierra-hd --replay <file> [--seed <n>] [--fast] [--end-state <file>] [game folder]
+    colonel-hd --replay <file> [--seed <n>] [--fast] [--end-state <file>] [game folder]
 
 plays the input of a replay file (`docs/formats/replay-and-trace.md`)
 with the seed given (default 0) and the deterministic time of day of
@@ -53,7 +53,7 @@ at the configured N (`scale`), or 3 with `auto`.
 
 ## Configuration
 
-`sierra-hd.ini` (section `[sierra-hd]`, `format = 1`; the program writes
+`colonel-hd.ini` (section `[colonel-hd]`, `format = 1`; the program writes
 it back on exit):
 
 | Key | Values | Default |
@@ -65,7 +65,7 @@ it back on exit):
 | `mt32_rom` | the folder of the MT-32 ROMs (see below) | empty |
 | `music` | `adlib`, `mt32` (needs the ROMs, otherwise AdLib), `off` | `adlib` |
 | `volume` | 0 to 100 (per cent) | 100 |
-| `saves` | the folder of the saved games; a relative path is taken from the folder of `sierra-hd.ini` | empty: `saves/` next to `sierra-hd.ini` |
+| `saves` | the folder of the saved games; a relative path is taken from the folder of `colonel-hd.ini` | empty: `saves/` next to `colonel-hd.ini` |
 
 `music = mt32` plays on an emulated Roland MT-32 (mt32emu) and needs the
 user's ROMs, which are never bundled: `mt32_rom` names their folder. Every

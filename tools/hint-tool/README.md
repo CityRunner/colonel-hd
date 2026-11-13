@@ -2,9 +2,9 @@
 
 Tooling for the scene-analysis hints (spec section 6.7, `hints/README.md`).
 
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         build/release/tools/hint-tool/sci-hint-tool /game candidates 44 build/cand
-    SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh \
+    COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh \
         build/release/tools/hint-tool/sci-hint-tool /game check hints
 
 - `candidates <n> <directory>`: proposes the chains of picture n that may

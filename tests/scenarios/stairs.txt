@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Up and down both grand staircases, with seed 0 and stop tick 8200
 # (milestone 5: hero positions, priorities and collisions, frame by frame).
 # Passes the copy protection (seed 0) and answers "Yes" to "Have you

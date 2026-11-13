@@ -1,6 +1,6 @@
 # The save format
 
-sierra-hd's own saved games (spec section 9, milestone 8). The code is
+colonel-hd's own saved games (spec section 9, milestone 8). The code is
 `src/sci-vm/src/save_game.cpp` (the file), `state.cpp` (writing the state)
 and `state_load.cpp` (reading it back). The state itself, its ten
 components and what it leaves out are defined in `docs/ASSUMPTIONS.md`,
@@ -22,7 +22,7 @@ followed by that many bytes (`StateWriter::string`, `StateWriter::bytes`).
 | month, day | `u8`, `u8` | 1 to 12, 1 to 31 |
 | hour, minute, second | 3 x `u8` | time of day of the save |
 | ticks | `u32` | the play time at the save, in game ticks (1/60 s): what kGetTime(elapsed) returns (ScummVM's `playTime`) |
-| program | string | the program that wrote it, e.g. `sierra-hd 0.1.0` |
+| program | string | the program that wrote it, e.g. `colonel-hd 0.1.0` |
 | state | byte block | the VM state as `write_state` writes it |
 | checksum | 32 bytes | SHA-256 of every byte before it |
 
@@ -50,7 +50,7 @@ followed by that many bytes (`StateWriter::string`, `StateWriter::bytes`).
   game sees slot n as the virtual id 100 + n (`SAVEGAMEID_OFFICIALRANGE`).
   sci-vm reads and writes saves through a `SaveStore` the host supplies
   (`sci/vm/files.hpp`); it does no I/O itself.
-- **Files:** slot n is `sierra-hd-<nnn>.sav` (`sierra-hd-001.sav`), in the
+- **Files:** slot n is `colonel-hd-<nnn>.sav` (`colonel-hd-001.sav`), in the
   folder `saves` next to the program's configuration
   (`sci::platform::SaveFolder`). They are kept apart from the `files`
   folder, where the files the game writes itself go, so that a game file
@@ -71,7 +71,7 @@ followed by that many bytes (`StateWriter::string`, `StateWriter::bytes`).
   without a listed save; the same low id again, without a kGetSaveFiles in
   between, overwrites the last new save (ScummVM's `_lastSaveVirtualId`);
   an id of 100 to 199 overwrites that slot if it is listed and fails
-  otherwise. The program named in a save is `sierra-hd <version>`, or
+  otherwise. The program named in a save is `colonel-hd <version>`, or
   `sci-vm-trace`.
 - **kCheckSaveGame** is true only for a listed save that `read_save_header`
   accepts: this format version, this release of the game and the right
@@ -112,7 +112,7 @@ message meant for the player (`sci::core::Error`):
 
 | Check | Error code | Message |
 |---|---|---|
-| at least 12 bytes and the magic | InvalidData | This is not a sierra-hd saved game. |
+| at least 12 bytes and the magic | InvalidData | This is not a colonel-hd saved game. |
 | the version is 1 | Unsupported | This saved game has format version N; this program reads version 1. |
 | room for the checksum | InvalidData | This saved game is truncated. |
 | the checksum | InvalidData | This saved game is damaged (its checksum is wrong). |

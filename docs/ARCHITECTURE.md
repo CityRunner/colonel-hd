@@ -13,15 +13,15 @@ purpose and invariants:
 |---|---|---|
 | sci-core | Error type, assertions, bounds-checked reading, floating-point profile, logging, exact rationals and rounding, SHA-256, MD5 (release detection only), a strict JSON reader, the executor interface | none |
 | sci-resource | RESOURCE.MAP, volumes, patch files, LZW and Huffman decompression (done, milestone 1) | sci-core |
-| sci-pic | PIC parsing and the exact 1x rasteriser (path 1) (done, milestone 2) | sci-core, sci-resource |
+| sci-pic | PIC parsing and the exact 1x rasteriser (path 1) (done, milestone 2) | sci-core |
 | sci-vector | Vector analysis of PIC (path 2): planar graph, gap closing, faces, fallbacks, curve fitting (done, milestone 3), hints (done, milestone 3a), stroke integrity (milestone 3b) | sci-core, sci-pic |
-| sci-view | View, loop and cel decoding (done, milestone 2); SCI0 cursors (milestone 6b) | sci-core, sci-resource |
-| sci-text | Fonts (done, milestone 2), messages, vocabulary, Said | sci-core, sci-resource |
+| sci-view | View, loop and cel decoding (done, milestone 2); SCI0 cursors (milestone 6b) | sci-core |
+| sci-text | Fonts (done, milestone 2), messages, vocabulary, Said | sci-core |
 | sci-audio | Sound playback, silent driver, AdLib (the OPL core on Nuked OPL3 and the SCI0 driver, milestone 7), MT-32, mixer | sci-core, sci-resource; Nuked OPL3 and mt32emu (vendored) |
-| sci-render | HD rasteriser (done, milestone 3), original mode, acceptance check, A1 checks (milestone 3b), composition of the game screen (milestone 5) | sci-core, sci-pic, sci-vector, sci-view |
+| sci-render | HD rasteriser (done, milestone 3), original mode, acceptance check, A1 checks (milestone 3b), composition of the game screen (milestone 5) | sci-core, sci-pic, sci-vector |
 | sci-vm | Bytecode interpreter, objects, kernel functions, the 1x graphics they drive, the music player with a silent driver or a sci-audio device (milestone 7), events, virtual clock, random source (boot gate, milestone 4a) | sci-core, sci-resource, sci-pic, sci-view, sci-text, sci-audio |
-| sci-platform (in `src/app/platform`) | The parts of app without a window, shared with the tools: thread executor, game-folder reading, release identification, configuration file, hint loading (done, milestone 3a), analysis cache (milestone 4b), the HD images of the picture shown and the game's frame (milestone 5) | sci-core, sci-resource, sci-pic, sci-vector, sci-render, sci-vm |
-| app (`sierra-hd`) | Window, input, presentation (the room viewer at release v0.1), saves, cache | all libraries |
+| sci-platform | The parts of app without a window, shared with the tools: thread executor, game-folder reading, release identification, configuration file, hint loading (done, milestone 3a), analysis cache (milestone 4b), the HD images of the picture shown and the game's frame (milestone 5) | sci-core, sci-resource, sci-pic, sci-vector, sci-render, sci-vm |
+| app (`colonel-hd`) | Window, input, presentation (the room viewer at release v0.1), saves, cache | all libraries |
 
 `tests/` holds the unit tests (`tests/unit`), the fuzz targets
 (`tests/fuzz`) and the golden tests (`tests/golden`: synthetic scenes in
@@ -232,7 +232,7 @@ Two entry points run the game:
 ## The program
 
 `src/app/src/main.cpp` does the following:
-1. reads `sierra-hd.ini`;
+1. reads `colonel-hd.ini`;
 2. identifies the game folder (`sci-platform`);
 3. opens an SDL3 window and prepares the analysis cache;
 4. runs the game (`sci::vm::Game`, milestone 4b), or with `--viewer` drives
@@ -280,7 +280,7 @@ The vector scenes are kept in files (spec section 10.2;
 - `sci-vector` writes and reads a scene as bytes (`scene_io.hpp`), so it
   stays free of I/O.
 - `sci-platform`'s `AnalysisCache` names, keys, reads and writes the
-  entries in `cache/` next to `sierra-hd.ini`.
+  entries in `cache/` next to `colonel-hd.ini`.
 - On launch, `main.cpp` has the cache analyse the missing entries on the
   executor, behind a progress bar.
 - `Viewer` and the game mode's `HdPictures` ask `AnalysisCache::scene`
@@ -316,9 +316,9 @@ when off, so they stay in release builds.
   ScummVM computes in binary32 round each step to binary32 in `double`
   (`docs/ASSUMPTIONS.md`, "Milestone 4a"). The kernel-call traces match on
   x86-64, under ASan and UBSan, and on ARM64 under qemu-user.
-- CI builds with three standard library implementations: libstdc++ on
-  Linux, libc++ on macOS, and the MSVC STL on Windows. Differences between
-  them therefore show up early.
+- CI builds with two standard library implementations: libstdc++ on
+  Linux and the MSVC STL on Windows. Differences between them therefore
+  show up early.
 
 ## Trade-offs
 
@@ -353,7 +353,7 @@ when off, so they stay in release builds.
   built, so faces, fitting and acceptance stay as they were and every
   change is recorded with its evidence. The cost: it works with 1 pixel
   wide round strokes and cannot change how such strokes meet the 1x pixel
-  pattern, so some A1 cases remain (`reports/milestone-3b.md`).
+  pattern, so some A1 cases remain (`docs/reports/milestone-3b.md`).
 - **A parsed command stream instead of drawing while decoding.** ScummVM
   draws as it decodes. Parsing first costs one allocation per picture, and
   in return the parser and the rasteriser are tested separately and path 2

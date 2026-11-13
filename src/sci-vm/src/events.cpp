@@ -181,7 +181,7 @@ core::Result<std::vector<InputEvent>> parse_replay(std::string_view text) {
             continue;
         }
         if (!header) {
-            if (line != "sierra-hd replay 1") {
+            if (line != "colonel-hd replay 1") {
                 return core::make_error(core::ErrorCode::InvalidData, "not a version 1 replay file");
             }
             header = true;

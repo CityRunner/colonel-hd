@@ -9,7 +9,7 @@ drawing order (docs/formats/replay-and-trace.md):
 
     <tick> <call> <object> <x> <y> <z> <priority> <view> <loop> <cel> <signal>
 
-the reference's from SIERRA_HD_ACTORS, ours from sci-vm-trace --actors.
+the reference's from COLONEL_HD_ACTORS, ours from sci-vm-trace --actors.
 Prints the first difference (tick, call, object and field) and exits with 1,
 or prints "actors match: <frames> frames", a frame being a kAnimate call
 that drew a cast.

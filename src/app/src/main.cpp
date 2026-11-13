@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// sierra-hd: the game in a window (milestone 4b), and the room viewer of
+// colonel-hd: the game in a window (milestone 4b), and the room viewer of
 // release v0.1 (milestone 3a) with --viewer.
 //
-//   sierra-hd [--viewer] [game folder]
-//   sierra-hd [--replay <file>] [--seed <n>] [--fast] [--end-state <file>] [game folder]
-//   sierra-hd --version | --help
+//   colonel-hd [--viewer] [game folder]
+//   colonel-hd [--replay <file>] [--seed <n>] [--fast] [--end-state <file>] [game folder]
+//   colonel-hd --version | --help
 //
-// The configuration file sierra-hd.ini and the hint files (hints/) are
+// The configuration file colonel-hd.ini and the hint files (hints/) are
 // next to the executable (spec section 10.2). The music plays through SDL3
 // audio (milestone 7, audio_output.hpp).
 
@@ -70,35 +70,36 @@ using SdlCoordinate = decltype(SDL_FPoint::x);
 namespace fs = std::filesystem;
 using sci::app::Command;
 
-constexpr std::string_view help_text = "usage: sierra-hd [--viewer] [game folder]\n"
-                                       "       sierra-hd [--replay <file>] [--seed <n>] [--fast] [--end-state <file>]\n"
-                                       "                 [game folder]\n"
-                                       "       sierra-hd --version | --help\n"
-                                       "\n"
-                                       "--replay plays the input of a replay file\n"
-                                       "(docs/formats/replay-and-trace.md) into the game, with the\n"
-                                       "random seed of --seed (default 0); keyboard and mouse still work.\n"
-                                       "--fast runs the game as fast as it can instead of in real time\n"
-                                       "(the game plays the same; the screen is shown about 60 times a\n"
-                                       "second of real time and most of the music is dropped).\n"
-                                       "--end-state writes the game's tick, globals and state hash to\n"
-                                       "the file when it ends (as sci-vm-trace --globals and\n"
-                                       "--state-hash write them at a tick past the end).\n"
-                                       "\n"
-                                       "In the game:\n"
-                                       "  F12               HD or original mode\n"
-                                       "  F11, Alt+Enter    fullscreen\n"
-                                       "\n"
-                                       "In the room viewer (--viewer):\n"
-                                       "  Left, Right       previous or next picture, view or font\n"
-                                       "  Up, Down          views: previous or next loop\n"
-                                       "  Tab               pictures, views, fonts\n"
-                                       "  H                 HD or original mode\n"
-                                       "  P                 pictures: visual or priority map\n"
-                                       "  + and -           scale N up or down; 0: the largest N that fits\n"
-                                       "  Space             views: stop or start the animation\n"
-                                       "  F11, Alt+Enter    fullscreen\n"
-                                       "  Escape            quit\n";
+constexpr std::string_view help_text =
+    "usage: colonel-hd [--viewer] [game folder]\n"
+    "       colonel-hd [--replay <file>] [--seed <n>] [--fast] [--end-state <file>]\n"
+    "                 [game folder]\n"
+    "       colonel-hd --version | --help\n"
+    "\n"
+    "--replay plays the input of a replay file\n"
+    "(docs/formats/replay-and-trace.md) into the game, with the\n"
+    "random seed of --seed (default 0); keyboard and mouse still work.\n"
+    "--fast runs the game as fast as it can instead of in real time\n"
+    "(the game plays the same; the screen is shown about 60 times a\n"
+    "second of real time and most of the music is dropped).\n"
+    "--end-state writes the game's tick, globals and state hash to\n"
+    "the file when it ends (as sci-vm-trace --globals and\n"
+    "--state-hash write them at a tick past the end).\n"
+    "\n"
+    "In the game:\n"
+    "  F12               HD or original mode\n"
+    "  F11, Alt+Enter    fullscreen\n"
+    "\n"
+    "In the room viewer (--viewer):\n"
+    "  Left, Right       previous or next picture, view or font\n"
+    "  Up, Down          views: previous or next loop\n"
+    "  Tab               pictures, views, fonts\n"
+    "  H                 HD or original mode\n"
+    "  P                 pictures: visual or priority map\n"
+    "  + and -           scale N up or down; 0: the largest N that fits\n"
+    "  Space             views: stop or start the animation\n"
+    "  F11, Alt+Enter    fullscreen\n"
+    "  Escape            quit\n";
 
 void print_log(sci::core::LogLevel level, sci::core::LogCategory category, std::string_view message) noexcept {
     std::println(stderr, "[{}:{}] {}", sci::core::to_string(category), sci::core::to_string(level), message);
@@ -116,7 +117,7 @@ fs::path base_path() {
 
 void show_error(SDL_Window* window, const std::string& message) {
     std::println(stderr, "{}", message);
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "sierra-hd", message.c_str(), window);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "colonel-hd", message.c_str(), window);
 }
 
 std::optional<std::string> read_text(const fs::path& path) {
@@ -349,11 +350,11 @@ struct Game {
 // folder if none is configured. Reports problems to the user.
 std::optional<Game> open_game(SDL_Window* window, sci::platform::Config& config, const fs::path& config_path) {
     if (config.game_folder.empty()) {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "sierra-hd", "Choose the folder of The Colonel's Bequest.",
-                                 window);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "colonel-hd",
+                                 "Choose the folder of The Colonel's Bequest.", window);
         auto folder = choose_folder(window);
         if (!folder) {
-            show_error(window, std::format("No game folder chosen. Start sierra-hd with the folder as its argument, "
+            show_error(window, std::format("No game folder chosen. Start colonel-hd with the folder as its argument, "
                                            "or set game_folder in {}.",
                                            config_path.string()));
             return std::nullopt;
@@ -373,7 +374,7 @@ std::optional<Game> open_game(SDL_Window* window, sci::platform::Config& config,
     sci::core::log(sci::core::LogLevel::Info, sci::core::LogCategory::General, identification->name);
     for (const std::string& warning : identification->warnings) {
         sci::core::log(sci::core::LogLevel::Warning, sci::core::LogCategory::General, warning);
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "sierra-hd", warning.c_str(), window);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "colonel-hd", warning.c_str(), window);
     }
     std::vector<sci::resource::GameFile> copies = *files;
     auto manager = sci::resource::ResourceManager::open(std::move(*files));
@@ -1084,7 +1085,7 @@ sci::core::Result<std::vector<sci::vm::InputEvent>> read_replay(const fs::path& 
 
 int run(const Options& options) {
     const fs::path base = base_path();
-    const fs::path config_path = base / "sierra-hd.ini";
+    const fs::path config_path = base / sci::platform::config_file_name;
     auto config = load_config(config_path);
     if (!config) {
         return 1;
@@ -1104,7 +1105,7 @@ int run(const Options& options) {
     }
     const int window_scale = initial_window_scale(*config);
     const std::unique_ptr<SDL_Window, SdlDeleter> window(
-        SDL_CreateWindow("sierra-hd", sci::app::screen_width * window_scale, sci::app::screen_height * window_scale,
+        SDL_CreateWindow("colonel-hd", sci::app::screen_width * window_scale, sci::app::screen_height * window_scale,
                          SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY));
     if (!window) {
         show_error(nullptr, std::format("Cannot open a window: {}", SDL_GetError()));
@@ -1120,7 +1121,7 @@ int run(const Options& options) {
         return 1;
     }
     SDL_SetRenderVSync(renderer.get(), 1);
-    SDL_SetWindowTitle(window.get(), std::format("sierra-hd {} - {}", SCI_VERSION, game->identification.name).c_str());
+    SDL_SetWindowTitle(window.get(), std::format("colonel-hd {} - {}", SCI_VERSION, game->identification.name).c_str());
     sci::platform::ThreadExecutor executor;
     sci::platform::AnalysisCache analysis(game->manager, hint_directory(base), base / "cache", executor);
     if (!prepare_analysis(renderer.get(), analysis)) {
@@ -1147,7 +1148,7 @@ int run(const Options& options) {
         // The saves next to the configuration, or in the configured folder
         // (docs/formats/save-format.md).
         sci::platform::SaveFolder saves(sci::platform::saves_folder(*config, base));
-        running.set_saves(&saves, std::format("sierra-hd {}", SCI_VERSION));
+        running.set_saves(&saves, std::format("colonel-hd {}", SCI_VERSION));
         running.set_music_device(audio.get());
         host.set_audio(audio.get());
         host.set_fast(options.fast);
@@ -1177,7 +1178,7 @@ int run(const Options& options) {
 int main(int argc, char** argv) {
     const std::span<char*> args(argv, static_cast<std::size_t>(argc));
     if (args.size() == 2 && std::string_view(args[1]) == "--version") {
-        std::println("sierra-hd {}", SCI_VERSION);
+        std::println("colonel-hd {}", SCI_VERSION);
         return 0;
     }
     const auto options = parse_options(args);

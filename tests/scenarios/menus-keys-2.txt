@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # The menu items menus.txt does not choose with the keyboard, in Laura's
 # bedroom (room 44), with seed 0 and the start of menus.txt: File (Save,
 # Restore, Restart, Quit, each cancelled with Escape), Action (Retype, Ask

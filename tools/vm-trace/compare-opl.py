@@ -9,7 +9,7 @@ Both files hold one line per register write of the AdLib driver
 
     <timer call> <register> <value>
 
-the reference's from SIERRA_HD_OPL, ours from sci-vm-trace --opl. Prints
+the reference's from COLONEL_HD_OPL, ours from sci-vm-trace --opl. Prints
 the first difference (line, timer call, register and value) and exits with
 1, or prints "opl match: <n> writes (...)" with the timer calls they span
 and the key-ons among them.

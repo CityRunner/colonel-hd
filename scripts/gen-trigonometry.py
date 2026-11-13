@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Generates src/sci-vm/src/trigonometry.{hpp,cpp}: sin and cos of whole
 # degrees as the kernel functions compute them, sin(angle * M_PI / 180.0),
 # for angles from -360 to 360. The values are those of the C library of the

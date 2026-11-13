@@ -1,4 +1,4 @@
-# sierra-hd
+# colonel-hd
 
 An HD version of Sierra's *The Colonel's Bequest* (DOS, EGA, SCI0), running
 on its own SCI0 interpreter written in C++23. The vector backgrounds are
@@ -14,7 +14,7 @@ integer factor. Game logic behaves exactly as in the original.
 - Music and sound on an emulated AdLib (Nuked OPL3) or Roland MT-32
   (mt32emu, with your own ROMs).
 - The game's own dialogs save and restore, in a documented, versioned format.
-- The milestone reports are in `reports/`.
+- The milestone reports are in `docs/reports/`.
 
 You need your own copy of the game (English DOS EGA release; the GOG
 release works). No game files are included, and none are ever committed.
@@ -26,18 +26,12 @@ with CMake 3.28 or later and Ninja.
 
 ### Linux, in the pinned toolchain container (recommended)
 
-    docker/build-image.sh                       # once; tags sierra-hd-toolchain:<hash>
+    docker/build-image.sh                       # once; tags colonel-hd-toolchain:<hash>
     docker/run.sh cmake --workflow --preset release
 
 The other presets are `debug`, `asan` (ASan + UBSan), `tsan`, `fuzz` and
 `cross-aarch64` (ARM64 under qemu-user). Behind a TLS-intercepting proxy, set
-`SIERRA_HD_EXTRA_CA=/path/to/ca-bundle.crt` for `docker/build-image.sh`.
-
-### macOS
-
-Install LLVM 23.1.4 from the official release archive, put its `bin`
-directory first on `PATH`, set `SDKROOT=$(xcrun --show-sdk-path)`, and run
-`cmake --workflow --preset release`.
+`COLONEL_HD_EXTRA_CA=/path/to/ca-bundle.crt` for `docker/build-image.sh`.
 
 ### Windows
 
@@ -47,8 +41,8 @@ From a Visual Studio developer prompt with LLVM 23.1.4 first on `PATH`, run
 
 ## Running
 
-    build/release/src/app/sierra-hd /path/to/game            # the game
-    build/release/src/app/sierra-hd --viewer /path/to/game   # the room viewer of release 0.1
+    build/release/src/app/colonel-hd /path/to/game            # the game
+    build/release/src/app/colonel-hd --viewer /path/to/game   # the room viewer of release 0.1
 
 - **In the game:** F12 switches between HD and the original look, and F11
   or Alt+Enter toggles fullscreen.
@@ -56,23 +50,23 @@ From a Visual Studio developer prompt with LLVM 23.1.4 first on `PATH`, run
   priority map), every view with its animation, and every font.
 - **Analysis:** the first launch analyses all pictures for HD, behind a
   progress bar, and keeps the result in `cache/`.
-- **Files:** the program reads `sierra-hd.ini` and `hints/` next to the
+- **Files:** the program reads `colonel-hd.ini` and `hints/` next to the
   executable. In a build tree, copy `hints/` next to it, or the HD pictures
   are drawn without hints.
 - **Saves:** the game's own File menu saves and restores; the saves go to
   `saves/` next to the configuration, one file per slot
-  (`sierra-hd-001.sav` to `sierra-hd-099.sav`,
+  (`colonel-hd-001.sav` to `colonel-hd-099.sav`,
   `docs/formats/save-format.md`), and the files the game itself writes to
   `files/`.
 - **Music:** `music = adlib` (default), `mt32` or `off` in
-  `sierra-hd.ini`. For the MT-32, put a control ROM and a PCM ROM of the
+  `colonel-hd.ini`. For the MT-32, put a control ROM and a PCM ROM of the
   MT-32 or CM-32L (files ending in `.rom`, recognised by their contents) in
   a folder and set `mt32_rom` to it; without usable ROMs the music plays
   on the AdLib.
-- **Help:** `sierra-hd --help` lists the keys and options.
+- **Help:** `colonel-hd --help` lists the keys and options.
   `docs/USER-README.md` is the user guide that ships with the binaries.
 
-Release binaries for Linux, Windows and macOS are built by the release
+Release binaries for Linux and Windows are built by the release
 workflow (`.github/workflows/release.yml`) for version tags and attached to
 the GitHub releases.
 
@@ -88,6 +82,7 @@ The development room viewer writes the same images to PNG files
     docker/run.sh scripts/check-format.sh              # clang-format
     docker/run.sh python3 scripts/check-repo-policy.py # no game data, no float
     docker/run.sh python3 scripts/check-hints.py       # hint files against their schema
+    docker/run.sh python3 scripts/check-vendored.py    # vendored files against their recorded SHA-256
     docker/run.sh scripts/run-clang-tidy.sh build/debug
 
 ## Documentation
@@ -100,7 +95,7 @@ The development room viewer writes the same images to PNG files
 - `docs/hd-pipeline.md`: how pictures become HD backgrounds
 - `hints/README.md`: the scene-analysis hints and their format
 - `tools/reference-scummvm/README.md`: the reference ScummVM build
-- `reports/`: milestone reports
+- `docs/reports/`: milestone reports
 - `THIRD_PARTY.md`: third-party components and their licences
 
 ## How it is developed
@@ -108,7 +103,7 @@ The development room viewer writes the same images to PNG files
 The project is built milestone by milestone against a written
 specification, with ScummVM as the behavioural reference. The changes to
 that specification are in `docs/SPEC_ADDENDA.md`, every decision is in
-`docs/ASSUMPTIONS.md`, and each milestone ends with a report in `reports/`.
+`docs/ASSUMPTIONS.md`, and each milestone ends with a report in `docs/reports/`.
 Most of the code is written by Claude, Anthropic's AI model, through Claude
 Code. See `CONTRIBUTING.md` before opening an issue or a pull request.
 

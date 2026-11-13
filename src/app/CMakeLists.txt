@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-add_subdirectory(platform)
 
 # The ARM64 build for qemu-user (preset cross-aarch64) runs the tests; its
 # sysroot has no ARM64 window-system libraries for SDL3.
@@ -7,16 +6,16 @@ if(NOT SCI_BUILD_APP)
     return()
 endif()
 
-add_executable(sierra-hd src/main.cpp src/audio_output.cpp src/file_store.cpp src/game_screen.cpp src/viewer.cpp)
-target_link_libraries(sierra-hd PRIVATE
+add_executable(colonel-hd src/main.cpp src/audio_output.cpp src/file_store.cpp src/game_screen.cpp src/viewer.cpp)
+target_link_libraries(colonel-hd PRIVATE
     sci-core sci-resource sci-pic sci-vector sci-view sci-text sci-audio sci-render sci-vm sci-platform
     SDL3::SDL3-static)
-target_compile_definitions(sierra-hd PRIVATE SCI_VERSION="${PROJECT_VERSION}")
-sci_target_defaults(sierra-hd)
+target_compile_definitions(colonel-hd PRIVATE SCI_VERSION="${PROJECT_VERSION}")
+sci_target_defaults(colonel-hd)
 
 # The Linux binary carries its C++ runtime, so it runs on distributions
 # with an older libstdc++ than the toolchain image (sanitizer builds keep
 # the shared runtime the sanitizers expect).
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT SCI_SANITIZE)
-    target_link_options(sierra-hd PRIVATE -static-libstdc++ -static-libgcc)
+    target_link_options(colonel-hd PRIVATE -static-libstdc++ -static-libgcc)
 endif()

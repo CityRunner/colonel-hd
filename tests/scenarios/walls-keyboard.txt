@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # Keyboard walks against walls and furniture and through doorways, with
 # seed 0 and stop tick 9300 (milestone 5: hero positions, priorities and
 # collisions, frame by frame).

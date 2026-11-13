@@ -13,15 +13,15 @@
         "CMAKE_CXX_COMPILER": "clang++"
       }
     },
-    { "name": "debug", "inherits": "base", "displayName": "Debug (Linux, macOS)",
+    { "name": "debug", "inherits": "base", "displayName": "Debug (Linux)",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" } },
-    { "name": "release", "inherits": "base", "displayName": "Release (Linux, macOS)",
+    { "name": "release", "inherits": "base", "displayName": "Release (Linux)",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" } },
-    { "name": "asan", "inherits": "base", "displayName": "ASan + UBSan (Linux, macOS)",
+    { "name": "asan", "inherits": "base", "displayName": "ASan + UBSan (Linux)",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "SCI_SANITIZE": "address;undefined" } },
-    { "name": "tsan", "inherits": "base", "displayName": "TSan (Linux, macOS)",
+    { "name": "tsan", "inherits": "base", "displayName": "TSan (Linux)",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "SCI_SANITIZE": "thread" } },
-    { "name": "fuzz", "inherits": "base", "displayName": "libFuzzer + ASan + UBSan (Linux, macOS)",
+    { "name": "fuzz", "inherits": "base", "displayName": "libFuzzer + ASan + UBSan (Linux)",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "SCI_FUZZ": "ON" } },
     {
       "name": "cross-aarch64", "inherits": "base", "displayName": "Release for Linux ARM64 under qemu-user (container)",

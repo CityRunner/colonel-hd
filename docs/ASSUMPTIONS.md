@@ -25,7 +25,7 @@ Status markers: **decided** (final unless the customer objects),
   document's tab title still says "Custom Rust SCI0 Interpreter"; the
   customer confirmed this is legacy naming and that C++23 (spec section 2)
   applies. **Decided.**
-- **Repository.** `github.com/CityRunner/sierra-hd`, private. **Decided** by
+- **Repository.** `github.com/CityRunner/colonel-hd`, private. **Decided** by
   the customer.
 - **ScummVM source.** Cloned from `https://github.com/scummvm/scummvm`, as
   agreed with the customer. Kept outside the repository. **Decided.**
@@ -39,14 +39,14 @@ Status markers: **decided** (final unless the customer objects),
   installer's `tmp/` folder was left out), to a read-only directory outside
   the repository: `/home/user/game/colonels-bequest-gog` in the agent's
   container. It is mounted read-only into the toolchain container, for
-  example `SIERRA_HD_MOUNTS=/home/user/game/colonels-bequest-gog:/game`.
+  example `COLONEL_HD_MOUNTS=/home/user/game/colonels-bequest-gog:/game`.
   **Decided.**
 - **Environment.** The agent works in a Linux x86-64 cloud container, not on a
   local machine (spec section 3.1). Docker is available (its daemon is started
   by hand in the session), so podman is not used; the customer allowed
   installing podman if needed, and it was not. Outbound HTTPS goes through a
   TLS-intercepting proxy; `docker/build-image.sh` supports that through
-  `SIERRA_HD_EXTRA_CA` without affecting the image (see "Toolchain").
+  `COLONEL_HD_EXTRA_CA` without affecting the image (see "Toolchain").
 
 ## Accepted game releases (milestone 0)
 
@@ -143,7 +143,7 @@ releases are (spec section 10.2):
   `--target=aarch64-linux-gnu` and runs the tests under qemu. **Decided.**
 - **Proxy support.** `docker/build-image.sh` passes an extra CA bundle as a
   BuildKit secret, so it never reaches an image layer, and switches the
-  Ubuntu archive to HTTPS. Without `SIERRA_HD_EXTRA_CA` the image builds over
+  Ubuntu archive to HTTPS. Without `COLONEL_HD_EXTRA_CA` the image builds over
   plain HTTP. Integrity is still guaranteed by the archive's GPG signatures
   and the LLVM SHA-256. **Decided.**
 
@@ -362,7 +362,7 @@ CI confirms, it does not discover. **Decided** (customer instruction).
 4. **Each minute cheaper.**
    - **ccache:**
      - In the toolchain image (pinned Ubuntu package) for the Linux jobs,
-       through `docker/run.sh` with `SIERRA_HD_CCACHE=1`.
+       through `docker/run.sh` with `COLONEL_HD_CCACHE=1`.
      - From pinned ccache 4.14.2 release archives (SHA-256 recorded in the
        workflow) for Windows and macOS.
      - Each job kind keeps its own cache: the newest is restored, and each
@@ -606,7 +606,7 @@ finish between limits, so that each limit costs at most one small task.
 ## Milestone 0 approval (2026-10-20)
 
 Milestone 0 was approved and merged
-([CityRunner/sierra-hd#1](https://github.com/CityRunner/sierra-hd/pull/1)),
+([CityRunner/colonel-hd#1](https://github.com/CityRunner/colonel-hd/pull/1)),
 together with the copy-protection approach and the change to make macOS CI
 optional (both above).
 
@@ -682,14 +682,14 @@ optional (both above).
 ## Milestone 1 approval (2026-10-20)
 
 Milestone 1 was approved and merged
-([CityRunner/sierra-hd#2](https://github.com/CityRunner/sierra-hd/pull/2)).
+([CityRunner/colonel-hd#2](https://github.com/CityRunner/colonel-hd/pull/2)).
 
 ## Milestone 2: path 1, views, fonts and the room viewer (2026-10-20)
 
 - **Reference tooling: a second ScummVM patch.** As in milestone 1, the
   reference is the patched engine, not a harness.
   `tools/scummvm-patches/0002-dump-graphics.patch` hooks in after
-  `initGraphics()`. With `SIERRA_HD_DUMP_GRAPHICS=<dir>` it draws every
+  `initGraphics()`. With `COLONEL_HD_DUMP_GRAPHICS=<dir>` it draws every
   picture through `GfxPaint16::drawPicture` and the picture port, as
   `kDrawPic` does. It dumps the visual, priority and control maps as
   palette-index buffers, then dumps every view cel (`GfxView::getBitmap`)
@@ -745,7 +745,7 @@ Milestone 1 was approved and merged
 ## Milestone 2 approval (2026-10-20)
 
 Milestone 2 was approved and merged
-([CityRunner/sierra-hd#3](https://github.com/CityRunner/sierra-hd/pull/3)).
+([CityRunner/colonel-hd#3](https://github.com/CityRunner/colonel-hd/pull/3)).
 The milestone 2 report and docs had called the vector path "milestone 3a";
 it is milestone 3 (the HD picture pipeline), and 3a is the separate gate
 after it (hints, release v0.1 with the window). The labels are corrected.
@@ -843,7 +843,7 @@ decisions.
 ## Milestone 3 approval (2026-10-20)
 
 Milestone 3 was approved and merged
-([CityRunner/sierra-hd#4](https://github.com/CityRunner/sierra-hd/pull/4)).
+([CityRunner/colonel-hd#4](https://github.com/CityRunner/colonel-hd/pull/4)).
 The customer decided:
 
 - **Fitting tolerance: 0.5 original pixels** (spec section 15, open question
@@ -941,8 +941,8 @@ The customer decided:
   - MD5 is implemented in sci-core for this alone.
 
   **Decided.**
-- **Configuration.** The file is `sierra-hd.ini` next to the executable,
-  section `[sierra-hd]`, `format = 1`, with these keys:
+- **Configuration.** The file is `colonel-hd.ini` next to the executable,
+  section `[colonel-hd]`, `format = 1`, with these keys:
   - `game_folder`;
   - `mode` (hd or original);
   - `scale` (auto, or 1 to 16);
@@ -955,7 +955,7 @@ The customer decided:
 - **Release v0.1** (spec section 12; moved to after milestone 3b by
   addendum A1). The program and its release workflow are built at 3a;
   the `v0.1.0` tag that publishes them follows the 3b gate.
-  - The program `sierra-hd` is the room viewer in an SDL3 window:
+  - The program `colonel-hd` is the room viewer in an SDL3 window:
     - pictures in HD or original mode, with the visual or priority map;
     - views with their animation, and fonts;
     - N automatic (the largest that fits in physical pixels) or chosen;
@@ -1059,7 +1059,7 @@ change spec section 2. Its effect on the plan:
 ## Milestone 3b approval (2026-10-21)
 
 Milestone 3b was approved and merged
-([CityRunner/sierra-hd#6](https://github.com/CityRunner/sierra-hd/pull/6)).
+([CityRunner/colonel-hd#6](https://github.com/CityRunner/colonel-hd/pull/6)).
 The customer decided:
 
 - **Option 1 of the trade-off**: the remaining A1 cases are accepted as
@@ -1284,7 +1284,7 @@ Scope:
   - The scene serialization is in sci-vector, as bytes in and bytes out.
   - The cache with its file I/O is in sci-platform (app's library), because
     spec section 4.2 keeps the libraries free of OS files.
-  - The files are in `cache/` next to `sierra-hd.ini`.
+  - The files are in `cache/` next to `colonel-hd.ini`.
   - **Decided.**
 - **The key** is the SHA-256 of the game digest, `analyser_version`,
   `scene_format_version`, the bytes of the picture's hint file and the
@@ -1791,7 +1791,7 @@ scripts' bytecode (after the script patches), not from runs:
 
 - **OPL register logs in both engines.** Patch 0003 writes every register
   write of ScummVM's AdLib driver (`MidiDriver_AdLib::setRegister`) to
-  `SIERRA_HD_OPL=<file>`; `sci-vm-trace --opl <file>` plays the music on
+  `COLONEL_HD_OPL=<file>`; `sci-vm-trace --opl <file>` plays the music on
   `AdlibDriver` (otherwise the silent driver) and writes ours from the
   driver's write hook, at the same level: the value the driver writes to
   the port, before the dual OPL2's masks. Format and time key in
@@ -1815,7 +1815,7 @@ scripts' bytecode (after the script patches), not from runs:
   ticks: 1040 writes over timer calls 0 to 13141, 118 key-ons), with all
   six other comparisons matching too. No port bug showed up. The
   comparison is the seventh in `run-scenario.sh` (on by default,
-  `SIERRA_HD_COMPARE_OPL=0` skips it). **Decided.**
+  `COLONEL_HD_COMPARE_OPL=0` skips it). **Decided.**
 - **No per-sound comparison with the reference:** ScummVM cannot play one
   sound resource alone without new engine code (a sound object, kDoSound
   calls, the main loop), so the in-game comparison stands for it; the
@@ -2085,9 +2085,9 @@ scripts' bytecode (after the script patches), not from runs:
   zeros; a released note decays to a floor of about 2 steps that stays;
   master volume 0 attenuates by about 44 dB, not to silence; a key struck
   again while its note still sounds keeps that note's level.
-- **ROMs in the tests:** `SIERRA_HD_MT32_ROMS` names the folder; without it
+- **ROMs in the tests:** `COLONEL_HD_MT32_ROMS` names the folder; without it
   the ROM tests pass with a "skipped" note (CI). Locally the folder is
-  mounted read-only (`SIERRA_HD_MOUNTS=/home/user/roms/roland:/roms`); no
+  mounted read-only (`COLONEL_HD_MOUNTS=/home/user/roms/roland:/roms`); no
   file from it is in the worktree. **Decided.**
 - **Since done:** the SCI0 MT-32 driver, the ROM folder in the
   configuration and the fallback to the AdLib ("Milestone 7: the MT-32
@@ -2204,7 +2204,7 @@ scripts' bytecode (after the script patches), not from runs:
 
 - **MIDI logs in both engines.** Patch 0003 writes every message
   `MidiPlayer_Midi` hands to its MIDI driver (`_driver->send`, and
-  `_driver->sysEx` in `sysExNoDelay`) to `SIERRA_HD_MIDI=<file>`, before
+  `_driver->sysEx` in `sysExNoDelay`) to `COLONEL_HD_MIDI=<file>`, before
   `MidiDriver_MT32` and mt32emu's queue, keyed by the music timer call as
   the OPL log (0 for the driver's open). `sci-vm-trace --music mt32
   [--roms <folder>] [--midi <file>]` runs the deterministic VM on
@@ -2223,7 +2223,7 @@ scripts' bytecode (after the script patches), not from runs:
   `/home/user/roms/roland`, mounted as `/roms` (its log: "Falling back to
   MT32"). No CM-32L names there, so the MT-32 1.07 plays, as on our side.
   **Decided.**
-- **`run-scenario.sh` with `SIERRA_HD_MUSIC=mt32`** runs both engines on
+- **`run-scenario.sh` with `COLONEL_HD_MUSIC=mt32`** runs both engines on
   the MT-32 (`--music-driver=mt32`) and compares the MIDI logs
   (`compare-midi.py`) in place of the OPL writes, with the other six
   comparisons unchanged. **Decided.**
@@ -2482,7 +2482,7 @@ kRestoreGame on the project's format; their behaviour in detail is in
 `docs/formats/save-format.md`, "Slots and the save folder".
 
 - **Slots and folder:** slots 1 to 99 (virtual ids 101 to 199), files
-  `sierra-hd-<nnn>.sav` in `saves/` next to the configuration, apart from
+  `colonel-hd-<nnn>.sav` in `saves/` next to the configuration, apart from
   the `files/` folder of the game's own files; `sci-vm-trace --saves
   <folder>`, by default a new empty folder per run. **Decided.**
 - **The save folder key:** the configuration takes an optional
@@ -2546,7 +2546,7 @@ kRestoreGame on the project's format; their behaviour in detail is in
   **Decided.**
 - **Scenario saves:** `run-scenario.sh` gives each engine an empty save
   folder per run (`reference-saves/`, `sci-vm-saves/` in the output
-  folder; `tools/reference-scummvm/run.sh` takes `SIERRA_HD_SAVEPATH`).
+  folder; `tools/reference-scummvm/run.sh` takes `COLONEL_HD_SAVEPATH`).
   Before this the reference kept its saves in the build folder between
   runs, so a scenario that saves changed the next run's dialogs.
   **Decided.**
@@ -2612,7 +2612,7 @@ room 74 on restore, two saves restored older then newer),
 ## Milestone 8: restores on the MT-32 (2026-10-29)
 
 The five save scenarios matched on the AdLib but not on the MT-32
-(`SIERRA_HD_MUSIC=mt32`). Two causes, neither in patch 0003; the
+(`COLONEL_HD_MUSIC=mt32`). Two causes, neither in patch 0003; the
 reference was not rebuilt.
 
 - **Parallel reference runs shared their settings.** `run.sh` wrote the
@@ -2622,7 +2622,7 @@ reference was not rebuilt.
   attic-restore and inventory-restore then found a save before their first
   one (kGetSaveFiles 1 instead of 0, tick 6724 and 21702, the save
   dialog's box differing in the layout), and everything after differed.
-  With `SIERRA_HD_SAVEPATH` the settings now go next to the save folder
+  With `COLONEL_HD_SAVEPATH` the settings now go next to the save folder
   (`<folder>.ini`). **Decided.**
 - **What the device sees on a restore** (save-restore, outdoors-restore,
   restart-restore: everything matched but the MIDI log, from the restore
@@ -2858,7 +2858,7 @@ the old numbers to the new ones, so older references stay unambiguous:
   unchanged. **Decided.**
 - **The state hash at a tick past the end.** `sci-vm-trace --state-hash`
   reports a requested tick the run does not reach with the state as the
-  game ended (as `--globals` did), so that `sierra-hd --end-state` can be
+  game ended (as `--globals` did), so that `colonel-hd --end-state` can be
   compared with it. **Decided.**
 - **The window opens at the configured N** (`scale` 1 to 16; at most what
   the display's usable area holds), not at 3: the frame is never larger
@@ -2893,3 +2893,49 @@ the old numbers to the new ones, so older references stay unambiguous:
   stages with a stop after each; stages 1 to 4 are read-only; refactoring
   starts only at stage 5, after the customer approves the plan. It audits
   `main`, the code as merged. **Decided (customer).**
+
+## Hint files: licensing (2026-11-11)
+
+- The licensing review of the hint files (spec section 15) is recorded in
+  `hints/README.md`, "Licensing": labels and geometry only, no image data;
+  made with Claude under the customer's personal subscription; published
+  under GPL-3.0-or-later at the customer's risk, the subscription's terms
+  not checked; the customer's own game pictures shown to the model with
+  the customer's permission. **Decided (customer, 2026-11-06, audit
+  question Q-03).**
+
+## macOS dropped (2026-11-11)
+
+- **The customer's decision** (2026-11-05, audit stage 2): "drop macOS
+  completely". macOS is no longer a platform of the project: its CI and
+  release jobs, the toolchain setup for it, the `APPLE` case of the linker
+  flag, the preset names and the README's build steps are removed (audit
+  stage 5, step 5). The platforms are Linux and Windows, x64 and ARM64.
+  Earlier sections that speak of macOS describe the state of their time.
+  **Decided (customer).**
+- **What stays:** the Apple back-ends inside the vendored SDL3, which is
+  kept unchanged; the macOS rate in `scripts/ci-minutes.py`, for the runs
+  of earlier milestones; and one `NOLINT` in
+  `src/sci-vector/src/build_scene.cpp` whose reason names Apple's libc++
+  (the reason is out of date; changing the code is left to the backlog,
+  B-27). **Decided.**
+
+## Project renamed to colonel-hd (2026-11-12)
+
+- **The name:** the customer asked to "rename repo and all files/mentions:
+  sierra -> colonel" and agreed to the proposals (review/BACKLOG_V2.md,
+  B-43). The project, the program, its configuration file `colonel-hd.ini`
+  (section `[colonel-hd]`), the saves `colonel-hd-NNN.sav`, the hint format
+  id `colonel-hd-hints`, the replay header `colonel-hd replay 1`, the
+  `COLONEL_HD_*` environment variables and the toolchain image are named
+  `colonel-hd` (audit stage 5, step 13). Sierra the company, its
+  interpreter (SCI) and the game's files keep their names; `third_party/`
+  and `review/` are unchanged. **Decided (customer).**
+- **Clean rename:** the program reads only the new names; an old
+  `sierra-hd.ini`, old saves and hint or replay files with the old ids are
+  not read. Users rename their own files once by hand. No migration code.
+  **Decided (customer).**
+- **Repository:** the customer renamed the GitHub repository to
+  `CityRunner/colonel-hd`; links to earlier pull requests in this file are
+  rewritten to the new name (GitHub redirects the old one). **Decided
+  (customer).**

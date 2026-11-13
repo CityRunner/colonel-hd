@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Local helper (not committed): the checks after each stage 5 step, run as a
+# plain background job. pre-push pieces (S1-S3, fuzz, ARM64), then S6: the
+# executables of a release build with the fixed SDL revision are compared
+# with build/s6-ref.sha256. With "game" as $1, the local gate (S4, S5) too.
+set -uo pipefail
+cd "$(dirname "$0")/.."
+out=build/step-checks.txt
+: > "$out"
+rm -f build/pre-push-steps/*.ok
+build/pre-push-pieces.sh >> "$out" 2>&1 || { echo "RESULT: pre-push FAILED" >> "$out"; exit 1; }
+docker/run.sh bash -c "cmake --preset release -B build/stage5-s6-current -DSDL_REVISION=SDL-3.4.18-stage5 > /dev/null && cmake --build build/stage5-s6-current" > build/s6-build.log 2>&1 || { echo "RESULT: S6 build FAILED" >> "$out"; exit 1; }
+(cd build/stage5-s6-current && find . -type f -executable ! -path "*/CMakeFiles/*" ! -name "*.sh" ! -name "*.py" ! -name "*.cmake" | sort | xargs sha256sum) > build/s6-now.sha256
+if diff build/s6-ref.sha256 build/s6-now.sha256 > build/s6-diff.txt; then echo "S6: all $(wc -l < build/s6-now.sha256) executables identical" >> "$out"; else echo "S6: DIFFERENT executables:" >> "$out"; grep '^[<>]' build/s6-diff.txt | awk '{print $1, $3}' | sort -u >> "$out"; fi
+if [[ "${1:-}" == game ]]; then
+    SIERRA_HD_MOUNTS=/home/user/game/colonels-bequest-gog:/game,/home/user/roms:/roms docker/run.sh scripts/check-local.sh build/release >> "$out" 2>&1 || { echo "RESULT: local gate FAILED" >> "$out"; exit 1; }
+fi
+echo "RESULT: done" >> "$out"

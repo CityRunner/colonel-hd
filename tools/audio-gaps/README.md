@@ -3,7 +3,7 @@
 Finds the gaps (underruns) in a capture of the program's audio output, as
 SDL's disk driver writes it:
 
-    SDL_AUDIODRIVER=disk SDL_AUDIO_DISK_OUTPUT_FILE=capture.raw xvfb-run -a build/release/src/app/sierra-hd
+    SDL_AUDIODRIVER=disk SDL_AUDIO_DISK_OUTPUT_FILE=capture.raw xvfb-run -a build/release/src/app/colonel-hd
     tools/audio-gaps/find_gaps.py capture.raw [--rate 44100] [--wav capture.wav]
 
 After the music starts it lists the runs of at least 1 ms of exact zeros

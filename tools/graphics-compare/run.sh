@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Milestone 2 check: path 1 (pictures), views and fonts are bit-exact with
 # ScummVM, compared as palette-index buffers. Runs inside the toolchain
 # container with the game folder mounted, for example:
 #
-#   SIERRA_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/graphics-compare/run.sh /game
+#   COLONEL_HD_MOUNTS=/path/to/game:/game docker/run.sh tools/graphics-compare/run.sh /game
 #
 # Needs the reference ScummVM built with the patches in tools/scummvm-patches
 # (build/reference-scummvm) and a configured build tree (default build/release).
@@ -15,11 +16,11 @@ build="${2:-build/release}"
 out="build/dumps"
 
 cmake --build "${build}" --target sci-graphics-dump
-rm -rf "${out}/scummvm-gfx" "${out}/sierra-hd-gfx"
-mkdir -p "${out}/scummvm-gfx" "${out}/sierra-hd-gfx"
+rm -rf "${out}/scummvm-gfx" "${out}/colonel-hd-gfx"
+mkdir -p "${out}/scummvm-gfx" "${out}/colonel-hd-gfx"
 
-SIERRA_HD_DUMP_GRAPHICS="${PWD}/${out}/scummvm-gfx" SDL_AUDIODRIVER=dummy \
+COLONEL_HD_DUMP_GRAPHICS="${PWD}/${out}/scummvm-gfx" SDL_AUDIODRIVER=dummy \
     xvfb-run -a tools/reference-scummvm/run.sh build/reference-scummvm "${game}" > "${out}/scummvm-gfx.log" 2>&1
-"${build}/tools/graphics-dump/sci-graphics-dump" "${game}" "${out}/sierra-hd-gfx" 2> "${out}/sierra-hd-gfx.log"
+"${build}/tools/graphics-dump/sci-graphics-dump" "${game}" "${out}/colonel-hd-gfx" 2> "${out}/colonel-hd-gfx.log"
 
-python3 tools/graphics-compare/compare.py "${out}/scummvm-gfx" "${out}/sierra-hd-gfx"
+python3 tools/graphics-compare/compare.py "${out}/scummvm-gfx" "${out}/colonel-hd-gfx"

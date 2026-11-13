@@ -1,4 +1,4 @@
-sierra-hd replay 1
+colonel-hd replay 1
 # A save outdoors while music plays and its restore in another room
 # (milestone 8), with seed 0 and stop tick 13600. Starts as grounds.txt:
 # out of the front door onto the porch (room 16, where the music starts

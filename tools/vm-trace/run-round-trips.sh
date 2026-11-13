@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # The round-trip check of milestone 8 (docs/ASSUMPTIONS.md, "Milestone 8:
 # round trips") over the scenarios, in sci-vm alone (the reference is not
 # needed): each scenario runs once without and once with round trips at
@@ -18,15 +19,15 @@
 # scenario, <replay>-<stop>-<seed>.ok or .fail, with a line per round trip
 # ("<tick>@<tick reached> call <n> save <bytes> persistent <equal|differ>
 # total <equal|differ>") and the comparison; a scenario with a .ok file is
-# skipped. SIERRA_HD_VM_TRACE names sci-vm-trace (default the release
-# build), SIERRA_HD_JOBS the scenarios run at once (default 4).
+# skipped. COLONEL_HD_VM_TRACE names sci-vm-trace (default the release
+# build), COLONEL_HD_JOBS the scenarios run at once (default 4).
 set -uo pipefail
 
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 list="${1:-${root}/tests/scenarios/scenarios.txt}"
 results="${2:-${root}/build/round-trips}"
 export ROUND_TRIP_RESULTS="${results}"
-export ROUND_TRIP_TRACE="${SIERRA_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
+export ROUND_TRIP_TRACE="${COLONEL_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
 export ROUND_TRIP_SCENARIOS="${root}/tests/scenarios"
 mkdir -p "${results}"
 
@@ -119,4 +120,4 @@ one() {
 }
 export -f one
 
-grep -v '^#' "${list}" | grep -v '^$' | xargs -P "${SIERRA_HD_JOBS:-4}" -L 1 bash -c 'one "$@"' _
+grep -v '^#' "${list}" | grep -v '^$' | xargs -P "${COLONEL_HD_JOBS:-4}" -L 1 bash -c 'one "$@"' _
