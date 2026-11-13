@@ -70,6 +70,7 @@ sci_add_unit_test(NAME sci-platform-tests
         platform/platform_test.cpp
         platform/data_folder_test.cpp
         platform/save_folder_test.cpp
+        platform/window_scale_test.cpp
         ${PROJECT_SOURCE_DIR}/tools/common/interface_check.cpp
     DEPENDS sci-platform)
 target_include_directories(sci-platform-tests PRIVATE pic render ${PROJECT_SOURCE_DIR}/tools/common)

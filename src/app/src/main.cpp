@@ -32,6 +32,7 @@
 #include "sci/platform/mt32_roms.hpp"
 #include "sci/platform/save_folder.hpp"
 #include "sci/platform/thread_executor.hpp"
+#include "sci/platform/window_scale.hpp"
 #include "sci/view/cursor.hpp"
 #include "sci/vm/events.hpp"
 #include "sci/vm/game.hpp"
@@ -736,8 +737,7 @@ private:
         int width = 0;
         int height = 0;
         SDL_GetCurrentRenderOutputSize(renderer_, &width, &height);
-        const int fit = std::max(1, std::min(width / sci::app::screen_width, height / sci::app::screen_height));
-        return config_->scale > 0 ? std::min(config_->scale, fit) : std::min(fit, sci::platform::max_scale);
+        return sci::platform::scale_for_window(config_->scale, width, height);
     }
 
     void handle(sci::vm::Game& game, const SDL_Event& event) {
@@ -1017,16 +1017,12 @@ bool write_end_state(const fs::path& path, sci::vm::Game& game) {
 // (the frame is never larger than the window, so a smaller window would
 // show a smaller N); 3 with `scale = auto`.
 int initial_window_scale(const sci::platform::Config& config) {
-    constexpr int auto_scale = 3;
-    if (config.scale <= 0) {
-        return auto_scale;
-    }
     SDL_Rect bounds{};
-    if (!SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &bounds)) {
-        return config.scale;
+    if (config.scale <= 0 || !SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &bounds)) {
+        return sci::platform::initial_window_scale(config.scale, std::nullopt);
     }
-    const int fit = std::max(1, std::min(bounds.w / sci::app::screen_width, bounds.h / sci::app::screen_height));
-    return std::min(config.scale, fit);
+    return sci::platform::initial_window_scale(config.scale,
+                                               sci::platform::DisplaySize{.width = bounds.w, .height = bounds.h});
 }
 
 // The input events of a replay file; an error message if it cannot be read.

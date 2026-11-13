@@ -18,5 +18,6 @@ sci_add_library(NAME sci-platform
         src/picture_hints.cpp
         src/save_folder.cpp
         src/thread_executor.cpp
+        src/window_scale.cpp
     DEPENDS sci-core sci-resource sci-pic sci-vector sci-render sci-vm sci-audio)
 target_link_libraries(sci-platform PUBLIC Threads::Threads)
