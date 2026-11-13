@@ -264,11 +264,11 @@ std::vector<std::pair<int, int>> actor_properties() {
     using sci::test::selector_id;
     std::vector<std::pair<int, int>> properties;
     const std::vector<std::pair<std::string_view, int>> values{
-        {"y", 120},         {"x", 100},    {"view", 1},     {"loop", 0},     {"cel", 0},
-        {"underBits", 0},   {"nsTop", 0},  {"nsLeft", 0},   {"nsBottom", 0}, {"nsRight", 0},
-        {"lsTop", 0},       {"lsLeft", 0}, {"lsBottom", 0}, {"lsRight", 0},  {"signal", 0},
-        {"illegalBits", 0}, {"brTop", 0},  {"brLeft", 0},   {"brBottom", 0}, {"brRight", 0},
-        {"priority", 0},    {"z", 0},      {"xStep", 3},    {"yStep", 2},    {"heading", 0},
+        {"y", 120},      {"x", 100},       {"view", 1},     {"loop", 0},        {"cel", 0},   {"underBits", 0},
+        {"nsTop", 0},    {"nsLeft", 0},    {"nsBottom", 0}, {"nsRight", 0},     {"lsTop", 0}, {"lsLeft", 0},
+        {"lsBottom", 0}, {"lsRight", 0},   {"signal", 0},   {"illegalBits", 0}, {"brTop", 0}, {"brLeft", 0},
+        {"brBottom", 0}, {"brRight", 0},   {"priority", 0}, {"z", 0},           {"xStep", 3}, {"yStep", 2},
+        {"heading", 0},  {"moveSpeed", 0},
     };
     properties.reserve(values.size());
     for (const auto& [name, value] : values) {
@@ -400,4 +400,203 @@ SCI_TEST(home_game_graphics) {
         }
         SCI_CHECK(got == value);
     }
+}
+
+namespace {
+
+// Properties by selector name, for objects of one class.
+std::vector<std::pair<int, int>> properties_of(const std::vector<std::pair<std::string_view, int>>& values) {
+    std::vector<std::pair<int, int>> properties;
+    properties.reserve(values.size());
+    for (const auto& [name, value] : values) {
+        properties.emplace_back(sci::test::selector_id(name), value);
+    }
+    return properties;
+}
+
+// A dialog control: what kDrawControl, kHiliteControl and kEditControl read.
+std::vector<std::pair<int, int>> control_properties(int type, int left, int top) {
+    return properties_of({
+        {"type", type},
+        {"state", 1},
+        {"nsTop", top},
+        {"nsLeft", left},
+        {"nsBottom", top + 10},
+        {"nsRight", left + 60},
+        {"text", 0},
+        {"font", 0},
+        {"mode", 0},
+        {"cursor", 0},
+        {"max", 20},
+        {"view", 1},
+        {"loop", 0},
+        {"cel", 0},
+        {"x", 4},
+        {"brTop", 0},
+    });
+}
+
+} // namespace
+
+// Dialog controls, menus and movement (kgraphics.cpp kDrawControl,
+// kHiliteControl, kEditControl; kmenu.cpp; kmovement.cpp): each control
+// type drawn, the button highlighted, the edit field edited; a menu added,
+// the status line and the menu bar drawn, a menu attribute read and set,
+// a menu selection with an empty event; a mover driving the actor by
+// InitBresen and DoBresen, and SetJump.
+SCI_TEST(home_game_controls_menus_movement) {
+    using sci::test::ObjectSpec;
+    using sci::test::selector_id;
+    ScriptBuilder script;
+    CodeAssembler& code = script.code();
+    const auto play = code.label();
+    const auto can_be_here = code.label();
+    const std::size_t ok = script.add_string("OK");
+    const std::size_t label = script.add_string("Label");
+    const std::size_t edit_text = script.add_string("edit me");
+    const std::size_t entry_one = script.add_string("one");
+    script.add_string("two");
+    script.add_string("");
+    const std::size_t menu_title = script.add_string("File");
+    const std::size_t menu_items = script.add_string("Save:Quit");
+    const std::size_t status = script.add_string("Status line");
+    // Classes: 0 the game's, 1 actors, 2 controls, 3 events, 4 movers.
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 0,
+        .super_class = -1,
+        .extra_properties = {},
+        .methods = {},
+    });
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 1,
+        .super_class = 0,
+        .extra_properties = actor_properties(),
+        .methods = {{selector_id("canBeHere"), can_be_here}},
+    });
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 2,
+        .super_class = 0,
+        .extra_properties = control_properties(1, 0, 0),
+        .methods = {},
+    });
+    const auto event_properties =
+        properties_of({{"type", 0}, {"message", 0}, {"modifiers", 0}, {"y", 0}, {"x", 0}, {"claimed", 0}});
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 3,
+        .super_class = 0,
+        .extra_properties = event_properties,
+        .methods = {},
+    });
+    const auto mover_properties = properties_of({
+        {"client", 0},
+        {"x", 160},
+        {"y", 150},
+        {"dx", 0},
+        {"dy", 0},
+        {"b-moveCnt", 0},
+        {"b-i1", 0},
+        {"b-i2", 0},
+        {"b-di", 0},
+        {"b-xAxis", 0},
+        {"b-incr", 0},
+    });
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 4,
+        .super_class = 0,
+        .extra_properties = mover_properties,
+        .methods = {},
+    });
+    const std::size_t game = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 0,
+        .super_class = 0,
+        .extra_properties = {},
+        .methods = {{sci::test::sel::play, play}},
+    });
+    const std::size_t actor = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 1,
+        .super_class = 1,
+        .extra_properties = actor_properties(),
+        .methods = {},
+    });
+    std::vector<std::size_t> controls;
+    controls.reserve(5);
+    const std::vector<int> types{1, 2, 3, 4, 6};
+    for (std::size_t i = 0; i < types.size(); ++i) {
+        controls.push_back(script.add(ObjectSpec{
+            .is_class = false,
+            .species = 2,
+            .super_class = 2,
+            .extra_properties = control_properties(types[i], 20, 20 + (static_cast<int>(i) * 20)),
+            .methods = {},
+        }));
+    }
+    const std::size_t event = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 3,
+        .super_class = 3,
+        .extra_properties = event_properties,
+        .methods = {},
+    });
+    const std::size_t mover = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 4,
+        .super_class = 4,
+        .extra_properties = mover_properties,
+        .methods = {},
+    });
+    script.export_object(game);
+    script.set_locals(std::vector<std::uint16_t>(64, 0));
+    const auto object = [&code](std::size_t index) { code.object_address(op::lofss, index); };
+    const auto string = [&code](std::size_t index) { code.string_address(op::lofss, index); };
+    // Sets a property to an address: selector, 1, the address, sent to the object.
+    const auto set_pointer = [&code](std::size_t target, std::string_view selector, const auto& push_value) {
+        code.op_w(op::pushi, selector_id(selector)).op(op::push1);
+        push_value();
+        code.object_address(op::lofsa, target).send(3);
+    };
+    code.bind(play);
+    kcall(code, "DrawPic", 1, [&] { push(code, 1); });
+    const std::vector<std::size_t> texts{ok, label, edit_text, ok, entry_one};
+    for (std::size_t i = 0; i < controls.size(); ++i) {
+        set_pointer(controls[i], "text", [&] { string(texts[i]); });
+        kcall(code, "DrawControl", 1, [&] { object(controls[i]); });
+    }
+    kcall(code, "HiliteControl", 1, [&] { object(controls[0]); });
+    kcall(code, "EditControl", 2, [&] { object(controls[2]), object(event); });
+
+    kcall(code, "AddMenu", 2, [&] { string(menu_title), string(menu_items); });
+    kcall(code, "DrawStatus", 1, [&] { string(status); });
+    kcall(code, "DrawMenuBar", 1, [&] { push(code, 1); });
+    kcall(code, "GetMenu", 2, [&] { push(code, 0x101), push(code, 0x6d); });
+    kcall(code, "SetMenu", 3, [&] { push(code, 0x101), push(code, 0x6d), push(code, 1); });
+    kcall(code, "MenuSelect", 1, [&] { object(event); });
+    kcall(code, "DrawMenuBar", 1, [&] { push(code, 0); });
+
+    set_pointer(mover, "client", [&] { object(actor); });
+    kcall(code, "InitBresen", 1, [&] { object(mover); });
+    for (int step = 0; step < 4; ++step) {
+        kcall(code, "DoBresen", 1, [&] { object(mover); });
+    }
+    kcall(code, "SetJump", 4, [&] { object(actor), push(code, 20), push(code, -10), push(code, 2); });
+    code.op(op::ret);
+    // The actor's canBeHere: always true, so every step of the mover lands.
+    code.bind(can_be_here);
+    code.op_b(op::ldi, 1).op(op::ret);
+
+    const Trace trace =
+        run_traced({{0, script.build()}}, {0, 0, 0, 0, 0},
+                   {
+                       {.type = sci::resource::ResourceType::Pic, .number = 1, .data = small_picture()},
+                       {.type = sci::resource::ResourceType::View, .number = 1, .data = sci::test::small_view()},
+                   });
+    SCI_CHECK(!trace.fault.has_value());
+    SCI_CHECK(trace.result("DoBresen", 3) != "<no call>");
+    SCI_CHECK(trace.result("SetJump", 0) != "<no call>");
 }
