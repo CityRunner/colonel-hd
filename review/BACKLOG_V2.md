@@ -56,9 +56,9 @@ found it.
 | B-03 | One run-time data folder | requirement | Medium | M (14 h) | iteration 2 | done 2026-11-13 (`932fa89, 4e9dea1`, iteration 2) | Q-06, G-122, R-125, V-08 |
 | B-04 | Ini updated in place | requirement (defect) | Medium | S (4 h) | iteration 2 | done 2026-11-13 (`44524a8, 7f72a2a`, iteration 2) | Q-10, R-114, V-08, V-11 |
 | B-05 | Fuzz targets for scripts, sound, patch resources, ini | requirement | Medium | M (8 h) | stage 5 | Decided | Q-09, G-48, R-138 |
-| B-06 | VM in CI: test assembler and hand-built bytecode tests | requirement | High | L (32 h) | iteration 2 | Decided | Q-01, MAP 8.1, G-03 |
-| B-07 | VM in CI: a small home-made game | requirement | High | L (40 h) | iteration 2 | Decided | Q-01, MAP 8.1 |
-| B-08 | sci-vm line coverage in CI ≥ 70 %, local VM gate until then | requirement | High | S (4 h) | stage 5 (gate) / iteration 2 (CI) | Decided | Q-01, MAP 6.4 |
+| B-06 | VM in CI: test assembler and hand-built bytecode tests | requirement | High | L (32 h) | iteration 2 | done 2026-11-13 (`04badd1`..`2503817`, iteration 2 P5) | Q-01, MAP 8.1, G-03 |
+| B-07 | VM in CI: a small home-made game | requirement | High | L (40 h) | iteration 2 | done 2026-11-13 (`b5916dd`..`8654f37`, iteration 2 P5) | Q-01, MAP 8.1 |
+| B-08 | sci-vm line coverage in CI ≥ 70 %, local VM gate until then | requirement | High | S (4 h) | stage 5 (gate) / iteration 2 (CI) | done 2026-11-13 (`8dcfb7c` local gate, `3afa581` CI job, iteration 2 P5) | Q-01, MAP 6.4 |
 | B-09 | No frame over 16.7 ms at N = 10 (measured misses only) | performance | Medium | M (16 h) | iteration 2 | Decided | Q-04, G-123, R-92 |
 | B-10 | Scripted timing mode; customer's reference-laptop run | requirement | Medium | M (6 h) | iteration 2 | Decided | Q-04, G-123 |
 | B-11 | Peak memory ≤ baseline + 10 % (regression check) | performance | Low | S (3 h) | iteration 2 | Decided | Q-04 |

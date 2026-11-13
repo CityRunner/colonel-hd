@@ -320,6 +320,11 @@ CI confirms, it does not discover. **Decided** (customer instruction).
        runs the golden hashes of synthetic scenes, so the cross-architecture
        comparison is against the same constants.
      - The fuzzers, 60 s per target.
+     - The sci-vm coverage gate (B-08, iteration 2): Linux x86-64 only,
+       `scripts/coverage.sh --min-vm 70`, failing below 70 % of sci-vm's
+       lines. Measured on 2026-11-13 (run 43427816386, manual, no compiler
+       cache yet): 3 min 44 s, so 4 included minutes per gate; also
+       available alone as the manual scope `coverage`.
      - Windows x64 in release and ASan, and Windows ARM64 in release.
      - macOS is optional and not part of the gate (2026-10-22, below).
    - **Release binaries** (`release.yml`): only for a pushed version tag,
