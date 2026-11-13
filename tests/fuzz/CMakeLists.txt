@@ -89,13 +89,6 @@ sci_test_private_includes(fuzz-script sci-vm)
 target_include_directories(fuzz-script PRIVATE
     ${PROJECT_SOURCE_DIR}/tests/unit/vm ${PROJECT_SOURCE_DIR}/tests/unit/resource)
 
-# The list of fuzz targets and their seed corpora, for scripts/run-fuzzers.sh.
-if(SCI_FUZZ)
-    get_property(targets GLOBAL PROPERTY SCI_FUZZ_TARGETS)
-    list(JOIN targets "\n" lines)
-    file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/fuzz-targets.txt CONTENT "${lines}\n")
-endif()
-
 # The save loader on a synthetic machine (tests/unit/vm/save_world.hpp); the
 # seeds are saves of that machine, written by sci-vm-tests with
 # SCI_WRITE_SAVE_SEEDS=tests/fuzz/corpus/save.
@@ -106,3 +99,12 @@ sci_add_fuzz_target(NAME fuzz-save
 sci_test_private_includes(fuzz-save sci-vm)
 target_include_directories(fuzz-save PRIVATE
     ${PROJECT_SOURCE_DIR}/tests/unit/vm ${PROJECT_SOURCE_DIR}/tests/unit/resource)
+
+# The list of fuzz targets and their seed corpora, for scripts/run-fuzzers.sh.
+# Keep it last: a target added after it is not fuzzed (B-44;
+# scripts/check-fuzz-list.py checks this).
+if(SCI_FUZZ)
+    get_property(targets GLOBAL PROPERTY SCI_FUZZ_TARGETS)
+    list(JOIN targets "\n" lines)
+    file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/fuzz-targets.txt CONTENT "${lines}\n")
+endif()

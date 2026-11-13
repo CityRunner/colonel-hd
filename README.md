@@ -83,6 +83,7 @@ The development room viewer writes the same images to PNG files
     docker/run.sh python3 scripts/check-repo-policy.py # no game data, no float
     docker/run.sh python3 scripts/check-hints.py       # hint files against their schema
     docker/run.sh python3 scripts/check-vendored.py    # vendored files against their recorded SHA-256
+    docker/run.sh python3 scripts/check-fuzz-list.py   # every fuzz target is in the fuzzed list
     docker/run.sh scripts/run-clang-tidy.sh build/debug
 
 ## Documentation
