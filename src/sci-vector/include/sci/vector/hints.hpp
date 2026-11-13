@@ -73,19 +73,6 @@ struct SymmetryHint {
     std::string note;
 };
 
-enum class RelationKind : std::int8_t { InFrontOf, Behind, Contains };
-
-// Depth or containment between two regions or chains, by id: `a` is in
-// front of, behind, or contains `b` (spec section 6.10, addendum A1). Used
-// by the vector path from milestone 3b.
-struct RelationHint {
-    RelationKind kind = RelationKind::InFrontOf;
-    std::string a;
-    std::string b;
-    std::string note;
-    bool uncertain = false;
-};
-
 struct PictureHints {
     int picture = 0;                 // PIC resource number.
     core::Sha256Digest pic_sha256{}; // Of the PIC resource data the hints were made for.
@@ -94,7 +81,6 @@ struct PictureHints {
     std::vector<ChainHint> chains;
     std::vector<GapHint> gaps;
     std::vector<SymmetryHint> symmetry;
-    std::vector<RelationHint> relations;
 };
 
 inline constexpr int hints_version = 1;
