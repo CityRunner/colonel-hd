@@ -20,6 +20,7 @@
 #include <array>
 #include <cstdint>
 #include <cstdlib>
+#include <format>
 #include <fstream>
 #include <map>
 #include <optional>
@@ -55,7 +56,7 @@ void check_golden(std::string_view name, std::string_view value) {
     // NOLINTNEXTLINE(concurrency-mt-unsafe): tests run alone.
     if (const char* out = std::getenv("COLONEL_HD_HOME_GAME_GOLDENS"); out != nullptr) {
         std::ofstream file(out, std::ios::app);
-        std::println(file, R"(        {{"{}", "{}"}},)", name, value);
+        file << std::format(R"(        {{"{}", "{}"}},)", name, value) << '\n';
         return;
     }
     for (const auto& [golden_name, golden] : sci::test::home_game_goldens()) {
