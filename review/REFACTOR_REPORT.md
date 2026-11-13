@@ -901,11 +901,11 @@ Also fixed on the way, because it blocked the checks themselves:
 
 ### What stage 5 did not do (remaining work)
 
-- **Windows** was not built locally (no Windows toolchain in the
-  container). The last Windows CI runs were after step 5 (runs
-  43161682914 and 43161685610, both passed); steps 6-9 and 13 changed
-  CMake and names since. One Windows CI run is recommended before the next
-  release (about 16 minutes); not started without the customer's go.
+- **Windows** (12d): not built locally (no Windows toolchain in the
+  container); one Windows CI run on the end of stage 5 at the customer's
+  go (2026-11-13): run 43369053899 on `refactor` at `2ad6c60`,
+  **windows-x64 and windows-arm64 both pass** (build and tests; 8 min 13 s
+  and 3 min 19 s).
 - **The CI image** gets a new tag with step 13 (Dockerfile comment), so the
   first CI run builds the toolchain image once.
 - **ARM64:** the screens and VM goldens are not run on ARM64 (12c below:
