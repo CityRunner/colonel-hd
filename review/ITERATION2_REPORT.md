@@ -258,7 +258,7 @@ milliseconds) is what the customer's laptop run (B-10 criterion 3) shows.
 | New tests: the timing statistics (nearest-rank percentiles), the CSV, peak memory read; `--timing`/`--scale` rules | pass (sci-platform-tests 56) |
 | Pre-push on `3edaad9` | PREPUSH_RESULT |
 | Local gate on `3edaad9` | GATE_RESULT |
-| Windows CI on `3edaad9` ([run 43486277989](https://github.com/CityRunner/colonel-hd/actions/runs/43486277989)) | WINDOWS_RESULT |
+| Windows CI on `3edaad9` ([run 43486277989](https://github.com/CityRunner/colonel-hd/actions/runs/43486277989)) | **success**: windows-x64 (release, ASan) and windows-arm64 (release); `peak_memory_kib` compiles on Windows (psapi) |
 
 ### Deviations and open points
 
