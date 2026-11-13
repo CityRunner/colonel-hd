@@ -7,16 +7,20 @@
 // kstring.cpp, klists.cpp, kmath.cpp, kscripts.cpp, kmisc.cpp). No game data.
 
 #include "bytecode_world.hpp"
+#include "home_game_goldens.hpp"
 #include "kernel.hpp"
 #include "pic_builder.hpp"
 #include "sample_vocabulary.hpp"
 #include "save_game.hpp"
+#include "sci/core/sha256.hpp"
 #include "sci/vm/interpreter.hpp"
 #include "sci_test.hpp"
 #include "state.hpp"
 
 #include <array>
 #include <cstdint>
+#include <cstdlib>
+#include <fstream>
 #include <map>
 #include <optional>
 #include <print>
@@ -44,6 +48,34 @@ int kernel_number(std::string_view name) {
     return -1;
 }
 
+// Compares `value` with the golden of `name` (home_game_goldens.hpp), or,
+// when COLONEL_HD_HOME_GAME_GOLDENS names a file, appends the golden line
+// to it instead (scripts/update-home-game-goldens.sh).
+void check_golden(std::string_view name, std::string_view value) {
+    // NOLINTNEXTLINE(concurrency-mt-unsafe): tests run alone.
+    if (const char* out = std::getenv("COLONEL_HD_HOME_GAME_GOLDENS"); out != nullptr) {
+        std::ofstream file(out, std::ios::app);
+        std::println(file, R"(        {{"{}", "{}"}},)", name, value);
+        return;
+    }
+    for (const auto& [golden_name, golden] : sci::test::home_game_goldens()) {
+        if (golden_name == name) {
+            if (golden != value) {
+                std::println(stderr, "{}: {} (golden {})", name, value, golden);
+            }
+            SCI_CHECK(golden == value);
+            return;
+        }
+    }
+    std::println(stderr, "{}: no golden", name);
+    SCI_CHECK(false);
+}
+
+std::string hash_text(std::string_view text) {
+    return sci::core::to_hex(
+        sci::core::sha256({reinterpret_cast<const std::uint8_t*>(text.data()), text.size()})); // NOLINT
+}
+
 // The trace of a run: "<call> <tick> <name>(<arguments>) = <result>".
 struct Trace {
     std::vector<std::string> lines;
@@ -64,7 +96,7 @@ struct Trace {
     }
 };
 
-Trace run_traced(const std::map<int, sci::test::Bytes>& scripts, const std::vector<int>& classes,
+Trace run_traced(std::string_view name, const std::map<int, sci::test::Bytes>& scripts, const std::vector<int>& classes,
                  const std::vector<sci::test::ExtraResource>& extra = {}, std::vector<sci::vm::InputEvent> input = {}) {
     Trace trace;
     auto resources = sci::test::assembled_game(scripts, classes, extra);
@@ -75,8 +107,19 @@ Trace run_traced(const std::map<int, sci::test::Bytes>& scripts, const std::vect
     sci::vm::RunOptions options;
     options.input = std::move(input);
     options.trace = [&trace](std::string_view line) { trace.lines.emplace_back(line); };
+    std::vector<std::uint8_t> screen;
+    options.on_tick = [&screen](const sci::vm::ScreenMaps& maps) {
+        screen.assign(maps.shown.begin(), maps.shown.end());
+    };
     const sci::vm::RunResult result = sci::vm::run_deterministic(*resources, options);
     trace.fault = result.fault;
+    std::string all;
+    for (const std::string& line : trace.lines) {
+        all += line;
+        all += '\n';
+    }
+    check_golden(std::string(name) + ".trace", hash_text(all));
+    check_golden(std::string(name) + ".screen", sci::core::to_hex(sci::core::sha256(screen)));
     if (result.fault) {
         std::println(stderr, "fault: {}", *result.fault);
         for (std::size_t i = trace.lines.size() > 4 ? trace.lines.size() - 4 : 0; i < trace.lines.size(); ++i) {
@@ -211,7 +254,8 @@ SCI_TEST(home_game_strings_lists_maths_scripts) {
     });
     script1.export_object(exported);
 
-    const Trace trace = run_traced({{0, sci::test::game_script(script, play, 64)}, {1, script1.build()}}, {0});
+    const Trace trace = run_traced("strings_lists_maths_scripts",
+                                   {{0, sci::test::game_script(script, play, 64)}, {1, script1.build()}}, {0});
     SCI_CHECK(!trace.fault.has_value());
     const std::vector<std::pair<std::pair<std::string_view, int>, std::string_view>> expected{
         // Strings.
@@ -385,10 +429,11 @@ SCI_TEST(home_game_graphics) {
     kcall(code, "Graph", 2, [&] { push(code, 8), global(4); });
     kcall(code, "Graph", 5, [&] { push(code, 12), push(code, 10), push(code, 10), push(code, 40), push(code, 60); });
     kcall(code, "Graph", 5, [&] { push(code, 13), push(code, 10), push(code, 10), push(code, 40), push(code, 60); });
+    kcall(code, "Wait", 1, [&] { push(code, 1); }); // Time passes: the last screen is shown.
     code.op(op::ret);
 
     const Trace trace =
-        run_traced({{0, script.build()}}, {0, 0},
+        run_traced("graphics", {{0, script.build()}}, {0, 0},
                    {
                        {.type = sci::resource::ResourceType::Pic, .number = 1, .data = small_picture()},
                        {.type = sci::resource::ResourceType::View, .number = 1, .data = sci::test::small_view()},
@@ -590,13 +635,15 @@ SCI_TEST(home_game_controls_menus_movement) {
         kcall(code, "DoBresen", 1, [&] { object(mover); });
     }
     kcall(code, "SetJump", 4, [&] { object(actor), push(code, 20), push(code, -10), push(code, 2); });
+    kcall(code, "Animate", 0, [] {});                // Shows the picture, with the controls drawn on it.
+    kcall(code, "Wait", 1, [&] { push(code, 30); }); // Time passes: the last screen is shown.
     code.op(op::ret);
     // The actor's canBeHere: always true, so every step of the mover lands.
     code.bind(can_be_here);
     code.op_b(op::ldi, 1).op(op::ret);
 
     const Trace trace =
-        run_traced({{0, script.build()}}, {0, 0, 0, 0, 0},
+        run_traced("controls_menus_movement", {{0, script.build()}}, {0, 0, 0, 0, 0},
                    {
                        {.type = sci::resource::ResourceType::Pic, .number = 1, .data = small_picture()},
                        {.type = sci::resource::ResourceType::View, .number = 1, .data = sci::test::small_view()},
@@ -807,7 +854,7 @@ SCI_TEST(home_game_parser_sound_events) {
     press.type = sci::vm::event_mouse_press;
     press.mouse = sci::vm::Point{.x = 50, .y = 60};
     using sci::resource::ResourceType;
-    const Trace trace = run_traced({{0, script.build()}}, {0, 0, 0, 0},
+    const Trace trace = run_traced("parser_sound_events", {{0, script.build()}}, {0, 0, 0, 0},
                                    {
                                        {.type = ResourceType::Vocab, .number = 0, .data = vocab::sample_words()},
                                        {.type = ResourceType::Vocab, .number = 900, .data = vocab::sample_branches()},
@@ -961,6 +1008,7 @@ SCI_TEST(home_game_save_and_restore_round_trip) {
         SCI_CHECK(after.components[i].digest == before.components[i].digest);
     }
     SCI_CHECK(target.global(5) == 77);
+    check_golden("save_and_restore_round_trip.state", sci::core::to_hex(before.persistent));
 }
 
 // Menus driven by input (kmenu.cpp kMenuSelect, GfxMenu): Escape opens the
@@ -1039,6 +1087,7 @@ SCI_TEST(home_game_menus_with_input) {
     select();
     set_event(sci::vm::event_mouse_press, 0, 0, 2, 10); // On the bar.
     select();
+    kcall(code, "Wait", 1, [&] { push(code, 1); }); // Time passes: the last screen is shown.
     code.op(op::ret);
 
     const auto key = [](std::uint16_t character) {
@@ -1053,7 +1102,7 @@ SCI_TEST(home_game_menus_with_input) {
         event.mouse = sci::vm::Point{.x = x, .y = y};
         return sci::vm::InputEvent{.tick = 0, .event = event, .move_only = move_only};
     };
-    const Trace trace = run_traced({{0, script.build()}}, {0, 0}, {},
+    const Trace trace = run_traced("menus_with_input", {{0, script.build()}}, {0, 0}, {},
                                    {
                                        key(sci::vm::key_right),
                                        key(sci::vm::key_down),
