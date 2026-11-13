@@ -962,3 +962,116 @@ SCI_TEST(home_game_save_and_restore_round_trip) {
     }
     SCI_CHECK(target.global(5) == 77);
 }
+
+// Menus driven by input (kmenu.cpp kMenuSelect, GfxMenu): Escape opens the
+// bar and the arrow keys walk the menus and items until Enter chooses one;
+// Ctrl and Alt keys and a Said event match items; a press on the bar
+// follows the mouse until the release.
+SCI_TEST(home_game_menus_with_input) {
+    using sci::test::ObjectSpec;
+    using sci::test::selector_id;
+    ScriptBuilder script;
+    CodeAssembler& code = script.code();
+    const auto play = code.label();
+    const std::size_t file_title = script.add_string("File");
+    const std::size_t file_items = script.add_string("Save`^s:--!:Quit`@q");
+    const std::size_t speed_title = script.add_string("Speed");
+    const std::size_t speed_items = script.add_string("Faster`#2:Slower");
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 0,
+        .super_class = -1,
+        .extra_properties = {},
+        .methods = {},
+    });
+    const auto event_properties =
+        properties_of({{"type", 0}, {"message", 0}, {"modifiers", 0}, {"y", 0}, {"x", 0}, {"claimed", 0}});
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 1,
+        .super_class = 0,
+        .extra_properties = event_properties,
+        .methods = {},
+    });
+    const std::size_t game = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 0,
+        .super_class = 0,
+        .extra_properties = {},
+        .methods = {{sci::test::sel::play, play}},
+    });
+    const std::size_t event = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 1,
+        .super_class = 1,
+        .extra_properties = event_properties,
+        .methods = {},
+    });
+    script.export_object(game);
+    script.set_locals(std::vector<std::uint16_t>(64, 0));
+    const auto string = [&code](std::size_t index) { code.string_address(op::lofss, index); };
+    // The event's type, message, modifiers, y and x, in one send.
+    const auto set_event = [&](int type, int message, int modifiers, int y, int x) {
+        for (const auto& [selector, value] : std::vector<std::pair<std::string_view, int>>{
+                 {"type", type},
+                 {"message", message},
+                 {"modifiers", modifiers},
+                 {"y", y},
+                 {"x", x},
+             }) {
+            code.op_w(op::pushi, selector_id(selector)).op(op::push1);
+            push(code, value);
+        }
+        code.object_address(op::lofsa, event).send(15);
+    };
+    const auto select = [&] { kcall(code, "MenuSelect", 1, [&] { code.object_address(op::lofss, event); }); };
+    code.bind(play);
+    kcall(code, "AddMenu", 2, [&] { string(file_title), string(file_items); });
+    kcall(code, "AddMenu", 2, [&] { string(speed_title), string(speed_items); });
+    kcall(code, "DrawMenuBar", 1, [&] { push(code, 1); });
+    set_event(sci::vm::event_key_down, sci::vm::key_escape, 0, 0, 0);
+    select();
+    set_event(sci::vm::event_key_down, 19, sci::vm::modifier_ctrl, 0, 0); // Ctrl+S.
+    select();
+    set_event(sci::vm::event_key_down, 'q', sci::vm::modifier_alt, 0, 0); // Alt+Q.
+    select();
+    set_event(sci::vm::event_said, 0, 0, 0, 0);
+    select();
+    set_event(sci::vm::event_mouse_press, 0, 0, 2, 10); // On the bar.
+    select();
+    code.op(op::ret);
+
+    const auto key = [](std::uint16_t character) {
+        sci::vm::SciEvent event;
+        event.type = sci::vm::event_key_down;
+        event.character = character;
+        return sci::vm::InputEvent{.tick = 0, .event = event, .move_only = false};
+    };
+    const auto mouse = [](std::uint16_t type, std::int16_t x, std::int16_t y, bool move_only) {
+        sci::vm::SciEvent event;
+        event.type = type;
+        event.mouse = sci::vm::Point{.x = x, .y = y};
+        return sci::vm::InputEvent{.tick = 0, .event = event, .move_only = move_only};
+    };
+    const Trace trace = run_traced({{0, script.build()}}, {0, 0}, {},
+                                   {
+                                       key(sci::vm::key_right),
+                                       key(sci::vm::key_down),
+                                       key(sci::vm::key_up),
+                                       key(sci::vm::key_left),
+                                       key(sci::vm::key_down),
+                                       key(sci::vm::key_enter),
+                                       mouse(sci::vm::event_none, 10, 2, true),
+                                       mouse(sci::vm::event_none, 10, 14, true),
+                                       mouse(sci::vm::event_none, 60, 2, true),
+                                       mouse(sci::vm::event_none, 60, 14, true),
+                                       mouse(sci::vm::event_mouse_release, 60, 14, false),
+                                   });
+    SCI_CHECK(!trace.fault.has_value());
+    // Escape, right, down, up, left, down skips the separator: Quit, item 3.
+    SCI_CHECK(trace.result("MenuSelect", 0) == "259");
+    SCI_CHECK(trace.result("MenuSelect", 1) == "257"); // Ctrl+S: menu 1, item 1.
+    SCI_CHECK(trace.result("MenuSelect", 2) == "259"); // Alt+Q.
+    SCI_CHECK(trace.result("MenuSelect", 3) == "0");   // No parse to match.
+    SCI_CHECK(trace.result("MenuSelect", 4) != "<no call>");
+}
