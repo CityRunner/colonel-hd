@@ -164,8 +164,6 @@ std::string_view music_name(MusicDevice device) {
     return "adlib";
 }
 
-} // namespace
-
 // The categories as the log key writes them: " vm,resources", or nothing.
 std::string log_names(const std::vector<core::LogCategory>& categories) {
     std::string text;
@@ -175,6 +173,8 @@ std::string log_names(const std::vector<core::LogCategory>& categories) {
     }
     return text;
 }
+
+} // namespace
 
 std::string format_config(const Config& config) {
     const auto path = [](const std::filesystem::path& p) {
@@ -205,6 +205,141 @@ std::string format_config(const Config& config) {
                        max_scale, config.scale == 0 ? std::string("auto") : std::to_string(config.scale),
                        config.priority_snap ? "on" : "off", path(config.mt32_rom), music_name(config.music), max_volume,
                        config.volume, path(config.saves), log_names(config.log));
+}
+
+namespace {
+
+// Every key's value as the file writes it, in format_config's order.
+std::vector<std::pair<std::string_view, std::string>> key_values(const Config& config) {
+    const auto path = [](const std::filesystem::path& p) {
+        const std::u8string text = p.u8string();
+        return std::string(text.begin(), text.end());
+    };
+    std::string log = log_names(config.log);
+    if (!log.empty()) {
+        log.erase(0, 1); // log_names puts a space first.
+    }
+    return {
+        {"game_folder", path(config.game_folder)},
+        {"mode", config.mode == GraphicsMode::Hd ? "hd" : "original"},
+        {"scale", config.scale == 0 ? std::string("auto") : std::to_string(config.scale)},
+        {"priority_snap", config.priority_snap ? "on" : "off"},
+        {"mt32_rom", path(config.mt32_rom)},
+        {"music", std::string(music_name(config.music))},
+        {"volume", std::to_string(config.volume)},
+        {"saves", path(config.saves)},
+        {"log", log},
+    };
+}
+
+bool is_path_key(std::string_view key) {
+    return key == "game_folder" || key == "mt32_rom" || key == "saves";
+}
+
+// The line with the key's value replaced; a trailing comment of a value
+// that takes comments stays (with the spaces before it).
+std::string replace_value(std::string_view line, std::string_view key, const std::string& value) {
+    const auto equals = line.find('=');
+    std::string out(line.substr(0, equals + 1));
+    if (!value.empty()) {
+        out += " " + value;
+    }
+    if (!is_path_key(key)) {
+        const std::string_view rest = line.substr(equals + 1);
+        if (const auto comment = rest.find_first_of(";#"); comment != std::string_view::npos) {
+            const auto space = rest.find_last_not_of(" \t", comment == 0 ? 0 : comment - 1);
+            const std::size_t from = space == std::string_view::npos || comment == 0 ? comment : space + 1;
+            out += rest.substr(from);
+        }
+    }
+    return out;
+}
+
+} // namespace
+
+std::string update_config(std::string_view text, const Config& before, const Config& after) {
+    if (text.empty()) {
+        return format_config(after);
+    }
+    const auto old_values = key_values(before);
+    const auto new_values = key_values(after);
+    std::vector<std::pair<std::string_view, std::string>> changed;
+    for (std::size_t i = 0; i < new_values.size(); ++i) {
+        if (old_values[i].second != new_values[i].second) {
+            changed.push_back(new_values[i]);
+        }
+    }
+    if (changed.empty()) {
+        return std::string(text);
+    }
+    const bool crlf = text.find("\r\n") != std::string_view::npos;
+    const std::string_view newline = crlf ? "\r\n" : "\n";
+    std::vector<bool> written(changed.size(), false);
+    std::string out;
+    bool in_section = false;
+    std::size_t section_end = std::string::npos; // Where missing keys go.
+    std::string_view rest = text;
+    while (!rest.empty()) {
+        const auto end = rest.find('\n');
+        std::string_view line = rest.substr(0, end == std::string_view::npos ? rest.size() : end + 1);
+        rest.remove_prefix(line.size());
+        std::string_view ending;
+        if (line.ends_with("\r\n")) {
+            ending = "\r\n";
+        } else if (line.ends_with('\n')) {
+            ending = "\n";
+        }
+        line.remove_suffix(ending.size());
+        const std::string_view trimmed = trim(line);
+        if (!trimmed.empty() && trimmed.front() == '[') {
+            if (in_section) {
+                section_end = out.size();
+            }
+            in_section = trimmed == "[colonel-hd]";
+        } else if (in_section && !trimmed.empty() && trimmed.front() != ';' && trimmed.front() != '#') {
+            const auto equals = trimmed.find('=');
+            if (equals != std::string_view::npos) {
+                const std::string_view key = trim(trimmed.substr(0, equals));
+                for (std::size_t i = 0; i < changed.size(); ++i) {
+                    if (changed[i].first == key) {
+                        out += replace_value(line, key, changed[i].second);
+                        out += ending;
+                        written[i] = true;
+                        line = {};
+                        ending = {};
+                        break;
+                    }
+                }
+                if (line.empty() && ending.empty()) {
+                    continue;
+                }
+            }
+        }
+        out += line;
+        out += ending;
+    }
+    if (in_section) {
+        section_end = out.size();
+    }
+    std::string missing;
+    for (std::size_t i = 0; i < changed.size(); ++i) {
+        if (!written[i]) {
+            missing += std::string(changed[i].first) + " =" +
+                       (changed[i].second.empty() ? "" : " " + changed[i].second) + std::string(newline);
+        }
+    }
+    if (!missing.empty()) {
+        if (section_end == std::string::npos) {
+            // No [colonel-hd] section: parse_config would have refused the
+            // file (no format line); write it whole.
+            return format_config(after);
+        }
+        if (section_end > 0 && out[section_end - 1] != '\n') {
+            missing.insert(0, newline);
+        }
+        out.insert(section_end, missing);
+    }
+    return out;
 }
 
 std::filesystem::path saves_folder(const Config& config, const std::filesystem::path& config_folder) {

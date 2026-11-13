@@ -329,10 +329,17 @@ private:
     int offset_y_ = 0;
 };
 
-std::optional<sci::platform::Config> load_config(const fs::path& path) {
-    const auto text = read_text(path);
+// The configuration file as read: its values and its text (empty when
+// there is no file), so that it can be updated in place (B-04).
+struct LoadedConfig {
+    sci::platform::Config config;
+    std::string text;
+};
+
+std::optional<LoadedConfig> load_config(const fs::path& path) {
+    auto text = read_text(path);
     if (!text) {
-        return sci::platform::Config{};
+        return LoadedConfig{};
     }
     auto parsed = sci::platform::parse_config(*text);
     if (!parsed) {
@@ -342,7 +349,33 @@ std::optional<sci::platform::Config> load_config(const fs::path& path) {
     for (const std::string& warning : parsed->warnings) {
         sci::core::log(sci::core::LogLevel::Warning, sci::core::LogCategory::General, warning);
     }
-    return parsed->config;
+    return LoadedConfig{.config = std::move(parsed->config), .text = std::move(*text)};
+}
+
+// Writes what changed in the configuration during the run (B-04): only
+// when a value changed, in place, keeping every other line of the file.
+// The values to keep are the file's, with the mode and scale of the run
+// and a game folder chosen in the dialog; a folder given on the command
+// line is never written.
+void save_config(const fs::path& path, const LoadedConfig& loaded, const sci::platform::Config& run,
+                 const std::optional<fs::path>& chosen_folder) {
+    sci::platform::Config kept = loaded.config;
+    kept.mode = run.mode;
+    kept.scale = run.scale;
+    if (chosen_folder) {
+        kept.game_folder = *chosen_folder;
+    }
+    const std::string text = sci::platform::update_config(loaded.text, loaded.config, kept);
+    if (!loaded.text.empty() && text == loaded.text) {
+        return;
+    }
+    std::ofstream file(path, std::ios::binary);
+    file << text;
+    file.close();
+    if (!file) {
+        sci::core::log(sci::core::LogLevel::Warning, sci::core::LogCategory::General,
+                       std::format("Cannot write the configuration {}", path.string()));
+    }
 }
 
 struct Game {
@@ -353,7 +386,8 @@ struct Game {
 
 // Opens and identifies the game in the configured folder, asking for the
 // folder if none is configured. Reports problems to the user.
-std::optional<Game> open_game(SDL_Window* window, sci::platform::Config& config, const fs::path& config_path) {
+std::optional<Game> open_game(SDL_Window* window, sci::platform::Config& config, const fs::path& config_path,
+                              std::optional<fs::path>& chosen_folder) {
     if (config.game_folder.empty()) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "colonel-hd",
                                  "Choose the folder of The Colonel's Bequest.", window);
@@ -365,6 +399,7 @@ std::optional<Game> open_game(SDL_Window* window, sci::platform::Config& config,
             return std::nullopt;
         }
         config.game_folder = *folder;
+        chosen_folder = *folder;
     }
     auto files = sci::platform::read_game_folder(config.game_folder);
     if (!files) {
@@ -1098,10 +1133,12 @@ sci::core::Result<std::vector<sci::vm::InputEvent>> read_replay(const fs::path& 
 int run(const Options& options) {
     const fs::path base = base_path();
     const fs::path config_path = base / sci::platform::config_file_name;
-    auto config = load_config(config_path);
-    if (!config) {
+    const auto loaded = load_config(config_path);
+    if (!loaded) {
         return 1;
     }
+    std::optional<sci::platform::Config> config = loaded->config;
+    std::optional<fs::path> chosen_folder; // Chosen in the dialog: saved.
     // More log categories (B-28): --log for this run, else the ini's log key.
     for (const sci::core::LogCategory category : options.log ? *options.log : config->log) {
         sci::core::set_log_category_enabled(category, true);
@@ -1127,7 +1164,7 @@ int run(const Options& options) {
         show_error(nullptr, std::format("Cannot open a window: {}", SDL_GetError()));
         return 1;
     }
-    auto game = open_game(window.get(), *config, config_path);
+    auto game = open_game(window.get(), *config, config_path, chosen_folder);
     if (!game) {
         return 1;
     }
@@ -1185,7 +1222,7 @@ int run(const Options& options) {
             result = 1;
         }
     }
-    std::ofstream(config_path) << sci::platform::format_config(*config);
+    save_config(config_path, *loaded, *config, chosen_folder);
     return result;
 }
 

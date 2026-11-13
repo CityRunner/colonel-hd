@@ -82,6 +82,44 @@ SCI_TEST(config_reads_and_writes_log_categories) {
     }
 }
 
+SCI_TEST(config_updates_keep_every_other_line) {
+    using sci::platform::update_config;
+    // Comments, a blank line, an unknown key, another section, a trailing
+    // comment on the changed value (B-04).
+    const std::string text = "; my notes\n[colonel-hd]\nformat = 1\n\n# old\nmode = hd   ; F12 to switch\n"
+                             "favourite = yes\ngame_folder = /games/Laura;1\n[other]\nmode = x\n";
+    const auto parsed = parse_config(text);
+    SCI_CHECK(parsed.has_value());
+    if (!parsed) {
+        return;
+    }
+    auto changed = parsed->config;
+    changed.mode = GraphicsMode::Original;
+    const std::string updated = update_config(text, parsed->config, changed);
+    SCI_CHECK(updated == "; my notes\n[colonel-hd]\nformat = 1\n\n# old\nmode = original   ; F12 to switch\n"
+                         "favourite = yes\ngame_folder = /games/Laura;1\n[other]\nmode = x\n");
+    // Nothing changed: the text is returned as it was.
+    SCI_CHECK(update_config(text, parsed->config, parsed->config) == text);
+    // CR LF line endings stay; a key without a line is added at the end of
+    // the section, with the file's line ending.
+    const std::string crlf = "[colonel-hd]\r\nformat = 1\r\nmode = hd\r\n[other]\r\nx = 1\r\n";
+    const auto parsed_crlf = parse_config(crlf);
+    SCI_CHECK(parsed_crlf.has_value());
+    if (parsed_crlf) {
+        auto scaled = parsed_crlf->config;
+        scaled.mode = GraphicsMode::Original;
+        scaled.scale = 5;
+        SCI_CHECK(update_config(crlf, parsed_crlf->config, scaled) ==
+                  "[colonel-hd]\r\nformat = 1\r\nmode = original\r\nscale = 5\r\n[other]\r\nx = 1\r\n");
+    }
+    // No file yet: the commented defaults.
+    SCI_CHECK(update_config("", sci::platform::Config{}, changed) == sci::platform::format_config(changed));
+    // What update_config writes reads back as the changed configuration.
+    const auto again = parse_config(updated);
+    SCI_CHECK(again.has_value() && again->config.mode == GraphicsMode::Original &&
+              again->config.game_folder == parsed->config.game_folder);
+}
+
 SCI_TEST(config_file_and_section_have_the_colonel_hd_name) {
     SCI_CHECK(sci::platform::config_file_name == "colonel-hd.ini");
     SCI_CHECK(sci::platform::format_config(sci::platform::Config{}).contains("\n[colonel-hd]\n"));

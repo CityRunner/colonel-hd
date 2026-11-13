@@ -77,4 +77,12 @@ struct ParsedConfig {
 
 [[nodiscard]] std::string format_config(const Config& config);
 
+// The configuration file's text with the values of `after` that differ
+// from `before` (B-04): only the lines of changed keys in the [colonel-hd]
+// section change, and only their values; comments, blank lines, unknown
+// keys, other sections and the line endings (LF or CR LF) stay byte for
+// byte. A changed key without a line gets one at the end of the section.
+// With no text (no file yet), the commented defaults of format_config.
+[[nodiscard]] std::string update_config(std::string_view text, const Config& before, const Config& after);
+
 } // namespace sci::platform
