@@ -32,6 +32,7 @@
 #include "sci/platform/mt32_roms.hpp"
 #include "sci/platform/save_folder.hpp"
 #include "sci/platform/thread_executor.hpp"
+#include "sci/platform/timing.hpp"
 #include "sci/platform/window_scale.hpp"
 #include "sci/view/cursor.hpp"
 #include "sci/vm/events.hpp"
@@ -405,7 +406,8 @@ std::optional<fs::path> hint_directory(const fs::path& base) {
 // The first launch's analysis of every picture (spec section 10.2), with a
 // progress bar; later launches find the entries and skip it. False when the
 // user closed the window meanwhile.
-bool prepare_analysis(SDL_Renderer* renderer, sci::platform::AnalysisCache& analysis) {
+bool prepare_analysis(SDL_Renderer* renderer, sci::platform::AnalysisCache& analysis,
+                      sci::platform::TimingLog* timing) {
     const auto all = analysis.all_variants();
     const auto missing = analysis.missing(all);
     if (missing.empty()) {
@@ -450,6 +452,9 @@ bool prepare_analysis(SDL_Renderer* renderer, sci::platform::AnalysisCache& anal
     sci::core::log(
         sci::core::LogLevel::Info, sci::core::LogCategory::General,
         std::format("analysed {} scenes in {} ms{}", missing.size(), SDL_GetTicks() - start, done ? "" : " (stopped)"));
+    if (timing != nullptr) {
+        timing->set_first_launch(missing.size(), static_cast<double>(SDL_GetTicks() - start));
+    }
     return open;
 }
 
@@ -697,6 +702,16 @@ public:
         SDL_SetRenderVSync(renderer_, fast ? 0 : 1);
     }
 
+    // The N of the last frame composed.
+    [[nodiscard]] int frame_scale() const { return screen_.scale(); }
+
+    // --timing (B-10): every change of the screen is presented, its time
+    // and every room entry go to `log`; `scale` fixes N (else the window's).
+    void set_timing(sci::platform::TimingLog* log, std::optional<int> scale) {
+        timing_ = log;
+        fixed_scale_ = scale;
+    }
+
 private:
     // How often the fast waits present the screen, in real milliseconds.
     static constexpr std::uint64_t fast_frame_milliseconds = 16;
@@ -715,7 +730,7 @@ private:
             handle(game, event);
         }
         const std::uint64_t now = SDL_GetTicks();
-        if (redraw_ || now - last_fast_present_ >= fast_frame_milliseconds) {
+        if (timing_ != nullptr || redraw_ || now - last_fast_present_ >= fast_frame_milliseconds) {
             present(game);
             last_fast_present_ = now;
         }
@@ -734,6 +749,9 @@ private:
     }
 
     [[nodiscard]] int scale_for_window() const {
+        if (fixed_scale_) {
+            return *fixed_scale_;
+        }
         int width = 0;
         int height = 0;
         SDL_GetCurrentRenderOutputSize(renderer_, &width, &height);
@@ -825,6 +843,7 @@ private:
             }
             return;
         }
+        const std::uint64_t frame_start = SDL_GetPerformanceCounter();
         // A picture whose HD images are being made: the frame shown stays
         // for up to hd_hold_milliseconds, then the picture is shown at 1x
         // until they come (HdPictures::request).
@@ -833,6 +852,9 @@ private:
             hold_start_ = ticks;
         }
         screen_.update(shown, config_->mode, scale, config_->priority_snap, ticks - hold_start_ < hd_hold_milliseconds);
+        if (timing_ != nullptr) {
+            time_room_entry(game, frame_start);
+        }
         if (screen_.waiting()) {
             return;
         }
@@ -841,11 +863,36 @@ private:
             dirty.push_back(sci::app::Rect{.x = rect.x, .y = rect.y, .width = rect.width, .height = rect.height});
         }
         presenter_.present(screen_.frame(), screen_.scale(), redraw_ ? full_frame() : dirty);
+        if (timing_ != nullptr) {
+            timing_->frame(milliseconds_since(frame_start));
+        }
         redraw_ = false;
         last_serial_ = shown.serial;
         update_cursor(shown, scale);
         if (presenter_.draws_cursor() && std::exchange(pointer_moved_, false)) {
             presenter_.redraw();
+        }
+    }
+
+    // Real milliseconds since a performance counter value.
+    [[nodiscard]] static double milliseconds_since(std::uint64_t start) {
+        return static_cast<double>(SDL_GetPerformanceCounter() - start) * 1000.0 /
+               static_cast<double>(SDL_GetPerformanceFrequency());
+    }
+
+    // A room entry starts when a picture's HD images become pending and
+    // ends when its HD frame is composed (B-10).
+    void time_room_entry(sci::vm::Game& game, std::uint64_t now) {
+        const bool pending = screen_.hd_pending();
+        if (pending && !entering_) {
+            entering_ = true;
+            entry_start_ = now;
+            const std::vector<sci::vm::Reg> globals = game.globals();
+            constexpr std::size_t room = 11;
+            entry_room_ = globals.size() > room ? globals[room].offset : 0;
+        } else if (!pending && entering_) {
+            entering_ = false;
+            timing_->room_entry(entry_room_, milliseconds_since(entry_start_));
         }
     }
 
@@ -934,6 +981,12 @@ private:
     std::uint64_t start_;
     std::uint64_t virtual_ = 0;
     bool fast_ = false;
+    // --timing (B-10): the log, the fixed N, and the room entry under way.
+    sci::platform::TimingLog* timing_ = nullptr;
+    std::optional<int> fixed_scale_;
+    bool entering_ = false;
+    std::uint64_t entry_start_ = 0;
+    int entry_room_ = 0;
     std::uint64_t last_fast_present_ = 0;
     std::uint64_t hold_start_ = 0;
     sci::app::AudioOutput* audio_ = nullptr;
@@ -1016,6 +1069,13 @@ bool write_end_state(const fs::path& path, sci::vm::Game& game) {
 // coordinates: the configured N, as far as the display has room for it
 // (the frame is never larger than the window, so a smaller window would
 // show a smaller N); 3 with `scale = auto`.
+// --timing: the CSV of the run (B-10, docs/timing.md).
+bool write_timing(const fs::path& path, const sci::platform::TimingLog& timing, int scale) {
+    std::ofstream file(path, std::ios::binary);
+    file << timing.csv(SCI_VERSION, scale, sci::platform::peak_memory_kib());
+    return static_cast<bool>(file);
+}
+
 int initial_window_scale(const sci::platform::Config& config) {
     SDL_Rect bounds{};
     if (config.scale <= 0 || !SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &bounds)) {
@@ -1116,7 +1176,8 @@ int run(const sci::platform::Options& options) {
     SDL_SetWindowTitle(window.get(), std::format("colonel-hd {} - {}", SCI_VERSION, game->identification.name).c_str());
     sci::platform::ThreadExecutor executor;
     sci::platform::AnalysisCache analysis(game->manager, hint_directory(base), data.folder / "cache", executor);
-    if (!prepare_analysis(renderer.get(), analysis)) {
+    sci::platform::TimingLog timing;
+    if (!prepare_analysis(renderer.get(), analysis, options.timing ? &timing : nullptr)) {
         return 0;
     }
     int result = 0;
@@ -1143,9 +1204,14 @@ int run(const sci::platform::Options& options) {
         running.set_saves(&saves, std::format("colonel-hd {}", SCI_VERSION));
         running.set_music_device(audio.get());
         host.set_audio(audio.get());
-        host.set_fast(options.fast);
+        // --timing plays as fast as it can too (B-10).
+        const bool fast = options.fast || options.timing.has_value();
+        host.set_fast(fast);
+        if (options.timing) {
+            host.set_timing(&timing, options.scale);
+        }
         if (audio != nullptr) {
-            audio->set_fast(options.fast);
+            audio->set_fast(fast);
         }
         running.schedule(replay);
         // A replay plays as in sci-vm-trace: the time of day too.
@@ -1154,6 +1220,10 @@ int run(const sci::platform::Options& options) {
         }
         if (const auto fault = running.run()) {
             show_error(window.get(), std::format("The interpreter stopped: {}", *fault));
+            result = 1;
+        }
+        if (options.timing && !write_timing(*options.timing, timing, host.frame_scale())) {
+            std::println(stderr, "Cannot write {}", options.timing->string());
             result = 1;
         }
         if (options.end_state && !write_end_state(*options.end_state, running)) {

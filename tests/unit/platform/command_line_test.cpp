@@ -80,11 +80,25 @@ SCI_TEST(the_viewer_with_a_folder_and_the_data_and_log_options) {
     SCI_CHECK(command.options.game_folder == std::filesystem::path("game"));
 }
 
+SCI_TEST(the_timing_mode_needs_a_replay_and_takes_a_scale) {
+    const CommandLine command = parse({"--replay", "r.txt", "--timing", "t.csv", "--scale", "10"});
+    SCI_CHECK(command.action == CommandAction::Run);
+    SCI_CHECK(command.options.timing == std::filesystem::path("t.csv"));
+    SCI_CHECK(command.options.scale == 10);
+    SCI_CHECK(parse({"--replay", "r.txt", "--timing", "t.csv"}).options.scale == std::nullopt);
+    SCI_CHECK(is_usage(parse({"--timing", "t.csv"})));                 // No replay.
+    SCI_CHECK(is_usage(parse({"--replay", "r.txt", "--scale", "2"}))); // No timing.
+    SCI_CHECK(is_usage(parse({"--replay", "r", "--timing", "t", "--scale", "0"})));
+    SCI_CHECK(is_usage(parse({"--replay", "r", "--timing", "t", "--scale", "17"})));
+    SCI_CHECK(is_usage(parse({"--replay", "r", "--timing", "t", "--scale", "auto"})));
+}
+
 SCI_TEST(the_viewer_with_a_game_option_is_invalid) {
     SCI_CHECK(is_usage(parse({"--viewer", "--replay", "r.txt"})));
     SCI_CHECK(is_usage(parse({"--viewer", "--seed", "1"})));
     SCI_CHECK(is_usage(parse({"--fast", "--viewer"})));
     SCI_CHECK(is_usage(parse({"--viewer", "--end-state", "e"})));
+    SCI_CHECK(is_usage(parse({"--viewer", "--replay", "r", "--timing", "t"})));
 }
 
 SCI_TEST(invalid_values_and_arguments_are_usage_errors) {
