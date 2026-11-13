@@ -787,3 +787,54 @@ SCI_TEST(bytecode_kernel_log_and_selector_access) {
     machine.invoke_selector(object, sel::twice, {});
     SCI_CHECK(machine.faults().raised() && machine.faults().message().contains("not called from a kernel function"));
 }
+
+// vm.cpp op_line: a debugging marker with a word operand, ignored.
+SCI_TEST(bytecode_line_is_ignored) {
+    const auto world = run_play([](CodeAssembler& code) {
+        load(code, 12);
+        code.op_w(0x3f, 345).var(VarOp::Store, Var::Global, 0);
+    });
+    SCI_CHECK(world != nullptr && world->global(0) == 12);
+}
+
+namespace {
+
+// The opcodes the tests above execute: 0x00 to 0x25, class, self to selfID,
+// pprev to line, and every variable opcode (bytecode_every_variable_opcode).
+bool tested_opcode(int opcode) {
+    return opcode <= 0x25 || opcode == 0x28 || (opcode >= 0x2a && opcode <= 0x2e) || opcode >= 0x30;
+}
+
+} // namespace
+
+// B-06 criterion 1: every opcode the interpreter accepts is executed by a
+// test here. Each opcode not on the list must be one the interpreter
+// rejects: running it stops the machine with "illegal opcode" (SCI0 has
+// no info, superP and the two dummies, 0x26, 0x27, 0x29 and 0x2f).
+SCI_TEST(bytecode_every_accepted_opcode_is_tested) {
+    int untested = 0;
+    for (int opcode = 0; opcode < 0x80; ++opcode) {
+        if (tested_opcode(opcode)) {
+            continue;
+        }
+        ++untested;
+        ScriptBuilder script;
+        CodeAssembler& code = script.code();
+        const auto play = code.label();
+        code.bind(play);
+        code.op(opcode).op(op::ret);
+        auto game = sci::test::assembled_game({{0, sci::test::game_script(script, play)}}, {0});
+        SCI_CHECK(game.has_value());
+        if (!game) {
+            return;
+        }
+        BytecodeWorld world(std::move(*game));
+        const bool ran = world.run();
+        const bool rejected = !ran && world.machine->faults().message().contains("illegal opcode");
+        if (!rejected) {
+            std::println(stderr, "opcode {:02x} is not tested but the interpreter accepts it", opcode);
+        }
+        SCI_CHECK(rejected);
+    }
+    SCI_CHECK(untested == 4);
+}
