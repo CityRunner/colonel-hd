@@ -86,6 +86,7 @@ to be asked for the game folder again. Its keys:
 | `mt32_rom` | the folder of the MT-32 ROMs |
 | `volume` | 0 to 100 |
 | `saves` | the folder of the saves (empty: `saves/` next to the file) |
+| `log` | more messages on the console: `vm` (script problems the program works around), `resources` (resource loading), both comma-separated, or empty (default); `--log` on the command line overrides it for one run |
 
 The `hints` folder holds the scene-analysis hints for the HD mode. Keep it
 next to the program; without it, HD pictures are drawn without them.

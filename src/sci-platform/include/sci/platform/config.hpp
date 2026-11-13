@@ -24,6 +24,7 @@
 #pragma once
 
 #include "sci/core/error.hpp"
+#include "sci/core/log.hpp"
 
 #include <filesystem>
 #include <string>
@@ -59,6 +60,8 @@ struct Config {
     // The folder of the saved games; empty: `saves` next to the
     // configuration (saves_folder).
     std::filesystem::path saves;
+    // Log categories shown besides General (B-28); none by default.
+    std::vector<core::LogCategory> log;
 };
 
 // The folder of the saved games: `saves` in the configuration's folder by

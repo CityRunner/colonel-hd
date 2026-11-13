@@ -48,3 +48,15 @@ SCI_TEST(log_messages_reach_the_sink_for_enabled_categories) {
 
     sci::core::set_log_sink(previous);
 }
+
+SCI_TEST(log_category_lists_are_parsed) {
+    using sci::core::parse_log_categories;
+    const auto both = parse_log_categories(" vm , resources ");
+    SCI_CHECK(both.has_value() && both->size() == 2 && (*both)[0] == LogCategory::Vm &&
+              (*both)[1] == LogCategory::Resources);
+    SCI_CHECK(parse_log_categories("").has_value() && parse_log_categories("")->empty());
+    SCI_CHECK(parse_log_categories("none").has_value() && parse_log_categories("none")->empty());
+    SCI_CHECK(!parse_log_categories("vm,general").has_value()); // General is always on, not named.
+    SCI_CHECK(!parse_log_categories("vm,").has_value());
+    SCI_CHECK(!parse_log_categories("graphics").has_value());
+}

@@ -87,6 +87,12 @@ std::optional<std::string> apply(ParsedConfig& parsed, std::string_view key, std
         config.scale = *scale;
     } else if (key == "music" || key == "volume") {
         return apply_audio(config, key, value);
+    } else if (key == "log") {
+        auto categories = core::parse_log_categories(value);
+        if (!categories) {
+            return "log is a comma-separated list of vm and resources, or empty";
+        }
+        config.log = std::move(*categories);
     } else if (key == "priority_snap") {
         if (value != "on" && value != "off") {
             return "priority_snap is on or off";
@@ -160,6 +166,16 @@ std::string_view music_name(MusicDevice device) {
 
 } // namespace
 
+// The categories as the log key writes them: " vm,resources", or nothing.
+std::string log_names(const std::vector<core::LogCategory>& categories) {
+    std::string text;
+    for (const core::LogCategory category : categories) {
+        text += text.empty() ? " " : ",";
+        text += core::to_string(category);
+    }
+    return text;
+}
+
 std::string format_config(const Config& config) {
     const auto path = [](const std::filesystem::path& p) {
         const std::u8string text = p.u8string();
@@ -182,11 +198,13 @@ std::string format_config(const Config& config) {
                        "; volume in per cent, 0 to {}\n"
                        "volume = {}\n"
                        "; folder of the saved games (empty: saves next to this file)\n"
-                       "saves ={}\n",
+                       "saves ={}\n"
+                       "; more messages on the console: vm, resources, or both (comma-separated); empty: none\n"
+                       "log ={}\n",
                        config_format, path(config.game_folder), config.mode == GraphicsMode::Hd ? "hd" : "original",
                        max_scale, config.scale == 0 ? std::string("auto") : std::to_string(config.scale),
                        config.priority_snap ? "on" : "off", path(config.mt32_rom), music_name(config.music), max_volume,
-                       config.volume, path(config.saves));
+                       config.volume, path(config.saves), log_names(config.log));
 }
 
 std::filesystem::path saves_folder(const Config& config, const std::filesystem::path& config_folder) {

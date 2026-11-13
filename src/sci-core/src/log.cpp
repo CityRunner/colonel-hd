@@ -76,4 +76,36 @@ std::string_view to_string(LogCategory category) noexcept {
     return "unknown";
 }
 
+std::optional<std::vector<LogCategory>> parse_log_categories(std::string_view list) {
+    const auto trim = [](std::string_view text) {
+        while (!text.empty() && (text.front() == ' ' || text.front() == '\t')) {
+            text.remove_prefix(1);
+        }
+        while (!text.empty() && (text.back() == ' ' || text.back() == '\t')) {
+            text.remove_suffix(1);
+        }
+        return text;
+    };
+    std::vector<LogCategory> categories;
+    list = trim(list);
+    if (list.empty() || list == "none") {
+        return categories;
+    }
+    while (true) {
+        const auto comma = list.find(',');
+        const std::string_view name = trim(list.substr(0, comma));
+        if (name == to_string(LogCategory::Resources)) {
+            categories.push_back(LogCategory::Resources);
+        } else if (name == to_string(LogCategory::Vm)) {
+            categories.push_back(LogCategory::Vm);
+        } else {
+            return std::nullopt;
+        }
+        if (comma == std::string_view::npos) {
+            return categories;
+        }
+        list.remove_prefix(comma + 1);
+    }
+}
+
 } // namespace sci::core

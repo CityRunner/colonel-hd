@@ -71,7 +71,7 @@ namespace fs = std::filesystem;
 using sci::app::Command;
 
 constexpr std::string_view help_text =
-    "usage: colonel-hd [--viewer] [game folder]\n"
+    "usage: colonel-hd [--viewer] [--log <categories>] [game folder]\n"
     "       colonel-hd [--replay <file>] [--seed <n>] [--fast] [--end-state <file>]\n"
     "                 [game folder]\n"
     "       colonel-hd --version | --help\n"
@@ -82,6 +82,10 @@ constexpr std::string_view help_text =
     "--fast runs the game as fast as it can instead of in real time\n"
     "(the game plays the same; the screen is shown about 60 times a\n"
     "second of real time and most of the music is dropped).\n"
+    "--log shows more messages on the console, for these categories\n"
+    "(comma-separated): vm (script problems the interpreter works\n"
+    "around), resources (resource loading); it overrides the log key of\n"
+    "colonel-hd.ini for this run.\n"
     "--end-state writes the game's tick, globals and state hash to\n"
     "the file when it ends (as sci-vm-trace --globals and\n"
     "--state-hash write them at a tick past the end).\n"
@@ -955,6 +959,7 @@ struct Options {
     std::optional<std::uint32_t> seed;
     bool fast = false;
     std::optional<fs::path> end_state;
+    std::optional<std::vector<sci::core::LogCategory>> log;
 };
 
 // The command line, or nothing if it is not valid.
@@ -969,6 +974,11 @@ std::optional<Options> parse_options(std::span<char*> args) {
             options.replay = fs::path(args[++i]);
         } else if (arg == "--fast") {
             options.fast = true;
+        } else if (arg == "--log" && has_value) {
+            options.log = sci::core::parse_log_categories(args[++i]);
+            if (!options.log) {
+                return std::nullopt;
+            }
         } else if (arg == "--end-state" && has_value) {
             options.end_state = fs::path(args[++i]);
         } else if (arg == "--seed" && has_value) {
@@ -1091,6 +1101,10 @@ int run(const Options& options) {
     auto config = load_config(config_path);
     if (!config) {
         return 1;
+    }
+    // More log categories (B-28): --log for this run, else the ini's log key.
+    for (const sci::core::LogCategory category : options.log ? *options.log : config->log) {
+        sci::core::set_log_category_enabled(category, true);
     }
     if (options.game_folder) {
         config->game_folder = *options.game_folder;

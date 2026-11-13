@@ -69,6 +69,19 @@ SCI_TEST(config_rejects_what_it_cannot_read) {
     SCI_CHECK(!parse_config("[colonel-hd]\nformat = 1\nnonsense\n").has_value());
 }
 
+SCI_TEST(config_reads_and_writes_log_categories) {
+    const auto parsed = parse_config("[colonel-hd]\nformat = 1\nlog = vm, resources ; comment\n");
+    SCI_CHECK(parsed.has_value() && parsed->config.log.size() == 2 &&
+              parsed->config.log[0] == sci::core::LogCategory::Vm);
+    SCI_CHECK(!parse_config("[colonel-hd]\nformat = 1\nlog = graphics\n").has_value());
+    const auto defaults = parse_config("[colonel-hd]\nformat = 1\n");
+    SCI_CHECK(defaults.has_value() && defaults->config.log.empty());
+    if (parsed) {
+        const auto again = parse_config(sci::platform::format_config(parsed->config));
+        SCI_CHECK(again.has_value() && again->config.log == parsed->config.log);
+    }
+}
+
 SCI_TEST(config_file_and_section_have_the_colonel_hd_name) {
     SCI_CHECK(sci::platform::config_file_name == "colonel-hd.ini");
     SCI_CHECK(sci::platform::format_config(sci::platform::Config{}).contains("\n[colonel-hd]\n"));
