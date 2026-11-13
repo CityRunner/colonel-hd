@@ -143,15 +143,27 @@ public:
     // when the script is built.
     CodeAssembler& object_address(int opcode, std::size_t object) {
         bytes_.push_back(opcode_byte(opcode, false));
-        object_fixups_.push_back(ObjectFixup{.at = bytes_.size(), .object = object, .next = bytes_.size() + 2});
+        object_fixups_.push_back(
+            ObjectFixup{.at = bytes_.size(), .object = object, .next = bytes_.size() + 2, .is_string = false});
+        append_u16le(bytes_, 0);
+        return *this;
+    }
+
+    // lofsa or lofss: the address of a string of the script (by its index
+    // in the ScriptBuilder's strings block).
+    CodeAssembler& string_address(int opcode, std::size_t string) {
+        bytes_.push_back(opcode_byte(opcode, false));
+        object_fixups_.push_back(
+            ObjectFixup{.at = bytes_.size(), .object = string, .next = bytes_.size() + 2, .is_string = true});
         append_u16le(bytes_, 0);
         return *this;
     }
 
     struct ObjectFixup {
         std::size_t at;
-        std::size_t object;
+        std::size_t object; // Or the string, with is_string.
         std::size_t next;
+        bool is_string = false;
     };
 
     [[nodiscard]] const std::vector<ObjectFixup>& object_fixups() const { return object_fixups_; }
@@ -210,6 +222,13 @@ public:
 
     void set_locals(std::vector<std::uint16_t> locals) { locals_ = std::move(locals); }
 
+    // Adds a string to the strings block; returns its index (for
+    // CodeAssembler::string_address).
+    std::size_t add_string(std::string text) {
+        strings_.push_back(std::move(text));
+        return strings_.size() - 1;
+    }
+
     // Exports objects (by index) or code labels, in order.
     void export_object(std::size_t index) { exports_.push_back(Export{.object = index, .label = std::nullopt}); }
 
@@ -225,10 +244,23 @@ public:
             object_at.push_back(offset + 12);
             offset += object_size(object);
         }
+        // The strings block, after the objects: each string null-terminated.
+        std::vector<std::size_t> string_at;
+        std::size_t strings_size = 0;
+        if (!strings_.empty()) {
+            strings_size = 4;
+            for (const std::string& text : strings_) {
+                string_at.push_back(offset + strings_size);
+                strings_size += text.size() + 1;
+            }
+            strings_size += strings_size % 2; // Blocks keep words aligned.
+            offset += strings_size;
+        }
         const std::size_t code_at = offset + 4; // After the code block's header.
         Bytes code_bytes = code_.finish();
         for (const CodeAssembler::ObjectFixup& fixup : code_.object_fixups()) {
-            const auto relative = static_cast<std::uint16_t>(static_cast<std::int64_t>(object_at[fixup.object]) -
+            const std::size_t target = fixup.is_string ? string_at[fixup.object] : object_at[fixup.object];
+            const auto relative = static_cast<std::uint16_t>(static_cast<std::int64_t>(target) -
                                                              static_cast<std::int64_t>(code_at + fixup.next));
             code_bytes[fixup.at] = static_cast<std::uint8_t>(relative & 0xFFU);
             code_bytes[fixup.at + 1] = static_cast<std::uint8_t>(relative >> 8U);
@@ -254,6 +286,18 @@ public:
         }
         for (const ObjectSpec& object : objects_) {
             append_object(out, object, code_at);
+        }
+        if (!strings_.empty()) {
+            append_u16le(out, 5);
+            append_u16le(out, static_cast<std::uint32_t>(strings_size));
+            const std::size_t start = out.size();
+            for (const std::string& text : strings_) {
+                out.insert(out.end(), text.begin(), text.end());
+                out.push_back(0);
+            }
+            while (out.size() - start < strings_size - 4) {
+                out.push_back(0);
+            }
         }
         append_u16le(out, 2);
         append_u16le(out, static_cast<std::uint32_t>(4 + code_bytes.size()));
@@ -322,6 +366,7 @@ private:
     }
 
     CodeAssembler code_;
+    std::vector<std::string> strings_;
     std::vector<ObjectSpec> objects_;
     std::vector<std::uint16_t> locals_;
     std::vector<Export> exports_;

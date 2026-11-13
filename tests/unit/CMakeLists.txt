@@ -77,6 +77,7 @@ sci_add_unit_test(NAME sci-vm-tests
     SOURCES
         vm/bytecode_test.cpp
         vm/files_test.cpp
+        vm/home_game_test.cpp
         vm/input_test.cpp
         vm/music_device_test.cpp
         vm/music_test.cpp
