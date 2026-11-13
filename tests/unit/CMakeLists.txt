@@ -69,6 +69,7 @@ sci_add_unit_test(NAME sci-platform-tests
         platform/data_folder_test.cpp
         platform/file_store_test.cpp
         platform/save_folder_test.cpp
+        platform/timing_test.cpp
         platform/window_scale_test.cpp
         ${PROJECT_SOURCE_DIR}/tools/common/interface_check.cpp
     DEPENDS sci-platform)
