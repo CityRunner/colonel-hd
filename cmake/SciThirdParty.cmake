@@ -2,8 +2,8 @@
 #
 # Vendored third-party components (spec section 2), built as static
 # libraries. Only targets that may use them link them (spec section 4.2):
-# SDL3 is for app (window, input, presentation) and, from milestone 7, the
-# audio output of sci-audio; Nuked OPL3 and mt32emu are for sci-audio.
+# SDL3 is for app and its tests only (window, input, presentation and the
+# audio output); Nuked OPL3 and mt32emu are for sci-audio.
 #
 # Vendored code is not held to the project's warning set (sci_target_defaults
 # is not applied), so its warnings never fail the build; the global

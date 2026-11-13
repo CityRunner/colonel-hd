@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The configuration file next to the executable (spec section 10.2): an
-// INI file with a format version.
+// The configuration file, colonel-hd.ini in the data folder (spec section
+// 10.2 as replaced by B-03, data_folder.hpp): an INI file with a format
+// version.
 //
 //   [colonel-hd]
 //   format = 1

@@ -27,7 +27,9 @@ header = """// SPDX-License-Identifier: GPL-3.0-or-later
 // functions (sin(angle * M_PI / 180.0)), but the same on every platform
 // (spec section 5.3): for angles from -360 to 360 the values come from a
 // table of the reference platform's results (scripts/gen-trigonometry.py);
-// other angles use the C library.
+// other angles use the table's value of the angle modulo 360, which may
+// differ from the C library's in the last bits. The tested release never
+// passes an angle (docs/ASSUMPTIONS.md, B-39).
 
 #pragma once
 

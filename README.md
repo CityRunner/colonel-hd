@@ -5,7 +5,7 @@ on its own SCI0 interpreter written in C++23. The vector backgrounds are
 re-rendered at high resolution; sprites stay original and are scaled by an
 integer factor. Game logic behaves exactly as in the original.
 
-**Status: milestone 9 (the playthrough); release candidate 0.9.**
+**Status: milestone 9 (the playthrough), release candidate 0.9; iteration 2 in progress (`review/ITERATION2_PLAN.md`).**
 - The whole game plays from the start to the ending. A scripted
   playthrough gives the same kernel calls, screens, actors, parser results
   and music as ScummVM from the boot to the last screen.
@@ -50,25 +50,25 @@ From a Visual Studio developer prompt with LLVM 23.1.4 first on `PATH`, run
   priority map), every view with its animation, and every font.
 - **Analysis:** the first launch analyses all pictures for HD, behind a
   progress bar, and keeps the result in `cache/`.
-- **Files:** the program reads `colonel-hd.ini` and `hints/` next to the
-  executable. In a build tree, copy `hints/` next to it, or the HD pictures
-  are drawn without hints.
-- **Saves:** the game's own File menu saves and restores; the saves go to
-  `saves/` next to the configuration, one file per slot
-  (`colonel-hd-001.sav` to `colonel-hd-099.sav`,
-  `docs/formats/save-format.md`), and the files the game itself writes to
+- **Files:** the program keeps `colonel-hd.ini`, `game/`, `rom/`,
+  `saves/`, `cache/` and `files/` in one data folder: `--data <folder>`,
+  else its own folder if that holds `colonel-hd.ini` or `game/`, else the
+  per-user folder (`docs/USER-README.md`, "Where the program keeps its
+  files"). From a build tree, `--data local` uses `local/`. The `hints/`
+  folder is read next to the executable: in a build tree, copy or link it
+  there, or the HD pictures are drawn without hints.
+- **Saves:** the game's own File menu saves and restores, one file per slot
+  in `saves/` (`colonel-hd-001.sav` to `colonel-hd-099.sav`,
+  `docs/formats/save-format.md`); the files the game itself writes go to
   `files/`.
-- **Music:** `music = adlib` (default), `mt32` or `off` in
-  `colonel-hd.ini`. For the MT-32, put a control ROM and a PCM ROM of the
-  MT-32 or CM-32L (files ending in `.rom`, recognised by their contents) in
-  a folder and set `mt32_rom` to it; without usable ROMs the music plays
-  on the AdLib.
+- **Configuration:** the keys of `colonel-hd.ini` (mode, scale, music,
+  MT-32 ROMs, volume, saves, log) are listed in `docs/USER-README.md`, the
+  user guide that ships with the binaries.
 - **Help:** `colonel-hd --help` lists the keys and options.
-  `docs/USER-README.md` is the user guide that ships with the binaries.
 
-Release binaries for Linux and Windows are built by the release
-workflow (`.github/workflows/release.yml`) for version tags and attached to
-the GitHub releases.
+No release has been published yet: build the program as above. The release
+workflow (`.github/workflows/release.yml`) builds and tests the Linux and
+Windows archives for a version tag and attaches them to a GitHub release.
 
 The development room viewer writes the same images to PNG files
 (`tools/room-viewer/README.md`):

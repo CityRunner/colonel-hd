@@ -3026,3 +3026,13 @@ the old numbers to the new ones, so older references stay unambiguous:
   game folder given on the command line is never written. A failed write
   is logged as a warning naming the file. With no file, it writes the
   commented defaults. **Decided (Q-10 default).**
+
+## The repository is public (2026-11-13)
+
+- `github.com/CityRunner/colonel-hd` is public (GitHub reports
+  `visibility: public` on 2026-11-13); the entry "Repository" above, from
+  the project's start, says private and describes that time. The customer
+  made the change. Nothing changes in the rules: no game data, ROMs, saves
+  or game-derived images are ever committed (`scripts/check-repo-policy.py`
+  checks the names); the hint files' licensing is in `hints/README.md`
+  (B-12). **Recorded (fact).**
