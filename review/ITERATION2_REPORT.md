@@ -152,7 +152,7 @@ small steps, each with a STOP-free commit and the local gate at the end.
 | Pre-push on `3afa581`: style and clang-tidy, release, asan, tsan, fuzz, ARM64 under qemu | all pass |
 | Local gate on `3afa581`: resources, pictures, sounds, screens, VM hashes | **all match the committed goldens** |
 | Windows CI on `3afa581` ([run 43433464586](https://github.com/CityRunner/colonel-hd/actions/runs/43433464586)) | **failed**: `std::println` to a stream does not compile with MSVC's library; fixed in `80c3a67` |
-| Windows CI on `80c3a67` ([run 43436461968](https://github.com/CityRunner/colonel-hd/actions/runs/43436461968)) | WINDOWS_RESULT |
+| Windows CI on `80c3a67` ([run 43436461968](https://github.com/CityRunner/colonel-hd/actions/runs/43436461968)) | **success**: windows-x64 (release, ASan) and windows-arm64 (release) built and passed every test |
 
 ### Deviations and open points
 
