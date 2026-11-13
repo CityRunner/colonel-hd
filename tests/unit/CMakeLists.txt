@@ -75,6 +75,7 @@ target_include_directories(sci-platform-tests PRIVATE pic render ${PROJECT_SOURC
 
 sci_add_unit_test(NAME sci-vm-tests
     SOURCES
+        vm/bytecode_test.cpp
         vm/files_test.cpp
         vm/input_test.cpp
         vm/music_device_test.cpp
