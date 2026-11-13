@@ -3036,3 +3036,12 @@ the old numbers to the new ones, so older references stay unambiguous:
   or game-derived images are ever committed (`scripts/check-repo-policy.py`
   checks the names); the hint files' licensing is in `hints/README.md`
   (B-12). **Recorded (fact).**
+
+## Version 1.0.0 is tagged after iteration 2 (2026-11-13)
+
+- The project's version is 1.0.0 and `docs/release-notes/v1.0.0.md` is
+  written, but the tag `v1.0.0` is pushed only after iteration 2's
+  packages P5 to P7, including the customer's run on a real Windows laptop
+  (B-10). The customer chose this over releasing now or a release
+  candidate. Pushing the tag is the customer's step. **Decided
+  (customer).**
