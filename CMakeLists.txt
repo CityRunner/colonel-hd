@@ -15,8 +15,6 @@ option(SCI_BUILD_TESTS "Build the unit and fuzz tests" ON)
 option(SCI_BUILD_TOOLS "Build the development tools under tools/" ON)
 option(SCI_BUILD_APP "Build the program (colonel-hd) and SDL3; off for the ARM64 tests under qemu-user" ON)
 option(SCI_DEBUG_HIGHLIGHT "Development only: let the room viewer highlight vector replacements" OFF)
-option(SCI_WITHOUT_STROKE_INTEGRITY
-       "Development only: build scenes without the stroke integrity pass (the A1 baseline; golden tests fail)" OFF)
 
 # With ccache as the compiler launcher (CI; CMake takes it from the
 # environment), clang-cl writes debug information into the objects (/Z7):

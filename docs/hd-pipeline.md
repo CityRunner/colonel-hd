@@ -119,9 +119,9 @@ order:
    colour seen at 1x.
 
 Every change is recorded with its evidence (`SceneStats::integrity_changes`)
-and listed by `tools/hd-report`. The CMake option
-`SCI_WITHOUT_STROKE_INTEGRITY` (development only) builds scenes without
-the pass, to measure the baseline.
+and listed by `tools/hd-report`. (Milestone 3b measured its baseline with a
+development option that built scenes without the pass; it was removed in
+iteration 2, B-35.)
 
 ## 6. Curves
 
