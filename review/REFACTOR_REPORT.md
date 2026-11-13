@@ -751,7 +751,7 @@ the final measurements run on the final code.
 | Format, policy (self-test 16/17), hints (86 files, 0 problems) | **pass** |
 | S6 replacement for this step (plan): compile commands of `1a8539e` and `673fb25` after the name substitution | **identical**: 539 commands each, 0 differences |
 | S6 binaries | differ, as expected (the program's name and strings); new reference `review/stage5/s6-ref-after-step13.sha256` |
-| ScummVM comparison with the rebuilt reference | SCUMMVM13 |
+| ScummVM comparison with the rebuilt reference | **match**: 39 scenarios ok, 0 FAIL (420 s); playthrough matches to tick 338000 (931 s) |
 
 ## Run times of the game-dependent checks (for the per-commit suite)
 
