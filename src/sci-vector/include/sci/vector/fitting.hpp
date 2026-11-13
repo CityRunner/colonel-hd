@@ -5,6 +5,9 @@
 // for closed chains, an axis-aligned ellipse, in double precision with
 // only +, -, *, / and sqrt (spec section 5.3). Every fit keeps the chain's
 // end points, so the curve still meets the lines at its ends.
+//
+// Public so the tests reach it through the library's interface (B-23);
+// build_scene() is its only user in the program.
 #pragma once
 
 #include "sci/vector/scene.hpp"
@@ -14,7 +17,7 @@
 #include <span>
 #include <vector>
 
-namespace sci::vector::detail {
+namespace sci::vector {
 
 enum class CurveKind : std::int8_t { Line, Arc, Spline, Ellipse };
 
@@ -42,4 +45,4 @@ struct FittedCurve {
 [[nodiscard]] std::optional<FittedCurve> fit_curve_as(std::span<const Vec2> chain, const std::vector<bool>& pinned,
                                                       CurveKind kind, double tolerance);
 
-} // namespace sci::vector::detail
+} // namespace sci::vector

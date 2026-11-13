@@ -45,9 +45,7 @@ sci_add_unit_test(NAME sci-vector-tests
         vector/scene_io_test.cpp
         vector/stroke_integrity_test.cpp
     DEPENDS sci-vector sci-render)
-# The fitting tests reach into sci-vector's internals.
 target_include_directories(sci-vector-tests PRIVATE pic)
-sci_test_private_includes(sci-vector-tests sci-vector)
 
 sci_add_unit_test(NAME sci-audio-tests
     SOURCES audio/adlib_test.cpp audio/mixer_test.cpp audio/mt32_driver_test.cpp audio/mt32_test.cpp audio/opl3_test.cpp

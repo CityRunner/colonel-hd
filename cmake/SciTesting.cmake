@@ -13,7 +13,11 @@
 #   Lets a test, fuzz target or test tool include the private headers of a
 #   component: src/<component>/src, for a library (sci-vm) or the program
 #   (app). Every use is a test that reaches behind a public interface; the
-#   calls are the list of them.
+#   calls are the list of them. Since iteration 2 (B-23) the allowed
+#   exceptions are: sci-vm, whose internals (interpreter, segments, kernel
+#   functions, saves) are what its unit and fuzz tests check (B-06, B-07);
+#   and app, a program with no public interface. Every other library is
+#   tested through its include/ folder only.
 
 function(sci_add_unit_test)
     cmake_parse_arguments(PARSE_ARGV 0 arg "" "NAME" "SOURCES;DEPENDS;LABELS")

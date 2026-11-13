@@ -8,7 +8,7 @@
 // geometry, and the fitted curve then bounds the faces on both sides.
 #pragma once
 
-#include "fitting.hpp"
+#include "sci/vector/fitting.hpp"
 #include "topology.hpp"
 
 #include <cstdint>
