@@ -8,6 +8,7 @@ sci_add_library(NAME sci-platform
     SOURCES
         src/analysis_cache.cpp
         src/config.cpp
+        src/data_folder.cpp
         src/game_files.cpp
         src/game_frame.cpp
         src/hd_pictures.cpp
