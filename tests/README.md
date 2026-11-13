@@ -96,7 +96,11 @@ releases:
   output regenerates exactly the affected file, generated twice with the
   same result, and says why in the commit.
 - **Also before a release:** the comparison with the reference ScummVM,
-  `tools/vm-trace/run-all-scenarios.sh` and `tools/playthrough/check.sh`.
+  `tools/vm-trace/run-all-scenarios.sh` and `tools/playthrough/check.sh`;
+  and the memory check (B-11), `scripts/check-memory.sh`: the program's
+  peak memory over the playthrough at N = 1 and 10 (the timing mode,
+  `docs/timing.md`) against `tests/golden/memory.txt` + 10 %, with the
+  numbers written in the release notes.
 
 ## Scenario recordings
 
