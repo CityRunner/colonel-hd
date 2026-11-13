@@ -25,6 +25,9 @@ struct Options {
     std::optional<std::filesystem::path> end_state;
     std::optional<std::vector<core::LogCategory>> log;
     std::optional<std::filesystem::path> data;
+    // B-10: the timing mode's CSV, and the scale N it measures at.
+    std::optional<std::filesystem::path> timing;
+    std::optional<int> scale;
 };
 
 enum class CommandAction : std::uint8_t {
@@ -44,8 +47,9 @@ struct CommandLine {
 // Reads the arguments after the program's name. Valid: --viewer, --fast,
 // --replay <file>, --seed <n> (an unsigned 32-bit number), --end-state
 // <file>, --log <categories>, --data <folder>, and one game folder (not
-// starting with '-'); --viewer with any of --replay, --seed, --fast or
-// --end-state is not.
+// starting with '-'), --timing <csv> (with --replay) and --scale <n> (1 to
+// max_scale, with --timing); --viewer with any of --replay, --seed,
+// --fast, --end-state or --timing is not.
 [[nodiscard]] CommandLine parse_command_line(std::span<const std::string_view> args);
 
 // The text --help and invalid usage print.

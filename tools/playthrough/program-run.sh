@@ -26,6 +26,7 @@
 #   --music adlib|mt32|off music device (default adlib)
 #   --rom <folder>         mt32_rom (default /roms/roland)
 #   --cache warm|cold      cold empties the analysis cache first (default warm)
+#   --timing <csv>         B-10: the timing mode at --scale N, its CSV written here
 #   --cache-dir <folder>   the analysis cache shared by the runs
 #                          (default build/program-run/cache)
 #   --audio dummy|disk     SDL's audio driver (default dummy); disk writes
@@ -47,7 +48,7 @@ program="${COLONEL_HD_PROGRAM:-${root}/build/release/src/app/colonel-hd}"
 vm_trace="${COLONEL_HD_VM_TRACE:-${root}/build/release/tools/vm-trace/sci-vm-trace}"
 base="${root}/build/program-run"
 
-mode=hd scale=4 music=adlib rom=/roms/roland cache=warm audio=dummy fast=1 limit="" out=""
+mode=hd scale=4 music=adlib rom=/roms/roland cache=warm audio=dummy fast=1 limit="" out="" timing=""
 cache_dir="${base}/cache"
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -61,6 +62,7 @@ while [[ $# -gt 0 ]]; do
     --real) fast=0; shift ;;
     --limit) limit="$2"; shift 2 ;;
     --out) out="$2"; shift 2 ;;
+    --timing) timing="$2"; shift 2 ;;
     *) echo "unknown option $1" >&2; exit 2 ;;
     esac
 done
@@ -113,7 +115,10 @@ if [[ "${audio}" == disk ]]; then
     audio_env+=(SDL_AUDIO_DISK_OUTPUT_FILE="${out}/audio.raw")
 fi
 args=(--data "${out}/data" --replay "${replay}" --seed 0 --end-state "${out}/end-state.txt")
-if [[ "${fast}" == 1 ]]; then
+if [[ -n "${timing}" ]]; then
+    # B-10: every frame presented at the fixed N, the CSV written (implies --fast).
+    args+=(--timing "${timing}" --scale "${scale}")
+elif [[ "${fast}" == 1 ]]; then
     args+=(--fast)
 fi
 start="$(date +%s)"

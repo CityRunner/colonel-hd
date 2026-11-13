@@ -1,0 +1,5 @@
+# B-11: peak resident memory (KiB) of the playthrough in colonel-hd's timing
+# mode at N = 1 and 10, median of 3 runs in the toolchain container (Xvfb).
+# scripts/check-memory.sh fails above these + 10 %; --update rewrites them.
+1 165936
+10 378868

@@ -32,6 +32,7 @@
 #include "sci/platform/mt32_roms.hpp"
 #include "sci/platform/save_folder.hpp"
 #include "sci/platform/thread_executor.hpp"
+#include "sci/platform/timing.hpp"
 #include "sci/platform/window_scale.hpp"
 #include "sci/view/cursor.hpp"
 #include "sci/vm/events.hpp"
@@ -405,7 +406,8 @@ std::optional<fs::path> hint_directory(const fs::path& base) {
 // The first launch's analysis of every picture (spec section 10.2), with a
 // progress bar; later launches find the entries and skip it. False when the
 // user closed the window meanwhile.
-bool prepare_analysis(SDL_Renderer* renderer, sci::platform::AnalysisCache& analysis) {
+bool prepare_analysis(SDL_Renderer* renderer, sci::platform::AnalysisCache& analysis,
+                      sci::platform::TimingLog* timing) {
     const auto all = analysis.all_variants();
     const auto missing = analysis.missing(all);
     if (missing.empty()) {
@@ -450,6 +452,9 @@ bool prepare_analysis(SDL_Renderer* renderer, sci::platform::AnalysisCache& anal
     sci::core::log(
         sci::core::LogLevel::Info, sci::core::LogCategory::General,
         std::format("analysed {} scenes in {} ms{}", missing.size(), SDL_GetTicks() - start, done ? "" : " (stopped)"));
+    if (timing != nullptr) {
+        timing->set_first_launch(missing.size(), static_cast<double>(SDL_GetTicks() - start));
+    }
     return open;
 }
 
@@ -697,6 +702,16 @@ public:
         SDL_SetRenderVSync(renderer_, fast ? 0 : 1);
     }
 
+    // The N of the last frame composed.
+    [[nodiscard]] int frame_scale() const { return screen_.scale(); }
+
+    // --timing (B-10): every change of the screen is presented, its time
+    // and every room entry go to `log`; `scale` fixes N (else the window's).
+    void set_timing(sci::platform::TimingLog* log, std::optional<int> scale) {
+        timing_ = log;
+        fixed_scale_ = scale;
+    }
+
 private:
     // How often the fast waits present the screen, in real milliseconds.
     static constexpr std::uint64_t fast_frame_milliseconds = 16;
@@ -709,13 +724,17 @@ private:
     // fast_frame_milliseconds. Only the pacing differs from wait: the game
     // sees the same virtual time and the same music timer calls.
     void wait_fast(sci::vm::Game& game, std::uint32_t milliseconds) {
+        if (timing_ != nullptr && entering_) {
+            wait_entering(game, milliseconds);
+            return;
+        }
         virtual_ += milliseconds;
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             handle(game, event);
         }
         const std::uint64_t now = SDL_GetTicks();
-        if (redraw_ || now - last_fast_present_ >= fast_frame_milliseconds) {
+        if (timing_ != nullptr || redraw_ || now - last_fast_present_ >= fast_frame_milliseconds) {
             present(game);
             last_fast_present_ = now;
         }
@@ -733,7 +752,37 @@ private:
         }
     }
 
+    // --timing while a room's HD images are made (B-10): the wait takes its
+    // real time, presenting as a normal wait does, so that the room entry is
+    // timed with the main thread as idle as in normal play rather than
+    // running the game flat out beside the workers. The game sees the same
+    // virtual time and music calls.
+    void wait_entering(sci::vm::Game& game, std::uint32_t milliseconds) {
+        virtual_ += milliseconds;
+        const std::uint64_t until = SDL_GetTicks() + milliseconds;
+        // The input once per wait, as wait_fast takes it: the game gets
+        // every event at the same tick as with --fast (a presentation can
+        // move the pointer, and its motion event then comes in the next
+        // wait in both).
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            handle(game, event);
+        }
+        while (true) {
+            present(game);
+            const std::uint64_t now = SDL_GetTicks();
+            if (now >= until || !entering_) {
+                break;
+            }
+            SDL_Delay(static_cast<std::uint32_t>(std::min<std::uint64_t>(until - now, 4)));
+        }
+        game.pass_wait(milliseconds);
+    }
+
     [[nodiscard]] int scale_for_window() const {
+        if (fixed_scale_) {
+            return *fixed_scale_;
+        }
         int width = 0;
         int height = 0;
         SDL_GetCurrentRenderOutputSize(renderer_, &width, &height);
@@ -764,6 +813,9 @@ private:
             break;
         }
         case SDL_EVENT_MOUSE_MOTION:
+            if (timing_ != nullptr) {
+                break; // --timing: the replay is the only input (see below).
+            }
             last_mouse_ = sci::app::window_to_1x(static_cast<double>(event.motion.x),
                                                  static_cast<double>(event.motion.y), geometry());
             game.move_mouse(last_mouse_);
@@ -771,6 +823,13 @@ private:
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_BUTTON_UP: {
+            // --timing (B-10): the pointer is not the game's input. At a
+            // fixed N larger than the window, warping it to the game's
+            // mouse and reading it back loses the position, and the game
+            // would play differently from the replay.
+            if (timing_ != nullptr) {
+                break;
+            }
             last_mouse_ = sci::app::window_to_1x(static_cast<double>(event.button.x),
                                                  static_cast<double>(event.button.y), geometry());
             std::uint16_t modifiers = sci::vm::modifier_none;
@@ -825,6 +884,7 @@ private:
             }
             return;
         }
+        const std::uint64_t frame_start = SDL_GetPerformanceCounter();
         // A picture whose HD images are being made: the frame shown stays
         // for up to hd_hold_milliseconds, then the picture is shown at 1x
         // until they come (HdPictures::request).
@@ -833,6 +893,10 @@ private:
             hold_start_ = ticks;
         }
         screen_.update(shown, config_->mode, scale, config_->priority_snap, ticks - hold_start_ < hd_hold_milliseconds);
+        const double compose_ms = milliseconds_since(frame_start);
+        if (timing_ != nullptr) {
+            time_room_entry(game, frame_start);
+        }
         if (screen_.waiting()) {
             return;
         }
@@ -840,12 +904,59 @@ private:
         for (const sci::render::PixelRect& rect : screen_.take_dirty()) {
             dirty.push_back(sci::app::Rect{.x = rect.x, .y = rect.y, .width = rect.width, .height = rect.height});
         }
-        presenter_.present(screen_.frame(), screen_.scale(), redraw_ ? full_frame() : dirty);
+        const std::vector<sci::app::Rect> uploaded = redraw_ ? full_frame() : dirty;
+        presenter_.present(screen_.frame(), screen_.scale(), uploaded);
+        if (timing_ != nullptr) {
+            time_frame(game, milliseconds_since(frame_start), compose_ms, uploaded);
+        }
         redraw_ = false;
         last_serial_ = shown.serial;
         update_cursor(shown, scale);
         if (presenter_.draws_cursor() && std::exchange(pointer_moved_, false)) {
             presenter_.redraw();
+        }
+    }
+
+    // Real milliseconds since a performance counter value.
+    [[nodiscard]] static double milliseconds_since(std::uint64_t start) {
+        return static_cast<double>(SDL_GetPerformanceCounter() - start) * 1000.0 /
+               static_cast<double>(SDL_GetPerformanceFrequency());
+    }
+
+    // One presented frame for --timing, and its details if it was slow.
+    void time_frame(sci::vm::Game& game, double ms, double compose_ms, std::span<const sci::app::Rect> uploaded) {
+        timing_->frame(ms, compose_ms);
+        if (ms <= sci::platform::frame_budget_ms) {
+            return;
+        }
+        std::uint64_t pixels = 0;
+        for (const sci::app::Rect& rect : uploaded) {
+            pixels += static_cast<std::uint64_t>(rect.width) * static_cast<std::uint64_t>(rect.height);
+        }
+        const std::vector<sci::vm::Reg> globals = game.globals();
+        constexpr std::size_t room = 11;
+        timing_->slow_frame(sci::platform::SlowFrame{
+            .tick = game.ticks(),
+            .room = globals.size() > room ? globals[room].offset : 0,
+            .ms = ms,
+            .compose_ms = compose_ms,
+            .uploaded = pixels,
+        });
+    }
+
+    // A room entry starts when a picture's HD images become pending and
+    // ends when its HD frame is composed (B-10).
+    void time_room_entry(sci::vm::Game& game, std::uint64_t now) {
+        const bool pending = screen_.hd_pending();
+        if (pending && !entering_) {
+            entering_ = true;
+            entry_start_ = now;
+            const std::vector<sci::vm::Reg> globals = game.globals();
+            constexpr std::size_t room = 11;
+            entry_room_ = globals.size() > room ? globals[room].offset : 0;
+        } else if (!pending && entering_) {
+            entering_ = false;
+            timing_->room_entry(entry_room_, milliseconds_since(entry_start_));
         }
     }
 
@@ -934,6 +1045,12 @@ private:
     std::uint64_t start_;
     std::uint64_t virtual_ = 0;
     bool fast_ = false;
+    // --timing (B-10): the log, the fixed N, and the room entry under way.
+    sci::platform::TimingLog* timing_ = nullptr;
+    std::optional<int> fixed_scale_;
+    bool entering_ = false;
+    std::uint64_t entry_start_ = 0;
+    int entry_room_ = 0;
     std::uint64_t last_fast_present_ = 0;
     std::uint64_t hold_start_ = 0;
     sci::app::AudioOutput* audio_ = nullptr;
@@ -1016,6 +1133,13 @@ bool write_end_state(const fs::path& path, sci::vm::Game& game) {
 // coordinates: the configured N, as far as the display has room for it
 // (the frame is never larger than the window, so a smaller window would
 // show a smaller N); 3 with `scale = auto`.
+// --timing: the CSV of the run (B-10, docs/timing.md).
+bool write_timing(const fs::path& path, const sci::platform::TimingLog& timing, int scale) {
+    std::ofstream file(path, std::ios::binary);
+    file << timing.csv(SCI_VERSION, scale, sci::platform::peak_memory_kib());
+    return static_cast<bool>(file);
+}
+
 int initial_window_scale(const sci::platform::Config& config) {
     SDL_Rect bounds{};
     if (config.scale <= 0 || !SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &bounds)) {
@@ -1061,6 +1185,77 @@ std::optional<sci::platform::DataFolder> open_data_folder(const sci::platform::O
     sci::core::log(sci::core::LogLevel::Info, sci::core::LogCategory::General,
                    std::format("data folder: {} ({})", data.folder.string(), kind));
     return data;
+}
+
+// What play_game needs from run().
+struct RunContext {
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    Game* game;
+    sci::platform::Config* config;
+    sci::platform::AnalysisCache* analysis;
+    sci::platform::ThreadExecutor* executor;
+    sci::platform::TimingLog* timing;
+    const sci::platform::DataFolder* data;
+    const std::vector<sci::vm::InputEvent>* replay;
+};
+
+// Plays the game in the window (milestone 4b); the exit status.
+int play_game(const sci::platform::Options& options, const RunContext& context) {
+    SDL_Window* const window = context.window;
+    SDL_Renderer* const renderer = context.renderer;
+    const Game* const game = context.game;
+    sci::platform::Config* const config = context.config;
+    sci::platform::AnalysisCache& analysis = *context.analysis;
+    sci::platform::ThreadExecutor& executor = *context.executor;
+    sci::platform::TimingLog& timing = *context.timing;
+    const sci::platform::DataFolder& data = *context.data;
+    const std::vector<sci::vm::InputEvent>& replay = *context.replay;
+    int result = 0;
+    sci::platform::HdPictures pictures(analysis, executor);
+    sci::platform::DirectoryFileStore files(data.folder / "files", game->files);
+    GameHost host(window, renderer, game->manager, pictures, *config);
+    // Before the game, which sends it note-offs when it goes.
+    const auto audio = open_audio(game->manager, *config);
+    // A different seed every time, as ScummVM seeds its random source;
+    // a replay's run starts from a known one.
+    const std::uint32_t seed = options.replay
+                                   ? options.seed.value_or(0)
+                                   : options.seed.value_or(static_cast<std::uint32_t>(SDL_GetPerformanceCounter()));
+    sci::vm::Game running(game->manager, host, &files, seed);
+    // The saves next to the configuration, or in the configured folder
+    // (docs/formats/save-format.md).
+    sci::platform::SaveFolder saves(sci::platform::saves_folder(*config, data.folder));
+    running.set_saves(&saves, std::format("colonel-hd {}", SCI_VERSION));
+    running.set_music_device(audio.get());
+    host.set_audio(audio.get());
+    // --timing plays as fast as it can too (B-10).
+    const bool fast = options.fast || options.timing.has_value();
+    host.set_fast(fast);
+    if (options.timing) {
+        host.set_timing(&timing, options.scale);
+    }
+    if (audio != nullptr) {
+        audio->set_fast(fast);
+    }
+    running.schedule(replay);
+    // A replay plays as in sci-vm-trace: the time of day too.
+    if (options.replay) {
+        running.use_deterministic_time();
+    }
+    if (const auto fault = running.run()) {
+        show_error(window, std::format("The interpreter stopped: {}", *fault));
+        result = 1;
+    }
+    if (options.timing && !write_timing(*options.timing, timing, host.frame_scale())) {
+        std::println(stderr, "Cannot write {}", options.timing->string());
+        result = 1;
+    }
+    if (options.end_state && !write_end_state(*options.end_state, running)) {
+        std::println(stderr, "Cannot write {}", options.end_state->string());
+        result = 1;
+    }
+    return result;
 }
 
 int run(const sci::platform::Options& options) {
@@ -1116,7 +1311,8 @@ int run(const sci::platform::Options& options) {
     SDL_SetWindowTitle(window.get(), std::format("colonel-hd {} - {}", SCI_VERSION, game->identification.name).c_str());
     sci::platform::ThreadExecutor executor;
     sci::platform::AnalysisCache analysis(game->manager, hint_directory(base), data.folder / "cache", executor);
-    if (!prepare_analysis(renderer.get(), analysis)) {
+    sci::platform::TimingLog timing;
+    if (!prepare_analysis(renderer.get(), analysis, options.timing ? &timing : nullptr)) {
         return 0;
     }
     int result = 0;
@@ -1126,40 +1322,17 @@ int run(const sci::platform::Options& options) {
         config->mode = viewer.mode();
         config->scale = viewer.chosen_scale();
     } else {
-        sci::platform::HdPictures pictures(analysis, executor);
-        sci::platform::DirectoryFileStore files(data.folder / "files", game->files);
-        GameHost host(window.get(), renderer.get(), game->manager, pictures, *config);
-        // Before the game, which sends it note-offs when it goes.
-        const auto audio = open_audio(game->manager, *config);
-        // A different seed every time, as ScummVM seeds its random source;
-        // a replay's run starts from a known one.
-        const std::uint32_t seed = options.replay
-                                       ? options.seed.value_or(0)
-                                       : options.seed.value_or(static_cast<std::uint32_t>(SDL_GetPerformanceCounter()));
-        sci::vm::Game running(game->manager, host, &files, seed);
-        // The saves next to the configuration, or in the configured folder
-        // (docs/formats/save-format.md).
-        sci::platform::SaveFolder saves(sci::platform::saves_folder(*config, data.folder));
-        running.set_saves(&saves, std::format("colonel-hd {}", SCI_VERSION));
-        running.set_music_device(audio.get());
-        host.set_audio(audio.get());
-        host.set_fast(options.fast);
-        if (audio != nullptr) {
-            audio->set_fast(options.fast);
-        }
-        running.schedule(replay);
-        // A replay plays as in sci-vm-trace: the time of day too.
-        if (options.replay) {
-            running.use_deterministic_time();
-        }
-        if (const auto fault = running.run()) {
-            show_error(window.get(), std::format("The interpreter stopped: {}", *fault));
-            result = 1;
-        }
-        if (options.end_state && !write_end_state(*options.end_state, running)) {
-            std::println(stderr, "Cannot write {}", options.end_state->string());
-            result = 1;
-        }
+        result = play_game(options, RunContext{
+                                        .window = window.get(),
+                                        .renderer = renderer.get(),
+                                        .game = &*game,
+                                        .config = &*config,
+                                        .analysis = &analysis,
+                                        .executor = &executor,
+                                        .timing = &timing,
+                                        .data = &data,
+                                        .replay = &replay,
+                                    });
     }
     save_config(config_path, *loaded, *config, chosen_folder);
     return result;

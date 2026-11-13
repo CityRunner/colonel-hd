@@ -207,3 +207,77 @@ remaining private includes).
 
 P7: performance (B-10 a scripted timing mode and the customer's laptop
 run, B-09 no frame over 16.7 ms at N = 10, B-11 the memory check).
+
+## Package P7 (2026-11-13), at STOP
+
+### What was done
+
+| Item | Commits | What changed |
+|---|---|---|
+| B-10 | `63daa5f` to `4a9ffda` | `colonel-hd --replay <file> --timing <csv> [--scale N]`: the replay played as fast as it can with every frame presented at a fixed N (also when the window is smaller), and a CSV of the run: frame-time percentiles (the main thread's time per presented frame, and the composing part alone), each room entry (from the request of the new picture's HD images to the first frame composed with them, the game paced in real time meanwhile as in normal play), the first launch, peak memory, and every frame over 16.7 ms with its tick, room, composing time and upload size. In the timing mode the window's pointer is not the game's input (at N = 10 the frame is larger than the window and the pointer's round trip changed the game). The statistics and the CSV live in sci-platform (`timing.hpp`) with tests; `--timing`/`--scale` and their rules are in `command_line.hpp` with tests. `docs/timing.md` is the one-page instruction for the customer's run; `tools/timing/run-timing.cmd` (Windows) and `run-timing.sh` (Linux) run N = 1, 2, 5, 10; `tools/playthrough/program-run.sh --timing` runs it in the container and checks the end state. Normal runs are unchanged (the local gate, below). |
+| B-11 | `42c2e60`, `354d682`, `3edaad9` | `scripts/check-memory.sh`: the timing mode at N = 1 and 10, failing above `tests/golden/memory.txt` + 10 %; `--update` writes the medians of 3 runs. Baseline: 165,936 KiB at N = 1, 378,868 KiB at N = 10. Listed among the checks before a release (`tests/README.md`). |
+| B-09 | — (measured, nothing changed) | See below: the misses measured here are in the presentation, which the container renders in software; no optimisation before the customer's laptop run. |
+
+### Measurements (development container, 4 cores, Xvfb software rendering, warm cache)
+
+The playthrough in `colonel-hd --timing`; every run ended in the state of
+`sci-vm-trace` (same tick, globals and state hash).
+
+| N | Runs | Frames presented | Frame ms: median / p99 / worst | Frames over 16.7 ms | Composing worst | Room entry ms: median / worst | Peak memory |
+|---|---|---|---|---|---|---|---|
+| 1 | 3, median | 37,912 | 0.94 / 1.53 / 20.9 | 1 (0-1) | 3.6 ms | 17 / 34 | 165,936 KiB |
+| 4 | 1 | 20,147 * | 3.48 / 5.04 / 25.0 | 2 | — | 97 / 509 * | 203,508 KiB |
+| 10 | 5, median | 37,823 | 6.97 / 10.70 / 43.1 | 59 (55-65) | 19.5 ms | 233 / 327 | 378,868 KiB |
+
+\* The N = 4 run was the first version, before room entries were paced in
+real time; its numbers are not comparable with the others.
+
+Reading N = 10 (per-frame detail from the `slow` lines of one run, 65
+frames over 16.7 ms):
+
+- 49 of the 65 upload the whole frame (6.4 million pixels): a room entry
+  or the HD images arriving. Their composing takes 10 to 13 ms; the rest
+  of the frame time is the upload and presentation, which Xvfb does in
+  software (20 to 40 ms for a 25 MB frame).
+- One frame's composing is over the budget: the game's first frame (tick
+  13, 18.9 ms).
+- The others are small uploads with occasional outliers (one of 176 ms in
+  one run, 43 ms otherwise): noise of the shared container.
+- Room entry is within 1 s at every N (worst 349 ms of 5 runs at N = 10).
+
+So B-09's criterion 1 is not met in the container (median 59 frames over
+16.7 ms at N = 10), but the composing, the part the program controls
+directly, is within the budget except for the first frame. Whether the
+presentation misses on real hardware (a GPU upload of 25 MB takes a few
+milliseconds) is what the customer's laptop run (B-10 criterion 3) shows.
+
+### Checks
+
+| Check | Result |
+|---|---|
+| New tests: the timing statistics (nearest-rank percentiles), the CSV, peak memory read; `--timing`/`--scale` rules | pass (sci-platform-tests 56) |
+| Pre-push on `3edaad9` | all pass: style and clang-tidy over the tree, release, asan, tsan, fuzz, ARM64 under qemu |
+| Local gate on `3edaad9` | **all match the committed goldens**: resources, pictures, sounds, 14,731 screens, VM hashes and the program's playthrough end state (normal runs unchanged) |
+| Windows CI on `3edaad9` ([run 43486277989](https://github.com/CityRunner/colonel-hd/actions/runs/43486277989)) | **success**: windows-x64 (release, ASan) and windows-arm64 (release); `peak_memory_kib` compiles on Windows (psapi) |
+
+### Deviations and open points
+
+- **B-10 criterion 3 (the customer's run) is open:** `docs/timing.md`
+  says how. The build: a manual "Release" run on `iteration-2` (or `main`
+  after the merge), artifact `colonel-hd-windows-x64`.
+- **B-09 is open, waiting for that run.** Proposed: if the laptop shows
+  frames over 16.7 ms at N = 10, B-09 becomes High (Q-04) and the work is
+  in the presentation of full frames (for example uploading a new
+  picture's frame in parts over the frames while the old one is held);
+  if not, B-09 closes with the measurements. Its criterion 1 also names a
+  room-entry sweep over every room; the playthrough enters 55 rooms (one
+  `room` line each) and no separate sweep was made.
+- B-09 criterion 4 (before/after of 5 runs): only "before", since nothing
+  changed.
+- The timing mode's room entries are paced in real time, so a run takes
+  about 6 minutes at N = 10 here (2 minutes at N = 1).
+
+### What is next
+
+The customer's laptop run (`docs/timing.md`), then B-09 by its result;
+then the v1.0.0 tag (the customer's).
