@@ -15,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <print>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -72,6 +73,10 @@ struct BinaryCase {
     int expected; // As int16.
 };
 
+constexpr BinaryCase bin(int left, int opcode, int right, int expected) {
+    return BinaryCase{.left = left, .opcode = opcode, .right = right, .expected = expected};
+}
+
 // Each case: left pushed, right in the accumulator, the opcode, the result
 // into global i.
 std::unique_ptr<BytecodeWorld> run_binary(const std::vector<BinaryCase>& cases) {
@@ -106,20 +111,20 @@ void check_cases(const std::unique_ptr<BytecodeWorld>& world, const std::vector<
 // divisor's absolute value), unsigned shifts and bitwise operations.
 SCI_TEST(bytecode_arithmetic_and_bitwise) {
     const std::vector<BinaryCase> cases{
-        {7, op::add, 5, 12},
-        {7, op::sub, 5, 2},
-        {7, op::mul, -3, -21},
-        {-7, op::div, 2, -3},
-        {7, op::div, 2, 3},
-        {-7, op::mod, 3, 2},
-        {7, op::mod, -3, 1},
-        {7, op::mod, 3, 1},
-        {-32768, op::shr, 3, 4096},
-        {3, op::shl, 4, 48},
-        {0x0f0f, op::bxor, 0x00ff, 0x0ff0},
-        {0x0ff0, op::band, 0x00ff, 0x00f0},
-        {0x0ff0, op::bor, 0x00ff, 0x0fff},
-        {32767, op::add, 1, -32768}, // Wraps as int16.
+        bin(7, op::add, 5, 12),
+        bin(7, op::sub, 5, 2),
+        bin(7, op::mul, -3, -21),
+        bin(-7, op::div, 2, -3),
+        bin(7, op::div, 2, 3),
+        bin(-7, op::mod, 3, 2),
+        bin(7, op::mod, -3, 1),
+        bin(7, op::mod, 3, 1),
+        bin(-32768, op::shr, 3, 4096),
+        bin(3, op::shl, 4, 48),
+        bin(0x0f0f, op::bxor, 0x00ff, 0x0ff0),
+        bin(0x0ff0, op::band, 0x00ff, 0x00f0),
+        bin(0x0ff0, op::bor, 0x00ff, 0x0fff),
+        bin(32767, op::add, 1, -32768), // Wraps as int16.
     };
     check_cases(run_binary(cases), cases);
 }
@@ -127,10 +132,11 @@ SCI_TEST(bytecode_arithmetic_and_bitwise) {
 // vm.cpp op_eq_ ... op_ule_: signed and unsigned comparisons give 1 or 0.
 SCI_TEST(bytecode_comparisons) {
     const std::vector<BinaryCase> cases{
-        {3, op::eq, 3, 1},  {3, op::eq, 4, 0},   {3, op::ne, 4, 1},   {3, op::ne, 3, 0},    {-1, op::gt, 1, 0},
-        {2, op::gt, 1, 1},  {1, op::ge, 1, 1},   {0, op::ge, 1, 0},   {-1, op::lt, 1, 1},   {1, op::lt, 1, 0},
-        {1, op::le, 1, 1},  {2, op::le, 1, 0},   {-1, op::ugt, 1, 1}, {1, op::ugt, -1, 0},  {-1, op::uge, -1, 1},
-        {1, op::uge, 2, 0}, {1, op::ult, -1, 1}, {-1, op::ult, 1, 0}, {-1, op::ule, -1, 1}, {-1, op::ule, 1, 0},
+        bin(3, op::eq, 3, 1),   bin(3, op::eq, 4, 0),   bin(3, op::ne, 4, 1),    bin(3, op::ne, 3, 0),
+        bin(-1, op::gt, 1, 0),  bin(2, op::gt, 1, 1),   bin(1, op::ge, 1, 1),    bin(0, op::ge, 1, 0),
+        bin(-1, op::lt, 1, 1),  bin(1, op::lt, 1, 0),   bin(1, op::le, 1, 1),    bin(2, op::le, 1, 0),
+        bin(-1, op::ugt, 1, 1), bin(1, op::ugt, -1, 0), bin(-1, op::uge, -1, 1), bin(1, op::uge, 2, 0),
+        bin(1, op::ult, -1, 1), bin(-1, op::ult, 1, 0), bin(-1, op::ule, -1, 1), bin(-1, op::ule, 1, 0),
     };
     check_cases(run_binary(cases), cases);
 }
@@ -384,26 +390,34 @@ SCI_TEST(bytecode_objects_sends_and_calls) {
     const auto derived_twice = code.label();
     const auto exported = code.label();
     const std::vector<std::pair<int, int>> properties{{sel::value, 3}, {sel::other, 0}};
-    script.add(ObjectSpec{.is_class = true,
-                          .species = 0,
-                          .super_class = -1,
-                          .extra_properties = properties,
-                          .methods = {{sel::twice, base_twice}, {sel::sum, base_sum}}});
-    script.add(ObjectSpec{.is_class = true,
-                          .species = 1,
-                          .super_class = 0,
-                          .extra_properties = properties,
-                          .methods = {{sel::twice, derived_twice}}});
-    const std::size_t game = script.add(ObjectSpec{.is_class = false,
-                                                   .species = 1,
-                                                   .super_class = 1,
-                                                   .extra_properties = {{sel::value, 10}, {sel::other, 0}},
-                                                   .methods = {{sel::play, play}}});
-    const std::size_t thing = script.add(ObjectSpec{.is_class = false,
-                                                    .species = 0,
-                                                    .super_class = 0,
-                                                    .extra_properties = {{sel::value, 4}, {sel::other, 0}},
-                                                    .methods = {}});
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 0,
+        .super_class = -1,
+        .extra_properties = properties,
+        .methods = {{sel::twice, base_twice}, {sel::sum, base_sum}},
+    });
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 1,
+        .super_class = 0,
+        .extra_properties = properties,
+        .methods = {{sel::twice, derived_twice}},
+    });
+    const std::size_t game = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 1,
+        .super_class = 1,
+        .extra_properties = {{sel::value, 10}, {sel::other, 0}},
+        .methods = {{sel::play, play}},
+    });
+    const std::size_t thing = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 0,
+        .super_class = 0,
+        .extra_properties = {{sel::value, 4}, {sel::other, 0}},
+        .methods = {},
+    });
     script.export_object(game);
     script.export_code(exported);
     script.set_locals(std::vector<std::uint16_t>(32, 0));
@@ -635,4 +649,141 @@ SCI_TEST(bytecode_every_variable_opcode) {
         }
         SCI_CHECK(result_ok && value_ok);
     }
+}
+
+// vm_types.cpp (add, subtract, compare) on pointers: a pointer plus a
+// number, the difference of two pointers into one segment, a pointer
+// against a small number (greater, as SCI0 scripts expect) and two
+// pointers compared. Also: a read of an unset temporary (no workaround
+// applies: a warning and 0) and of a global past the last (the
+// accumulator stays).
+SCI_TEST(bytecode_pointers_and_odd_reads) {
+    const auto world = run_play([](CodeAssembler& code) {
+        const auto lea_global = [&code](int index) {
+            code.raw({sci::test::opcode_byte(op::lea, true), 0, static_cast<std::uint8_t>(index)});
+        };
+        const auto store = [&code](int global) { code.var(VarOp::Store, Var::Global, global); };
+        lea_global(3);
+        code.op(op::push);
+        load(code, 4);
+        code.op(op::add);
+        store(0); // Pointer to global 5.
+        lea_global(5);
+        code.op(op::push);
+        lea_global(3);
+        code.op(op::sub);
+        store(1); // 10 - 6 bytes = 4.
+        lea_global(3);
+        code.op(op::push);
+        load(code, 5);
+        code.op(op::gt);
+        store(2); // 1
+        load(code, 5);
+        code.op(op::push);
+        lea_global(3);
+        code.op(op::gt);
+        store(3); // 0
+        lea_global(5);
+        code.op(op::push);
+        lea_global(3);
+        code.op(op::ugt);
+        store(4); // 1
+        code.op_b(op::link, 1).var(VarOp::Load, Var::Temp, 0);
+        store(5); // 0
+        load(code, 33);
+        code.var(VarOp::Load, Var::Global, 200);
+        store(6); // 33
+    });
+    SCI_CHECK(world != nullptr);
+    if (world == nullptr) {
+        return;
+    }
+    const sci::vm::Reg pointer = world->machine->global(0);
+    SCI_CHECK(pointer.is_pointer() && pointer.offset == 10);
+    SCI_CHECK(world->global(1) == 4 && world->global(2) == 1 && world->global(3) == 0 && world->global(4) == 1);
+    SCI_CHECK(world->global(5) == 0 && world->global(6) == 33);
+}
+
+// An arithmetic operation on a pointer that no workaround covers stops the
+// machine with a fault (vm_types.cpp, arithmetic_workaround; ScummVM's
+// error()).
+SCI_TEST(bytecode_invalid_arithmetic_is_a_fault) {
+    ScriptBuilder script;
+    CodeAssembler& code = script.code();
+    const auto play = code.label();
+    code.bind(play);
+    code.raw({sci::test::opcode_byte(op::lea, true), 0, 3}).op(op::push);
+    load(code, 2);
+    code.op(op::mul).op(op::ret);
+    auto game = sci::test::assembled_game({{0, sci::test::game_script(script, play)}}, {0});
+    SCI_CHECK(game.has_value());
+    if (!game) {
+        return;
+    }
+    BytecodeWorld world(std::move(*game));
+    SCI_CHECK(!world.run());
+    SCI_CHECK(world.machine->faults().message().contains("Invalid arithmetic"));
+}
+
+// The kernel-call log sees each call with its name, arguments and result;
+// the selector access of kernel functions (selector.cpp readSelector and
+// writeSelector) works on the game object, and invokeSelector refuses to
+// run outside a kernel call.
+SCI_TEST(bytecode_kernel_log_and_selector_access) {
+    namespace sel = sci::test::sel;
+    using sci::test::ObjectSpec;
+    const int abs_number = kernel_number("Abs");
+    ScriptBuilder script;
+    CodeAssembler& code = script.code();
+    const auto play = code.label();
+    const auto twice = code.label();
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 0,
+        .super_class = -1,
+        .extra_properties = {{sel::value, 3}},
+        .methods = {{sel::twice, twice}},
+    });
+    const std::size_t game = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 0,
+        .super_class = 0,
+        .extra_properties = {{sel::value, 6}},
+        .methods = {{sel::play, play}},
+    });
+    script.export_object(game);
+    script.set_locals(std::vector<std::uint16_t>(8, 0));
+    code.bind(play);
+    code.op(op::push1).op_b(op::pushi, -7).callk(abs_number, 1).var(VarOp::Store, Var::Global, 0).op(op::ret);
+    code.bind(twice);
+    code.op_b(op::p_toa, 8).op(op::push);
+    load(code, 2);
+    code.op(op::mul).var(VarOp::Store, Var::Global, 1).op(op::ret);
+
+    auto resources = sci::test::assembled_game({{0, script.build()}}, {0});
+    SCI_CHECK(resources.has_value());
+    if (!resources) {
+        return;
+    }
+    BytecodeWorld world(std::move(*resources));
+    std::vector<sci::vm::KernelCall> calls;
+    world.machine->set_kernel_log([&calls](const sci::vm::KernelCall& call) { calls.push_back(call); });
+    SCI_CHECK(world.run());
+    SCI_CHECK(calls.size() == 1);
+    if (calls.size() == 1) {
+        SCI_CHECK(std::string_view(calls[0].name) == "Abs" && calls[0].arguments.size() == 1);
+        SCI_CHECK(calls[0].arguments[0].to_sint16() == -7 && calls[0].result.to_sint16() == 7);
+    }
+    SCI_CHECK(world.global(0) == 7);
+
+    sci::vm::Machine& machine = *world.machine;
+    const sci::vm::Reg object = machine.game_object();
+    SCI_CHECK(machine.read_selector_value(object, sel::value) == 6);
+    machine.write_selector_value(object, sel::value, 21);
+    SCI_CHECK(machine.read_selector_value(object, sel::value) == 21);
+    // invokeSelector runs only from a kernel function (selector.cpp); the
+    // kernel functions that call methods are covered by the home-made game
+    // (B-07).
+    machine.invoke_selector(object, sel::twice, {});
+    SCI_CHECK(machine.faults().raised() && machine.faults().message().contains("not called from a kernel function"));
 }
