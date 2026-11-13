@@ -10,10 +10,12 @@
 # - pull request ready for review (the milestone gate): the full matrix the
 #   spec requires, all at once so every failure shows: Linux x86-64 and
 #   ARM64 (release, ASan+UBSan, TSan, with the golden hashes of synthetic
-#   scenes on both), the fuzzers, Windows x64 (release, ASan) and ARM64
-#   (release). Linux is the first priority and Windows the second;
-# - manual runs (workflow_dispatch): one fast Linux job, or a single
-#   platform between gates for a fix only that platform reproduces.
+#   scenes on both), the fuzzers, the sci-vm coverage gate (B-08: at
+#   least 70 % of its lines, Linux x86-64), Windows x64 (release, ASan) and
+#   ARM64 (release). Linux is the first priority and Windows the second;
+# - manual runs (workflow_dispatch): one fast Linux job, the coverage gate
+#   alone, or a single platform between gates for a fix only that platform
+#   reproduces.
 # A push that changes only docs/ (with docs/reports/) or Markdown files runs nothing;
 # one that changes only hints/ runs only the hint-file check.
 
@@ -29,7 +31,7 @@ on:
       scope:
         description: What to run (gates run on pull requests marked ready for review)
         type: choice
-        options: [quick, linux-arm64, windows]
+        options: [quick, coverage, linux-arm64, windows]
         default: quick
 
 permissions:
@@ -68,6 +70,7 @@ jobs:
       quick: ${{ steps.plan.outputs.quick }}
       linux: ${{ steps.plan.outputs.linux }}
       linux-archs: ${{ steps.plan.outputs.linux-archs }}
+      coverage: ${{ steps.plan.outputs.coverage }}
       windows: ${{ steps.plan.outputs.windows }}
     steps:
       - id: plan
@@ -101,19 +104,20 @@ jobs:
               done <<< "$files"
             fi
           fi
-          wip=false; quick=false; linux=false; arm=false; windows=false; lint=false
+          wip=false; quick=false; linux=false; arm=false; windows=false; lint=false; coverage=false
           if [[ "$EVENT" == pull_request ]]; then
             if [[ "$code" == true ]]; then
               lint=true
               if [[ "$DRAFT" == true ]]; then
                 wip=true
               else
-                linux=true; arm=true; windows=true
+                linux=true; arm=true; windows=true; coverage=true
               fi
             fi
           else
             case "$SCOPE" in
               quick) quick=true; lint=true ;;
+              coverage) coverage=true ;;
               linux-arm64) arm=true ;;
               windows) windows=true ;;
             esac
@@ -128,6 +132,7 @@ jobs:
           elif [[ "$arm" == true ]]; then out linux-archs '["arm64"]'
           else out linux-archs '[]'; fi
           out windows "$windows"
+          out coverage "$coverage"
 
   hints:
     name: hint files
@@ -271,6 +276,33 @@ jobs:
         run: sudo sysctl vm.mmap_rnd_bits=28
       - name: Build and test
         run: docker/run.sh cmake --workflow --preset ${{ matrix.preset }} 2>&1 | tee build.log
+      - if: failure()
+        uses: ./.github/actions/report-failure
+        with:
+          log: build.log
+
+  # B-08: the line coverage of the CI tests (review/MAP.md section 6.4,
+  # scripts/coverage.sh), per module; fails when sci-vm is below 70 %.
+  coverage:
+    name: linux-x64 coverage
+    needs: plan
+    if: needs.plan.outputs.coverage == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    concurrency:
+      group: ci-${{ github.event.pull_request.number || github.ref }}-coverage
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/toolchain-image
+      - uses: ./.github/actions/ccache
+        with:
+          key: linux-x64-coverage
+      - name: Build, test and measure
+        run: docker/run.sh scripts/coverage.sh --min-vm 70 2>&1 | tee build.log
+      - name: Show the logs of the failed step
+        if: failure()
+        run: tail -n 60 build/coverage.*.log >> build.log || true
       - if: failure()
         uses: ./.github/actions/report-failure
         with:

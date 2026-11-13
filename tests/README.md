@@ -3,6 +3,17 @@
 - `support/`: the minimal test harness (`SCI_TEST`, `SCI_CHECK`).
 - `unit/`: unit tests, one executable per library (`sci-platform` included:
   configuration and release identification).
+- `unit/vm/`: the VM's net in CI, without game data (iteration 2, B-06 and
+  B-07). `script_assembler.hpp` builds SCI0 scripts (objects, classes,
+  code with labels, strings, exports) and the resources a game needs;
+  `bytecode_test.cpp` runs every opcode the interpreter accepts and checks
+  that the others fault; `home_game_test.cpp` is a small home-made game
+  (pictures, a view, a font, a cursor, a vocabulary, menus, windows,
+  controls, an actor, a sound, input) run through `run_deterministic`, with
+  a save and restore round trip. The hashes of its traces, last screens
+  and saved state are in `home_game_goldens.hpp`; after a deliberate change
+  `docker/run.sh scripts/update-home-game-goldens.sh` regenerates them
+  twice, checks both runs are equal and writes the header.
 - `fuzz/`: libFuzzer targets with their seed corpora. Without `SCI_FUZZ`,
   each target replays its corpus as a CTest test.
 - `golden/`: golden hashes. `synthetic_test.cpp` renders synthetic pictures
@@ -54,17 +65,21 @@ Tests that need the game files run locally, never in CI:
 
 ## The local gate
 
-CI has no game files, and its unit tests cover only part of sci-vm (38 %
-of its lines, `review/MAP.md` 6.4). Until the VM has a CI net of its own
-(`review/BACKLOG_V2.md` B-06, B-07, B-08), the game-dependent checks are
-the gate for changes that touch the game's behaviour:
+CI has no game files. Since iteration 2 the VM has a CI net of its own
+(`review/BACKLOG_V2.md` B-06, B-07): its unit tests cover 73 % of sci-vm's
+lines, and the coverage job of the pull request gate fails below 70 %
+(B-08, `scripts/coverage.sh --min-vm 70`; it was 38 % before,
+`review/MAP.md` 6.4). The game-dependent checks below stay the gate for
+releases:
 
-- **Who runs it:** the author of any change to `main` that touches
-  `src/sci-vm`, `src/sci-resource`, `src/sci-text` or `src/sci-audio`
-  (B-08), and of any change to `src/sci-pic`, `src/sci-view`,
-  `src/sci-vector`, `src/sci-render`, `src/app` or `hints/` (the golden
-  outputs). It runs locally on the customer's game copy (and the MT-32
-  ROMs), before merge, and the pull request names the log.
+- **Who runs it:** whoever prepares a release, on the release commit
+  (B-08: required for releases only once the CI coverage gate passed). It
+  is still recommended before merging a change that touches `src/sci-vm`,
+  `src/sci-resource`, `src/sci-text` or `src/sci-audio`, or the golden
+  outputs (`src/sci-pic`, `src/sci-view`, `src/sci-vector`,
+  `src/sci-render`, `src/app`, `hints/`): CI cannot see the real game. It
+  runs locally on the customer's game copy (and the MT-32 ROMs), and the
+  pull request or release notes name the log.
 - **What:** `scripts/check-local.sh` (S4 and S5 of the stage 5 plan):
 
       COLONEL_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh \

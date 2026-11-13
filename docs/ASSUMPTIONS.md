@@ -320,6 +320,11 @@ CI confirms, it does not discover. **Decided** (customer instruction).
        runs the golden hashes of synthetic scenes, so the cross-architecture
        comparison is against the same constants.
      - The fuzzers, 60 s per target.
+     - The sci-vm coverage gate (B-08, iteration 2): Linux x86-64 only,
+       `scripts/coverage.sh --min-vm 70`, failing below 70 % of sci-vm's
+       lines. Measured on 2026-11-13 (run 43427816386, manual, no compiler
+       cache yet): 3 min 44 s, so 4 included minutes per gate; also
+       available alone as the manual scope `coverage`.
      - Windows x64 in release and ASan, and Windows ARM64 in release.
      - macOS is optional and not part of the gate (2026-10-22, below).
    - **Release binaries** (`release.yml`): only for a pushed version tag,
@@ -3036,3 +3041,12 @@ the old numbers to the new ones, so older references stay unambiguous:
   or game-derived images are ever committed (`scripts/check-repo-policy.py`
   checks the names); the hint files' licensing is in `hints/README.md`
   (B-12). **Recorded (fact).**
+
+## Version 1.0.0 is tagged after iteration 2 (2026-11-13)
+
+- The project's version is 1.0.0 and `docs/release-notes/v1.0.0.md` is
+  written, but the tag `v1.0.0` is pushed only after iteration 2's
+  packages P5 to P7, including the customer's run on a real Windows laptop
+  (B-10). The customer chose this over releasing now or a release
+  candidate. Pushing the tag is the customer's step. **Decided
+  (customer).**
