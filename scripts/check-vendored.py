@@ -2,13 +2,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Checks the vendored files against the SHA-256 values recorded for them.
 
-Every component in third_party/ has a VENDORED.md. Where it holds a table
-whose rows start with a file name in backticks and have a SHA-256 in
-backticks in a later cell, each named file must exist and have that hash,
-and every other tracked file of the component must be VENDORED.md itself.
+Every component in third_party/ has a VENDORED.md. The SHA-256 of its files
+are in a table of VENDORED.md (rows that start with a file name in backticks
+and have a SHA-256 in backticks in a later cell) or, for a large component,
+in a SHA256SUMS file next to it (`sha256sum` output, B-48). Each named file
+must exist and have that hash, and every other tracked file of the
+component must be VENDORED.md or SHA256SUMS itself.
 
-A component whose VENDORED.md records no hash is listed as not covered;
-that is a finding (review/BACKLOG_V2.md, B-48), not a failure. A mismatch
+A component listed in NOT_COVERED that records no hash is reported as not
+covered, without failing; none is listed now. A mismatch
 that is logged in the backlog goes into KNOWN_MISMATCHES with its item and
 is then reported without failing. This script reports; it never changes a
 vendored file.
@@ -31,16 +33,29 @@ ROW = re.compile(r"^\|\s*`([^`]+)`\s*\|(?:.*\|)?\s*`([0-9a-f]{64})`\s*\|")
 KNOWN_MISMATCHES: dict[str, str] = {}
 
 # Components without per-file hashes -> backlog item.
-NOT_COVERED = {"SDL3": "B-48"}
+NOT_COVERED: dict[str, str] = {}
+
+
+SUM = re.compile(r"^([0-9a-f]{64})  (.+)$")
+
+# Files of a component that hold its records, not vendored code.
+RECORD_FILES = {"VENDORED.md", "SHA256SUMS"}
 
 
 def recorded_hashes(vendored: Path) -> dict[str, str]:
-    """The file names and hashes in the tables of a VENDORED.md."""
+    """The file names and hashes in the tables of a VENDORED.md and in the
+    component's SHA256SUMS, if it has one."""
     records: dict[str, str] = {}
     for line in vendored.read_text(encoding="utf-8").splitlines():
         match = ROW.match(line)
         if match:
             records[match.group(1)] = match.group(2)
+    sums = vendored.parent / "SHA256SUMS"
+    if sums.is_file():
+        for line in sums.read_text(encoding="utf-8").splitlines():
+            match = SUM.match(line)
+            if match:
+                records[match.group(2)] = match.group(1)
     return records
 
 
@@ -85,7 +100,7 @@ def check_component(component: Path) -> tuple[list[str], list[str]]:
         else:
             problems.append(message)
     for path in tracked_files(component):
-        if path != "VENDORED.md" and path not in records:
+        if path not in RECORD_FILES and path not in records:
             problems.append(f"{name}/{path}: tracked but not recorded in VENDORED.md")
     notes.append(f"{name}: {len(records)} files checked")
     return problems, notes
