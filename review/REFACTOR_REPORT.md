@@ -908,9 +908,9 @@ Also fixed on the way, because it blocked the checks themselves:
   release (about 16 minutes); not started without the customer's go.
 - **The CI image** gets a new tag with step 13 (Dockerfile comment), so the
   first CI run builds the toolchain image once.
-- **ARM64 goldens** (12c): see below; the screens and VM goldens are not
-  run on ARM64 (the program and `sci-hd-frames` screens need the app,
-  which `cross-aarch64` does not build).
+- **ARM64:** the screens and VM goldens are not run on ARM64 (12c below:
+  they need the program, which `cross-aarch64` does not build); the
+  other S4 goldens match.
 - **Iteration 2** (the backlog, `review/BACKLOG_V2.md`): B-45 and B-46
   first (they also limit fuzzing to seconds for those two targets), B-44,
   B-47, B-48, B-49, then the planned items.
@@ -918,7 +918,22 @@ Also fixed on the way, because it blocked the checks themselves:
   release tags when publishing; rename local copies of
   `sierra-hd.ini` and saves by hand if any exist (clean rename).
 
-ARM64GOLDENS
+### 12c: the S4 goldens on ARM64
+
+The `cross-aarch64` tools of the final code under `qemu-aarch64`
+(`build/stage5/arm64-s4.sh`, main session, 2026-11-13), against the
+committed goldens made on x86-64:
+
+| Golden | Result | Time under qemu (x86-64 native) |
+|---|---|---|
+| `tests/golden/pictures.txt` | **all golden hashes match** | 313 s (41 s) |
+| `tests/golden/sounds.txt` | **all 119 sound golden hashes match** | 116 s (22 s) |
+| `tests/golden/resources.txt` | **all resource hashes match** | 3099 s (423 s) |
+
+So ARM64 draws every picture layer, picture, cel, glyph and cursor and
+renders every sound bit for bit as x86-64. Not run on ARM64: the screens
+and VM goldens (they need the program, which `cross-aarch64` does not
+build).
 
 ## Run times of the game-dependent checks (for the per-commit suite)
 

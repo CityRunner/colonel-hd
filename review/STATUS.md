@@ -5,8 +5,10 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Stage 5, refactoring: step 0 (safety net) done; step 1 committed
-(2026-11-11), its long checks pending; next: step 2** (started
+**Stage 5, refactoring: done, at STOP (2026-11-13).** Steps 0-13 are
+committed, checked and pushed on branch `refactor`; the result and the
+before/after numbers are in `review/REFACTOR_REPORT.md`, "Stage 5
+result". Iteration 2 waits for the customer's go. (started
 2026-11-06 on branch `refactor` from `a0422d6`). The plan
 (`review/REFACTOR_PLAN.md`) was approved on 2026-11-06 ("1 approve"),
 with CI minutes for one Windows draft-PR run and one `quick` run ("4
