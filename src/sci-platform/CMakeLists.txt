@@ -10,6 +10,7 @@ sci_add_library(NAME sci-platform
         src/command_line.cpp
         src/config.cpp
         src/data_folder.cpp
+        src/file_store.cpp
         src/game_files.cpp
         src/game_frame.cpp
         src/hd_pictures.cpp

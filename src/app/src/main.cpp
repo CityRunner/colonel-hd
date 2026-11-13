@@ -12,7 +12,6 @@
 // audio (milestone 7, audio_output.hpp).
 
 #include "audio_output.hpp"
-#include "file_store.hpp"
 #include "game_screen.hpp"
 #include "sci/audio/adlib.hpp"
 #include "sci/audio/mt32_driver.hpp"
@@ -25,6 +24,7 @@
 #include "sci/platform/command_line.hpp"
 #include "sci/platform/config.hpp"
 #include "sci/platform/data_folder.hpp"
+#include "sci/platform/file_store.hpp"
 #include "sci/platform/game_files.hpp"
 #include "sci/platform/game_frame.hpp"
 #include "sci/platform/hd_pictures.hpp"
@@ -1127,7 +1127,7 @@ int run(const sci::platform::Options& options) {
         config->scale = viewer.chosen_scale();
     } else {
         sci::platform::HdPictures pictures(analysis, executor);
-        sci::app::DirectoryFileStore files(data.folder / "files", game->files);
+        sci::platform::DirectoryFileStore files(data.folder / "files", game->files);
         GameHost host(window.get(), renderer.get(), game->manager, pictures, *config);
         // Before the game, which sends it note-offs when it goes.
         const auto audio = open_audio(game->manager, *config);

@@ -21,7 +21,7 @@ purpose and invariants:
 | sci-audio | The OPL3 core (Nuked OPL3) and the SCI0 AdLib driver, the MT-32 (mt32emu) and its driver, the mixer, patch loading | sci-core, sci-resource; Nuked OPL3 and mt32emu (vendored, private) |
 | sci-render | HD rasteriser, original mode, the acceptance check, the A1 integrity checks, the composition of the game screen | sci-core, sci-pic, sci-vector |
 | sci-vm | Bytecode interpreter, segments, objects and the garbage collector, kernel functions, the 1x graphics they drive (menus and dialogs included), the music player on a sci-audio device or a silent one, saving and restoring (the save format), events, files, virtual clock, random source | sci-core, sci-resource, sci-pic, sci-view, sci-text, sci-audio |
-| sci-platform | The parts of the program without a window, shared with the tools: the data folder, the configuration file, game-folder reading and release identification, hint loading, the analysis cache, the HD images of the picture shown and the game's frame, MT-32 ROM finding, the save folder, worker threads | sci-core, sci-resource, sci-pic, sci-vector, sci-render, sci-vm, sci-audio |
+| sci-platform | The parts of the program without a window, shared with the tools: the command line and the window scale rules, the data folder, the configuration file, the game's file store, game-folder reading and release identification, hint loading, the analysis cache, the HD images of the picture shown and the game's frame, MT-32 ROM finding, the save folder, worker threads | sci-core, sci-resource, sci-pic, sci-vector, sci-render, sci-vm, sci-audio |
 | app (`colonel-hd`, `src/app`) | Window, input, presentation, the audio output (SDL3), the game host, the room viewer | every library above; SDL3 (vendored) |
 
 `tests/` holds the unit tests (`tests/unit`), the fuzz targets
@@ -254,6 +254,7 @@ Two entry points run the game:
 ## The program
 
 `src/app/src/main.cpp` does the following:
+0. reads the command line (sci-platform's `command_line.hpp`);
 1. resolves the data folder and reads `colonel-hd.ini` there (B-03);
 2. finds and identifies the game folder (`sci-platform`);
 3. opens an SDL3 window and prepares the analysis cache;
