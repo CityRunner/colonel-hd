@@ -6,7 +6,7 @@
 # COLONEL_HD_CCACHE=1 (CI), compiler output is cached in .ccache in the
 # repository; otherwise ccache stays off.
 #
-#   docker/run.sh cmake --preset linux-debug
+#   docker/run.sh cmake --workflow --preset release
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"

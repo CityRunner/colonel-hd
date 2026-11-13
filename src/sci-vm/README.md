@@ -3,12 +3,13 @@
 The SCI0 interpreter, ported from ScummVM (spec section 7): segments,
 script loading, classes, objects and selectors, the bytecode interpreter
 and garbage collector, the kernel functions, the graphics at 1x that they
-drive (with the menus and dialog controls), the music player with a silent
-driver, the event queue, files, the virtual clock and the random source.
+drive (with the menus and dialog controls), the music player (on the AdLib
+or MT-32 driver of sci-audio, or a silent one), saving and restoring
+(`docs/formats/save-format.md`), the event queue, files, the virtual clock
+and the random source.
 Only the SCI0-late paths this game uses are ported (`docs/ASSUMPTIONS.md`,
 "Milestone 4a" and "Milestone 4b"). Every kernel function the game's
-scripts reference is ported (`sci-vm-trace --scan-kernel` lists them);
-saving and restoring report failure until the save format of milestone 8.
+scripts reference is ported (`sci-vm-trace --scan-kernel` lists them).
 
 Public interface (`include/sci/vm`):
 

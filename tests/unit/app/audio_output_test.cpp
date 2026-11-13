@@ -83,7 +83,9 @@ SCI_TEST(audio_output_tops_the_queue_up_after_an_underrun) {
     SCI_CHECK(output->queued_frames() == 0);
     SCI_CHECK(output->recover());
     SCI_CHECK(output->recoveries() == 1);
-    SCI_CHECK(output->queued_frames() >= output->target_frames() * 3 / 4);
+    // What recover put in, not the queue's length afterwards: SDL's thread
+    // may take frames in between on a loaded machine (B-49).
+    SCI_CHECK(output->recovery_frames() >= output->target_frames() * 3 / 4);
     // Once is enough.
     SCI_CHECK(!output->recover());
     output.reset();

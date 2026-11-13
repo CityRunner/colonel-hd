@@ -29,6 +29,14 @@ cp "$root/third_party/nuked-opl3/LICENSE" "$stage/$name/licenses/Nuked-OPL3-LICE
 cp "$root/third_party/mt32emu/COPYING.LESSER.txt" "$stage/$name/licenses/mt32emu-LICENSE.txt"
 cp "$root/third_party/mt32emu/sha1-LICENSE.txt" "$stage/$name/licenses/mt32emu-sha1-LICENSE.txt"
 
+# The data folders (B-03): empty but for a note; never any game data.
+mkdir -p "$stage/$name/game" "$stage/$name/rom" "$stage/$name/saves"
+printf '%s\n' "Copy your own copy of The Colonel's Bequest here (the files with" \
+    "RESOURCE.MAP), or name its folder with game_folder in colonel-hd.ini." > "$stage/$name/game/README.txt"
+printf '%s\n' "Optional: your own MT-32 or CM-32L ROM files (control and PCM ROM)," \
+    "for the Roland music; set music = mt32 in colonel-hd.ini." > "$stage/$name/rom/README.txt"
+printf '%s\n' "The game's saves go here: colonel-hd-001.sav to colonel-hd-099.sav." > "$stage/$name/saves/README.txt"
+
 if [[ "$platform" == windows-* ]]; then
     (cd "$stage" && powershell -NoProfile -Command "Compress-Archive -Path '$name' -DestinationPath '$name.zip'")
     mv "$stage/$name.zip" "$out/"

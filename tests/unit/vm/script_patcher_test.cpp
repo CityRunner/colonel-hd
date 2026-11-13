@@ -16,7 +16,7 @@
 using sci::vm::ScriptPatchEntry;
 using sci::vm::ScriptPatcher;
 using sci::vm::ScriptPatchTable;
-using namespace sci::vm::patch_code; // NOLINT(google-build-using-namespace)
+using namespace sci::vm::patch_code; // NOLINT(google-build-using-namespace): the patch opcodes read as in ScummVM.
 
 namespace {
 

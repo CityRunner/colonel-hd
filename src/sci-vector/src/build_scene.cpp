@@ -474,6 +474,45 @@ std::vector<Fallback> list_fallbacks(const std::vector<Sample>& samples, const s
     return fallbacks;
 }
 
+// The thin faces (pixels, but no region pixel of their own) with the
+// pixels whose centres they hold and their bounding boxes, in face order,
+// after the mixed ones: for the replacement report (B-37).
+void append_thin_fallbacks(const std::vector<std::int32_t>& labels, const std::vector<int>& pixel_count,
+                           const std::vector<bool>& has_samples, std::vector<Fallback>& fallbacks) {
+    std::vector<std::size_t> index(has_samples.size(), 0);
+    const std::size_t first = fallbacks.size();
+    for (std::size_t f = 0; f < has_samples.size(); ++f) {
+        if (!has_samples[f] && pixel_count[f] > 0) {
+            index[f] = fallbacks.size();
+            fallbacks.push_back(Fallback{
+                .pixels = 0,
+                .left = picture_width,
+                .top = picture_height,
+                .right = -1,
+                .bottom = -1,
+                .thin = true,
+            });
+        }
+    }
+    if (fallbacks.size() == first) {
+        return;
+    }
+    for (std::size_t i = 0; i < picture_pixels; ++i) {
+        const std::int32_t face = labels[i];
+        if (face < 0 || has_samples[static_cast<std::size_t>(face)]) {
+            continue;
+        }
+        Fallback& fallback = fallbacks[index[static_cast<std::size_t>(face)]];
+        const int x = static_cast<int>(i % picture_width);
+        const int y = static_cast<int>(i / picture_width);
+        ++fallback.pixels;
+        fallback.left = std::min(fallback.left, x);
+        fallback.right = std::max(fallback.right, x);
+        fallback.top = std::min(fallback.top, y);
+        fallback.bottom = std::max(fallback.bottom, y);
+    }
+}
+
 // Decides every face's value from the region pixels whose centres it
 // contains. A face without any, or whose pixels disagree outside the edge
 // band, falls back to blocks.
@@ -529,6 +568,7 @@ void colour_faces(const std::vector<std::int32_t>& labels, const PlaneView& view
     for (const Fallback& fallback : stats.fallbacks) {
         stats.fallback_pixels += fallback.pixels;
     }
+    append_thin_fallbacks(labels, pixel_count, has_samples, stats.fallbacks);
 }
 
 // The value a fallback face shows in each pixel: the map's value, except
@@ -1254,12 +1294,6 @@ std::vector<Layer> build_layers(const pic::DrawTrace& trace, const PlaneView& vi
 
 } // namespace
 
-#ifdef SCI_WITHOUT_STROKE_INTEGRITY
-constexpr bool without_stroke_integrity = true;
-#else
-constexpr bool without_stroke_integrity = false;
-#endif
-
 BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace, Plane plane,
                        std::span<const PictureHints* const> hints) {
     BuiltScene built;
@@ -1304,9 +1338,7 @@ BuiltScene build_scene(const pic::PictureMaps& maps, const pic::DrawTrace& trace
     scene.layers = build_layers(trace, view, plane, lines, owned, curves.strokes, built.stats);
     // Stroke integrity and occlusion (spec section 6.10) change the HD
     // picture only, so the visual plane.
-    // The baseline of milestone 3b's report is measured without the pass
-    // (development option SCI_WITHOUT_STROKE_INTEGRITY).
-    if (plane == Plane::Visual && !without_stroke_integrity) {
+    if (plane == Plane::Visual) {
         std::vector<detail::StrokeLine> stroke_lines;
         stroke_lines.reserve(lines.size());
         for (const DrawnLine& line : lines) {

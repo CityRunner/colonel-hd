@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The configuration file next to the executable (spec section 10.2): an
-// INI file with a format version.
+// The configuration file, colonel-hd.ini in the data folder (spec section
+// 10.2 as replaced by B-03, data_folder.hpp): an INI file with a format
+// version.
 //
 //   [colonel-hd]
 //   format = 1
@@ -24,6 +25,7 @@
 #pragma once
 
 #include "sci/core/error.hpp"
+#include "sci/core/log.hpp"
 
 #include <filesystem>
 #include <string>
@@ -59,6 +61,8 @@ struct Config {
     // The folder of the saved games; empty: `saves` next to the
     // configuration (saves_folder).
     std::filesystem::path saves;
+    // Log categories shown besides General (B-28); none by default.
+    std::vector<core::LogCategory> log;
 };
 
 // The folder of the saved games: `saves` in the configuration's folder by
@@ -73,5 +77,17 @@ struct ParsedConfig {
 [[nodiscard]] core::Result<ParsedConfig> parse_config(std::string_view text);
 
 [[nodiscard]] std::string format_config(const Config& config);
+
+// The configuration file's text with the values of `after` that differ
+// from `before` (B-04): only the lines of changed keys in the [colonel-hd]
+// section change, and only their values; comments, blank lines, unknown
+// keys, other sections and the line endings (LF or CR LF) stay byte for
+// byte. A changed key without a line gets one at the end of the section.
+// With no text (no file yet), the commented defaults of format_config.
+[[nodiscard]] std::string update_config(std::string_view text, const Config& before, const Config& after);
+
+// Writes the configuration file's text; false, with a General warning that
+// names the file, if it cannot be written (B-04).
+bool write_config_file(const std::filesystem::path& path, std::string_view text);
 
 } // namespace sci::platform

@@ -2939,3 +2939,100 @@ the old numbers to the new ones, so older references stay unambiguous:
   `CityRunner/colonel-hd`; links to earlier pull requests in this file are
   rewritten to the new name (GitHub redirects the old one). **Decided
   (customer).**
+
+## `-fwrapv` stays in Release only (2026-11-13, B-33)
+
+- **The question:** Release and RelWithDebInfo builds without sanitizers
+  compile with `-fwrapv`; Debug and the sanitizer builds do not
+  (`cmake/SciCompilerFlags.cmake`). The goldens and the VM hashes run on
+  Release, so code that relied on signed wrap-around could pass there and
+  never show in a UBSan build.
+- **Evidence:** the stage 5 baseline (`review/REFACTOR_REPORT.md`, B-20)
+  ran `sci-vm-trace` of the `asan` build (ASan + UBSan,
+  `-fno-sanitize-recover=all`) over the 39 scenarios with AdLib and with
+  the MT-32 (78 runs) and over the whole playthrough: every run exited 0
+  with no UBSan report, so no signed overflow happens in them. The CTest
+  suites under `asan` pass on every change.
+- **Decision:** keep the flags as they are (the customer's default for
+  B-33): `-fwrapv` in Release is a safety margin, not something the code
+  relies on, as far as these runs reach. A UBSan report of a signed
+  overflow in any later run is a defect to fix at its site. **Decided
+  (default accepted by the customer, 2026-11-06).**
+
+## Angles outside -360 to 360 never reach the trigonometry (2026-11-13, B-39)
+
+- **The question:** `src/sci-vm/src/trigonometry.cpp` takes sine and cosine
+  from a table matching glibc for angles from -360 to 360; other angles use
+  the angle modulo 360, which may differ from glibc (so from ScummVM) in
+  the last bits. Whether the game passes such angles was not known.
+- **Evidence:** the kernel-call traces of the 39 scenarios and the
+  playthrough (`build/vm-baseline/`, 119 runs, B-19) were searched for the
+  kernel functions that take an angle. TimesSin, TimesCos, SinDiv and
+  CosDiv are never called; GetDistance is called 15,855 times, always with
+  4 or 5 arguments, so never with its optional angle (the 6th). No angle
+  reaches the table in the tested release.
+- **Decision:** no code change; the comment in `trigonometry.cpp` says
+  so (B-39 closed with the customer's default). **Decided (default
+  accepted by the customer, 2026-11-06).**
+
+## The range of N: 1 to 16, targets up to 10 (2026-11-13, B-29)
+
+- **Range:** the scale N stays 1 to 16 (`scale` in `colonel-hd.ini`, the
+  viewer's + and -); no cap at 10. The golden hashes cover every N from 1
+  to 16 for the picture layers (`tests/golden/resources.txt`) and N = 1, 2,
+  5, 10 for pictures and screens.
+- **Targets:** the performance targets of spec section 10.3 (room entry,
+  frame composition, memory) are measured and apply up to N = 10 only;
+  above 10 the program works but is not held to them.
+- **Flattening:** curves are flattened into chords of at most 0.25 original
+  pixels; against a curve of radius 2 or more the error is 0.039 screen
+  pixels at N = 10 and 0.063 at N = 16 (`src/sci-vector/src/fitting.cpp`).
+- **Decided (default accepted by the customer, 2026-11-06).**
+
+## One data folder (2026-11-13, B-03; replaces "next to the executable")
+
+- **The folder:** the program keeps `colonel-hd.ini`, `game/`, `rom/`,
+  `saves/`, `cache/` and `files/` in one data folder, chosen in this order:
+  `--data <folder>`; else the executable's folder if it holds
+  `colonel-hd.ini` or `game/` and is writable ("portable", the unpacked
+  release archive and every earlier installation); else the per-user
+  folder, `%APPDATA%\colonel-hd` on Windows (read from the wide
+  environment), `$XDG_DATA_HOME/colonel-hd` or
+  `~/.local/share/colonel-hd` on Linux, created on first use. The hints
+  stay next to the executable. Spec section 10.2's "next to the
+  executable" for the cache and the configuration is replaced by this
+  (G-122 closed). **Decided (Q-06 default, accepted by the customer).**
+- **Defaults inside it:** an empty `game_folder` means `game/` when it
+  holds a resource map; an empty `mt32_rom` means `rom/`; empty `saves`
+  means `saves/`. Neither the game folder found in `game/` nor the ROM
+  folder is written to the ini. The release archives hold empty `game/`,
+  `rom/` and `saves/`, each with a `README.txt`
+  (`scripts/test-package-release.sh` checks the layout).
+- **Existing users:** an installation with `colonel-hd.ini` next to the
+  program keeps using that folder (rule 2). One whose program folder holds
+  neither the ini nor `game/` gets the per-user folder on first start.
+- **Checked:** unit tests of the order on temporary folders (a non-ASCII
+  folder name included; a read-only program folder, run as an unprivileged
+  user); the whole playthrough in the program with `--data`. Not checked
+  here: the Windows per-user folder on a real Windows account (part of the
+  customer's laptop run, B-10).
+
+## The ini updated in place (2026-11-13, B-04)
+
+- The program writes `colonel-hd.ini` only when a value it keeps changed
+  (the mode, the viewer's scale, a game folder chosen in the dialog), and
+  then changes only those lines' values; comments, blank lines, unknown
+  keys, other sections and LF or CR LF line endings stay byte for byte. A
+  game folder given on the command line is never written. A failed write
+  is logged as a warning naming the file. With no file, it writes the
+  commented defaults. **Decided (Q-10 default).**
+
+## The repository is public (2026-11-13)
+
+- `github.com/CityRunner/colonel-hd` is public (GitHub reports
+  `visibility: public` on 2026-11-13); the entry "Repository" above, from
+  the project's start, says private and describes that time. The customer
+  made the change. Nothing changes in the rules: no game data, ROMs, saves
+  or game-derived images are ever committed (`scripts/check-repo-policy.py`
+  checks the names); the hint files' licensing is in `hints/README.md`
+  (B-12). **Recorded (fact).**

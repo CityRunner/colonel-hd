@@ -228,6 +228,21 @@ std::uint32_t MidiParser::read_vlq(std::size_t& position) const {
 void MidiParser::parse_next_event(EventInfo& info) {
     std::size_t position = position_.play_pos.value_or(0); // Only called while tracking.
     info.start = position;
+    if (position >= data_.size()) {
+        // A track that runs past its data ends there (B-46). Every song of
+        // the game ends with an end-of-track marker first; without this, the
+        // zero bytes read past the end decode as endless meta events with no
+        // delta, and one timer call never returns. ScummVM reads past its
+        // buffer here.
+        info.delta = 0;
+        info.event = 0xFF;
+        info.param1 = 0x2F;
+        info.param2 = 0;
+        info.length = 0;
+        info.data = position;
+        position_.play_pos = position;
+        return;
+    }
     info.delta = 0;
     while (byte_at(position) == 0xF8) {
         info.delta += 240;
@@ -364,7 +379,7 @@ void MidiParser::on_timer() {
 
 // Kept close to MidiParser_SCI::processEvent. A hold or loop jumps back,
 // which replays events; jumps do not nest.
-// NOLINTNEXTLINE(readability-function-cognitive-complexity,misc-no-recursion)
+// NOLINTNEXTLINE(readability-function-cognitive-complexity,misc-no-recursion): as in ScummVM.
 bool MidiParser::process_event(const EventInfo& info, bool fire_events) {
     if (!fire_events) {
         return process_base_event(info, fire_events);

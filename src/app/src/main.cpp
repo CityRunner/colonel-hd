@@ -23,6 +23,7 @@
 #include "sci/core/sha256.hpp"
 #include "sci/platform/analysis_cache.hpp"
 #include "sci/platform/config.hpp"
+#include "sci/platform/data_folder.hpp"
 #include "sci/platform/game_files.hpp"
 #include "sci/platform/game_frame.hpp"
 #include "sci/platform/hd_pictures.hpp"
@@ -71,7 +72,7 @@ namespace fs = std::filesystem;
 using sci::app::Command;
 
 constexpr std::string_view help_text =
-    "usage: colonel-hd [--viewer] [game folder]\n"
+    "usage: colonel-hd [--viewer] [--data <folder>] [--log <categories>] [game folder]\n"
     "       colonel-hd [--replay <file>] [--seed <n>] [--fast] [--end-state <file>]\n"
     "                 [game folder]\n"
     "       colonel-hd --version | --help\n"
@@ -82,6 +83,14 @@ constexpr std::string_view help_text =
     "--fast runs the game as fast as it can instead of in real time\n"
     "(the game plays the same; the screen is shown about 60 times a\n"
     "second of real time and most of the music is dropped).\n"
+    "--data names the folder for colonel-hd.ini, game/, rom/, saves/,\n"
+    "cache/ and files/. Without it: the program's folder if it holds\n"
+    "colonel-hd.ini or game/ and can be written, else the per-user folder\n"
+    "(%APPDATA%\\colonel-hd on Windows, ~/.local/share/colonel-hd on Linux).\n"
+    "--log shows more messages on the console, for these categories\n"
+    "(comma-separated): vm (script problems the interpreter works\n"
+    "around), resources (resource loading); it overrides the log key of\n"
+    "colonel-hd.ini for this run.\n"
     "--end-state writes the game's tick, globals and state hash to\n"
     "the file when it ends (as sci-vm-trace --globals and\n"
     "--state-hash write them at a tick past the end).\n"
@@ -111,8 +120,8 @@ void print_assertion(std::string_view expression, const std::source_location& lo
 
 fs::path base_path() {
     const char* base = SDL_GetBasePath();
-    return base != nullptr ? fs::path(std::u8string(reinterpret_cast<const char8_t*>(base))) // NOLINT
-                           : fs::current_path();
+    // NOLINTNEXTLINE(*-reinterpret-cast): SDL gives UTF-8 as char.
+    return base != nullptr ? fs::path(std::u8string(reinterpret_cast<const char8_t*>(base))) : fs::current_path();
 }
 
 void show_error(SDL_Window* window, const std::string& message) {
@@ -140,7 +149,8 @@ std::optional<fs::path> choose_folder(SDL_Window* window) {
         [](void* userdata, const char* const* list, int /*filter*/) {
             auto* result = static_cast<Choice*>(userdata);
             if (list != nullptr && *list != nullptr) {
-                result->folder = fs::path(std::u8string(reinterpret_cast<const char8_t*>(*list))); // NOLINT
+                // NOLINTNEXTLINE(*-reinterpret-cast): SDL gives UTF-8 as char.
+                result->folder = fs::path(std::u8string(reinterpret_cast<const char8_t*>(*list)));
             }
             result->done = true;
         },
@@ -324,10 +334,17 @@ private:
     int offset_y_ = 0;
 };
 
-std::optional<sci::platform::Config> load_config(const fs::path& path) {
-    const auto text = read_text(path);
+// The configuration file as read: its values and its text (empty when
+// there is no file), so that it can be updated in place (B-04).
+struct LoadedConfig {
+    sci::platform::Config config;
+    std::string text;
+};
+
+std::optional<LoadedConfig> load_config(const fs::path& path) {
+    auto text = read_text(path);
     if (!text) {
-        return sci::platform::Config{};
+        return LoadedConfig{};
     }
     auto parsed = sci::platform::parse_config(*text);
     if (!parsed) {
@@ -337,7 +354,27 @@ std::optional<sci::platform::Config> load_config(const fs::path& path) {
     for (const std::string& warning : parsed->warnings) {
         sci::core::log(sci::core::LogLevel::Warning, sci::core::LogCategory::General, warning);
     }
-    return parsed->config;
+    return LoadedConfig{.config = std::move(parsed->config), .text = std::move(*text)};
+}
+
+// Writes what changed in the configuration during the run (B-04): only
+// when a value changed, in place, keeping every other line of the file.
+// The values to keep are the file's, with the mode and scale of the run
+// and a game folder chosen in the dialog; a folder given on the command
+// line is never written.
+void save_config(const fs::path& path, const LoadedConfig& loaded, const sci::platform::Config& run,
+                 const std::optional<fs::path>& chosen_folder) {
+    sci::platform::Config kept = loaded.config;
+    kept.mode = run.mode;
+    kept.scale = run.scale;
+    if (chosen_folder) {
+        kept.game_folder = *chosen_folder;
+    }
+    const std::string text = sci::platform::update_config(loaded.text, loaded.config, kept);
+    if (!loaded.text.empty() && text == loaded.text) {
+        return;
+    }
+    sci::platform::write_config_file(path, text);
 }
 
 struct Game {
@@ -348,7 +385,8 @@ struct Game {
 
 // Opens and identifies the game in the configured folder, asking for the
 // folder if none is configured. Reports problems to the user.
-std::optional<Game> open_game(SDL_Window* window, sci::platform::Config& config, const fs::path& config_path) {
+std::optional<Game> open_game(SDL_Window* window, sci::platform::Config& config, const fs::path& config_path,
+                              std::optional<fs::path>& chosen_folder) {
     if (config.game_folder.empty()) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "colonel-hd",
                                  "Choose the folder of The Colonel's Bequest.", window);
@@ -360,6 +398,7 @@ std::optional<Game> open_game(SDL_Window* window, sci::platform::Config& config,
             return std::nullopt;
         }
         config.game_folder = *folder;
+        chosen_folder = *folder;
     }
     auto files = sci::platform::read_game_folder(config.game_folder);
     if (!files) {
@@ -906,9 +945,10 @@ private:
         }
         const sci::app::CursorImage image = sci::app::scale_cursor(*decoded, scale);
         if (sci::app::cursor_mode(where.pixel_density, image.size) == sci::app::CursorMode::System) {
-            SDL_Surface* surface = SDL_CreateSurfaceFrom(image.size, image.size, SDL_PIXELFORMAT_RGBA32,
-                                                         const_cast<std::uint8_t*>(image.pixels.data()), // NOLINT
-                                                         image.size * 4);
+            SDL_Surface* surface =
+                SDL_CreateSurfaceFrom(image.size, image.size, SDL_PIXELFORMAT_RGBA32,
+                                      // NOLINTNEXTLINE(*-const-cast): SDL only reads the pixels.
+                                      const_cast<std::uint8_t*>(image.pixels.data()), image.size * 4);
             if (surface != nullptr) {
                 cursor_.reset(SDL_CreateColorCursor(surface, image.hotspot_x, image.hotspot_y));
                 SDL_DestroySurface(surface);
@@ -953,31 +993,50 @@ struct Options {
     std::optional<std::uint32_t> seed;
     bool fast = false;
     std::optional<fs::path> end_state;
+    std::optional<std::vector<sci::core::LogCategory>> log;
+    std::optional<fs::path> data;
 };
+
+// Sets an option that takes a value: nothing if `arg` is not one, false if
+// the value is not valid.
+std::optional<bool> value_option(Options& options, std::string_view arg, std::string_view value) {
+    if (arg == "--replay") {
+        options.replay = fs::path(value);
+    } else if (arg == "--data") {
+        options.data = fs::path(value);
+    } else if (arg == "--end-state") {
+        options.end_state = fs::path(value);
+    } else if (arg == "--log") {
+        options.log = sci::core::parse_log_categories(value);
+        return options.log.has_value();
+    } else if (arg == "--seed") {
+        std::uint32_t seed = 0;
+        const auto [end, error] = std::from_chars(std::to_address(value.begin()), std::to_address(value.end()), seed);
+        if (error != std::errc{} || end != std::to_address(value.end())) {
+            return false;
+        }
+        options.seed = seed;
+    } else {
+        return std::nullopt;
+    }
+    return true;
+}
 
 // The command line, or nothing if it is not valid.
 std::optional<Options> parse_options(std::span<char*> args) {
     Options options;
     for (std::size_t i = 1; i < args.size(); ++i) {
         const std::string_view arg = args[i];
-        const bool has_value = i + 1 < args.size();
         if (arg == "--viewer") {
             options.viewer = true;
-        } else if (arg == "--replay" && has_value) {
-            options.replay = fs::path(args[++i]);
         } else if (arg == "--fast") {
             options.fast = true;
-        } else if (arg == "--end-state" && has_value) {
-            options.end_state = fs::path(args[++i]);
-        } else if (arg == "--seed" && has_value) {
-            const std::string_view value = args[++i];
-            std::uint32_t seed = 0;
-            const auto [end, error] =
-                std::from_chars(std::to_address(value.begin()), std::to_address(value.end()), seed);
-            if (error != std::errc{} || end != std::to_address(value.end())) {
+        } else if (const auto taken =
+                       i + 1 < args.size() ? value_option(options, arg, args[i + 1]) : std::optional<bool>()) {
+            if (!*taken) {
                 return std::nullopt;
             }
-            options.seed = seed;
+            ++i;
         } else if (!arg.starts_with('-') && !options.game_folder) {
             options.game_folder = fs::path(arg);
         } else {
@@ -1083,16 +1142,71 @@ sci::core::Result<std::vector<sci::vm::InputEvent>> read_replay(const fs::path& 
     return sci::vm::parse_replay(text.str());
 }
 
+// The data folder (B-03): --data, the executable's folder (portable) or
+// the per-user folder; created if needed and logged. Nothing (after
+// telling the user) if there is none or it cannot be created.
+std::optional<sci::platform::DataFolder> open_data_folder(const Options& options, const fs::path& base) {
+    sci::platform::DataFolder data =
+        sci::platform::resolve_data_folder(options.data, base, sci::platform::per_user_data_folder());
+    if (data.folder.empty()) {
+        show_error(nullptr, "No folder for the configuration and saves: start colonel-hd with --data <folder>.");
+        return std::nullopt;
+    }
+    std::error_code error;
+    fs::create_directories(data.folder, error);
+    if (error) {
+        show_error(nullptr, std::format("Cannot create {}: {}", data.folder.string(), error.message()));
+        return std::nullopt;
+    }
+    std::string_view kind = "per user";
+    if (data.kind == sci::platform::DataFolderKind::Option) {
+        kind = "--data";
+    } else if (data.kind == sci::platform::DataFolderKind::Portable) {
+        kind = "next to the program";
+    }
+    sci::core::log(sci::core::LogLevel::Info, sci::core::LogCategory::General,
+                   std::format("data folder: {} ({})", data.folder.string(), kind));
+    return data;
+}
+
+// The game folder of the command line, else game/ in the data folder when
+// game_folder is empty and it holds the game; rom/ when mt32_rom is empty.
+// For this run only: neither is written to the ini.
+void use_data_folder_defaults(sci::platform::Config& config, const Options& options, const fs::path& data_folder) {
+    if (options.game_folder) {
+        config.game_folder = *options.game_folder;
+    } else if (config.game_folder.empty()) {
+        if (auto game_folder = sci::platform::data_game_folder(data_folder)) {
+            config.game_folder = std::move(*game_folder);
+        }
+    }
+    if (config.mt32_rom.empty()) {
+        config.mt32_rom = data_folder / "rom";
+    }
+}
+
 int run(const Options& options) {
+    // The hints are next to the executable; everything else is in the data
+    // folder (B-03): --data, the executable's folder (portable) or the
+    // per-user folder.
     const fs::path base = base_path();
-    const fs::path config_path = base / sci::platform::config_file_name;
-    auto config = load_config(config_path);
-    if (!config) {
+    const auto data_folder = open_data_folder(options, base);
+    if (!data_folder) {
         return 1;
     }
-    if (options.game_folder) {
-        config->game_folder = *options.game_folder;
+    const sci::platform::DataFolder& data = *data_folder;
+    const fs::path config_path = data.folder / sci::platform::config_file_name;
+    const auto loaded = load_config(config_path);
+    if (!loaded) {
+        return 1;
     }
+    std::optional<sci::platform::Config> config = loaded->config;
+    std::optional<fs::path> chosen_folder; // Chosen in the dialog: saved.
+    // More log categories (B-28): --log for this run, else the ini's log key.
+    for (const sci::core::LogCategory category : options.log ? *options.log : config->log) {
+        sci::core::set_log_category_enabled(category, true);
+    }
+    use_data_folder_defaults(*config, options, data.folder);
     const bool viewer_mode = options.viewer;
     std::vector<sci::vm::InputEvent> replay;
     if (options.replay) {
@@ -1111,7 +1225,7 @@ int run(const Options& options) {
         show_error(nullptr, std::format("Cannot open a window: {}", SDL_GetError()));
         return 1;
     }
-    auto game = open_game(window.get(), *config, config_path);
+    auto game = open_game(window.get(), *config, config_path, chosen_folder);
     if (!game) {
         return 1;
     }
@@ -1123,7 +1237,7 @@ int run(const Options& options) {
     SDL_SetRenderVSync(renderer.get(), 1);
     SDL_SetWindowTitle(window.get(), std::format("colonel-hd {} - {}", SCI_VERSION, game->identification.name).c_str());
     sci::platform::ThreadExecutor executor;
-    sci::platform::AnalysisCache analysis(game->manager, hint_directory(base), base / "cache", executor);
+    sci::platform::AnalysisCache analysis(game->manager, hint_directory(base), data.folder / "cache", executor);
     if (!prepare_analysis(renderer.get(), analysis)) {
         return 0;
     }
@@ -1135,7 +1249,7 @@ int run(const Options& options) {
         config->scale = viewer.chosen_scale();
     } else {
         sci::platform::HdPictures pictures(analysis, executor);
-        sci::app::DirectoryFileStore files(base / "files", game->files);
+        sci::app::DirectoryFileStore files(data.folder / "files", game->files);
         GameHost host(window.get(), renderer.get(), game->manager, pictures, *config);
         // Before the game, which sends it note-offs when it goes.
         const auto audio = open_audio(game->manager, *config);
@@ -1147,7 +1261,7 @@ int run(const Options& options) {
         sci::vm::Game running(game->manager, host, &files, seed);
         // The saves next to the configuration, or in the configured folder
         // (docs/formats/save-format.md).
-        sci::platform::SaveFolder saves(sci::platform::saves_folder(*config, base));
+        sci::platform::SaveFolder saves(sci::platform::saves_folder(*config, data.folder));
         running.set_saves(&saves, std::format("colonel-hd {}", SCI_VERSION));
         running.set_music_device(audio.get());
         host.set_audio(audio.get());
@@ -1169,7 +1283,7 @@ int run(const Options& options) {
             result = 1;
         }
     }
-    std::ofstream(config_path) << sci::platform::format_config(*config);
+    save_config(config_path, *loaded, *config, chosen_folder);
     return result;
 }
 
@@ -1190,7 +1304,7 @@ int main(int argc, char** argv) {
     sci::core::set_log_sink(&print_log);
     // mt32emu's pitch jitter is the only user of rand() (the program's own
     // code never calls it); a fixed seed makes it the same in every run.
-    // NOLINTBEGIN(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp)
+    // NOLINTBEGIN(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp): see above.
     std::srand(1);
     // NOLINTEND(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp)
     // Spec section 5.3: the floating-point profile, on the main thread too.

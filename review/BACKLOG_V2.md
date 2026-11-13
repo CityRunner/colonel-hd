@@ -53,8 +53,8 @@ found it.
 |---|---|---|---|---|---|---|---|
 | B-01 | Drop macOS completely | requirement | High | M (6 h) | stage 5 (build/CI/docs) | Decided | G-07, R-143, G-126 |
 | B-02 | Logical repository layout | requirement | Medium | M (8 h) | stage 5 | Decided | Q-07, answer 5 (1a), G-29, G-18 |
-| B-03 | One run-time data folder | requirement | Medium | M (14 h) | iteration 2 | Decided | Q-06, G-122, R-125, V-08 |
-| B-04 | Ini updated in place | requirement (defect) | Medium | S (4 h) | iteration 2 | Decided | Q-10, R-114, V-08, V-11 |
+| B-03 | One run-time data folder | requirement | Medium | M (14 h) | iteration 2 | done 2026-11-13 (`932fa89, 4e9dea1`, iteration 2) | Q-06, G-122, R-125, V-08 |
+| B-04 | Ini updated in place | requirement (defect) | Medium | S (4 h) | iteration 2 | done 2026-11-13 (`44524a8, 7f72a2a`, iteration 2) | Q-10, R-114, V-08, V-11 |
 | B-05 | Fuzz targets for scripts, sound, patch resources, ini | requirement | Medium | M (8 h) | stage 5 | Decided | Q-09, G-48, R-138 |
 | B-06 | VM in CI: test assembler and hand-built bytecode tests | requirement | High | L (32 h) | iteration 2 | Decided | Q-01, MAP 8.1, G-03 |
 | B-07 | VM in CI: a small home-made game | requirement | High | L (40 h) | iteration 2 | Decided | Q-01, MAP 8.1 |
@@ -63,43 +63,43 @@ found it.
 | B-10 | Scripted timing mode; customer's reference-laptop run | requirement | Medium | M (6 h) | iteration 2 | Decided | Q-04, G-123 |
 | B-11 | Peak memory ≤ baseline + 10 % (regression check) | performance | Low | S (3 h) | iteration 2 | Decided | Q-04 |
 | B-12 | Hint licensing section in `hints/README.md` | requirement | High | S (2 h) | stage 5 (docs) | Decided (Q-03) | Q-03, G-24, HISTORY_CLEANUP E |
-| B-13 | `docs/ARCHITECTURE.md` brought up to date | maintainability | Medium | M (10 h) | iteration 2 | accepted (customer, 2026-11-06) | G-44, MAP 8.4 |
-| B-14 | Other stale docs, comments and missing READMEs | maintainability | Low | M (6 h) | iteration 2 | accepted (customer, 2026-11-06) | G-155, G-156, G-39, G-126, MAP 8.5, 8.6, 8.13, V-03, V-05, V-07, V-11 |
+| B-13 | `docs/ARCHITECTURE.md` brought up to date | maintainability | Medium | M (10 h) | iteration 2 | done 2026-11-13 (`24e52ed`, iteration 2) | G-44, MAP 8.4 |
+| B-14 | Other stale docs, comments and missing READMEs | maintainability | Low | M (6 h) | iteration 2 | done 2026-11-13 (`575b096`, iteration 2) | G-155, G-156, G-39, G-126, MAP 8.5, 8.6, 8.13, V-03, V-05, V-07, V-11 |
 | B-15 | Policy script and `.gitignore`: SCI0 patch files, run-time folders | defect | Medium | S (2 h) | stage 5 | Decided (Q-07) | G-18, V-06, R-135 |
-| B-16 | Release workflow kept working without macOS; publishing is the customer's | requirement | Medium | S (3 h) | stage 5 (macOS part) / iteration 2 | Decided | G-125, R-141 |
+| B-16 | Release workflow kept working without macOS; publishing is the customer's | requirement | Medium | S (3 h) | stage 5 (macOS part) / iteration 2 | done 2026-11-13 (`03e1404 (release notes and tag: customer)`, iteration 2) | G-125, R-141 |
 | B-17 | `kDoAvoider` stub: scan other releases if a copy turns up | defect (latent) | Low | S (1 h) | iteration 2, conditional | accepted (customer, 2026-11-06) | R-65, R-66 |
 | B-18 | Golden outputs for all resources | maintainability (safety net) | High | M (16 h) | stage 5 step 0 | Decided | Q-02, V-04, R-57, MAP 8.3 |
 | B-19 | Hashes of every VM output | maintainability (safety net) | High | M (10 h) | stage 5 step 0 | Decided | Q-01, MAP 6.3 |
 | B-20 | Baselines: warnings, sanitizers, timings, memory, size, build time | maintainability (safety net) | Medium | M (6 h) | stage 5 step 0 | Decided | Q-04, brief 5.1 |
 | B-21 | Remove the four unused dependency edges | architecture | Low | S (1 h) | stage 5 | accepted (customer, 2026-11-06) | G-31, MAP 1.3, 8.7 |
-| B-22 | Check in lint that every declared edge is used | maintainability | Low | S (3 h) | iteration 2 | accepted (customer, 2026-11-06) | G-31, MAP 1.4 |
+| B-22 | Check in lint that every declared edge is used | maintainability | Low | S (3 h) | iteration 2 | done 2026-11-13 (`d64fadf`, iteration 2) | G-31, MAP 1.4 |
 | B-23 | Tests that include private `src/` folders | architecture | Low | S (2 h) stage 5; M (12 h) iteration 2 | stage 5 (make explicit) / iteration 2 | stage 5 part: plan; rest accepted (customer, 2026-11-06) | G-31, MAP 1.4, 8.9 |
 | B-24 | Remove the dead `component_name()` placeholders | tech debt | Low | S (0.5 h) | stage 5 | accepted (customer, 2026-11-06) | G-43, MAP 8.8 |
 | B-25 | Check the vendored files' SHA-256 | maintainability | Medium | S (3 h) | stage 5 | plan | MAP 5, 8.11 |
 | B-26 | SPDX headers on scripts; policy checks `.py`/`.sh` | maintainability | Low | S (1.5 h) | stage 5 | plan | MAP 8.10, R-135 |
-| B-27 | A reason on every `NOLINT` | maintainability | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | G-36, R-136 |
-| B-28 | Switchable log categories in the program | requirement | Low | S (4 h) | iteration 2 | accepted (customer, 2026-11-06) | G-41, V-10, R-121 |
-| B-29 | The range of N (cap or keep 16) | requirement | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | G-148, V-03, R-50 |
+| B-27 | A reason on every `NOLINT` | maintainability | Low | S (2 h) | iteration 2 | done 2026-11-13 (`89107cb, 16a33d4`, iteration 2) | G-36, R-136 |
+| B-28 | Switchable log categories in the program | requirement | Low | S (4 h) | iteration 2 | done 2026-11-13 (`c3cc4d2`, iteration 2) | G-41, V-10, R-121 |
+| B-29 | The range of N (cap or keep 16) | requirement | Low | S (2 h) | iteration 2 | done 2026-11-13 (`c3dfb3e`, iteration 2) | G-148, V-03, R-50 |
 | B-30 | Other sound devices | requirement | Low | — (0 h with the default) | — | accepted (customer, 2026-11-06) | G-145 |
-| B-31 | Hint files for pictures 55 and 992 | maintainability | Low | S (0.5 h) | iteration 2 | accepted (customer, 2026-11-06) | G-79 |
+| B-31 | Hint files for pictures 55 and 992 | maintainability | Low | S (0.5 h) | iteration 2 | done 2026-11-13 (`3607a24`, iteration 2) | G-79 |
 | B-32 | Make the application layer testable (options, `GameHost`) | tech debt | Medium | M (14 h) | iteration 2 | accepted (customer, 2026-11-06) | MAP 8.2, R-110, MAP 6.4 |
-| B-33 | `-fwrapv` in some build types only | tech debt | Low | S (3 h) | iteration 2 | accepted (customer, 2026-11-06) | MAP 8.12 |
-| B-34 | Test hooks in the shipped program | requirement | Low | S (1 h) | iteration 2 | accepted (customer, 2026-11-06) | G-151, R-115…R-117 |
-| B-35 | Remove the unbuilt `SCI_WITHOUT_STROKE_INTEGRITY` option | tech debt | Low | S (1 h) | iteration 2 | accepted (customer, 2026-11-06) | G-153 |
-| B-36 | Remove relation-hint parsing; fix its comments | tech debt | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | G-154, G-97, V-02, R-36 |
-| B-37 | List thin fallbacks in the replacement report | requirement | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | G-69, R-128 |
-| B-38 | Check the `analyser_version` rule in CI | maintainability | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | V-12, G-156 |
-| B-39 | Trigonometry outside -360…360: compare with glibc | defect (unverified) | Low | S (2 h) | iteration 2 | accepted (customer, 2026-11-06) | V-05, G-156 |
+| B-33 | `-fwrapv` in some build types only | tech debt | Low | S (3 h) | iteration 2 | done 2026-11-13 (`3607a24`, iteration 2) | MAP 8.12 |
+| B-34 | Test hooks in the shipped program | requirement | Low | S (1 h) | iteration 2 | done 2026-11-13 (`1aa721e`, iteration 2) | G-151, R-115…R-117 |
+| B-35 | Remove the unbuilt `SCI_WITHOUT_STROKE_INTEGRITY` option | tech debt | Low | S (1 h) | iteration 2 | done 2026-11-13 (`56dee1e`, iteration 2) | G-153 |
+| B-36 | Remove relation-hint parsing; fix its comments | tech debt | Low | S (2 h) | iteration 2 | done 2026-11-13 (`6417c50`, iteration 2) | G-154, G-97, V-02, R-36 |
+| B-37 | List thin fallbacks in the replacement report | requirement | Low | S (2 h) | iteration 2 | done 2026-11-13 (`953082e`, iteration 2) | G-69, R-128 |
+| B-38 | Check the `analyser_version` rule in CI | maintainability | Low | S (2 h) | iteration 2 | done 2026-11-13 (`bd85846`, iteration 2) | V-12, G-156 |
+| B-39 | Trigonometry outside -360…360: compare with glibc | defect (unverified) | Low | S (2 h) | iteration 2 | done 2026-11-13 (`3607a24, 59efc9e`, iteration 2) | V-05, G-156 |
 | B-40 | 5.25" release: hint warning possibly false | defect (unverified) | Low | — | — | struck (customer, 2026-11-06) | V-01, V-14, R-06 |
 | B-41 | LGPL static linking note | maintainability | Low | — | — | struck (customer, 2026-11-06) | V-09 |
 | B-42 | `uint32_t` sums instead of `uint64_t` | tech debt | Low | — | — | struck (customer, 2026-11-06) | G-73, R-46 |
 | B-43 | Rename the project `sierra-hd` → `colonel-hd` | requirement | Medium | M (8 h) | stage 5 step 13 | Decided (customer, 2026-11-06) | customer's request 2026-11-06 |
-| B-44 | `fuzz-save` missing from the fuzz target list | defect | Low | S (0.5 h) | iteration 2 | open (found in stage 5 step 0.5) | MAP 6.2, B-05 |
-| B-45 | Script loader reads past an object's properties on a malformed script | defect | Low | S (2 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-script) | B-05 |
-| B-46 | The music player can loop forever on a malformed song | defect | Low | S (3 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-sound) | B-05 |
-| B-47 | The program embeds the repository's `git describe` as SDL's revision | defect | Low | S (1 h) | iteration 2 | open (found in stage 5 step 0.7) | B-20, step 0.1 |
-| B-48 | SDL3 has no per-file SHA-256 record | maintainability | Low | S (2 h) | iteration 2 | open (found in stage 5 step 2) | B-25, MAP 5 |
-| B-49 | `sci-audio-output-tests` fails now and then on a loaded machine | defect (test) | Low | S (2 h) | iteration 2 | open (found in stage 5 step 9) | R-92, MAP 6 |
+| B-44 | `fuzz-save` missing from the fuzz target list | defect | Low | S (0.5 h) | iteration 2 | fixed 2026-11-13 (`ef2836e`, iteration 2 P1) | MAP 6.2, B-05 |
+| B-45 | Script loader reads past an object's properties on a malformed script | defect | Low | S (2 h) | iteration 2 | fixed 2026-11-13 (`bdb1c8f`, iteration 2 P1) | B-05 |
+| B-46 | The music player can loop forever on a malformed song | defect | Low | S (3 h) | iteration 2 | fixed 2026-11-13 (`bdb1c8f`, iteration 2 P1) | B-05 |
+| B-47 | The program embeds the repository's `git describe` as SDL's revision | defect | Low | S (1 h) | iteration 2 | fixed 2026-11-13 (`22d798f`, iteration 2 P1) | B-20, step 0.1 |
+| B-48 | SDL3 has no per-file SHA-256 record | maintainability | Low | S (2 h) | iteration 2 | fixed 2026-11-13 (`9b46cac`, iteration 2 P1) | B-25, MAP 5 |
+| B-49 | `sci-audio-output-tests` fails now and then on a loaded machine | defect (test) | Low | S (2 h) | iteration 2 | fixed 2026-11-13 (`41afc1d`, iteration 2 P1) | R-92, MAP 6 |
 
 B-43: the project rename (added by the customer, 2026-11-06). B-44 onward: reserved for bugs found in stage 5 (the range started at B-43 before the rename item took that number).
 
@@ -1067,7 +1067,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 - **Kind:** defect (test tooling). **Severity:** Low (one target never
   fuzzed; its corpus still replays in the non-fuzz presets). **Found in:**
   stage 5 step 0.5 (2026-11-06), while adding the B-05 targets. **State:**
-  open, not fixed (brief 5.3).
+  fixed 2026-11-13 (`ef2836e`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** `tests/fuzz/CMakeLists.txt` reads the global property
   `SCI_FUZZ_TARGETS` into `fuzz-targets.txt` (the list
   `scripts/run-fuzzers.sh` and the CI `fuzz` job run) *before*
@@ -1090,7 +1090,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   hostile script resource triggers it; the game's own scripts load in
   every scenario and the playthrough). **Found in:** stage 5 step 0.5
   (2026-11-06), by the new `fuzz-script` target after 106 inputs.
-  **State:** open, not fixed (brief 5.3).
+  **State:** fixed 2026-11-13 (`bdb1c8f`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** `SegManager::script_segment(0, Lock)` →
   `instantiate_script` → `Script::initialize_objects`
   (`script.cpp:306`) → `Object::init_species` (`object.cpp:138`) →
@@ -1123,7 +1123,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   hostile sound resource; the game's 119 sounds render, and every
   scenario and the playthrough play their music). **Found in:** stage 5
   step 0.5 (2026-11-06), by the new `fuzz-sound` target (a timeout after
-  447 inputs). **State:** open, not fixed (brief 5.3).
+  447 inputs). **State:** fixed 2026-11-13 (`bdb1c8f`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** a 47-byte synthetic sound (header, then a loop point `BF 60
   7F` and events with zero deltas; kept in
   `build/stage5/fuzz-artifacts/fuzz-sound-timeout-44b3c1579acaa5c96ad0aea55dfb37dd070f4c73`,
@@ -1153,7 +1153,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   commits and misreports SDL's version). **Found in:** stage 5 step 0.7
   (2026-11-06), when the gate's release build of commit `8dcfb7c` gave a
   `sierra-hd` that differs from the one built at `3c3791d`/`5b1c01f`
-  although `src/` is the same. **State:** open, not fixed (brief 5.3).
+  although `src/` is the same. **State:** fixed 2026-11-13 (`22d798f`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** the vendored SDL3's CMake (`third_party/SDL3/CMakeLists.txt`
   `:3730-3742`) has no `REVISION.txt`, so it sets `SDL_REVISION` from
   `git describe` of the enclosing repository, i.e. this project's
@@ -1257,7 +1257,7 @@ of which the VM net (B-06, B-07) is 72. Judgement, not measured.
 ### B-48 SDL3 has no per-file SHA-256 record
 
 - **Kind:** maintainability. **Severity:** Low. **Found in:** stage 5
-  step 2 (2026-11-11). **State:** open, not fixed (brief 5.3).
+  step 2 (2026-11-11). **State:** fixed 2026-11-13 (`9b46cac`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** `THIRD_PARTY.md:15` says "The SHA-256 of each vendored file is
   in the component's `VENDORED.md`". `third_party/nuked-opl3/VENDORED.md`
   (3 files) and `third_party/mt32emu/VENDORED.md` (49 files) record one per
@@ -1279,7 +1279,7 @@ of which the VM net (B-06, B-07) is 72. Judgement, not measured.
   (`queued_frames() >= target_frames() * 3 / 4` after `recover()`), while
   other containers were building. The same test then passed 5 of 5 times
   alone. It had failed once the same way during milestone 10. **State:**
-  open, not fixed (brief 5.3).
+  fixed 2026-11-13 (`41afc1d`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** `audio_output_tops_the_queue_up_after_an_underrun` sleeps in
   real time, lets SDL's dummy audio thread drain the queue, and then
   expects the queue to be three quarters full right after `recover()`;

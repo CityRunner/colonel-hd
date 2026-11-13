@@ -150,7 +150,7 @@ bool render(const sci::resource::ResourceManager& resources, std::uint16_t numbe
     }
     if (mt32 != nullptr) {
         // mt32emu's pitch jitter, the same in every run.
-        // NOLINTBEGIN(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp)
+        // NOLINTBEGIN(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp): see above.
         std::srand(1);
         // NOLINTEND(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp)
     }

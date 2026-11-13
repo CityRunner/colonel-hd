@@ -37,8 +37,9 @@ and compares the traces; the reference side is the patch
   queue, and the next screen update that is due (an event read or
   `kAnimate`) aborts it after that kernel call. sci-vm does the same (and,
   should the game never poll, stops a minute of virtual time later).
-- **Input.** Only replayed events reach the game; host input is ignored
-  except for quitting. The mouse position is virtual: it starts at the
+- **Input.** In the reference and in sci-vm-trace, only replayed events
+  reach the game; host input is ignored except for quitting. The program's
+  `--replay` keeps the host's keyboard and mouse working as well (V-07). The mouse position is virtual: it starts at the
   centre of the screen (160, 100), follows replayed mouse events and is
   moved by `kSetCursor`.
 

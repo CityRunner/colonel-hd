@@ -9,7 +9,9 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string_view>
+#include <vector>
 
 namespace sci::core {
 
@@ -42,5 +44,10 @@ void log(LogLevel level, LogCategory category, std::string_view message) noexcep
 
 [[nodiscard]] std::string_view to_string(LogLevel level) noexcept;
 [[nodiscard]] std::string_view to_string(LogCategory category) noexcept;
+
+// The categories of a comma-separated list of their names ("vm,resources";
+// spaces allowed; empty or "none": none), or nothing if a name is unknown.
+// General is always on and is not named (B-28).
+[[nodiscard]] std::optional<std::vector<LogCategory>> parse_log_categories(std::string_view list);
 
 } // namespace sci::core

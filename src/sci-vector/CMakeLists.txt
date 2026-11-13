@@ -12,6 +12,3 @@ sci_add_library(NAME sci-vector
 if(SCI_DEBUG_HIGHLIGHT)
     target_compile_definitions(sci-vector PUBLIC SCI_DEBUG_HIGHLIGHT=1)
 endif()
-if(SCI_WITHOUT_STROKE_INTEGRITY)
-    target_compile_definitions(sci-vector PRIVATE SCI_WITHOUT_STROKE_INTEGRITY=1)
-endif()

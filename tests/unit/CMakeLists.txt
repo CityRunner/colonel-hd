@@ -67,6 +67,7 @@ sci_add_unit_test(NAME sci-platform-tests
         platform/interface_check_test.cpp
         platform/mt32_roms_test.cpp
         platform/platform_test.cpp
+        platform/data_folder_test.cpp
         platform/save_folder_test.cpp
         ${PROJECT_SOURCE_DIR}/tools/common/interface_check.cpp
     DEPENDS sci-platform)

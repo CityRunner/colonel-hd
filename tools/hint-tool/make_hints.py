@@ -86,7 +86,7 @@ def make(number, sha, candidates, decisions, analyser):
         "pic_sha256": sha,
         "analyser": analyser,
     }
-    for key, value in (("regions", regions), ("chains", chains), ("symmetry", symmetry)):  # Relations: milestone 3b.
+    for key, value in (("regions", regions), ("chains", chains), ("symmetry", symmetry)):
         if value:
             hints[key] = value
     return hints

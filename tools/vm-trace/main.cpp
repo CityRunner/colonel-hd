@@ -635,7 +635,8 @@ int main(int argc, char** argv) {
         options.on_round_trip = [&](std::uint32_t requested, std::uint32_t tick, const sci::vm::RoundTrip& trip) {
             if (!round_trip_saves.empty()) {
                 std::ofstream save{round_trip_saves / std::format("round-trip-{}.sav", requested), std::ios::binary};
-                save.write(reinterpret_cast<const char*>(trip.file.data()), // NOLINT(*-reinterpret-cast)
+                // NOLINTNEXTLINE(*-reinterpret-cast): bytes for write.
+                save.write(reinterpret_cast<const char*>(trip.file.data()),
                            static_cast<std::streamsize>(trip.file.size()));
             }
             if (trip.error) {

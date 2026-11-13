@@ -265,12 +265,21 @@ std::string table_row(const Row& row) {
         a.overlapped_line_pixels, row.priority.mixed_faces, row.entry_ms);
 }
 
+// Every fallback face of the visual plane, mixed and thin (spec section
+// 6.4; B-37), with a count per picture.
 std::string fallback_list(const std::vector<Row>& rows) {
     std::string text;
     for (const Row& row : rows) {
-        for (const auto& f : row.visual.fallbacks) {
-            text += std::format("- pic {}: {} pixels in ({}, {})-({}, {})\n", row.number, f.pixels, f.left, f.top,
-                                f.right, f.bottom);
+        const auto& fallbacks = row.visual.fallbacks;
+        if (fallbacks.empty()) {
+            continue;
+        }
+        const auto thin = std::ranges::count_if(fallbacks, [](const auto& f) { return f.thin; });
+        text += std::format("- pic {}: {} fallback faces ({} mixed, {} thin)\n", row.number, fallbacks.size(),
+                            std::ssize(fallbacks) - thin, thin);
+        for (const auto& f : fallbacks) {
+            text += std::format("  - {}: {} pixels in ({}, {})-({}, {})\n", f.thin ? "thin" : "mixed", f.pixels, f.left,
+                                f.top, f.right, f.bottom);
         }
     }
     return text.empty() ? "None.\n" : text;
@@ -339,7 +348,10 @@ std::string report(const std::vector<Row>& rows, int scale) {
             text += std::format("- pic {}: {}\n", row.number, c);
         }
     }
-    text += "\n## Fallbacks (mixed faces of the visual plane)\n\n" + fallback_list(rows);
+    text += "\n## Fallbacks (mixed and thin faces of the visual plane)\n\n"
+            "A mixed face's pixels are its region pixels; a thin face has none, so its pixels are the line pixels "
+            "whose centres it holds.\n\n" +
+            fallback_list(rows);
     text += "\n## Hints used\n\n" + hint_list(rows, true);
     text += "\n## Hints left out\n\n" + hint_list(rows, false);
     return text;

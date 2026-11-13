@@ -144,8 +144,8 @@ SCI_TEST(mt32_patch_parses_all_parts) {
         return;
     }
     SCI_CHECK(
-        std::string_view(reinterpret_cast<const char*>(patch->after_text.data()), 5) == // NOLINT(*-reinterpret-cast)
-        "After");
+        // NOLINTNEXTLINE(*-reinterpret-cast): bytes as text.
+        std::string_view(reinterpret_cast<const char*>(patch->after_text.data()), 5) == "After");
     SCI_CHECK(patch->before_text[0] == 'B' && patch->goodbye_text[0] == 'G');
     SCI_CHECK(patch->volume == 100);
     SCI_CHECK(patch->default_reverb == 2);

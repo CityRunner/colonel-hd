@@ -68,17 +68,18 @@ name="${mode}${scale}-${music}-${cache}$([[ "${fast}" == 1 ]] && echo -fast || e
 out="${out:-${base}/${name}}"
 limit="${limit:-$([[ "${fast}" == 1 ]] && echo 3600 || echo 7200)}"
 
-# The run folder: the program reads colonel-hd.ini, hints/ and cache/ next
-# to its executable (src/app/README.md), so it gets a copy of its own.
+# The program reads hints/ next to its executable, so it gets a run folder
+# with a copy of itself and a link to the hints; its data folder (B-03:
+# colonel-hd.ini, cache/, saves/) is given with --data.
 rm -rf "${out}"
-mkdir -p "${out}/run" "${cache_dir}"
+mkdir -p "${out}/run" "${out}/data" "${cache_dir}"
 cp "${program}" "${out}/run/colonel-hd"
 ln -s "${root}/hints" "${out}/run/hints"
 if [[ "${cache}" == cold ]]; then
     rm -rf "${cache_dir:?}"/*
 fi
-ln -s "$(cd "${cache_dir}" && pwd)" "${out}/run/cache"
-cat > "${out}/run/colonel-hd.ini" <<EOF
+ln -s "$(cd "${cache_dir}" && pwd)" "${out}/data/cache"
+cat > "${out}/data/colonel-hd.ini" <<EOF
 [colonel-hd]
 format = 1
 game_folder = /game
@@ -111,7 +112,7 @@ audio_env=(SDL_AUDIODRIVER="${audio}")
 if [[ "${audio}" == disk ]]; then
     audio_env+=(SDL_AUDIO_DISK_OUTPUT_FILE="${out}/audio.raw")
 fi
-args=(--replay "${replay}" --seed 0 --end-state "${out}/end-state.txt")
+args=(--data "${out}/data" --replay "${replay}" --seed 0 --end-state "${out}/end-state.txt")
 if [[ "${fast}" == 1 ]]; then
     args+=(--fast)
 fi

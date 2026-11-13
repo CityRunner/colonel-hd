@@ -297,7 +297,8 @@ SCI_TEST(mt32_output_is_the_same_on_every_run) {
         }
         if (run < 2) {
             // The state mt32emu reads, not a random source of ours.
-            // NOLINTBEGIN(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp)
+            // NOLINTBEGIN(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp): see
+            // above.
             std::srand(1);
             // NOLINTEND(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp)
         }

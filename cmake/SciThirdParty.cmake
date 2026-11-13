@@ -2,8 +2,8 @@
 #
 # Vendored third-party components (spec section 2), built as static
 # libraries. Only targets that may use them link them (spec section 4.2):
-# SDL3 is for app (window, input, presentation) and, from milestone 7, the
-# audio output of sci-audio; Nuked OPL3 and mt32emu are for sci-audio.
+# SDL3 is for app and its tests only (window, input, presentation and the
+# audio output); Nuked OPL3 and mt32emu are for sci-audio.
 #
 # Vendored code is not held to the project's warning set (sci_target_defaults
 # is not applied), so its warnings never fail the build; the global
@@ -74,5 +74,10 @@ if(SCI_BUILD_APP)
     set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
     set(SDL_UNINSTALL OFF CACHE BOOL "" FORCE)
+    # The vendored release as SDL's revision (B-47). Without it, SDL's CMake
+    # takes `git describe` of this repository, so every commit changed the
+    # binaries and a release reported the project's tag as SDL's revision.
+    # A -DSDL_REVISION=... on the command line still wins (cache, no FORCE).
+    set(SDL_REVISION "SDL-3.4.18-829a65d769d9" CACHE STRING "SDL revision of the vendored release (VENDORED.md)")
     add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/SDL3 ${PROJECT_BINARY_DIR}/third_party/SDL3 EXCLUDE_FROM_ALL SYSTEM)
 endif()

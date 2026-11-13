@@ -1,8 +1,9 @@
 # Architecture
 
 How the program is organised, how data flows through it, and the trade-offs
-behind it. Updated at every milestone (spec section 5.1). State: milestone
-4a, the VM boot gate.
+behind it. Updated at every milestone (spec section 5.1). State: milestone 9
+(the playthrough) and iteration 2 packages P1 to P3, 2026-11-13; every
+statement checked against the code on that date (B-13).
 
 ## Modules
 
@@ -11,17 +12,17 @@ purpose and invariants:
 
 | Library | Purpose | Depends on |
 |---|---|---|
-| sci-core | Error type, assertions, bounds-checked reading, floating-point profile, logging, exact rationals and rounding, SHA-256, MD5 (release detection only), a strict JSON reader, the executor interface | none |
-| sci-resource | RESOURCE.MAP, volumes, patch files, LZW and Huffman decompression (done, milestone 1) | sci-core |
-| sci-pic | PIC parsing and the exact 1x rasteriser (path 1) (done, milestone 2) | sci-core |
-| sci-vector | Vector analysis of PIC (path 2): planar graph, gap closing, faces, fallbacks, curve fitting (done, milestone 3), hints (done, milestone 3a), stroke integrity (milestone 3b) | sci-core, sci-pic |
-| sci-view | View, loop and cel decoding (done, milestone 2); SCI0 cursors (milestone 6b) | sci-core |
-| sci-text | Fonts (done, milestone 2), messages, vocabulary, Said | sci-core |
-| sci-audio | Sound playback, silent driver, AdLib (the OPL core on Nuked OPL3 and the SCI0 driver, milestone 7), MT-32, mixer | sci-core, sci-resource; Nuked OPL3 and mt32emu (vendored) |
-| sci-render | HD rasteriser (done, milestone 3), original mode, acceptance check, A1 checks (milestone 3b), composition of the game screen (milestone 5) | sci-core, sci-pic, sci-vector |
-| sci-vm | Bytecode interpreter, objects, kernel functions, the 1x graphics they drive, the music player with a silent driver or a sci-audio device (milestone 7), events, virtual clock, random source (boot gate, milestone 4a) | sci-core, sci-resource, sci-pic, sci-view, sci-text, sci-audio |
-| sci-platform | The parts of app without a window, shared with the tools: thread executor, game-folder reading, release identification, configuration file, hint loading (done, milestone 3a), analysis cache (milestone 4b), the HD images of the picture shown and the game's frame (milestone 5) | sci-core, sci-resource, sci-pic, sci-vector, sci-render, sci-vm |
-| app (`colonel-hd`) | Window, input, presentation (the room viewer at release v0.1), saves, cache | all libraries |
+| sci-core | Error type, assertions, bounds-checked reading, floating-point profile, logging with categories, exact rationals and rounding, SHA-256, MD5 (release detection only), a strict JSON reader, the executor interface | none |
+| sci-resource | RESOURCE.MAP, volumes, patch files, LZW and Huffman decompression | sci-core |
+| sci-pic | PIC parsing and the exact 1x rasteriser (path 1), with the draw trace and owner maps | sci-core |
+| sci-vector | Vector analysis of PIC (path 2): planar graph, gap closing, faces, fallbacks, curve fitting, hints, stroke integrity; the scene's byte format for the cache | sci-core, sci-pic |
+| sci-view | View, loop and cel decoding; SCI0 cursors | sci-core |
+| sci-text | Fonts, the text parser (vocabulary, grammar, Said) | sci-core |
+| sci-audio | The OPL3 core (Nuked OPL3) and the SCI0 AdLib driver, the MT-32 (mt32emu) and its driver, the mixer, patch loading | sci-core, sci-resource; Nuked OPL3 and mt32emu (vendored, private) |
+| sci-render | HD rasteriser, original mode, the acceptance check, the A1 integrity checks, the composition of the game screen | sci-core, sci-pic, sci-vector |
+| sci-vm | Bytecode interpreter, segments, objects and the garbage collector, kernel functions, the 1x graphics they drive (menus and dialogs included), the music player on a sci-audio device or a silent one, saving and restoring (the save format), events, files, virtual clock, random source | sci-core, sci-resource, sci-pic, sci-view, sci-text, sci-audio |
+| sci-platform | The parts of the program without a window, shared with the tools: the data folder, the configuration file, game-folder reading and release identification, hint loading, the analysis cache, the HD images of the picture shown and the game's frame, MT-32 ROM finding, the save folder, worker threads | sci-core, sci-resource, sci-pic, sci-vector, sci-render, sci-vm, sci-audio |
+| app (`colonel-hd`, `src/app`) | Window, input, presentation, the audio output (SDL3), the game host, the room viewer | every library above; SDL3 (vendored) |
 
 `tests/` holds the unit tests (`tests/unit`), the fuzz targets
 (`tests/fuzz`) and the golden tests (`tests/golden`: synthetic scenes in
@@ -34,25 +35,35 @@ program:
 - `resource-dump`: dumps all resources through sci-resource.
 - `resource-compare`: the milestone 1 comparison with ScummVM.
 - `common`: opening a game, logging and assertions to stderr, a PNG
-  writer and picture drawing with the trace, shared by the tools (which
-  also link `sci-platform`).
+  writer, picture drawing with the trace and milestone 6b's interface
+  checks, shared by the tools (which also link `sci-platform`).
 - `graphics-dump`: dumps every picture variant, view and font through
   sci-pic, sci-view and sci-text.
 - `graphics-compare`: the milestone 2 comparison with ScummVM.
 - `room-viewer`: renders pictures (1x maps, or HD frames and priority maps
   with `--hd`), views and fonts to PNG files; the window version is the
-  program itself from release v0.1.
-- `hd-report`: the milestone 3 replacement report and acceptance check.
-- `golden-hashes`: writes or checks the golden hashes of every picture.
+  program's `--viewer`.
+- `hd-report`: the replacement report (fits, fallbacks with thin faces,
+  hints) and the acceptance check.
+- `golden-hashes`: writes or checks the golden hashes of every picture and
+  picture stack.
+- `golden-resources`: the golden hashes of every picture layer, cel, glyph
+  and cursor (the stage 5 safety net).
 - `hint-tool`: proposes hint candidates for review, checks hint files
   against the game, and turns review decisions into hint files.
 - `vm-trace`: runs the game in sci-vm's deterministic mode, writes the
-  kernel-call trace and compares it with the reference's (milestone 4).
+  kernel-call trace and the other logs and compares them with the
+  reference's (milestone 4 onwards); `run-all-scenarios.sh` runs every
+  scenario.
 - `sound-render`: plays sound resources through the music player and the
   AdLib driver and prints a hash of the OPL output (milestone 7).
+- `audio-gaps`: finds underruns in a capture of the program's audio output
+  (milestone 7).
 - `hd-frames`: runs the game without a window on virtual time and writes
   the frames the program would show at chosen ticks, original and HD side
   by side, and measures the composition time (milestone 5).
+- `playthrough`: the whole game in both engines and in the program
+  (milestone 9, `docs/playthrough.md`).
 
 ### Dependency rules and how they are enforced
 
@@ -67,29 +78,36 @@ program:
   where spec section 4.2 allows them: SDL3 by app (which holds the audio
   output too, `src/app/src/audio_output.cpp`), Nuked OPL3 and mt32emu privately by sci-audio, whose public
   headers do not include them.
-- The dependencies listed above are the planned edges that are already
-  needed. Edges such as sci-vm to sci-audio (sound kernel calls) are added
-  when the code needs them, and the declaration order keeps the graph
-  acyclic.
+- Every declared edge is used and every used edge declared:
+  `scripts/check-deps.py` (pre-push and the CI lint job; B-22) compares
+  each library's `DEPENDS` with the `sci/<name>/` headers its files
+  include.
 
-## Data flow (planned)
+## Data flow
 
-1. app identifies the game folder by resource hashes and hands the file
-   bytes to sci-resource.
-2. sci-vm runs the scripts. Kernel calls draw pictures through sci-pic (path
-   1, whose visual, priority and control maps the game logic reads), and
-   views through sci-view.
-3. For HD mode, sci-vector turns the PIC command stream, the path-1 pair map
-   and the hint files into a vector scene. sci-render rasterises it at
-   320N x 190N, once per room, and composites sprites, text and windows per
-   frame.
+1. The program resolves its data folder (`--data`, its own folder, or the
+   per-user folder; sci-platform's `data_folder.hpp`), reads
+   `colonel-hd.ini` there, reads the game folder (`game/` there by
+   default) and identifies the release by its resource hashes. The file
+   bytes go to sci-resource.
+2. sci-vm runs the scripts. Kernel calls draw pictures through sci-pic
+   (path 1, whose visual, priority and control maps the game logic
+   reads), views through sci-view and text through sci-text.
+3. For HD mode, sci-vector turns the PIC command stream, the path-1 maps
+   and the hint files into a vector scene per plane; sci-platform's
+   analysis cache keeps the scenes in `cache/`. sci-render rasterises the
+   scenes of the picture stack shown at 320N x 190N once per picture, and
+   `GameFrame` composes the frame: the HD background, the sprites over it
+   behind the HD priority, and the interface as N x N blocks.
 4. sci-vm's music player plays the sound resources on the virtual clock
    (signals and cues go back to the scripts) and sends MIDI to a sci-audio
-   device; in the program the AdLib driver's chip output is mixed to the
-   device rate on the main thread and handed to SDL's audio thread through
-   an `SDL_AudioStream` (milestone 7).
-5. app presents the frame with dirty rectangles and feeds input to the VM in
-   1x coordinates.
+   device (AdLib or MT-32, or a silent one); the program mixes the device's
+   output to the device rate on the main thread and hands it to SDL's
+   audio thread through an `SDL_AudioStream`.
+5. The program presents the frame with dirty rectangles and feeds input to
+   the VM in 1x coordinates. Saves go to `saves/` and the game's own files
+   to `files/` in the data folder; the ini is updated in place when the
+   mode, the scale or a chosen game folder changed.
 
 ## Error handling
 
@@ -211,8 +229,12 @@ structure so that each part can be checked against its source
   to the game's objects.
 - Script patches are applied when a script loads, as in ScummVM.
 - The music player runs on the virtual clock (its timer once per 4 ms of
-  virtual time) and plays to a silent driver; only timing, signals and
-  cues reach the scripts.
+  virtual time) and plays to a sci-audio device: the AdLib or the MT-32
+  driver in the program, or a silent driver; only timing, signals and cues
+  reach the scripts.
+- Saving and restoring (milestone 8) write and read the whole VM state in
+  the versioned save format (`docs/formats/save-format.md`), through the
+  host's save folder.
 
 Two entry points run the game:
 - `run_deterministic` (`include/sci/vm/interpreter.hpp`) runs it the way
@@ -232,8 +254,8 @@ Two entry points run the game:
 ## The program
 
 `src/app/src/main.cpp` does the following:
-1. reads `colonel-hd.ini`;
-2. identifies the game folder (`sci-platform`);
+1. resolves the data folder and reads `colonel-hd.ini` there (B-03);
+2. finds and identifies the game folder (`sci-platform`);
 3. opens an SDL3 window and prepares the analysis cache;
 4. runs the game (`sci::vm::Game`, milestone 4b), or with `--viewer` drives
    the room viewer of release v0.1.
@@ -254,8 +276,9 @@ over the frame by the presenter elsewhere (milestone 6b,
 `docs/hd-composition.md`, "The cursor"); the mouse reaches the game in 1x
 through one tested mapping (`game_screen.hpp`). Keys are translated as
 ScummVM translates them. The game's own files are
-kept in `files/` next to the configuration (`DirectoryFileStore`), the
-saves in `saves/` (milestone 8).
+kept in `files/` in the data folder (`DirectoryFileStore`), the saves in
+`saves/` (milestone 8). When the game ends, the ini is updated in place if
+the mode, the scale or a game folder chosen in the dialog changed (B-04).
 
 `--replay <file>` schedules a replay's input into the run (milestone 9).
 A replay takes the deterministic time of day of sci-vm-trace instead of
@@ -280,7 +303,7 @@ The vector scenes are kept in files (spec section 10.2;
 - `sci-vector` writes and reads a scene as bytes (`scene_io.hpp`), so it
   stays free of I/O.
 - `sci-platform`'s `AnalysisCache` names, keys, reads and writes the
-  entries in `cache/` next to `colonel-hd.ini`.
+  entries in `cache/` in the data folder.
 - On launch, `main.cpp` has the cache analyse the missing entries on the
   executor, behind a progress bar.
 - `Viewer` and the game mode's `HdPictures` ask `AnalysisCache::scene`
@@ -295,16 +318,18 @@ variant, so a stale entry is never used.
 
 `sci/core/log.hpp` is the only logging facility. Messages have a level and a
 category and go to a sink installed by app or a tool; sci-core itself does no
-I/O. `General` is always on. Other categories (`Resources` so far; kernel
-calls and sound signals later) are off by default and cost one atomic load
-when off, so they stay in release builds.
+I/O. `General` is always on. `Resources` (resource loading) and `Vm`
+(script problems the interpreter works around, unusual kernel calls) are
+off by default and cost one atomic load when off, so they stay in release
+builds; the program turns them on with `--log vm,resources` or the ini's
+`log` key (B-28), the tools with their own options.
 
 ## Determinism
 
 - The floating-point profile of spec section 5.3 is set for every target in
   `cmake/SciCompilerFlags.cmake`. `sci::core::check_fp_profile()` verifies it
-  at run time; the tools' executor calls it in every worker thread, and
-  app's executor will (milestone 3a).
+  at run time; the executor (`sci-platform`'s `thread_executor.cpp`, used
+  by the program and the tools) asserts it in every worker thread.
 - Golden hashes of synthetic scenes run in CI on x86-64 and ARM64; those of
   every picture are checked locally, on ARM64 under qemu-user too.
 - Functions whose results differ between platforms or standard libraries are
@@ -332,9 +357,6 @@ when off, so they stay in release builds.
   Index checks come from the standard library hardening in Debug and
   sanitizer builds, and input-driven indices go through bounds-checked
   readers.
-- **Placeholder `component_name()` functions** keep the empty libraries
-  buildable and linked into the program. They go away as the libraries get
-  content; sci-resource's went at milestone 1.
 - **Whole files in memory.** The resource manager keeps the game folder's
   files in memory (about 2.6 MB for this game) instead of reading on demand.
   This keeps sci-resource free of I/O and makes loading a pure function of
@@ -342,8 +364,10 @@ when off, so they stay in release builds.
 - **Faces coloured from the map instead of replayed fills.** Taking each
   face's value from path 1's pixels makes the vector path follow path 1 by
   construction (leaks included) and leaves only the geometry to analyse;
-  the cost is a fallback where a face's pixels disagree (5 faces in the
-  whole game).
+  the cost is a fallback to 1x blocks where a face's pixels disagree (one
+  such mixed face in the visual planes of the game's 88 pictures) and
+  where a face holds no pixel of its own (thin faces between close lines;
+  `sci-hd-report` lists both, B-37).
 - **Supersampling with fast paths, and a reference.** The rasteriser fills
   spans and adds uniform sample rows in one step; `reference_value`
   evaluates single points the simple way, and a differential test keeps

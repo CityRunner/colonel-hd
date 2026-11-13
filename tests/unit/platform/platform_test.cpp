@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "sci/core/log.hpp"
 #include "sci/platform/config.hpp"
 #include "sci/platform/identify.hpp"
 #include "sci_test.hpp"
 
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using sci::platform::GraphicsMode;
@@ -67,6 +70,75 @@ SCI_TEST(config_rejects_what_it_cannot_read) {
     SCI_CHECK(!parse_config("[colonel-hd]\nformat = 1\nscale = 17\n").has_value());
     SCI_CHECK(!parse_config("[colonel-hd]\nformat = 1\nmode = vga\n").has_value());
     SCI_CHECK(!parse_config("[colonel-hd]\nformat = 1\nnonsense\n").has_value());
+}
+
+SCI_TEST(config_reads_and_writes_log_categories) {
+    const auto parsed = parse_config("[colonel-hd]\nformat = 1\nlog = vm, resources ; comment\n");
+    SCI_CHECK(parsed.has_value() && parsed->config.log.size() == 2 &&
+              parsed->config.log[0] == sci::core::LogCategory::Vm);
+    SCI_CHECK(!parse_config("[colonel-hd]\nformat = 1\nlog = graphics\n").has_value());
+    const auto defaults = parse_config("[colonel-hd]\nformat = 1\n");
+    SCI_CHECK(defaults.has_value() && defaults->config.log.empty());
+    if (parsed) {
+        const auto again = parse_config(sci::platform::format_config(parsed->config));
+        SCI_CHECK(again.has_value() && again->config.log == parsed->config.log);
+    }
+}
+
+SCI_TEST(config_updates_keep_every_other_line) {
+    using sci::platform::update_config;
+    // Comments, a blank line, an unknown key, another section, a trailing
+    // comment on the changed value (B-04).
+    const std::string text = "; my notes\n[colonel-hd]\nformat = 1\n\n# old\nmode = hd   ; F12 to switch\n"
+                             "favourite = yes\ngame_folder = /games/Laura;1\n[other]\nmode = x\n";
+    const auto parsed = parse_config(text);
+    SCI_CHECK(parsed.has_value());
+    if (!parsed) {
+        return;
+    }
+    auto changed = parsed->config;
+    changed.mode = GraphicsMode::Original;
+    const std::string updated = update_config(text, parsed->config, changed);
+    SCI_CHECK(updated == "; my notes\n[colonel-hd]\nformat = 1\n\n# old\nmode = original   ; F12 to switch\n"
+                         "favourite = yes\ngame_folder = /games/Laura;1\n[other]\nmode = x\n");
+    // Nothing changed: the text is returned as it was.
+    SCI_CHECK(update_config(text, parsed->config, parsed->config) == text);
+    // CR LF line endings stay; a key without a line is added at the end of
+    // the section, with the file's line ending.
+    const std::string crlf = "[colonel-hd]\r\nformat = 1\r\nmode = hd\r\n[other]\r\nx = 1\r\n";
+    const auto parsed_crlf = parse_config(crlf);
+    SCI_CHECK(parsed_crlf.has_value());
+    if (parsed_crlf) {
+        auto scaled = parsed_crlf->config;
+        scaled.mode = GraphicsMode::Original;
+        scaled.scale = 5;
+        SCI_CHECK(update_config(crlf, parsed_crlf->config, scaled) ==
+                  "[colonel-hd]\r\nformat = 1\r\nmode = original\r\nscale = 5\r\n[other]\r\nx = 1\r\n");
+    }
+    // No file yet: the commented defaults.
+    SCI_CHECK(update_config("", sci::platform::Config{}, changed) == sci::platform::format_config(changed));
+    // What update_config writes reads back as the changed configuration.
+    const auto again = parse_config(updated);
+    SCI_CHECK(again.has_value() && again->config.mode == GraphicsMode::Original &&
+              again->config.game_folder == parsed->config.game_folder);
+}
+
+SCI_TEST(config_write_failure_is_a_warning_naming_the_file) {
+    static int warnings = 0;
+    static bool named = false;
+    const auto sink = [](sci::core::LogLevel level, sci::core::LogCategory category,
+                         std::string_view message) noexcept {
+        if (level == sci::core::LogLevel::Warning && category == sci::core::LogCategory::General) {
+            ++warnings;
+            named = message.contains("no-such-folder-for-colonel-hd");
+        }
+    };
+    const auto previous = sci::core::set_log_sink(sink);
+    // A file in a folder that does not exist cannot be written.
+    const auto path = std::filesystem::temp_directory_path() / "no-such-folder-for-colonel-hd" / "colonel-hd.ini";
+    SCI_CHECK(!sci::platform::write_config_file(path, "[colonel-hd]\nformat = 1\n"));
+    sci::core::set_log_sink(previous);
+    SCI_CHECK(warnings == 1 && named);
 }
 
 SCI_TEST(config_file_and_section_have_the_colonel_hd_name) {

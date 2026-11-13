@@ -28,6 +28,7 @@
 
 #include "sci/vm/reg.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -43,6 +44,9 @@ inline constexpr std::uint16_t info_flag_class = 0x8000;
 
 // An object or class of a script, or a clone. In SCI0 the first four
 // properties are -species-, -super-, -info- and name.
+// The properties every object has: -species-, -super-, -info- and name.
+inline constexpr std::size_t minimum_object_properties = 4;
+
 class Object {
 public:
     // Reads the object at `pos` of its script: its property values (unless

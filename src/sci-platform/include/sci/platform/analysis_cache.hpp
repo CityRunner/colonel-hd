@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // The vector analysis cache (spec section 10.2): the scenes of every
-// picture, analysed on first launch and kept in files next to the
-// configuration (docs/formats/analysis-cache.md). An entry is keyed by the
+// picture, analysed on first launch and kept in files in the data folder's
+// cache/ (docs/formats/analysis-cache.md). An entry is keyed by the
 // game data, the analyser version, the picture's hint file and the variant
 // drawn; an entry with another key, or one that cannot be read, is analysed
 // again and replaced. Missing entries are analysed when first asked for.
