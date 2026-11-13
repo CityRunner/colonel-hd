@@ -50,3 +50,42 @@ measurement builds it was run again and matched.
 P3: the program's files and options (B-04 ini updated in place, B-03 one
 run-time data folder, B-34, B-28, B-29, B-37). These change what the user
 sees; the package report will list every visible change.
+
+## Package P3 (2026-11-13), at STOP
+
+### What was done
+
+| Item | Commits | What changed (visible to the user) |
+|---|---|---|
+| B-03 | `5ad0dbb`, `932fa89`, `4e9dea1` | One data folder for `colonel-hd.ini`, `game/`, `rom/`, `saves/`, `cache/`, `files/`: `--data <folder>`, else the program's folder if it holds the ini or `game/` and is writable (portable), else `%APPDATA%\colonel-hd` / `~/.local/share/colonel-hd`. An empty `game_folder` uses `game/`, an empty `mt32_rom` uses `rom/` (not written to the ini). Hints stay next to the program. Release archives hold empty `game/`, `rom/`, `saves/` with a `README.txt`. The data folder is logged at start-up. |
+| B-04 | `44524a8`, `7f72a2a` | The ini is written only when the mode, the viewer's scale or a game folder chosen in the dialog changed, and only those lines; comments, unknown keys, other sections and CR LF stay. A folder from the command line is never written. A failed write is a warning naming the file. |
+| B-28 | `c3cc4d2` | `--log vm,resources` and the ini key `log` show the Vm and Resources messages; off by default. |
+| B-37 | `953082e` | `sci-hd-report` lists every fallback face, thin ones included, with a count per picture. |
+| B-29 | `c3dfb3e` | N stays 1 to 16; the chord comment gives the error at N = 16 (0.063 screen pixels); the targets of spec 10.3 apply up to N = 10 (ASSUMPTIONS). |
+| B-34 | `1aa721e` | The testing options are kept and described in the user README. |
+| — | `626da91` | clang-tidy findings in the new code fixed (functions split under the complexity limit); found by the first closing run, which failed at its style step. |
+
+### Checks
+
+| Check | Result |
+|---|---|
+| Unit tests: data folder order (option, portable with ini or `game/`, per user, read-only program folder run as an unprivileged user, non-ASCII folder name), ini update in place (LF, CR LF, missing key, no change, new file), failed write warning, log category lists and the ini key | pass |
+| B-03 end to end: release archive unpacked, the game copied into `game/`, the program started with no game folder and no `--data`, the whole replayed playthrough | portable folder chosen, status 0, 0 errors and warnings, end state the same as `sci-vm-trace`'s; the ini written with the commented defaults and an empty `game_folder` |
+| `scripts/test-package-release.sh` | archive layout ok (105 entries), no game data |
+| B-37 on the game: `sci-hd-report` over all 88 pictures | the listed fallbacks match the table's counts for every picture: 14,940 thin and 1 mixed (before: only the 1 mixed face was listed) |
+| Pre-push on `626da91`: style and clang-tidy over the tree, release, asan, tsan, fuzz, ARM64 | all pass |
+| Local gate on `626da91`: resources, pictures, sounds, 14,731 screens, VM hashes (the program's playthrough now runs with `--data`) | **all match the committed goldens** |
+
+### Not checked here
+
+- The per-user folder on a real Windows account and a non-ASCII Windows
+  user name (the code reads `APPDATA` wide; the customer's laptop run,
+  B-10).
+- B-28's acceptance names a script workaround warning from B-07's
+  mini-game; that game comes in P5. Here: the list parser, the ini key,
+  the option and its rejection of unknown names are tested.
+
+### What is next
+
+P4: the docs (B-13 ARCHITECTURE, B-14 other docs, B-16 the release
+workflow's rest).

@@ -5,10 +5,10 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Iteration 2: packages P1 and P2 done, at STOP (2026-11-13).** Stage 5
+**Iteration 2: packages P1, P2 and P3 done, at STOP (2026-11-13).** Stage 5
 is merged into `main` (`b531169`). Iteration 2 runs on branch
 `iteration-2`: order in `review/ITERATION2_PLAN.md`, results in
-`review/ITERATION2_REPORT.md`. Next: P3, after the customer's go. Stage 5
+`review/ITERATION2_REPORT.md`. Next: P4 (docs), after the customer's go. Stage 5
 (started
 2026-11-06 on branch `refactor` from `a0422d6`). The plan
 (`review/REFACTOR_PLAN.md`) was approved on 2026-11-06 ("1 approve"),
