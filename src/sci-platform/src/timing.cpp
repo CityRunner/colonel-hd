@@ -71,6 +71,10 @@ std::string TimingLog::csv(std::string_view version, int scale, std::optional<st
     line(out, "frame_ms_p99", frames.p99);
     line(out, "frame_ms_worst", frames.worst);
     line(out, "frames_over_16.7ms", static_cast<std::uint64_t>(frames.over_budget));
+    const TimeStats composes = time_stats(composes_);
+    line(out, "compose_ms_median", composes.median);
+    line(out, "compose_ms_p99", composes.p99);
+    line(out, "compose_ms_worst", composes.worst);
     std::vector<double> entries;
     entries.reserve(rooms_.size());
     for (const RoomEntry& room : rooms_) {

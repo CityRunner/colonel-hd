@@ -724,6 +724,10 @@ private:
     // fast_frame_milliseconds. Only the pacing differs from wait: the game
     // sees the same virtual time and the same music timer calls.
     void wait_fast(sci::vm::Game& game, std::uint32_t milliseconds) {
+        if (timing_ != nullptr && entering_) {
+            wait_entering(game, milliseconds);
+            return;
+        }
         virtual_ += milliseconds;
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -746,6 +750,33 @@ private:
                                        globals.size() > room ? globals[room].offset : 0,
                                        globals.size() > act ? globals[act].offset : 0, (now - start_) / 1000));
         }
+    }
+
+    // --timing while a room's HD images are made (B-10): the wait takes its
+    // real time, presenting as a normal wait does, so that the room entry is
+    // timed with the main thread as idle as in normal play rather than
+    // running the game flat out beside the workers. The game sees the same
+    // virtual time and music calls.
+    void wait_entering(sci::vm::Game& game, std::uint32_t milliseconds) {
+        virtual_ += milliseconds;
+        const std::uint64_t until = SDL_GetTicks() + milliseconds;
+        // The input once per wait, as wait_fast takes it: the game gets
+        // every event at the same tick as with --fast (a presentation can
+        // move the pointer, and its motion event then comes in the next
+        // wait in both).
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            handle(game, event);
+        }
+        while (true) {
+            present(game);
+            const std::uint64_t now = SDL_GetTicks();
+            if (now >= until || !entering_) {
+                break;
+            }
+            SDL_Delay(static_cast<std::uint32_t>(std::min<std::uint64_t>(until - now, 4)));
+        }
+        game.pass_wait(milliseconds);
     }
 
     [[nodiscard]] int scale_for_window() const {
@@ -782,6 +813,9 @@ private:
             break;
         }
         case SDL_EVENT_MOUSE_MOTION:
+            if (timing_ != nullptr) {
+                break; // --timing: the replay is the only input (see below).
+            }
             last_mouse_ = sci::app::window_to_1x(static_cast<double>(event.motion.x),
                                                  static_cast<double>(event.motion.y), geometry());
             game.move_mouse(last_mouse_);
@@ -789,6 +823,13 @@ private:
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_BUTTON_UP: {
+            // --timing (B-10): the pointer is not the game's input. At a
+            // fixed N larger than the window, warping it to the game's
+            // mouse and reading it back loses the position, and the game
+            // would play differently from the replay.
+            if (timing_ != nullptr) {
+                break;
+            }
             last_mouse_ = sci::app::window_to_1x(static_cast<double>(event.button.x),
                                                  static_cast<double>(event.button.y), geometry());
             std::uint16_t modifiers = sci::vm::modifier_none;
@@ -852,6 +893,7 @@ private:
             hold_start_ = ticks;
         }
         screen_.update(shown, config_->mode, scale, config_->priority_snap, ticks - hold_start_ < hd_hold_milliseconds);
+        const double compose_ms = milliseconds_since(frame_start);
         if (timing_ != nullptr) {
             time_room_entry(game, frame_start);
         }
@@ -864,7 +906,7 @@ private:
         }
         presenter_.present(screen_.frame(), screen_.scale(), redraw_ ? full_frame() : dirty);
         if (timing_ != nullptr) {
-            timing_->frame(milliseconds_since(frame_start));
+            timing_->frame(milliseconds_since(frame_start), compose_ms);
         }
         redraw_ = false;
         last_serial_ = shown.serial;

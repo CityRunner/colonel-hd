@@ -43,8 +43,12 @@ public:
     void set_first_launch(std::size_t scenes, double ms);
 
     // The main thread's time for one presented frame: composing it,
-    // uploading the changed rectangles and presenting.
-    void frame(double ms) { frames_.push_back(ms); }
+    // uploading the changed rectangles and presenting; and of that, the
+    // composing.
+    void frame(double ms, double compose_ms) {
+        frames_.push_back(ms);
+        composes_.push_back(compose_ms);
+    }
 
     void room_entry(int room, double ms) { rooms_.push_back(RoomEntry{.room = room, .ms = ms}); }
 
@@ -60,6 +64,7 @@ private:
     std::size_t scenes_ = 0;
     double first_launch_ms_ = 0;
     std::vector<double> frames_;
+    std::vector<double> composes_;
     std::vector<RoomEntry> rooms_;
 };
 

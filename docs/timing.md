@@ -51,7 +51,8 @@ entry, in order:
 | `frames` | the frames presented |
 | `frame_ms_mean`, `_median`, `_p90`, `_p99`, `_worst` | the main thread's time per presented frame: composing it at N, uploading the changed rectangles, presenting; nearest-rank percentiles |
 | `frames_over_16.7ms` | frames over a 60 Hz display's frame time |
-| `room_entries`, `room_entry_ms_median`, `room_entry_ms_worst` | per new picture: from the request of its HD images to the first frame composed with them (the game goes on meanwhile; the frame shown is held, then the picture at 1x, `docs/hd-composition.md`) |
+| `compose_ms_median`, `_p99`, `_worst` | of the frame time, the composing alone (the rest is the upload and the presentation) |
+| `room_entries`, `room_entry_ms_median`, `room_entry_ms_worst` | per new picture: from the request of its HD images to the first frame composed with them (the game goes on meanwhile, paced in real time as in normal play rather than as fast as it can; the frame shown is held, then the picture at 1x, `docs/hd-composition.md`) |
 | `peak_memory_kib` | the process's peak resident memory (peak working set on Windows) |
 | `room,<room>,<ms>` | each room entry: the room number (global 11) and its time |
 
