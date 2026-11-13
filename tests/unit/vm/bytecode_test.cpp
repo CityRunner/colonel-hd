@@ -149,3 +149,179 @@ SCI_TEST(bytecode_unary) {
         SCI_CHECK(world->global(1) == -5 && world->global(2) == 1 && world->global(3) == 0);
     }
 }
+
+// vm.cpp op_bt, op_bnt, op_jmp: relative jumps taken on a non-zero, a zero
+// accumulator, or always.
+SCI_TEST(bytecode_branches) {
+    const auto world = run_play([](CodeAssembler& code) {
+        const auto skip_zero = code.label();
+        const auto skip_true = code.label();
+        const auto skip_always = code.label();
+        const auto not_taken = code.label();
+        load(code, 0);
+        code.branch(op::bnt, skip_zero);
+        load(code, 99);
+        code.var(VarOp::Store, Var::Global, 0);
+        code.bind(skip_zero);
+        load(code, 1);
+        code.branch(op::bt, skip_true);
+        load(code, 99);
+        code.var(VarOp::Store, Var::Global, 1);
+        code.bind(skip_true);
+        code.branch(op::jmp, skip_always);
+        load(code, 99);
+        code.var(VarOp::Store, Var::Global, 2);
+        code.bind(skip_always);
+        // Not taken: bt on zero, bnt on non-zero.
+        load(code, 0);
+        code.branch(op::bt, not_taken);
+        load(code, 1);
+        code.branch(op::bnt, not_taken);
+        load(code, 7);
+        code.var(VarOp::Store, Var::Global, 3);
+        code.bind(not_taken);
+    });
+    SCI_CHECK(world != nullptr);
+    if (world != nullptr) {
+        SCI_CHECK(world->global(0) == 0 && world->global(1) == 0 && world->global(2) == 0);
+        SCI_CHECK(world->global(3) == 7);
+    }
+}
+
+// vm.cpp op_push, op_pushi, op_push0/1/2, op_dup, op_toss.
+SCI_TEST(bytecode_stack) {
+    const auto world = run_play([](CodeAssembler& code) {
+        code.op_b(op::pushi, 10).op(op::push2).op(op::toss).op(op::dup); // 10 10
+        load(code, 5);
+        code.op(op::add).var(VarOp::Store, Var::Global, 0); // 10 + 5
+        load(code, 1);
+        code.op(op::add).var(VarOp::Store, Var::Global, 1); // 10 + 1
+        code.op(op::push0);
+        load(code, 3);
+        code.op(op::add).var(VarOp::Store, Var::Global, 2);
+        code.op(op::push1);
+        load(code, 3);
+        code.op(op::add).var(VarOp::Store, Var::Global, 3);
+        code.op(op::push2);
+        load(code, 3);
+        code.op(op::add).var(VarOp::Store, Var::Global, 4);
+        load(code, 6);
+        code.op(op::push);
+        load(code, 4);
+        code.op(op::sub).var(VarOp::Store, Var::Global, 5);
+    });
+    SCI_CHECK(world != nullptr);
+    if (world != nullptr) {
+        SCI_CHECK(world->global(0) == 15 && world->global(1) == 11 && world->global(2) == 3);
+        SCI_CHECK(world->global(3) == 4 && world->global(4) == 5 && world->global(5) == 2);
+    }
+}
+
+// vm.cpp op_link and the temporaries: a loop summing 5 + 4 + ... + 1 with a
+// counter decremented in place (op_minus_at).
+SCI_TEST(bytecode_temporaries_and_loop) {
+    const auto world = run_play([](CodeAssembler& code) {
+        const auto loop = code.label();
+        const auto done = code.label();
+        code.op_b(op::link, 2);
+        load(code, 0);
+        code.var(VarOp::Store, Var::Temp, 0);
+        load(code, 5);
+        code.var(VarOp::Store, Var::Temp, 1);
+        code.bind(loop);
+        code.var(VarOp::Load, Var::Temp, 1);
+        code.branch(op::bnt, done);
+        code.var(VarOp::Load, Var::Temp, 0);
+        code.op(op::push);
+        code.var(VarOp::Load, Var::Temp, 1);
+        code.op(op::add);
+        code.var(VarOp::Store, Var::Temp, 0);
+        code.var(VarOp::Decrement, Var::Temp, 1);
+        code.branch(op::jmp, loop);
+        code.bind(done);
+        code.var(VarOp::Load, Var::Temp, 0);
+        code.var(VarOp::Store, Var::Global, 0);
+    });
+    SCI_CHECK(world != nullptr && world->global(0) == 15);
+}
+
+// The variable opcodes 0x40 to 0x7f: load and store to the accumulator or
+// the stack, increment and decrement, indexed by the accumulator.
+SCI_TEST(bytecode_variable_forms) {
+    const auto world = run_play([](CodeAssembler& code) {
+        load(code, 40);
+        code.var(VarOp::Store, Var::Global, 10);           // sag 10
+        code.var(VarOp::Increment, Var::Global, 10);       // +ag 10: 41 into acc and the global
+        code.var(VarOp::Store, Var::Global, 0);            // 41
+        code.var(VarOp::Increment, Var::Global, 10, true); // +sg 10: 42 onto the stack
+        code.var(VarOp::Store, Var::Global, 1, true);      // ssg 1: pops 42
+        code.var(VarOp::Decrement, Var::Global, 10, true); // -sg 10: 41 onto the stack
+        code.var(VarOp::Store, Var::Global, 2, true);      // 41
+        code.var(VarOp::Load, Var::Global, 10, true);      // lsg 10: 41 onto the stack
+        load(code, 1);
+        code.op(op::add).var(VarOp::Store, Var::Global, 3); // 42
+        // Indexed: global 20 + acc.
+        load(code, 77);
+        code.var(VarOp::Store, Var::Global, 22);
+        load(code, 2);
+        code.var(VarOp::Load, Var::Global, 20, false, true); // lagi 20: global 22
+        code.var(VarOp::Store, Var::Global, 4);
+        code.op_b(op::pushi, 55);
+        load(code, 3);
+        code.var(VarOp::Store, Var::Global, 20, false, true); // sagi 20: pops 55 into global 23
+        load(code, 1);
+        code.var(VarOp::Increment, Var::Global, 22, false, true); // +agi 22: global 23 + 1
+        // Locals of script 0 are its globals.
+        code.var(VarOp::Load, Var::Local, 23);
+        code.var(VarOp::Store, Var::Global, 5);
+    });
+    SCI_CHECK(world != nullptr);
+    if (world != nullptr) {
+        SCI_CHECK(world->global(0) == 41 && world->global(1) == 42 && world->global(2) == 41);
+        SCI_CHECK(world->global(3) == 42 && world->global(4) == 77 && world->global(5) == 56);
+    }
+}
+
+// vm.cpp op_call, op_ret and the parameters (lap: param 0 is the argument
+// count); op_rest passes a procedure's parameters on to the next call.
+SCI_TEST(bytecode_local_calls_and_rest) {
+    const auto world = run_play([](CodeAssembler& code) {
+        const auto add_two = code.label();
+        const auto pass_on = code.label();
+        const auto count_and_sum = code.label();
+        // add_two(3, 4) and its argument count.
+        code.op_b(op::pushi, 2).op_b(op::pushi, 3).op_b(op::pushi, 4).call(add_two, 2);
+        code.var(VarOp::Store, Var::Global, 0);
+        // pass_on(10, 20, 30) calls count_and_sum with rest 1.
+        code.op_b(op::pushi, 3).op_b(op::pushi, 10).op_b(op::pushi, 20).op_b(op::pushi, 30).call(pass_on, 3);
+        code.var(VarOp::Store, Var::Global, 2);
+        code.op(op::ret);
+
+        code.bind(add_two);
+        code.var(VarOp::Load, Var::Param, 0);
+        code.var(VarOp::Store, Var::Global, 1);
+        code.var(VarOp::Load, Var::Param, 1);
+        code.op(op::push);
+        code.var(VarOp::Load, Var::Param, 2);
+        code.op(op::add).op(op::ret);
+
+        code.bind(pass_on);
+        code.op(op::push0).op_b(op::rest, 1).call(count_and_sum, 0).op(op::ret);
+
+        code.bind(count_and_sum);
+        code.var(VarOp::Load, Var::Param, 1);
+        code.op(op::push);
+        code.var(VarOp::Load, Var::Param, 2);
+        code.op(op::add).op(op::push);
+        code.var(VarOp::Load, Var::Param, 3);
+        code.op(op::add);
+        code.var(VarOp::Store, Var::Global, 3);
+        code.var(VarOp::Load, Var::Param, 0);
+        code.op(op::ret);
+    });
+    SCI_CHECK(world != nullptr);
+    if (world != nullptr) {
+        SCI_CHECK(world->global(0) == 7 && world->global(1) == 2);
+        SCI_CHECK(world->global(2) == 3 && world->global(3) == 60);
+    }
+}
