@@ -59,6 +59,29 @@ std::optional<std::string> apply_audio(Config& config, std::string_view key, std
     return std::nullopt;
 }
 
+// Sets the mode, priority_snap or log; the problem, if the value is not
+// valid.
+std::optional<std::string> apply_choice(Config& config, std::string_view key, std::string_view value) {
+    if (key == "mode") {
+        if (value != "hd" && value != "original") {
+            return "mode is hd or original";
+        }
+        config.mode = value == "hd" ? GraphicsMode::Hd : GraphicsMode::Original;
+    } else if (key == "priority_snap") {
+        if (value != "on" && value != "off") {
+            return "priority_snap is on or off";
+        }
+        config.priority_snap = value == "on";
+    } else {
+        auto categories = core::parse_log_categories(value);
+        if (!categories) {
+            return "log is a comma-separated list of vm and resources, or empty";
+        }
+        config.log = std::move(*categories);
+    }
+    return std::nullopt;
+}
+
 // Sets one key; the problem, if the value is not valid.
 std::optional<std::string> apply(ParsedConfig& parsed, std::string_view key, std::string_view value) {
     Config& config = parsed.config;
@@ -75,11 +98,8 @@ std::optional<std::string> apply(ParsedConfig& parsed, std::string_view key, std
         config.mt32_rom = to_path(value);
     } else if (key == "saves") {
         config.saves = to_path(value);
-    } else if (key == "mode") {
-        if (value != "hd" && value != "original") {
-            return "mode is hd or original";
-        }
-        config.mode = value == "hd" ? GraphicsMode::Hd : GraphicsMode::Original;
+    } else if (key == "mode" || key == "priority_snap" || key == "log") {
+        return apply_choice(config, key, value);
     } else if (key == "scale") {
         const auto scale = value == "auto" ? std::optional<int>(0) : parse_int(value);
         if (!scale || *scale < 0 || *scale > max_scale) {
@@ -88,17 +108,6 @@ std::optional<std::string> apply(ParsedConfig& parsed, std::string_view key, std
         config.scale = *scale;
     } else if (key == "music" || key == "volume") {
         return apply_audio(config, key, value);
-    } else if (key == "log") {
-        auto categories = core::parse_log_categories(value);
-        if (!categories) {
-            return "log is a comma-separated list of vm and resources, or empty";
-        }
-        config.log = std::move(*categories);
-    } else if (key == "priority_snap") {
-        if (value != "on" && value != "off") {
-            return "priority_snap is on or off";
-        }
-        config.priority_snap = value == "on";
     } else {
         parsed.warnings.push_back(std::format("configuration: unknown key {} ignored", key));
     }
@@ -258,70 +267,59 @@ std::string replace_value(std::string_view line, std::string_view key, const std
 
 } // namespace
 
-std::string update_config(std::string_view text, const Config& before, const Config& after) {
-    if (text.empty()) {
-        return format_config(after);
-    }
+namespace {
+
+using KeyValue = std::pair<std::string_view, std::string>;
+
+// The values of `after` that differ from `before`.
+std::vector<KeyValue> changed_values(const Config& before, const Config& after) {
     const auto old_values = key_values(before);
-    const auto new_values = key_values(after);
-    std::vector<std::pair<std::string_view, std::string>> changed;
+    auto new_values = key_values(after);
+    std::vector<KeyValue> changed;
     for (std::size_t i = 0; i < new_values.size(); ++i) {
         if (old_values[i].second != new_values[i].second) {
-            changed.push_back(new_values[i]);
+            changed.push_back(std::move(new_values[i]));
         }
     }
-    if (changed.empty()) {
-        return std::string(text);
+    return changed;
+}
+
+// One line of the text, without its ending, and the ending (LF, CR LF or
+// none at the end of the text); the rest of the text after it.
+struct TextLine {
+    std::string_view content;
+    std::string_view ending;
+};
+
+TextLine take_line(std::string_view& rest) {
+    const auto end = rest.find('\n');
+    std::string_view line = rest.substr(0, end == std::string_view::npos ? rest.size() : end + 1);
+    rest.remove_prefix(line.size());
+    std::string_view ending;
+    if (line.ends_with("\r\n")) {
+        ending = "\r\n";
+    } else if (line.ends_with('\n')) {
+        ending = "\n";
     }
-    const bool crlf = text.find("\r\n") != std::string_view::npos;
-    const std::string_view newline = crlf ? "\r\n" : "\n";
-    std::vector<bool> written(changed.size(), false);
-    std::string out;
-    bool in_section = false;
-    std::size_t section_end = std::string::npos; // Where missing keys go.
-    std::string_view rest = text;
-    while (!rest.empty()) {
-        const auto end = rest.find('\n');
-        std::string_view line = rest.substr(0, end == std::string_view::npos ? rest.size() : end + 1);
-        rest.remove_prefix(line.size());
-        std::string_view ending;
-        if (line.ends_with("\r\n")) {
-            ending = "\r\n";
-        } else if (line.ends_with('\n')) {
-            ending = "\n";
-        }
-        line.remove_suffix(ending.size());
-        const std::string_view trimmed = trim(line);
-        if (!trimmed.empty() && trimmed.front() == '[') {
-            if (in_section) {
-                section_end = out.size();
-            }
-            in_section = trimmed == "[colonel-hd]";
-        } else if (in_section && !trimmed.empty() && trimmed.front() != ';' && trimmed.front() != '#') {
-            const auto equals = trimmed.find('=');
-            if (equals != std::string_view::npos) {
-                const std::string_view key = trim(trimmed.substr(0, equals));
-                for (std::size_t i = 0; i < changed.size(); ++i) {
-                    if (changed[i].first == key) {
-                        out += replace_value(line, key, changed[i].second);
-                        out += ending;
-                        written[i] = true;
-                        line = {};
-                        ending = {};
-                        break;
-                    }
-                }
-                if (line.empty() && ending.empty()) {
-                    continue;
-                }
-            }
-        }
-        out += line;
-        out += ending;
+    line.remove_suffix(ending.size());
+    return TextLine{.content = line, .ending = ending};
+}
+
+// The key of a `key = value` line, if the line is one.
+std::optional<std::string_view> key_of(std::string_view trimmed) {
+    if (trimmed.empty() || trimmed.front() == ';' || trimmed.front() == '#') {
+        return std::nullopt;
     }
-    if (in_section) {
-        section_end = out.size();
+    const auto equals = trimmed.find('=');
+    if (equals == std::string_view::npos) {
+        return std::nullopt;
     }
+    return trim(trimmed.substr(0, equals));
+}
+
+// The lines for changed keys that had no line, with the file's newline.
+std::string missing_lines(const std::vector<KeyValue>& changed, const std::vector<bool>& written,
+                          std::string_view newline) {
     std::string missing;
     for (std::size_t i = 0; i < changed.size(); ++i) {
         if (!written[i]) {
@@ -329,17 +327,60 @@ std::string update_config(std::string_view text, const Config& before, const Con
                        (changed[i].second.empty() ? "" : " " + changed[i].second) + std::string(newline);
         }
     }
-    if (!missing.empty()) {
-        if (section_end == std::string::npos) {
-            // No [colonel-hd] section: parse_config would have refused the
-            // file (no format line); write it whole.
-            return format_config(after);
-        }
-        if (section_end > 0 && out[section_end - 1] != '\n') {
-            missing.insert(0, newline);
-        }
-        out.insert(section_end, missing);
+    return missing;
+}
+
+} // namespace
+
+std::string update_config(std::string_view text, const Config& before, const Config& after) {
+    if (text.empty()) {
+        return format_config(after);
     }
+    const std::vector<KeyValue> changed = changed_values(before, after);
+    if (changed.empty()) {
+        return std::string(text);
+    }
+    std::vector<bool> written(changed.size(), false);
+    std::string out;
+    bool in_section = false;
+    std::size_t section_end = std::string::npos; // Where missing keys go.
+    std::string_view rest = text;
+    while (!rest.empty()) {
+        const TextLine line = take_line(rest);
+        const std::string_view trimmed = trim(line.content);
+        if (!trimmed.empty() && trimmed.front() == '[') {
+            if (in_section) {
+                section_end = out.size();
+            }
+            in_section = trimmed == "[colonel-hd]";
+        }
+        const auto key = in_section ? key_of(trimmed) : std::nullopt;
+        const auto match = key ? std::ranges::find(changed, *key, &KeyValue::first) : changed.end();
+        if (match != changed.end()) {
+            out += replace_value(line.content, match->first, match->second);
+            written[static_cast<std::size_t>(match - changed.begin())] = true;
+        } else {
+            out += line.content;
+        }
+        out += line.ending;
+    }
+    if (in_section) {
+        section_end = out.size();
+    }
+    const bool crlf = text.contains("\r\n");
+    std::string missing = missing_lines(changed, written, crlf ? "\r\n" : "\n");
+    if (missing.empty()) {
+        return out;
+    }
+    if (section_end == std::string::npos) {
+        // No [colonel-hd] section: parse_config would have refused the file
+        // (no format line); write it whole.
+        return format_config(after);
+    }
+    if (section_end > 0 && out[section_end - 1] != '\n') {
+        missing.insert(0, crlf ? "\r\n" : "\n");
+    }
+    out.insert(section_end, missing);
     return out;
 }
 

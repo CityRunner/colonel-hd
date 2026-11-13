@@ -22,7 +22,7 @@ bool folder_is_writable(const fs::path& folder) {
     }
     const fs::path probe = folder / ".colonel-hd-write-test";
     {
-        std::ofstream file(probe, std::ios::binary);
+        const std::ofstream file(probe, std::ios::binary);
         if (!file) {
             return false;
         }
@@ -67,7 +67,7 @@ fs::path per_user_data_folder() {
 }
 
 std::optional<fs::path> data_game_folder(const fs::path& data_folder) {
-    const fs::path game = data_folder / "game";
+    fs::path game = data_folder / "game";
     std::error_code error;
     for (fs::directory_iterator it(game, error), end; !error && it != end; it.increment(error)) {
         std::string name = it->path().filename().string();

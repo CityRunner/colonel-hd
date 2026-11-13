@@ -485,7 +485,13 @@ void append_thin_fallbacks(const std::vector<std::int32_t>& labels, const std::v
         if (!has_samples[f] && pixel_count[f] > 0) {
             index[f] = fallbacks.size();
             fallbacks.push_back(Fallback{
-                .pixels = 0, .left = picture_width, .top = picture_height, .right = -1, .bottom = -1, .thin = true});
+                .pixels = 0,
+                .left = picture_width,
+                .top = picture_height,
+                .right = -1,
+                .bottom = -1,
+                .thin = true,
+            });
         }
     }
     if (fallbacks.size() == first) {

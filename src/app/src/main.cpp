@@ -997,36 +997,46 @@ struct Options {
     std::optional<fs::path> data;
 };
 
+// Sets an option that takes a value: nothing if `arg` is not one, false if
+// the value is not valid.
+std::optional<bool> value_option(Options& options, std::string_view arg, std::string_view value) {
+    if (arg == "--replay") {
+        options.replay = fs::path(value);
+    } else if (arg == "--data") {
+        options.data = fs::path(value);
+    } else if (arg == "--end-state") {
+        options.end_state = fs::path(value);
+    } else if (arg == "--log") {
+        options.log = sci::core::parse_log_categories(value);
+        return options.log.has_value();
+    } else if (arg == "--seed") {
+        std::uint32_t seed = 0;
+        const auto [end, error] = std::from_chars(std::to_address(value.begin()), std::to_address(value.end()), seed);
+        if (error != std::errc{} || end != std::to_address(value.end())) {
+            return false;
+        }
+        options.seed = seed;
+    } else {
+        return std::nullopt;
+    }
+    return true;
+}
+
 // The command line, or nothing if it is not valid.
 std::optional<Options> parse_options(std::span<char*> args) {
     Options options;
     for (std::size_t i = 1; i < args.size(); ++i) {
         const std::string_view arg = args[i];
-        const bool has_value = i + 1 < args.size();
         if (arg == "--viewer") {
             options.viewer = true;
-        } else if (arg == "--replay" && has_value) {
-            options.replay = fs::path(args[++i]);
         } else if (arg == "--fast") {
             options.fast = true;
-        } else if (arg == "--data" && has_value) {
-            options.data = fs::path(args[++i]);
-        } else if (arg == "--log" && has_value) {
-            options.log = sci::core::parse_log_categories(args[++i]);
-            if (!options.log) {
+        } else if (const auto taken =
+                       i + 1 < args.size() ? value_option(options, arg, args[i + 1]) : std::optional<bool>()) {
+            if (!*taken) {
                 return std::nullopt;
             }
-        } else if (arg == "--end-state" && has_value) {
-            options.end_state = fs::path(args[++i]);
-        } else if (arg == "--seed" && has_value) {
-            const std::string_view value = args[++i];
-            std::uint32_t seed = 0;
-            const auto [end, error] =
-                std::from_chars(std::to_address(value.begin()), std::to_address(value.end()), seed);
-            if (error != std::errc{} || end != std::to_address(value.end())) {
-                return std::nullopt;
-            }
-            options.seed = seed;
+            ++i;
         } else if (!arg.starts_with('-') && !options.game_folder) {
             options.game_folder = fs::path(arg);
         } else {
@@ -1132,30 +1142,59 @@ sci::core::Result<std::vector<sci::vm::InputEvent>> read_replay(const fs::path& 
     return sci::vm::parse_replay(text.str());
 }
 
+// The data folder (B-03): --data, the executable's folder (portable) or
+// the per-user folder; created if needed and logged. Nothing (after
+// telling the user) if there is none or it cannot be created.
+std::optional<sci::platform::DataFolder> open_data_folder(const Options& options, const fs::path& base) {
+    sci::platform::DataFolder data =
+        sci::platform::resolve_data_folder(options.data, base, sci::platform::per_user_data_folder());
+    if (data.folder.empty()) {
+        show_error(nullptr, "No folder for the configuration and saves: start colonel-hd with --data <folder>.");
+        return std::nullopt;
+    }
+    std::error_code error;
+    fs::create_directories(data.folder, error);
+    if (error) {
+        show_error(nullptr, std::format("Cannot create {}: {}", data.folder.string(), error.message()));
+        return std::nullopt;
+    }
+    std::string_view kind = "per user";
+    if (data.kind == sci::platform::DataFolderKind::Option) {
+        kind = "--data";
+    } else if (data.kind == sci::platform::DataFolderKind::Portable) {
+        kind = "next to the program";
+    }
+    sci::core::log(sci::core::LogLevel::Info, sci::core::LogCategory::General,
+                   std::format("data folder: {} ({})", data.folder.string(), kind));
+    return data;
+}
+
+// The game folder of the command line, else game/ in the data folder when
+// game_folder is empty and it holds the game; rom/ when mt32_rom is empty.
+// For this run only: neither is written to the ini.
+void use_data_folder_defaults(sci::platform::Config& config, const Options& options, const fs::path& data_folder) {
+    if (options.game_folder) {
+        config.game_folder = *options.game_folder;
+    } else if (config.game_folder.empty()) {
+        if (auto game_folder = sci::platform::data_game_folder(data_folder)) {
+            config.game_folder = std::move(*game_folder);
+        }
+    }
+    if (config.mt32_rom.empty()) {
+        config.mt32_rom = data_folder / "rom";
+    }
+}
+
 int run(const Options& options) {
     // The hints are next to the executable; everything else is in the data
     // folder (B-03): --data, the executable's folder (portable) or the
     // per-user folder.
     const fs::path base = base_path();
-    const sci::platform::DataFolder data =
-        sci::platform::resolve_data_folder(options.data, base, sci::platform::per_user_data_folder());
-    if (data.folder.empty()) {
-        show_error(nullptr, "No folder for the configuration and saves: start colonel-hd with --data <folder>.");
+    const auto data_folder = open_data_folder(options, base);
+    if (!data_folder) {
         return 1;
     }
-    {
-        std::error_code error;
-        fs::create_directories(data.folder, error);
-        if (error) {
-            show_error(nullptr, std::format("Cannot create {}: {}", data.folder.string(), error.message()));
-            return 1;
-        }
-    }
-    sci::core::log(sci::core::LogLevel::Info, sci::core::LogCategory::General,
-                   std::format("data folder: {} ({})", data.folder.string(),
-                               data.kind == sci::platform::DataFolderKind::Option     ? "--data"
-                               : data.kind == sci::platform::DataFolderKind::Portable ? "next to the program"
-                                                                                      : "per user"));
+    const sci::platform::DataFolder& data = *data_folder;
     const fs::path config_path = data.folder / sci::platform::config_file_name;
     const auto loaded = load_config(config_path);
     if (!loaded) {
@@ -1167,18 +1206,7 @@ int run(const Options& options) {
     for (const sci::core::LogCategory category : options.log ? *options.log : config->log) {
         sci::core::set_log_category_enabled(category, true);
     }
-    if (options.game_folder) {
-        config->game_folder = *options.game_folder;
-    } else if (config->game_folder.empty()) {
-        // An empty game_folder means game/ in the data folder, if it holds
-        // the game; this is not written to the ini.
-        if (auto game_folder = sci::platform::data_game_folder(data.folder)) {
-            config->game_folder = std::move(*game_folder);
-        }
-    }
-    if (config->mt32_rom.empty()) {
-        config->mt32_rom = data.folder / "rom"; // For this run only.
-    }
+    use_data_folder_defaults(*config, options, data.folder);
     const bool viewer_mode = options.viewer;
     std::vector<sci::vm::InputEvent> replay;
     if (options.replay) {
