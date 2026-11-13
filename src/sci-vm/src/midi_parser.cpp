@@ -379,8 +379,7 @@ void MidiParser::on_timer() {
 
 // Kept close to MidiParser_SCI::processEvent. A hold or loop jumps back,
 // which replays events; jumps do not nest.
-// NOLINTNEXTLINE(readability-function-cognitive-complexity,misc-no-recursion): kept close to ScummVM; jumps do not
-// nest.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity,misc-no-recursion): as in ScummVM.
 bool MidiParser::process_event(const EventInfo& info, bool fire_events) {
     if (!fire_events) {
         return process_base_event(info, fire_events);

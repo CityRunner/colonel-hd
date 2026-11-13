@@ -68,7 +68,7 @@ private:
 
     // Recursion follows the nesting of the text, which is limited to
     // json_max_depth levels.
-    Result<JsonValue> parse_value(std::size_t depth) { // NOLINT(misc-no-recursion): depth is bounded by json_max_depth.
+    Result<JsonValue> parse_value(std::size_t depth) { // NOLINT(misc-no-recursion): json_max_depth.
         if (depth > json_max_depth) {
             return fail("too deeply nested");
         }
@@ -105,9 +105,8 @@ private:
         return fail("unexpected character");
     }
 
-    Result<JsonValue>
-    parse_object(std::size_t depth) { // NOLINT(misc-no-recursion): depth is bounded by json_max_depth.
-        ++position_;                  // {
+    Result<JsonValue> parse_object(std::size_t depth) { // NOLINT(misc-no-recursion): json_max_depth.
+        ++position_;                                    // {
         JsonObject members;
         skip_space();
         if (take('}')) {
@@ -146,7 +145,7 @@ private:
         }
     }
 
-    Result<JsonValue> parse_array(std::size_t depth) { // NOLINT(misc-no-recursion): depth is bounded by json_max_depth.
+    Result<JsonValue> parse_array(std::size_t depth) { // NOLINT(misc-no-recursion): json_max_depth.
         ++position_;                                   // [
         JsonArray items;
         skip_space();

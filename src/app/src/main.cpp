@@ -111,10 +111,8 @@ void print_assertion(std::string_view expression, const std::source_location& lo
 
 fs::path base_path() {
     const char* base = SDL_GetBasePath();
-    return base != nullptr ? fs::path(std::u8string(reinterpret_cast<const char8_t*>(
-                                 base))) // NOLINT(*-reinterpret-cast): SDL gives UTF-8 as char; char8_t makes fs::path
-                                         // read it as UTF-8.
-                           : fs::current_path();
+    // NOLINTNEXTLINE(*-reinterpret-cast): SDL gives UTF-8 as char.
+    return base != nullptr ? fs::path(std::u8string(reinterpret_cast<const char8_t*>(base))) : fs::current_path();
 }
 
 void show_error(SDL_Window* window, const std::string& message) {
@@ -142,9 +140,8 @@ std::optional<fs::path> choose_folder(SDL_Window* window) {
         [](void* userdata, const char* const* list, int /*filter*/) {
             auto* result = static_cast<Choice*>(userdata);
             if (list != nullptr && *list != nullptr) {
-                result->folder = fs::path(std::u8string(
-                    reinterpret_cast<const char8_t*>(*list))); // NOLINT(*-reinterpret-cast): SDL gives UTF-8 as char;
-                                                               // char8_t makes fs::path read it as UTF-8.
+                // NOLINTNEXTLINE(*-reinterpret-cast): SDL gives UTF-8 as char.
+                result->folder = fs::path(std::u8string(reinterpret_cast<const char8_t*>(*list)));
             }
             result->done = true;
         },
@@ -910,11 +907,10 @@ private:
         }
         const sci::app::CursorImage image = sci::app::scale_cursor(*decoded, scale);
         if (sci::app::cursor_mode(where.pixel_density, image.size) == sci::app::CursorMode::System) {
-            SDL_Surface* surface = SDL_CreateSurfaceFrom(
-                image.size, image.size, SDL_PIXELFORMAT_RGBA32,
-                const_cast<std::uint8_t*>(image.pixels.data()), // NOLINT(*-const-cast): SDL takes non-const pixels; the
-                                                                // surface only reads them.
-                image.size * 4);
+            SDL_Surface* surface =
+                SDL_CreateSurfaceFrom(image.size, image.size, SDL_PIXELFORMAT_RGBA32,
+                                      // NOLINTNEXTLINE(*-const-cast): SDL only reads the pixels.
+                                      const_cast<std::uint8_t*>(image.pixels.data()), image.size * 4);
             if (surface != nullptr) {
                 cursor_.reset(SDL_CreateColorCursor(surface, image.hotspot_x, image.hotspot_y));
                 SDL_DestroySurface(surface);

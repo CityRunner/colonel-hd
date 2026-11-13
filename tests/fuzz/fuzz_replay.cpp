@@ -11,8 +11,8 @@
 
 // NOLINTNEXTLINE(readability-identifier-naming): name fixed by libFuzzer.
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t* data, std::size_t size) {
-    const std::string_view text(reinterpret_cast<const char*>(data),
-                                size); // NOLINT(*-reinterpret-cast): libFuzzer bytes as text.
+    // NOLINTNEXTLINE(*-reinterpret-cast): libFuzzer bytes as text.
+    const std::string_view text(reinterpret_cast<const char*>(data), size);
     [[maybe_unused]] const auto parsed = sci::vm::parse_replay(text);
     return 0;
 }

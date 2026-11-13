@@ -14,8 +14,8 @@
 namespace {
 
 std::string hash_of(std::string_view text) {
-    const std::span bytes(reinterpret_cast<const std::uint8_t*>(text.data()),
-                          text.size()); // NOLINT(*-reinterpret-cast): text as bytes.
+    // NOLINTNEXTLINE(*-reinterpret-cast): text as bytes.
+    const std::span bytes(reinterpret_cast<const std::uint8_t*>(text.data()), text.size());
     return sci::core::to_hex(sci::core::sha256(bytes));
 }
 
