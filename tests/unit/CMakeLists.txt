@@ -63,6 +63,7 @@ target_include_directories(sci-render-tests PRIVATE pic render)
 sci_add_unit_test(NAME sci-platform-tests
     SOURCES
         platform/analysis_cache_test.cpp
+        platform/command_line_test.cpp
         platform/game_frame_test.cpp
         platform/interface_check_test.cpp
         platform/mt32_roms_test.cpp

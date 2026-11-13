@@ -7,6 +7,7 @@ find_package(Threads REQUIRED)
 sci_add_library(NAME sci-platform
     SOURCES
         src/analysis_cache.cpp
+        src/command_line.cpp
         src/config.cpp
         src/data_folder.cpp
         src/game_files.cpp
