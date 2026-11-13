@@ -151,6 +151,8 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # The analyser_version check compares with the base branch.
       - uses: ./.github/actions/toolchain-image
       - name: clang-format
         run: docker/run.sh scripts/check-format.sh
@@ -164,6 +166,9 @@ jobs:
         run: docker/run.sh python3 scripts/check-fuzz-list.py
       - name: Library dependencies
         run: docker/run.sh python3 scripts/check-deps.py
+      - name: analyser_version bumped with the HD picture goldens
+        # On the runner, not in the container: it reads the git history.
+        run: python3 scripts/check-analyser-version.py "origin/${{ github.base_ref || 'main' }}"
       - name: clang-tidy
         run: docker/run.sh bash -c "cmake --preset debug && scripts/run-clang-tidy.sh build/debug" 2>&1 | tee build.log
       - if: failure()

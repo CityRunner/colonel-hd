@@ -85,6 +85,7 @@ The development room viewer writes the same images to PNG files
     docker/run.sh python3 scripts/check-vendored.py    # vendored files against their recorded SHA-256
     docker/run.sh python3 scripts/check-fuzz-list.py   # every fuzz target is in the fuzzed list
     docker/run.sh python3 scripts/check-deps.py        # declared library dependencies match the includes
+    python3 scripts/check-analyser-version.py          # HD picture goldens changed only with an analyser_version bump
     docker/run.sh scripts/run-clang-tidy.sh build/debug
 
 ## Documentation

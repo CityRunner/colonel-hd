@@ -33,6 +33,7 @@ step "style and static analysis"
 run "scripts/check-format.sh && python3 scripts/check-repo-policy.py --self-test \
      && python3 scripts/check-repo-policy.py && python3 scripts/check-hints.py \
      && python3 scripts/check-vendored.py && python3 scripts/check-fuzz-list.py && python3 scripts/check-deps.py \
+     && python3 scripts/check-analyser-version.py \
      && cmake --preset debug > /dev/null && scripts/run-clang-tidy.sh build/debug"
 
 step "release: build and tests"
