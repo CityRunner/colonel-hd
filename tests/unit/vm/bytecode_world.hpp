@@ -63,7 +63,7 @@ inline std::optional<resource::ResourceManager> assembled_game(const std::map<in
 // The usual script 0: class 0 (the game's class) and the game object, an
 // instance of it whose play method is at `play` in `script.code()`, with
 // `globals` global variables. The caller adds code and other objects first.
-inline Bytes game_script(ScriptBuilder& script, CodeAssembler::Label play, int globals = 16,
+inline Bytes game_script(ScriptBuilder& script, CodeAssembler::Label play, int globals = 32,
                          std::vector<std::pair<int, CodeAssembler::Label>> class_methods = {}) {
     script.add(ObjectSpec{
         .is_class = true,
