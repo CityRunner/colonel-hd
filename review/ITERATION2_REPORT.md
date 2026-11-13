@@ -192,7 +192,7 @@ remaining private includes).
 | All CTest tests in Debug | 31 of 31 pass |
 | Pre-push on `603d661` | PREPUSH_RESULT |
 | Local gate on `603d661` (B-18, B-19, the program's playthrough end state) | GATE_RESULT |
-| Windows CI on `603d661` ([run 43440744960](https://github.com/CityRunner/colonel-hd/actions/runs/43440744960)) | WINDOWS_RESULT |
+| Windows CI on `603d661` ([run 43440744960](https://github.com/CityRunner/colonel-hd/actions/runs/43440744960)) | **success**: windows-x64 (release, ASan) and windows-arm64 (release) |
 
 ### Deviations and open points
 
