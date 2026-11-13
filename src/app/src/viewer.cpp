@@ -4,6 +4,7 @@
 
 #include "sci/pic/draw_pic.hpp"
 #include "sci/pic/parse_pic.hpp"
+#include "sci/platform/window_scale.hpp"
 #include "sci/render/colors.hpp"
 #include "sci/render/original.hpp"
 #include "sci/vector/scene.hpp"
@@ -79,7 +80,7 @@ Viewer::Viewer(const resource::ResourceManager& manager, platform::AnalysisCache
 }
 
 void Viewer::set_window_size(int width, int height) {
-    fit_scale_ = std::clamp(std::min(width / screen_width, height / screen_height), 1, platform::max_scale);
+    fit_scale_ = platform::fit_scale(width, height);
     const int scale = chosen_scale_ == 0 ? fit_scale_ : std::min(chosen_scale_, fit_scale_);
     if (scale != scale_) {
         scale_ = scale;

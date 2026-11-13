@@ -173,3 +173,37 @@ small steps, each with a STOP-free commit and the local gate at the end.
 
 P6: a testable application (B-32 options and `GameHost`, B-23 the
 remaining private includes).
+
+## Package P6 (2026-11-13), at STOP
+
+### What was done
+
+| Item | Commits | What changed |
+|---|---|---|
+| B-32 | `8b5b06f`, `7aafe77`, `603d661` | The program's pure parts move from `src/app` to sci-platform, each with CTest tests: the command line (`command_line.hpp`: options, the R-110 rules, the help text, the exit codes 0/0/2, and the defaults the data folder gives), the window scale (`window_scale.hpp`, R-112: auto, a configured N reduced to what fits, the opening scale; the game and the viewer share it), and the game's file store (`file_store.hpp`: written files in `files/`, read before the game folder's, plain names only). `main.cpp` went from 1,322 to 1,207 lines. Nothing visible changes. |
+| B-23 | `34a26bd` | sci-vector's tests use its public interface only: curve fitting is a public header (`sci/vector/fitting.hpp`, namespace `sci::vector`), and `sci-vector-tests` no longer include `src/sci-vector/src`. The helper `sci_test_private_includes` documents the two remaining exceptions: sci-vm (its internals are what its tests check, B-06/B-07) and app (a program, no public interface). |
+
+### Checks
+
+| Check | Result |
+|---|---|
+| New tests: every R-110 rule (no arguments, `--version`/`--help` alone and with more, all game options, the viewer with data and log, the viewer with each game option, bad seeds incl. 2^32, unknown log category, a missing value, an unknown option, two folders), the data-folder defaults, the scale rules, the file store | pass (sci-platform-tests 52, was 40) |
+| The program's exit codes by hand: `--help` 0, `--version` prints `colonel-hd 1.0.0`, `--viewer --fast` 2 | as before |
+| All CTest tests in Debug | 31 of 31 pass |
+| Pre-push on `603d661` | all pass: style and clang-tidy over the tree, release, asan, tsan, fuzz, ARM64 under qemu |
+| Local gate on `603d661` (B-18, B-19, the program's playthrough end state) | **all match the committed goldens**: resources, pictures, sounds, 14,731 screens, VM hashes (the program's playthrough end state included) |
+| Windows CI on `603d661` ([run 43440744960](https://github.com/CityRunner/colonel-hd/actions/runs/43440744960)) | **success**: windows-x64 (release, ASan) and windows-arm64 (release) |
+
+### Deviations and open points
+
+- `GameHost`, the presenter and the event loop stay in `main.cpp`: they
+  are SDL and timing code, and B-32's default moves only pure functions
+  (its risk note). They remain untested by CTest; the program's
+  playthrough in the local gate covers them.
+- `write_end_state` and `read_replay` (test hooks of the program, G-151)
+  stay in `main.cpp`; P7's timing mode (B-10) will touch them.
+
+### What is next
+
+P7: performance (B-10 a scripted timing mode and the customer's laptop
+run, B-09 no frame over 16.7 ms at N = 10, B-11 the memory check).

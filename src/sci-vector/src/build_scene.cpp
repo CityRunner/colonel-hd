@@ -725,18 +725,18 @@ std::string_view kind_name(HintPrimitive primitive) {
     return "a spline";
 }
 
-detail::CurveKind curve_kind(HintPrimitive primitive) {
+CurveKind curve_kind(HintPrimitive primitive) {
     switch (primitive) {
     case HintPrimitive::Line:
-        return detail::CurveKind::Line;
+        return CurveKind::Line;
     case HintPrimitive::Arc:
-        return detail::CurveKind::Arc;
+        return CurveKind::Arc;
     case HintPrimitive::Spline:
-        return detail::CurveKind::Spline;
+        return CurveKind::Spline;
     case HintPrimitive::Ellipse:
-        return detail::CurveKind::Ellipse;
+        return CurveKind::Ellipse;
     }
-    return detail::CurveKind::Spline;
+    return CurveKind::Spline;
 }
 
 // Finds the lines that hints refer to by picture and command.
@@ -989,7 +989,7 @@ bool stroke_touches(const std::vector<Vec2>& points, int x, int y) {
 std::vector<detail::FittedChain> fit_curves(const detail::Arrangement& arrangement, const std::vector<DrawnLine>& lines,
                                             const std::vector<std::optional<TopoSegment>>& segments,
                                             const std::vector<int>& owned, std::span<const std::int32_t> hint_of_line,
-                                            std::span<const detail::CurveKind> hint_kinds,
+                                            std::span<const CurveKind> hint_kinds,
                                             std::vector<std::int32_t>& failed_hints, SceneStats& stats) {
     std::vector<detail::ChainLine> chain_lines(lines.size());
     for (std::size_t i = 0; i < lines.size(); ++i) {
@@ -1192,7 +1192,7 @@ Curves fit_with_hints(const detail::Arrangement& arrangement, const std::vector<
                       const std::vector<std::optional<TopoSegment>>& segments, const std::vector<int>& owned,
                       const PlaneView& view, const PlaneHints& hints, SceneStats& stats) {
     std::vector<std::int32_t> hint_of_line(lines.size(), -1);
-    std::vector<detail::CurveKind> kinds;
+    std::vector<CurveKind> kinds;
     for (std::size_t h = 0; h < hints.chains.size(); ++h) {
         for (const std::size_t line : hints.chains[h].lines) {
             hint_of_line[line] = static_cast<std::int32_t>(h);

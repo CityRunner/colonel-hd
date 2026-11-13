@@ -3,7 +3,7 @@
 // The files the game opens (kFOpen), for the program: what the game writes
 // goes into a folder next to the configuration, as ScummVM keeps them in
 // its save folder; what it reads comes from there, or else from the game
-// folder.
+// folder. In sci-platform so CTest can check it (B-32).
 #pragma once
 
 #include "sci/resource/resource_manager.hpp"
@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace sci::app {
+namespace sci::platform {
 
 class DirectoryFileStore final : public vm::FileStore {
 public:
@@ -31,4 +31,4 @@ private:
     std::map<std::string, std::vector<std::uint8_t>, std::less<>> game_files_;
 };
 
-} // namespace sci::app
+} // namespace sci::platform

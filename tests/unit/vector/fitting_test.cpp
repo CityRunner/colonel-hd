@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "fitting.hpp"
+#include "sci/vector/fitting.hpp"
 #include "sci_test.hpp"
 
 #include <algorithm>
@@ -9,10 +9,10 @@
 #include <cstddef>
 #include <vector>
 
+using sci::vector::CurveKind;
+using sci::vector::fit_curve;
+using sci::vector::polyline_distance;
 using sci::vector::Vec2;
-using sci::vector::detail::CurveKind;
-using sci::vector::detail::fit_curve;
-using sci::vector::detail::polyline_distance;
 
 namespace {
 
@@ -111,7 +111,7 @@ SCI_TEST(fits_never_leave_the_tolerance) {
 }
 
 SCI_TEST(forced_kinds_follow_the_hint) {
-    using sci::vector::detail::fit_curve_as;
+    using sci::vector::fit_curve_as;
     // A shallow bend, forced into each kind.
     const std::vector<Vec2> chain{{.x = 0.5, .y = 0.5}, {.x = 20.5, .y = 1.5}, {.x = 40.5, .y = 0.5}};
     const std::vector<bool> pinned(chain.size(), false);
@@ -136,6 +136,6 @@ SCI_TEST(forced_arcs_on_almost_straight_chains_stay_small) {
     // computed reliably; the section is straight instead.
     const std::vector<Vec2> chain{{.x = 0.5, .y = 0.5}, {.x = 100.5, .y = 0.5 + 1e-9}, {.x = 200.5, .y = 0.5}};
     const std::vector<bool> pinned(chain.size(), false);
-    const auto curve = sci::vector::detail::fit_curve_as(chain, pinned, CurveKind::Arc, 1.0);
+    const auto curve = sci::vector::fit_curve_as(chain, pinned, CurveKind::Arc, 1.0);
     SCI_CHECK(curve.has_value() && curve->points.size() < 10000);
 }

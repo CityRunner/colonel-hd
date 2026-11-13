@@ -8,6 +8,11 @@ sci-resource, sci-pic, sci-vector, sci-render, sci-vm and sci-audio
 
 Public interface (`include/sci/platform`):
 
+- `command_line.hpp`: the program's options, their rules, the help text
+  and the exit codes (R-110; B-32), and the defaults the data folder gives.
+- `window_scale.hpp`: the window's scale N (R-112; B-32).
+- `file_store.hpp`: the files the game opens with kFOpen, in `files/` of
+  the data folder, else from the game folder.
 - `data_folder.hpp`: the data folder (`--data`, portable, per user; B-03)
   and the game folder in its `game/`.
 - `config.hpp`: `colonel-hd.ini`, its reader, its writer for a new file and

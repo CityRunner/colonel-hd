@@ -73,7 +73,7 @@ found it.
 | B-20 | Baselines: warnings, sanitizers, timings, memory, size, build time | maintainability (safety net) | Medium | M (6 h) | stage 5 step 0 | Decided | Q-04, brief 5.1 |
 | B-21 | Remove the four unused dependency edges | architecture | Low | S (1 h) | stage 5 | accepted (customer, 2026-11-06) | G-31, MAP 1.3, 8.7 |
 | B-22 | Check in lint that every declared edge is used | maintainability | Low | S (3 h) | iteration 2 | done 2026-11-13 (`d64fadf`, iteration 2) | G-31, MAP 1.4 |
-| B-23 | Tests that include private `src/` folders | architecture | Low | S (2 h) stage 5; M (12 h) iteration 2 | stage 5 (make explicit) / iteration 2 | stage 5 part: plan; rest accepted (customer, 2026-11-06) | G-31, MAP 1.4, 8.9 |
+| B-23 | Tests that include private `src/` folders | architecture | Low | S (2 h) stage 5; M (12 h) iteration 2 | stage 5 (make explicit) / iteration 2 | done: stage 5 part (helper), iteration 2 part 2026-11-13 (`34a26bd`, P6) | G-31, MAP 1.4, 8.9 |
 | B-24 | Remove the dead `component_name()` placeholders | tech debt | Low | S (0.5 h) | stage 5 | accepted (customer, 2026-11-06) | G-43, MAP 8.8 |
 | B-25 | Check the vendored files' SHA-256 | maintainability | Medium | S (3 h) | stage 5 | plan | MAP 5, 8.11 |
 | B-26 | SPDX headers on scripts; policy checks `.py`/`.sh` | maintainability | Low | S (1.5 h) | stage 5 | plan | MAP 8.10, R-135 |
@@ -82,7 +82,7 @@ found it.
 | B-29 | The range of N (cap or keep 16) | requirement | Low | S (2 h) | iteration 2 | done 2026-11-13 (`c3dfb3e`, iteration 2) | G-148, V-03, R-50 |
 | B-30 | Other sound devices | requirement | Low | — (0 h with the default) | — | accepted (customer, 2026-11-06) | G-145 |
 | B-31 | Hint files for pictures 55 and 992 | maintainability | Low | S (0.5 h) | iteration 2 | done 2026-11-13 (`3607a24`, iteration 2) | G-79 |
-| B-32 | Make the application layer testable (options, `GameHost`) | tech debt | Medium | M (14 h) | iteration 2 | accepted (customer, 2026-11-06) | MAP 8.2, R-110, MAP 6.4 |
+| B-32 | Make the application layer testable (options, `GameHost`) | tech debt | Medium | M (14 h) | iteration 2 | done 2026-11-13 (`8b5b06f`, `7aafe77`, `603d661`, iteration 2 P6) | MAP 8.2, R-110, MAP 6.4 |
 | B-33 | `-fwrapv` in some build types only | tech debt | Low | S (3 h) | iteration 2 | done 2026-11-13 (`3607a24`, iteration 2) | MAP 8.12 |
 | B-34 | Test hooks in the shipped program | requirement | Low | S (1 h) | iteration 2 | done 2026-11-13 (`1aa721e`, iteration 2) | G-151, R-115…R-117 |
 | B-35 | Remove the unbuilt `SCI_WITHOUT_STROKE_INTEGRITY` option | tech debt | Low | S (1 h) | iteration 2 | done 2026-11-13 (`56dee1e`, iteration 2) | G-153 |

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "fitting.hpp"
+#include "sci/vector/fitting.hpp"
 
 #include <algorithm>
 #include <array>
@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace sci::vector::detail {
+namespace sci::vector {
 
 namespace {
 
@@ -602,4 +602,4 @@ std::optional<FittedCurve> fit_curve_as(std::span<const Vec2> chain, const std::
     return curve;
 }
 
-} // namespace sci::vector::detail
+} // namespace sci::vector

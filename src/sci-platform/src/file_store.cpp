@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "file_store.hpp"
+#include "sci/platform/file_store.hpp"
 
 #include "sci/core/log.hpp"
 
@@ -10,7 +10,7 @@
 #include <fstream>
 #include <iterator>
 
-namespace sci::app {
+namespace sci::platform {
 
 namespace {
 
@@ -64,4 +64,4 @@ bool DirectoryFileStore::write(std::string_view name, std::span<const std::uint8
     return true;
 }
 
-} // namespace sci::app
+} // namespace sci::platform

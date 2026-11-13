@@ -6,7 +6,7 @@ if(NOT SCI_BUILD_APP)
     return()
 endif()
 
-add_executable(colonel-hd src/main.cpp src/audio_output.cpp src/file_store.cpp src/game_screen.cpp src/viewer.cpp)
+add_executable(colonel-hd src/main.cpp src/audio_output.cpp src/game_screen.cpp src/viewer.cpp)
 target_link_libraries(colonel-hd PRIVATE
     sci-core sci-resource sci-pic sci-vector sci-view sci-text sci-audio sci-render sci-vm sci-platform
     SDL3::SDL3-static)

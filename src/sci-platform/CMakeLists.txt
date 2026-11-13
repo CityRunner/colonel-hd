@@ -7,8 +7,10 @@ find_package(Threads REQUIRED)
 sci_add_library(NAME sci-platform
     SOURCES
         src/analysis_cache.cpp
+        src/command_line.cpp
         src/config.cpp
         src/data_folder.cpp
+        src/file_store.cpp
         src/game_files.cpp
         src/game_frame.cpp
         src/hd_pictures.cpp
@@ -17,5 +19,6 @@ sci_add_library(NAME sci-platform
         src/picture_hints.cpp
         src/save_folder.cpp
         src/thread_executor.cpp
+        src/window_scale.cpp
     DEPENDS sci-core sci-resource sci-pic sci-vector sci-render sci-vm sci-audio)
 target_link_libraries(sci-platform PUBLIC Threads::Threads)

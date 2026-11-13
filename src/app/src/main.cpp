@@ -12,7 +12,6 @@
 // audio (milestone 7, audio_output.hpp).
 
 #include "audio_output.hpp"
-#include "file_store.hpp"
 #include "game_screen.hpp"
 #include "sci/audio/adlib.hpp"
 #include "sci/audio/mt32_driver.hpp"
@@ -22,8 +21,10 @@
 #include "sci/core/log.hpp"
 #include "sci/core/sha256.hpp"
 #include "sci/platform/analysis_cache.hpp"
+#include "sci/platform/command_line.hpp"
 #include "sci/platform/config.hpp"
 #include "sci/platform/data_folder.hpp"
+#include "sci/platform/file_store.hpp"
 #include "sci/platform/game_files.hpp"
 #include "sci/platform/game_frame.hpp"
 #include "sci/platform/hd_pictures.hpp"
@@ -31,6 +32,7 @@
 #include "sci/platform/mt32_roms.hpp"
 #include "sci/platform/save_folder.hpp"
 #include "sci/platform/thread_executor.hpp"
+#include "sci/platform/window_scale.hpp"
 #include "sci/view/cursor.hpp"
 #include "sci/vm/events.hpp"
 #include "sci/vm/game.hpp"
@@ -41,7 +43,6 @@
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <array>
-#include <charconv>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -70,45 +71,6 @@ using SdlCoordinate = decltype(SDL_FPoint::x);
 
 namespace fs = std::filesystem;
 using sci::app::Command;
-
-constexpr std::string_view help_text =
-    "usage: colonel-hd [--viewer] [--data <folder>] [--log <categories>] [game folder]\n"
-    "       colonel-hd [--replay <file>] [--seed <n>] [--fast] [--end-state <file>]\n"
-    "                 [game folder]\n"
-    "       colonel-hd --version | --help\n"
-    "\n"
-    "--replay plays the input of a replay file\n"
-    "(docs/formats/replay-and-trace.md) into the game, with the\n"
-    "random seed of --seed (default 0); keyboard and mouse still work.\n"
-    "--fast runs the game as fast as it can instead of in real time\n"
-    "(the game plays the same; the screen is shown about 60 times a\n"
-    "second of real time and most of the music is dropped).\n"
-    "--data names the folder for colonel-hd.ini, game/, rom/, saves/,\n"
-    "cache/ and files/. Without it: the program's folder if it holds\n"
-    "colonel-hd.ini or game/ and can be written, else the per-user folder\n"
-    "(%APPDATA%\\colonel-hd on Windows, ~/.local/share/colonel-hd on Linux).\n"
-    "--log shows more messages on the console, for these categories\n"
-    "(comma-separated): vm (script problems the interpreter works\n"
-    "around), resources (resource loading); it overrides the log key of\n"
-    "colonel-hd.ini for this run.\n"
-    "--end-state writes the game's tick, globals and state hash to\n"
-    "the file when it ends (as sci-vm-trace --globals and\n"
-    "--state-hash write them at a tick past the end).\n"
-    "\n"
-    "In the game:\n"
-    "  F12               HD or original mode\n"
-    "  F11, Alt+Enter    fullscreen\n"
-    "\n"
-    "In the room viewer (--viewer):\n"
-    "  Left, Right       previous or next picture, view or font\n"
-    "  Up, Down          views: previous or next loop\n"
-    "  Tab               pictures, views, fonts\n"
-    "  H                 HD or original mode\n"
-    "  P                 pictures: visual or priority map\n"
-    "  + and -           scale N up or down; 0: the largest N that fits\n"
-    "  Space             views: stop or start the animation\n"
-    "  F11, Alt+Enter    fullscreen\n"
-    "  Escape            quit\n";
 
 void print_log(sci::core::LogLevel level, sci::core::LogCategory category, std::string_view message) noexcept {
     std::println(stderr, "[{}:{}] {}", sci::core::to_string(category), sci::core::to_string(level), message);
@@ -775,8 +737,7 @@ private:
         int width = 0;
         int height = 0;
         SDL_GetCurrentRenderOutputSize(renderer_, &width, &height);
-        const int fit = std::max(1, std::min(width / sci::app::screen_width, height / sci::app::screen_height));
-        return config_->scale > 0 ? std::min(config_->scale, fit) : std::min(fit, sci::platform::max_scale);
+        return sci::platform::scale_for_window(config_->scale, width, height);
     }
 
     void handle(sci::vm::Game& game, const SDL_Event& event) {
@@ -986,69 +947,6 @@ private:
     std::unique_ptr<SDL_Cursor, SdlDeleter> cursor_;
 };
 
-struct Options {
-    bool viewer = false;
-    std::optional<fs::path> game_folder;
-    std::optional<fs::path> replay;
-    std::optional<std::uint32_t> seed;
-    bool fast = false;
-    std::optional<fs::path> end_state;
-    std::optional<std::vector<sci::core::LogCategory>> log;
-    std::optional<fs::path> data;
-};
-
-// Sets an option that takes a value: nothing if `arg` is not one, false if
-// the value is not valid.
-std::optional<bool> value_option(Options& options, std::string_view arg, std::string_view value) {
-    if (arg == "--replay") {
-        options.replay = fs::path(value);
-    } else if (arg == "--data") {
-        options.data = fs::path(value);
-    } else if (arg == "--end-state") {
-        options.end_state = fs::path(value);
-    } else if (arg == "--log") {
-        options.log = sci::core::parse_log_categories(value);
-        return options.log.has_value();
-    } else if (arg == "--seed") {
-        std::uint32_t seed = 0;
-        const auto [end, error] = std::from_chars(std::to_address(value.begin()), std::to_address(value.end()), seed);
-        if (error != std::errc{} || end != std::to_address(value.end())) {
-            return false;
-        }
-        options.seed = seed;
-    } else {
-        return std::nullopt;
-    }
-    return true;
-}
-
-// The command line, or nothing if it is not valid.
-std::optional<Options> parse_options(std::span<char*> args) {
-    Options options;
-    for (std::size_t i = 1; i < args.size(); ++i) {
-        const std::string_view arg = args[i];
-        if (arg == "--viewer") {
-            options.viewer = true;
-        } else if (arg == "--fast") {
-            options.fast = true;
-        } else if (const auto taken =
-                       i + 1 < args.size() ? value_option(options, arg, args[i + 1]) : std::optional<bool>()) {
-            if (!*taken) {
-                return std::nullopt;
-            }
-            ++i;
-        } else if (!arg.starts_with('-') && !options.game_folder) {
-            options.game_folder = fs::path(arg);
-        } else {
-            return std::nullopt;
-        }
-    }
-    if (options.viewer && (options.replay || options.seed || options.fast || options.end_state)) {
-        return std::nullopt;
-    }
-    return options;
-}
-
 // The music device of the configuration (milestone 7): the MT-32 driver on
 // the user's ROMs with the game's patch.001, or the AdLib driver with the
 // game's patches (also when the MT-32 cannot be opened), through SDL3
@@ -1119,16 +1017,12 @@ bool write_end_state(const fs::path& path, sci::vm::Game& game) {
 // (the frame is never larger than the window, so a smaller window would
 // show a smaller N); 3 with `scale = auto`.
 int initial_window_scale(const sci::platform::Config& config) {
-    constexpr int auto_scale = 3;
-    if (config.scale <= 0) {
-        return auto_scale;
-    }
     SDL_Rect bounds{};
-    if (!SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &bounds)) {
-        return config.scale;
+    if (config.scale <= 0 || !SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &bounds)) {
+        return sci::platform::initial_window_scale(config.scale, std::nullopt);
     }
-    const int fit = std::max(1, std::min(bounds.w / sci::app::screen_width, bounds.h / sci::app::screen_height));
-    return std::min(config.scale, fit);
+    return sci::platform::initial_window_scale(config.scale,
+                                               sci::platform::DisplaySize{.width = bounds.w, .height = bounds.h});
 }
 
 // The input events of a replay file; an error message if it cannot be read.
@@ -1145,7 +1039,7 @@ sci::core::Result<std::vector<sci::vm::InputEvent>> read_replay(const fs::path& 
 // The data folder (B-03): --data, the executable's folder (portable) or
 // the per-user folder; created if needed and logged. Nothing (after
 // telling the user) if there is none or it cannot be created.
-std::optional<sci::platform::DataFolder> open_data_folder(const Options& options, const fs::path& base) {
+std::optional<sci::platform::DataFolder> open_data_folder(const sci::platform::Options& options, const fs::path& base) {
     sci::platform::DataFolder data =
         sci::platform::resolve_data_folder(options.data, base, sci::platform::per_user_data_folder());
     if (data.folder.empty()) {
@@ -1169,23 +1063,7 @@ std::optional<sci::platform::DataFolder> open_data_folder(const Options& options
     return data;
 }
 
-// The game folder of the command line, else game/ in the data folder when
-// game_folder is empty and it holds the game; rom/ when mt32_rom is empty.
-// For this run only: neither is written to the ini.
-void use_data_folder_defaults(sci::platform::Config& config, const Options& options, const fs::path& data_folder) {
-    if (options.game_folder) {
-        config.game_folder = *options.game_folder;
-    } else if (config.game_folder.empty()) {
-        if (auto game_folder = sci::platform::data_game_folder(data_folder)) {
-            config.game_folder = std::move(*game_folder);
-        }
-    }
-    if (config.mt32_rom.empty()) {
-        config.mt32_rom = data_folder / "rom";
-    }
-}
-
-int run(const Options& options) {
+int run(const sci::platform::Options& options) {
     // The hints are next to the executable; everything else is in the data
     // folder (B-03): --data, the executable's folder (portable) or the
     // per-user folder.
@@ -1206,7 +1084,7 @@ int run(const Options& options) {
     for (const sci::core::LogCategory category : options.log ? *options.log : config->log) {
         sci::core::set_log_category_enabled(category, true);
     }
-    use_data_folder_defaults(*config, options, data.folder);
+    sci::platform::use_data_folder_defaults(*config, options, data.folder);
     const bool viewer_mode = options.viewer;
     std::vector<sci::vm::InputEvent> replay;
     if (options.replay) {
@@ -1249,7 +1127,7 @@ int run(const Options& options) {
         config->scale = viewer.chosen_scale();
     } else {
         sci::platform::HdPictures pictures(analysis, executor);
-        sci::app::DirectoryFileStore files(data.folder / "files", game->files);
+        sci::platform::DirectoryFileStore files(data.folder / "files", game->files);
         GameHost host(window.get(), renderer.get(), game->manager, pictures, *config);
         // Before the game, which sends it note-offs when it goes.
         const auto audio = open_audio(game->manager, *config);
@@ -1290,15 +1168,22 @@ int run(const Options& options) {
 } // namespace
 
 int main(int argc, char** argv) {
-    const std::span<char*> args(argv, static_cast<std::size_t>(argc));
-    if (args.size() == 2 && std::string_view(args[1]) == "--version") {
-        std::println("colonel-hd {}", SCI_VERSION);
-        return 0;
+    const std::span<char*> argv_span(argv, static_cast<std::size_t>(argc));
+    std::vector<std::string_view> args;
+    for (const char* arg : argv_span.empty() ? argv_span : argv_span.subspan(1)) { // After the program's name.
+        args.emplace_back(arg);
     }
-    const auto options = parse_options(args);
-    if (!options) {
-        std::print("{}", help_text);
-        return args.size() == 2 && std::string_view(args[1]) == "--help" ? 0 : 2;
+    const sci::platform::CommandLine command = sci::platform::parse_command_line(args);
+    switch (command.action) {
+    case sci::platform::CommandAction::Version:
+        std::println("colonel-hd {}", SCI_VERSION);
+        return command.exit_code;
+    case sci::platform::CommandAction::Help:
+    case sci::platform::CommandAction::Usage:
+        std::print("{}", sci::platform::help_text());
+        return command.exit_code;
+    case sci::platform::CommandAction::Run:
+        break;
     }
     sci::core::set_assertion_handler(&print_assertion);
     sci::core::set_log_sink(&print_log);
@@ -1316,7 +1201,7 @@ int main(int argc, char** argv) {
         std::println(stderr, "Cannot start SDL: {}", SDL_GetError());
         return 1;
     }
-    const int result = run(*options);
+    const int result = run(command.options);
     SDL_Quit();
     return result;
 }
