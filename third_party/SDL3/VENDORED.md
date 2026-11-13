@@ -11,5 +11,9 @@ as the build does not use them: `test/`, `examples/`, `docs/`,
 `build-scripts/`, `android-project/`, `VisualC/`, `VisualC-GDK/`, `Xcode/`
 and the other top-level files.
 
+The build sets SDL's revision string to `SDL-3.4.18-829a65d769d9`
+(`cmake/SciThirdParty.cmake`, B-47) instead of SDL's `git describe` of
+this repository; update it with the version.
+
 To update, copy the same paths from the new release tag and record the new
 version here, in `THIRD_PARTY.md` and in `docs/ASSUMPTIONS.md`.
