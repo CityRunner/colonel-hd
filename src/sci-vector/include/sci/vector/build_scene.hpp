@@ -18,14 +18,17 @@
 
 namespace sci::vector {
 
-// A face whose pixels disagree, drawn from the 1x blocks: its region
-// pixels and their bounding box (picture pixels, inclusive).
+// A face drawn from the 1x blocks and its bounding box (picture pixels,
+// inclusive): a mixed face (its region pixels disagree; `pixels` counts
+// them) or a thin face (no region pixel of its own, only line pixels;
+// `pixels` counts the pixels whose centre it holds).
 struct Fallback {
     int pixels = 0;
     int left = 0;
     int top = 0;
     int right = 0;
     int bottom = 0;
+    bool thin = false;
 };
 
 // What the analysis did with a hint: how it was used, or why not.
@@ -75,7 +78,7 @@ struct SceneStats {
     int ellipses = 0;                // Closed chains, by ellipses.
     int fitted_lines = 0;            // PIC lines replaced by these curves.
     int rejected_fits = 0;           // Fits left out because they would change the faces.
-    std::vector<Fallback> fallbacks; // The mixed faces.
+    std::vector<Fallback> fallbacks; // The mixed faces, then the thin faces (B-37).
     // Hints (spec section 6.7).
     int hint_chains = 0;                     // Chain hints fitted as they ask.
     int hint_gaps = 0;                       // Gap hints closed.

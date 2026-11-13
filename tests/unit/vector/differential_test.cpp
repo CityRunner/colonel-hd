@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // The optimised scene sampler against the simple reference (spec section
-// 5.1), on a picture with curves, dithers, brushes and fallbacks.
+// 5.1), on a picture with curves, dithers and brushes.
 
 #include "pic_builder.hpp"
 #include "sci/pic/draw_pic.hpp"
@@ -53,4 +53,25 @@ SCI_TEST(sampler_matches_the_reference) {
         }
     }
     SCI_CHECK(differences == 0);
+
+    // The fallback list holds every fallback face (B-37): one entry per mixed
+    // face and per thin face, each with pixels and a box around them; the
+    // fallback pixels count the mixed faces' region pixels only. (This
+    // picture has none; tools/hd-report shows them on the game's pictures.)
+    const auto& stats = built.stats;
+    int thin = 0;
+    int mixed = 0;
+    int mixed_pixels = 0;
+    for (const auto& f : stats.fallbacks) {
+        SCI_CHECK(f.pixels > 0 && f.left <= f.right && f.top <= f.bottom);
+        SCI_CHECK((f.right - f.left + 1) * (f.bottom - f.top + 1) >= f.pixels);
+        if (f.thin) {
+            ++thin;
+        } else {
+            ++mixed;
+            mixed_pixels += f.pixels;
+        }
+    }
+    SCI_CHECK(thin == stats.thin_faces && mixed == stats.mixed_faces);
+    SCI_CHECK(mixed_pixels == stats.fallback_pixels);
 }
