@@ -190,8 +190,8 @@ remaining private includes).
 | New tests: every R-110 rule (no arguments, `--version`/`--help` alone and with more, all game options, the viewer with data and log, the viewer with each game option, bad seeds incl. 2^32, unknown log category, a missing value, an unknown option, two folders), the data-folder defaults, the scale rules, the file store | pass (sci-platform-tests 52, was 40) |
 | The program's exit codes by hand: `--help` 0, `--version` prints `colonel-hd 1.0.0`, `--viewer --fast` 2 | as before |
 | All CTest tests in Debug | 31 of 31 pass |
-| Pre-push on `603d661` | PREPUSH_RESULT |
-| Local gate on `603d661` (B-18, B-19, the program's playthrough end state) | GATE_RESULT |
+| Pre-push on `603d661` | all pass: style and clang-tidy over the tree, release, asan, tsan, fuzz, ARM64 under qemu |
+| Local gate on `603d661` (B-18, B-19, the program's playthrough end state) | **all match the committed goldens**: resources, pictures, sounds, 14,731 screens, VM hashes (the program's playthrough end state included) |
 | Windows CI on `603d661` ([run 43440744960](https://github.com/CityRunner/colonel-hd/actions/runs/43440744960)) | **success**: windows-x64 (release, ASan) and windows-arm64 (release) |
 
 ### Deviations and open points
