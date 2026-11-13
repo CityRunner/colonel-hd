@@ -710,6 +710,35 @@ Logs: `build/stage5/scummvm-scenarios-end.log`,
 `build/stage5/scummvm-playthrough-end.log`. The run times differ by less
 than 1 %, within the noise of the container.
 
+**12b, long fuzzing** (main session, 2026-11-13, on the final code of
+step 13, `251fb10`): `scripts/run-fuzzers.sh` with 600 s per target,
+three targets at a time (`build/stage5/fuzz-long.sh`), 3006 s in all. The
+list has 15 targets (`fuzz-save` is not in it, B-44). The run started
+before the rename was interrupted by a container restart and was run
+again from the start.
+
+| Target | Executions | Coverage | Result |
+|---|---|---|---|
+| `fuzz-byte-reader` | 33,303,623 | 118 | pass |
+| `fuzz-config` | 14,041,396 | 383 | pass |
+| `fuzz-decompress` | 3,296,606 | 224 | pass |
+| `fuzz-game-folder` | 6,169,159 | 1083 | pass |
+| `fuzz-hints` | 14,300,071 | 1298 | pass |
+| `fuzz-json` | 17,939,927 | 365 | pass |
+| `fuzz-parser` | 106,048 | 1050 | pass |
+| `fuzz-patch` | 83,606,957 | 173 | pass |
+| `fuzz-pic` | 204,658 | 685 | pass |
+| `fuzz-replay` | 65,773,394 | 191 | pass |
+| `fuzz-scene` | 8,854 | 352 | pass |
+| `fuzz-vector` | 8,224 | 4287 | pass |
+| `fuzz-view-font` | 3,006,784 | 347 | pass |
+| `fuzz-script` | 1,263 | 1179 | known failure B-45 (crash) after about 22 s |
+| `fuzz-sound` | 1,177 | 759 | known failure B-46 (timeout) after about 25 s |
+
+No new failure. A limit worth knowing: a known failure ends its target's
+run, so `fuzz-script` and `fuzz-sound` are fuzzed for seconds, not ten
+minutes, until B-45 and B-46 are fixed (iteration 2).
+
 ### Step 13: the project renamed to colonel-hd (B-43)
 
 Done before the rest of step 12 (12b-12e), so that the long fuzzing and
