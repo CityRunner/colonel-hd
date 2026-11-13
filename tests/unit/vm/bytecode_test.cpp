@@ -516,3 +516,123 @@ SCI_TEST(bytecode_objects_sends_and_calls) {
     const sci::vm::Reg address = world->machine->global(19);
     SCI_CHECK(address.is_pointer() && address.offset == 6);
 }
+
+namespace {
+
+struct VarCase {
+    VarOp operation;
+    Var type;
+    bool to_stack;
+    bool indexed;
+};
+
+// Every variable opcode, 0x40 to 0x7f.
+std::vector<VarCase> all_var_cases() {
+    std::vector<VarCase> cases;
+    for (const VarOp operation : {VarOp::Load, VarOp::Store, VarOp::Increment, VarOp::Decrement}) {
+        for (const bool indexed : {false, true}) {
+            for (const bool to_stack : {false, true}) {
+                for (const Var type : {Var::Global, Var::Local, Var::Temp, Var::Param}) {
+                    cases.push_back(
+                        VarCase{.operation = operation, .type = type, .to_stack = to_stack, .indexed = indexed});
+                }
+            }
+        }
+    }
+    return cases;
+}
+
+// The variable each case works on, and the base the indexed form names (the
+// accumulator holds the rest of the index).
+int case_index(Var type) {
+    switch (type) {
+    case Var::Global:
+    case Var::Local:
+        return 100; // Script 0's locals are the globals.
+    case Var::Temp:
+        return 0;
+    case Var::Param:
+        return 1;
+    }
+    return 0;
+}
+
+int case_base(const VarCase& c) {
+    return c.indexed && (c.type == Var::Global || c.type == Var::Local) ? case_index(c.type) - 1 : case_index(c.type);
+}
+
+int case_acc_index(const VarCase& c) {
+    return case_index(c.type) - case_base(c);
+}
+
+} // namespace
+
+// vm.cpp, the variable opcodes l[as][gltp][i], s[as][gltp][i],
+// +[as][gltp][i], -[as][gltp][i]: each of the 64 run on a variable holding
+// 10, its result (accumulator or stack) and the variable's new value kept
+// in globals. Stores take 20 from the accumulator, or 30 from the stack;
+// an indexed store to the accumulator takes its value from the stack too.
+SCI_TEST(bytecode_every_variable_opcode) {
+    const std::vector<VarCase> cases = all_var_cases();
+    SCI_CHECK(cases.size() == 64);
+    constexpr int first_result = 120; // Result of case k in global 120 + 2k, the variable in 121 + 2k.
+    ScriptBuilder script;
+    CodeAssembler& code = script.code();
+    const auto play = code.label();
+    const auto procedure = code.label();
+    code.bind(play);
+    code.op(op::push1).op_b(op::pushi, 0).call(procedure, 1).op(op::ret);
+
+    code.bind(procedure);
+    code.op_b(op::link, 1);
+    for (std::size_t k = 0; k < cases.size(); ++k) {
+        const VarCase& c = cases[k];
+        const int index = case_index(c.type);
+        const int result = first_result + static_cast<int>(2 * k);
+        load(code, 10);
+        code.var(VarOp::Store, c.type, index);
+        if (c.operation == VarOp::Store && (c.to_stack || c.indexed)) {
+            code.op_b(op::pushi, c.to_stack ? 30 : 20);
+        }
+        load(code, c.indexed ? case_acc_index(c) : 20);
+        code.var(c.operation, c.type, case_base(c), c.to_stack, c.indexed);
+        if (c.operation != VarOp::Store) {
+            code.var(VarOp::Store, Var::Global, result, c.to_stack); // From the accumulator or the stack.
+        }
+        code.var(VarOp::Load, c.type, index).var(VarOp::Store, Var::Global, result + 1);
+    }
+    code.op(op::ret);
+    const auto bytes = sci::test::game_script(script, play, 256);
+    const auto world = run_game({{0, bytes}}, {0});
+    SCI_CHECK(world != nullptr);
+    if (world == nullptr) {
+        return;
+    }
+    for (std::size_t k = 0; k < cases.size(); ++k) {
+        const VarCase& c = cases[k];
+        int expected_result = 10;
+        int expected_value = 10;
+        switch (c.operation) {
+        case VarOp::Load:
+            break;
+        case VarOp::Store:
+            expected_value = c.to_stack ? 30 : 20;
+            break;
+        case VarOp::Increment:
+            expected_result = expected_value = 11;
+            break;
+        case VarOp::Decrement:
+            expected_result = expected_value = 9;
+            break;
+        }
+        const std::size_t result = 120 + (2 * k);
+        const bool result_ok = c.operation == VarOp::Store || world->global(result) == expected_result;
+        const bool value_ok = world->global(result + 1) == expected_value;
+        if (!result_ok || !value_ok) {
+            std::println(stderr, "opcode {:02x}: result {} (expected {}), variable {} (expected {})",
+                         sci::test::var_opcode(c.operation, c.type, c.to_stack, c.indexed), world->global(result),
+                         expected_result, world->global(result + 1), expected_value);
+        }
+        SCI_CHECK(result_ok && value_ok);
+    }
+}
