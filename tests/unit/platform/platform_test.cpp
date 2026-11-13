@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "sci/core/log.hpp"
 #include "sci/platform/config.hpp"
 #include "sci/platform/identify.hpp"
 #include "sci_test.hpp"
 
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using sci::platform::GraphicsMode;
@@ -118,6 +121,24 @@ SCI_TEST(config_updates_keep_every_other_line) {
     const auto again = parse_config(updated);
     SCI_CHECK(again.has_value() && again->config.mode == GraphicsMode::Original &&
               again->config.game_folder == parsed->config.game_folder);
+}
+
+SCI_TEST(config_write_failure_is_a_warning_naming_the_file) {
+    static int warnings = 0;
+    static bool named = false;
+    const auto sink = [](sci::core::LogLevel level, sci::core::LogCategory category,
+                         std::string_view message) noexcept {
+        if (level == sci::core::LogLevel::Warning && category == sci::core::LogCategory::General) {
+            ++warnings;
+            named = message.contains("no-such-folder-for-colonel-hd");
+        }
+    };
+    const auto previous = sci::core::set_log_sink(sink);
+    // A file in a folder that does not exist cannot be written.
+    const auto path = std::filesystem::temp_directory_path() / "no-such-folder-for-colonel-hd" / "colonel-hd.ini";
+    SCI_CHECK(!sci::platform::write_config_file(path, "[colonel-hd]\nformat = 1\n"));
+    sci::core::set_log_sink(previous);
+    SCI_CHECK(warnings == 1 && named);
 }
 
 SCI_TEST(config_file_and_section_have_the_colonel_hd_name) {

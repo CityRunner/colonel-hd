@@ -85,4 +85,8 @@ struct ParsedConfig {
 // With no text (no file yet), the commented defaults of format_config.
 [[nodiscard]] std::string update_config(std::string_view text, const Config& before, const Config& after);
 
+// Writes the configuration file's text; false, with a General warning that
+// names the file, if it cannot be written (B-04).
+bool write_config_file(const std::filesystem::path& path, std::string_view text);
+
 } // namespace sci::platform

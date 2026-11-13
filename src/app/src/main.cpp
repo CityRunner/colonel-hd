@@ -374,13 +374,7 @@ void save_config(const fs::path& path, const LoadedConfig& loaded, const sci::pl
     if (!loaded.text.empty() && text == loaded.text) {
         return;
     }
-    std::ofstream file(path, std::ios::binary);
-    file << text;
-    file.close();
-    if (!file) {
-        sci::core::log(sci::core::LogLevel::Warning, sci::core::LogCategory::General,
-                       std::format("Cannot write the configuration {}", path.string()));
-    }
+    sci::platform::write_config_file(path, text);
 }
 
 struct Game {

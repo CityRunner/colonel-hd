@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <charconv>
 #include <format>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -340,6 +341,18 @@ std::string update_config(std::string_view text, const Config& before, const Con
         out.insert(section_end, missing);
     }
     return out;
+}
+
+bool write_config_file(const std::filesystem::path& path, std::string_view text) {
+    std::ofstream file(path, std::ios::binary);
+    file << text;
+    file.close();
+    if (!file) {
+        core::log(core::LogLevel::Warning, core::LogCategory::General,
+                  std::format("Cannot write the configuration {}", path.string()));
+        return false;
+    }
+    return true;
 }
 
 std::filesystem::path saves_folder(const Config& config, const std::filesystem::path& config_folder) {
