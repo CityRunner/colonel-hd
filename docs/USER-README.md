@@ -111,6 +111,18 @@ font, in HD or in the original look.
 
 `colonel-hd --help` lists the keys and options.
 
+## Options for testing
+
+These are for testing the program, not for playing; `colonel-hd --help`
+describes them.
+
+| Option | Effect |
+|---|---|
+| `--replay <file>` | Plays the input recorded in a replay file into the game (`docs/formats/replay-and-trace.md` in the source); the keyboard and mouse still work. |
+| `--seed <n>` | The random seed (default 0), so that a replay plays the same each time. |
+| `--fast` | Runs the game as fast as it can instead of in real time; most of the music is dropped. |
+| `--end-state <file>` | Writes the game's tick, global variables and state hash to the file when it ends. |
+
 ## Licence
 
 colonel-hd is free software under the GNU General Public License, version 3
