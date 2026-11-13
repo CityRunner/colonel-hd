@@ -72,8 +72,8 @@ void check_golden(std::string_view name, std::string_view value) {
 }
 
 std::string hash_text(std::string_view text) {
-    return sci::core::to_hex(
-        sci::core::sha256({reinterpret_cast<const std::uint8_t*>(text.data()), text.size()})); // NOLINT
+    const std::vector<std::uint8_t> bytes(text.begin(), text.end());
+    return sci::core::to_hex(sci::core::sha256(bytes));
 }
 
 // The trace of a run: "<call> <tick> <name>(<arguments>) = <result>".
