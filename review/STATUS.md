@@ -5,10 +5,10 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Iteration 2: P1 to P4 done and merged into `main` (`b0fe034`); P5 in progress (2026-11-13).** Version 1.0.0 is set; the tag waits until P5 to P7 and the customer's laptop run are done (customer's choice). Stage 5
+**Iteration 2: P1 to P5 done and merged into `main` (P5 merged 2026-11-13, customer: "Merge P5, proceed with P6"); P6 in progress.** Version 1.0.0 is set; the tag waits until P5 to P7 and the customer's laptop run are done (customer's choice). Stage 5
 is merged into `main` (`b531169`). Iteration 2 runs on branch
 `iteration-2`: order in `review/ITERATION2_PLAN.md`, results in
-`review/ITERATION2_REPORT.md`. P5: the VM in CI. Stage 5
+`review/ITERATION2_REPORT.md`. P6: a testable application (B-32, B-23). Stage 5
 (started
 2026-11-06 on branch `refactor` from `a0422d6`). The plan
 (`review/REFACTOR_PLAN.md`) was approved on 2026-11-06 ("1 approve"),
@@ -403,20 +403,7 @@ game-dependent run times).
   renamed patches in `build/reference-scummvm` (the old build is kept in
   `build/reference-scummvm-sierra`).
 
-- **P5 resume notes (2026-11-13):** B-06 done (`04badd1`..`2503817`):
-  `tests/unit/vm/script_assembler.hpp` (assembler: opcodes, labels,
-  objects/classes, strings, exports, locals, vocab 996/997, blank font),
-  `bytecode_world.hpp` (game of assembled scripts, `run()` via
-  init_game/run_game), `bytecode_test.cpp` (every accepted opcode tested;
-  machine.cpp 73.3 % with `scripts/coverage.sh`). B-07 part 1 done
-  (`b5916dd`): `home_game_test.cpp` runs through `run_deterministic` and
-  checks kernel results in the trace (strings, lists, maths, scripts, GC).
-  Next for B-07: part 2 graphics (needs a view builder from
-  `docs/formats/views-and-fonts.md`; `tests/unit/pic/pic_builder.hpp` for
-  pictures; the cached selector names of `src/sci-vm/src/selectors.hpp`
-  appended to `selector_names()` after `base`), part 3 menus, controls,
-  parser (vocab 0/900/901?), sound, part 4 save/restore round trip and
-  goldens of the trace (hashes, generated twice). Then B-08: CI job
-  running `scripts/coverage.sh --min-vm 70`. sci-vm was 47.0 % after
-  B-06. The pre-push after `2503817` failed only because the unfinished
-  home game was registered mid-run; rerun pre-push at the P5 end.
+- **P5 done (2026-11-13):** B-06, B-07, B-08 done; report in
+  `review/ITERATION2_REPORT.md`. sci-vm 73.2 % in CI; the coverage job is
+  part of the pull request gate. Merged into `main` on the customer's
+  word. Next: P6 (B-32 options and `GameHost`, B-23 private includes).
