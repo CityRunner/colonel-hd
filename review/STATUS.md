@@ -402,3 +402,21 @@ game-dependent run times).
   `/home/user/sierra-hd`. The reference ScummVM was rebuilt from the
   renamed patches in `build/reference-scummvm` (the old build is kept in
   `build/reference-scummvm-sierra`).
+
+- **P5 resume notes (2026-11-13):** B-06 done (`04badd1`..`2503817`):
+  `tests/unit/vm/script_assembler.hpp` (assembler: opcodes, labels,
+  objects/classes, strings, exports, locals, vocab 996/997, blank font),
+  `bytecode_world.hpp` (game of assembled scripts, `run()` via
+  init_game/run_game), `bytecode_test.cpp` (every accepted opcode tested;
+  machine.cpp 73.3 % with `scripts/coverage.sh`). B-07 part 1 done
+  (`b5916dd`): `home_game_test.cpp` runs through `run_deterministic` and
+  checks kernel results in the trace (strings, lists, maths, scripts, GC).
+  Next for B-07: part 2 graphics (needs a view builder from
+  `docs/formats/views-and-fonts.md`; `tests/unit/pic/pic_builder.hpp` for
+  pictures; the cached selector names of `src/sci-vm/src/selectors.hpp`
+  appended to `selector_names()` after `base`), part 3 menus, controls,
+  parser (vocab 0/900/901?), sound, part 4 save/restore round trip and
+  goldens of the trace (hashes, generated twice). Then B-08: CI job
+  running `scripts/coverage.sh --min-vm 70`. sci-vm was 47.0 % after
+  B-06. The pre-push after `2503817` failed only because the unfinished
+  home game was registered mid-run; rerun pre-push at the P5 end.
