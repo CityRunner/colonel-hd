@@ -91,7 +91,7 @@ sci_add_unit_test(NAME sci-vm-tests
 # The tests reach into sci-vm's internals; the state tests build a resource
 # folder.
 sci_test_private_includes(sci-vm-tests sci-vm)
-target_include_directories(sci-vm-tests PRIVATE resource)
+target_include_directories(sci-vm-tests PRIVATE resource pic)
 
 # The window layer's key and cursor conversion, compiled from the program's
 # sources (the program itself is no library).

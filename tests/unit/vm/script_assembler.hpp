@@ -388,6 +388,35 @@ inline Bytes blank_font() {
     return out;
 }
 
+// A view of one loop with two 8 x 8 cels of solid colours 4 and 2
+// (docs/formats/views-and-fonts.md): transparent colour 15, no
+// displacement.
+inline Bytes small_view() {
+    Bytes out;
+    out.push_back(1);      // Loop count.
+    out.push_back(0);      // Flags.
+    append_u16le(out, 0);  // Mirror mask.
+    append_u16le(out, 0);  // Version.
+    append_u16le(out, 0);  // Palette.
+    append_u16le(out, 10); // Loop 0.
+    // The loop at 10: two cels, an unused word, their offsets.
+    append_u16le(out, 2);
+    append_u16le(out, 0);
+    append_u16le(out, 18);
+    append_u16le(out, 18 + 12);
+    for (const std::uint8_t colour : {std::uint8_t{4}, std::uint8_t{2}}) {
+        append_u16le(out, 8); // Width.
+        append_u16le(out, 8); // Height.
+        out.push_back(0);     // Displacement x.
+        out.push_back(0);     // Displacement y.
+        out.push_back(15);    // Transparent colour.
+        // 64 pixels: four runs of 15 and one of 4.
+        const auto run = [colour](unsigned length) { return static_cast<std::uint8_t>((length << 4U) | colour); };
+        out.insert(out.end(), {run(15), run(15), run(15), run(15), run(4)});
+    }
+    return out;
+}
+
 // Vocab 997: the selector names, selector n being names[n].
 inline Bytes selector_vocab(const std::vector<std::string>& names) {
     Bytes out;

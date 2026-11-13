@@ -18,6 +18,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -30,12 +31,45 @@ inline constexpr int species = 0, super_class = 1, info = 2, name = 3, play = 4,
                      sum = 8, base = 9, count = 10;
 } // namespace sel
 
+// The test selectors above, then the names the interpreter looks up
+// (src/sci-vm/src/selectors.hpp), which kernel functions read and write.
 inline std::vector<std::string> selector_names() {
-    return {"species", "superClass", "-info-", "name", "play", "value", "other", "twice", "sum", "base"};
+    return {
+        "species",   "superClass",  "-info-",    "name",      "play",     "value",      "other",    "twice",
+        "sum",       "base",        "y",         "x",         "view",     "loop",       "cel",      "underBits",
+        "nsTop",     "nsLeft",      "nsBottom",  "nsRight",   "lsTop",    "lsLeft",     "lsBottom", "lsRight",
+        "signal",    "illegalBits", "brTop",     "brLeft",    "brBottom", "brRight",    "text",     "elements",
+        "mode",      "state",       "font",      "type",      "cursor",   "max",        "mark",     "sort",
+        "message",   "restore",     "number",    "handle",    "nodePtr",  "client",     "dx",       "dy",
+        "b-moveCnt", "b-i1",        "b-i2",      "b-di",      "b-xAxis",  "b-incr",     "xStep",    "yStep",
+        "xLast",     "yLast",       "moveSpeed", "canBeHere", "heading",  "mover",      "doit",     "isBlocked",
+        "looper",    "priority",    "modifiers", "replay",    "wordFail", "syntaxFail", "claimed",  "delete",
+        "z",         "setPri",      "size",      "min",       "sec",      "frame",      "vol",      "pri",
+        "moveDone",
+    };
 }
 
+// The number of a selector of selector_names().
+inline int selector_id(std::string_view name) {
+    const std::vector<std::string> names = selector_names();
+    for (std::size_t i = 0; i < names.size(); ++i) {
+        if (names[i] == name) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
+// Another resource of a test game.
+struct ExtraResource {
+    resource::ResourceType type;
+    int number;
+    Bytes data;
+};
+
 inline std::optional<resource::ResourceManager> assembled_game(const std::map<int, Bytes>& scripts,
-                                                               const std::vector<int>& class_scripts) {
+                                                               const std::vector<int>& class_scripts,
+                                                               const std::vector<ExtraResource>& extra = {}) {
     Bytes volume;
     Bytes map;
     const auto add = [&](resource::ResourceType type, int number, const Bytes& data) {
@@ -48,6 +82,9 @@ inline std::optional<resource::ResourceManager> assembled_game(const std::map<in
     add(resource::ResourceType::Font, 0, blank_font());
     for (const auto& [number, data] : scripts) {
         add(resource::ResourceType::Script, number, data);
+    }
+    for (const ExtraResource& resource : extra) {
+        add(resource.type, resource.number, resource.data);
     }
     append_map_terminator(map);
     std::vector<resource::GameFile> files;

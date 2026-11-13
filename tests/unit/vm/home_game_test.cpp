@@ -8,6 +8,7 @@
 
 #include "bytecode_world.hpp"
 #include "kernel.hpp"
+#include "pic_builder.hpp"
 #include "sci/vm/interpreter.hpp"
 #include "sci_test.hpp"
 
@@ -59,9 +60,10 @@ struct Trace {
     }
 };
 
-Trace run_traced(const std::map<int, sci::test::Bytes>& scripts, const std::vector<int>& classes) {
+Trace run_traced(const std::map<int, sci::test::Bytes>& scripts, const std::vector<int>& classes,
+                 const std::vector<sci::test::ExtraResource>& extra = {}) {
     Trace trace;
-    auto resources = sci::test::assembled_game(scripts, classes);
+    auto resources = sci::test::assembled_game(scripts, classes, extra);
     SCI_CHECK(resources.has_value());
     if (!resources) {
         return trace;
@@ -72,6 +74,9 @@ Trace run_traced(const std::map<int, sci::test::Bytes>& scripts, const std::vect
     trace.fault = result.fault;
     if (result.fault) {
         std::println(stderr, "fault: {}", *result.fault);
+        for (std::size_t i = trace.lines.size() > 4 ? trace.lines.size() - 4 : 0; i < trace.lines.size(); ++i) {
+            std::println(stderr, "  {}", trace.lines[i]);
+        }
     }
     return trace;
 }
@@ -234,6 +239,159 @@ SCI_TEST(home_game_strings_lists_maths_scripts) {
         {{"RespondsTo", 0}, "1"},
         {{"RespondsTo", 1}, "0"},
         {{"IsObject", 2}, "1"},
+    };
+    for (const auto& [call, value] : expected) {
+        const std::string got = trace.result(call.first, call.second);
+        if (got != value) {
+            std::println(stderr, "{} #{}: {} instead of {}", call.first, call.second, got, value);
+        }
+        SCI_CHECK(got == value);
+    }
+}
+
+namespace {
+
+// A picture: a red rectangle filled green on white (pic_builder.hpp).
+sci::test::Bytes small_picture() {
+    sci::test::PicBuilder pic;
+    pic.color(4).rectangle(20, 20, 300, 170).color(2).fill(100, 100);
+    return pic.end();
+}
+
+// The actor class's properties: what kAnimate, kCanBeHere, kDirLoop and
+// kBaseSetter read and write, with a view at (100, 120).
+std::vector<std::pair<int, int>> actor_properties() {
+    using sci::test::selector_id;
+    std::vector<std::pair<int, int>> properties;
+    const std::vector<std::pair<std::string_view, int>> values{
+        {"y", 120},         {"x", 100},    {"view", 1},     {"loop", 0},     {"cel", 0},
+        {"underBits", 0},   {"nsTop", 0},  {"nsLeft", 0},   {"nsBottom", 0}, {"nsRight", 0},
+        {"lsTop", 0},       {"lsLeft", 0}, {"lsBottom", 0}, {"lsRight", 0},  {"signal", 0},
+        {"illegalBits", 0}, {"brTop", 0},  {"brLeft", 0},   {"brBottom", 0}, {"brRight", 0},
+        {"priority", 0},    {"z", 0},      {"xStep", 3},    {"yStep", 2},    {"heading", 0},
+    };
+    properties.reserve(values.size());
+    for (const auto& [name, value] : values) {
+        properties.emplace_back(selector_id(name), value);
+    }
+    return properties;
+}
+
+} // namespace
+
+// The graphics kernel functions (kgraphics.cpp, kevent.cpp's neighbours):
+// a picture drawn and shown, a window with a title, text displayed and
+// measured, the ports, a view's loops and cels, a cel drawn and one added
+// to the picture, an actor animated, and the Graph subfunctions.
+SCI_TEST(home_game_graphics) {
+    using sci::test::ObjectSpec;
+    ScriptBuilder script;
+    CodeAssembler& code = script.code();
+    const auto play = code.label();
+    const std::size_t title = script.add_string("Title");
+    const std::size_t text = script.add_string("Hello there");
+    const std::size_t actor_class = 1;
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 0,
+        .super_class = -1,
+        .extra_properties = {},
+        .methods = {},
+    });
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = static_cast<int>(actor_class),
+        .super_class = 0,
+        .extra_properties = actor_properties(),
+        .methods = {},
+    });
+    const std::size_t game = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 0,
+        .super_class = 0,
+        .extra_properties = {},
+        .methods = {{sci::test::sel::play, play}},
+    });
+    const std::size_t actor = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 1,
+        .super_class = 1,
+        .extra_properties = actor_properties(),
+        .methods = {},
+    });
+    script.export_object(game);
+    script.set_locals(std::vector<std::uint16_t>(64, 0));
+    const auto string = [&code](std::size_t index) { code.string_address(op::lofss, index); };
+    const auto global = [&code](int index) { code.var(VarOp::Load, Var::Global, index, true); };
+    const auto keep = [&code](int index) { code.var(VarOp::Store, Var::Global, index); };
+    const auto the_actor = [&code, actor] { code.object_address(op::lofss, actor); };
+    const auto rect = [&code] { code.raw({sci::test::opcode_byte(op::lea, true), 0, 50}).op(op::push); };
+    code.bind(play);
+
+    kcall(code, "DrawPic", 1, [&] { push(code, 1); });
+    kcall(code, "Show", 1, [&] { push(code, 1); });
+    kcall(code, "PicNotValid", 0, [] {});
+    kcall(code, "GetPort", 0, [] {});
+    keep(0);
+    kcall(code, "NewWindow", 9, [&] {
+        push(code, 20), push(code, 20), push(code, 120), push(code, 200), string(title);
+        push(code, 0), push(code, -1), push(code, 0), push(code, 15);
+    });
+    keep(1);
+    kcall(code, "Display", 1, [&] { string(text); });
+    kcall(code, "TextSize", 4, [&] { rect(), string(text), push(code, 0), push(code, 0); });
+    kcall(code, "SetPort", 1, [&] { global(0); });
+    kcall(code, "DisposeWindow", 1, [&] { global(1); });
+
+    kcall(code, "NumLoops", 1, [&] { the_actor(); });
+    kcall(code, "NumCels", 1, [&] { the_actor(); });
+    kcall(code, "CelWide", 3, [&] { push(code, 1), push(code, 0), push(code, 1); });
+    kcall(code, "CelHigh", 3, [&] { push(code, 1), push(code, 0), push(code, 1); });
+    kcall(code, "DrawCel", 6,
+          [&] { push(code, 1), push(code, 0), push(code, 0), push(code, 50), push(code, 50), push(code, 5); });
+    kcall(code, "AddToPic", 7, [&] {
+        push(code, 1), push(code, 0), push(code, 1), push(code, 60), push(code, 160), push(code, 6), push(code, 0);
+    });
+
+    // The cast: a list holding the actor, animated twice.
+    kcall(code, "NewList", 0, [] {});
+    keep(2);
+    kcall(code, "NewNode", 2, [&] { the_actor(), the_actor(); });
+    keep(3);
+    kcall(code, "AddToEnd", 2, [&] { global(2), global(3); });
+    kcall(code, "Animate", 2, [&] { global(2), push(code, 0); });
+    kcall(code, "Animate", 2, [&] { global(2), push(code, 0); });
+    kcall(code, "CanBeHere", 2, [&] { the_actor(), global(2); }); // SCI0 passes the cast.
+    kcall(code, "OnControl", 3, [&] { push(code, 1), push(code, 100), push(code, 100); });
+    kcall(code, "CoordPri", 1, [&] { push(code, 100); });
+    kcall(code, "DirLoop", 2, [&] { the_actor(), push(code, 90); });
+    kcall(code, "BaseSetter", 1, [&] { the_actor(); });
+
+    // Graph subfunctions (kgraphics.cpp kGraph).
+    kcall(code, "Graph", 1, [&] { push(code, 2); });
+    kcall(code, "Graph", 6,
+          [&] { push(code, 4), push(code, 10), push(code, 10), push(code, 30), push(code, 150), push(code, 1); });
+    kcall(code, "Graph", 6,
+          [&] { push(code, 7), push(code, 10), push(code, 10), push(code, 40), push(code, 60), push(code, 1); });
+    keep(4);
+    kcall(code, "Graph", 7, [&] {
+        push(code, 11), push(code, 10), push(code, 10), push(code, 40), push(code, 60), push(code, 1), push(code, 5);
+    });
+    kcall(code, "Graph", 2, [&] { push(code, 8), global(4); });
+    kcall(code, "Graph", 5, [&] { push(code, 12), push(code, 10), push(code, 10), push(code, 40), push(code, 60); });
+    kcall(code, "Graph", 5, [&] { push(code, 13), push(code, 10), push(code, 10), push(code, 40), push(code, 60); });
+    code.op(op::ret);
+
+    const Trace trace =
+        run_traced({{0, script.build()}}, {0, 0},
+                   {
+                       {.type = sci::resource::ResourceType::Pic, .number = 1, .data = small_picture()},
+                       {.type = sci::resource::ResourceType::View, .number = 1, .data = sci::test::small_view()},
+                   });
+    SCI_CHECK(!trace.fault.has_value());
+    const std::vector<std::pair<std::pair<std::string_view, int>, std::string_view>> expected{
+        {{"NumLoops", 0}, "1"}, {{"NumCels", 0}, "2"},   {{"CelWide", 0}, "8"},
+        {{"CelHigh", 0}, "8"},  {{"CanBeHere", 0}, "1"}, {{"GraphGetColorCount", 0}, "16"},
     };
     for (const auto& [call, value] : expected) {
         const std::string got = trace.result(call.first, call.second);
