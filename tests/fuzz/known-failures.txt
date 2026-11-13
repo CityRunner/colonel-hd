@@ -6,5 +6,3 @@
 # Remove a line when its bug is fixed.
 #
 # <target> <bug> <crash|timeout> <extended regex matched against the stack frames of the report>
-fuzz-script B-45 crash in sci::vm::Object::species\(\) const .*/object\.hpp:53
-fuzz-sound B-46 timeout in sci::vm::MidiParser::on_timer\(\) .*/midi_parser\.cpp

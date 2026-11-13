@@ -303,6 +303,17 @@ void Script::initialize_objects(SegManager& segments, SegmentId segment) {
             }
             const Reg address = make_reg(segment, position);
             Object* object = init_object(address);
+            // Every object starts with -species-, -super-, -info- and name
+            // (object.hpp). A malformed script may declare fewer properties;
+            // reading them would go past the object (B-45). ScummVM asserts
+            // on the same read (Common::Array); here it is a load fault.
+            if (object->var_count() < minimum_object_properties) {
+                segments.faults().raise(std::format("Object at {:04x}:{:04x} in script {} has {} properties, fewer "
+                                                    "than the {} every object has",
+                                                    address.segment, address.offset, number_, object->var_count(),
+                                                    minimum_object_properties));
+                return;
+            }
             object->init_species(segments, address);
             if (!object->init_base_object(segments, address)) {
                 segments.faults().raise(std::format("Failed to locate base object for object at {:04x}:{:04x} in "
