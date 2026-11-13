@@ -6,7 +6,11 @@ that imitates a curve but is too coarse for the automatic fitting: an
 arch, a drape, a barrel. A hint says which lines form the curve, and of
 what kind it is.
 
-There is one file per picture, `pic.NNN.json`. The analysis is done
+There is one file per picture that needs hints, `pic.NNN.json`: 86 of the
+game's 88 pictures. Pictures 55 and 992 have no file: the scene analysis
+found no curve, region label or symmetry to record in them (milestone 3a,
+`docs/ASSUMPTIONS.md`), and a picture without a file is drawn without hints
+(B-31). The analysis is done
 offline, and the files are committed; the program never changes them. They
 were frozen at the milestone 3b gate (addendum A1 in
 `docs/SPEC_ADDENDA.md`; 2026-10-21). A change is now a reviewed commit like

@@ -2939,3 +2939,38 @@ the old numbers to the new ones, so older references stay unambiguous:
   `CityRunner/colonel-hd`; links to earlier pull requests in this file are
   rewritten to the new name (GitHub redirects the old one). **Decided
   (customer).**
+
+## `-fwrapv` stays in Release only (2026-11-13, B-33)
+
+- **The question:** Release and RelWithDebInfo builds without sanitizers
+  compile with `-fwrapv`; Debug and the sanitizer builds do not
+  (`cmake/SciCompilerFlags.cmake`). The goldens and the VM hashes run on
+  Release, so code that relied on signed wrap-around could pass there and
+  never show in a UBSan build.
+- **Evidence:** the stage 5 baseline (`review/REFACTOR_REPORT.md`, B-20)
+  ran `sci-vm-trace` of the `asan` build (ASan + UBSan,
+  `-fno-sanitize-recover=all`) over the 39 scenarios with AdLib and with
+  the MT-32 (78 runs) and over the whole playthrough: every run exited 0
+  with no UBSan report, so no signed overflow happens in them. The CTest
+  suites under `asan` pass on every change.
+- **Decision:** keep the flags as they are (the customer's default for
+  B-33): `-fwrapv` in Release is a safety margin, not something the code
+  relies on, as far as these runs reach. A UBSan report of a signed
+  overflow in any later run is a defect to fix at its site. **Decided
+  (default accepted by the customer, 2026-11-06).**
+
+## Angles outside -360 to 360 never reach the trigonometry (2026-11-13, B-39)
+
+- **The question:** `src/sci-vm/src/trigonometry.cpp` takes sine and cosine
+  from a table matching glibc for angles from -360 to 360; other angles use
+  the angle modulo 360, which may differ from glibc (so from ScummVM) in
+  the last bits. Whether the game passes such angles was not known.
+- **Evidence:** the kernel-call traces of the 39 scenarios and the
+  playthrough (`build/vm-baseline/`, 119 runs, B-19) were searched for the
+  kernel functions that take an angle. TimesSin, TimesCos, SinDiv and
+  CosDiv are never called; GetDistance is called 15,855 times, always with
+  4 or 5 arguments, so never with its optional angle (the 6th). No angle
+  reaches the table in the tested release.
+- **Decision:** no code change; the comment in `trigonometry.cpp` says
+  so (B-39 closed with the customer's default). **Decided (default
+  accepted by the customer, 2026-11-06).**
