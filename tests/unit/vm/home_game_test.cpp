@@ -10,8 +10,10 @@
 #include "kernel.hpp"
 #include "pic_builder.hpp"
 #include "sample_vocabulary.hpp"
+#include "save_game.hpp"
 #include "sci/vm/interpreter.hpp"
 #include "sci_test.hpp"
+#include "state.hpp"
 
 #include <array>
 #include <cstdint>
@@ -822,4 +824,141 @@ SCI_TEST(home_game_parser_sound_events) {
     SCI_CHECK(trace.result("Parse", 0) == "1");
     SCI_CHECK(trace.result("MapKeyToDir", 0) == "1");
     SCI_CHECK(trace.result("GameIsRestarting", 1) != "<no call>");
+}
+
+namespace {
+
+// A home-made game whose play method leaves state of every kind behind: a
+// picture, an open window, a cast list with an actor animated, a clone, a
+// playing sound and some globals.
+std::optional<sci::resource::ResourceManager> rich_state_game() {
+    using sci::test::ObjectSpec;
+    ScriptBuilder script;
+    CodeAssembler& code = script.code();
+    const auto play = code.label();
+    const std::size_t title = script.add_string("Saved");
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 0,
+        .super_class = -1,
+        .extra_properties = {},
+        .methods = {},
+    });
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 1,
+        .super_class = 0,
+        .extra_properties = actor_properties(),
+        .methods = {},
+    });
+    const auto sound_properties = properties_of({
+        {"number", 1},
+        {"loop", -1},
+        {"priority", 0},
+        {"state", 0},
+        {"signal", 0},
+        {"vol", 127},
+        {"handle", 0},
+        {"dataInc", 0},
+        {"nodePtr", 0},
+    });
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 2,
+        .super_class = 0,
+        .extra_properties = sound_properties,
+        .methods = {},
+    });
+    const std::size_t game = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 0,
+        .super_class = 0,
+        .extra_properties = {},
+        .methods = {{sci::test::sel::play, play}},
+    });
+    const std::size_t actor = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 1,
+        .super_class = 1,
+        .extra_properties = actor_properties(),
+        .methods = {},
+    });
+    const std::size_t sound = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 2,
+        .super_class = 2,
+        .extra_properties = sound_properties,
+        .methods = {},
+    });
+    script.export_object(game);
+    script.set_locals(std::vector<std::uint16_t>(64, 0));
+    const auto object = [&code](std::size_t index) { code.object_address(op::lofss, index); };
+    const auto keep = [&code](int index) { code.var(VarOp::Store, Var::Global, index); };
+    const auto global = [&code](int index) { code.var(VarOp::Load, Var::Global, index, true); };
+    code.bind(play);
+    kcall(code, "DrawPic", 1, [&] { push(code, 1); });
+    kcall(code, "NewWindow", 9, [&] {
+        push(code, 20), push(code, 20), push(code, 120), push(code, 200);
+        code.string_address(op::lofss, title);
+        push(code, 0), push(code, -1), push(code, 0), push(code, 15);
+    });
+    keep(1);
+    kcall(code, "NewList", 0, [] {});
+    keep(2);
+    kcall(code, "NewNode", 2, [&] { object(actor), object(actor); });
+    keep(3);
+    kcall(code, "AddToEnd", 2, [&] { global(2), global(3); });
+    kcall(code, "Animate", 2, [&] { global(2), push(code, 0); });
+    kcall(code, "Clone", 1, [&] { object(actor); });
+    keep(4);
+    kcall(code, "DoSound", 2, [&] { push(code, 0), object(sound); });
+    kcall(code, "DoSound", 2, [&] { push(code, 1), object(sound); });
+    kcall(code, "Wait", 1, [&] { push(code, 10); });
+    code.op_b(op::ldi, 77);
+    keep(5);
+    code.op(op::ret);
+    sci::test::Bytes sound_resource(0x21, 0);
+    sound_resource[2] = 0x04;
+    const std::vector<std::uint8_t> song{0x00, 0x90, 0x3C, 0x40, 0x60, 0x80, 0x3C, 0x00, 0x00, 0xFC};
+    sound_resource.insert(sound_resource.end(), song.begin(), song.end());
+    using sci::resource::ResourceType;
+    return sci::test::assembled_game({{0, script.build()}}, {0, 0, 0},
+                                     {
+                                         {.type = ResourceType::Pic, .number = 1, .data = small_picture()},
+                                         {.type = ResourceType::View, .number = 1, .data = sci::test::small_view()},
+                                         {.type = ResourceType::Sound, .number = 1, .data = sound_resource},
+                                     });
+}
+
+} // namespace
+
+// A save of the home-made game read into a fresh machine of the same game
+// gives the same persistent state: every component but the execution.
+SCI_TEST(home_game_save_and_restore_round_trip) {
+    auto source_game = rich_state_game();
+    auto target_game = rich_state_game();
+    SCI_CHECK(source_game.has_value() && target_game.has_value());
+    if (!source_game || !target_game) {
+        return;
+    }
+    sci::test::BytecodeWorld source(std::move(*source_game));
+    SCI_CHECK(source.run());
+    SCI_CHECK(source.global(5) == 77);
+    const sci::vm::StateHash before = sci::vm::state_hash(*source.machine);
+    const std::vector<std::uint8_t> file = sci::vm::write_save(*source.machine, "home", "test");
+    SCI_CHECK(sci::vm::state_hash(*source.machine).total == before.total);
+
+    sci::test::BytecodeWorld target(std::move(*target_game));
+    SCI_CHECK(target.machine->init_game());
+    SCI_CHECK(sci::vm::state_hash(*target.machine).persistent != before.persistent);
+    SCI_CHECK(sci::vm::read_save(*target.machine, file).has_value());
+    const sci::vm::StateHash after = sci::vm::state_hash(*target.machine);
+    SCI_CHECK(after.persistent == before.persistent);
+    for (std::size_t i = 1; i < before.components.size() && i < after.components.size(); ++i) {
+        if (after.components[i].digest != before.components[i].digest) {
+            std::println(stderr, "component {} differs", before.components[i].name);
+        }
+        SCI_CHECK(after.components[i].digest == before.components[i].digest);
+    }
+    SCI_CHECK(target.global(5) == 77);
 }
