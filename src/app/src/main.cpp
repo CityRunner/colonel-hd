@@ -904,9 +904,10 @@ private:
         for (const sci::render::PixelRect& rect : screen_.take_dirty()) {
             dirty.push_back(sci::app::Rect{.x = rect.x, .y = rect.y, .width = rect.width, .height = rect.height});
         }
-        presenter_.present(screen_.frame(), screen_.scale(), redraw_ ? full_frame() : dirty);
+        const std::vector<sci::app::Rect> uploaded = redraw_ ? full_frame() : dirty;
+        presenter_.present(screen_.frame(), screen_.scale(), uploaded);
         if (timing_ != nullptr) {
-            timing_->frame(milliseconds_since(frame_start), compose_ms);
+            time_frame(game, milliseconds_since(frame_start), compose_ms, uploaded);
         }
         redraw_ = false;
         last_serial_ = shown.serial;
@@ -920,6 +921,27 @@ private:
     [[nodiscard]] static double milliseconds_since(std::uint64_t start) {
         return static_cast<double>(SDL_GetPerformanceCounter() - start) * 1000.0 /
                static_cast<double>(SDL_GetPerformanceFrequency());
+    }
+
+    // One presented frame for --timing, and its details if it was slow.
+    void time_frame(sci::vm::Game& game, double ms, double compose_ms, std::span<const sci::app::Rect> uploaded) {
+        timing_->frame(ms, compose_ms);
+        if (ms <= sci::platform::frame_budget_ms) {
+            return;
+        }
+        std::uint64_t pixels = 0;
+        for (const sci::app::Rect& rect : uploaded) {
+            pixels += static_cast<std::uint64_t>(rect.width) * static_cast<std::uint64_t>(rect.height);
+        }
+        const std::vector<sci::vm::Reg> globals = game.globals();
+        constexpr std::size_t room = 11;
+        timing_->slow_frame(sci::platform::SlowFrame{
+            .tick = game.ticks(),
+            .room = globals.size() > room ? globals[room].offset : 0,
+            .ms = ms,
+            .compose_ms = compose_ms,
+            .uploaded = pixels,
+        });
     }
 
     // A room entry starts when a picture's HD images become pending and

@@ -55,6 +55,7 @@ entry, in order:
 | `room_entries`, `room_entry_ms_median`, `room_entry_ms_worst` | per new picture: from the request of its HD images to the first frame composed with them (the game goes on meanwhile, paced in real time as in normal play rather than as fast as it can; the frame shown is held, then the picture at 1x, `docs/hd-composition.md`) |
 | `peak_memory_kib` | the process's peak resident memory (peak working set on Windows) |
 | `room,<room>,<ms>` | each room entry: the room number (global 11) and its time |
+| `slow,<tick>,<room>,<ms>,<compose ms>,<pixels>` | each frame over 16.7 ms: the game's tick, the room, its time, the composing part, and the frame pixels uploaded |
 
 The targets (spec section 10.3, B-09): no frame over 16.7 ms and room
 entry within 1 s at N = 10; first launch within 15 s.

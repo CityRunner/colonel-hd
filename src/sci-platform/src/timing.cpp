@@ -90,6 +90,10 @@ std::string TimingLog::csv(std::string_view version, int scale, std::optional<st
     for (const RoomEntry& room : rooms_) {
         out += std::format("room,{},{:.3f}\n", room.room, room.ms);
     }
+    for (const SlowFrame& frame : slow_) {
+        out += std::format("slow,{},{},{:.3f},{:.3f},{}\n", frame.tick, frame.room, frame.ms, frame.compose_ms,
+                           frame.uploaded);
+    }
     return out;
 }
 

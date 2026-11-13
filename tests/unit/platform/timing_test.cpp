@@ -35,6 +35,8 @@ SCI_TEST(the_csv_holds_every_value_and_the_rooms_in_order) {
     log.frame(20.0, 12.0);
     log.room_entry(1, 150.25);
     log.room_entry(7, 90.0);
+    log.slow_frame(
+        sci::platform::SlowFrame{.tick = 1234, .room = 7, .ms = 20.0, .compose_ms = 12.0, .uploaded = 64000});
     const std::string csv = log.csv("1.0.0", 10, 210924);
     SCI_CHECK(csv.starts_with("colonel-hd timing,1\nversion,1.0.0\nscale,10\n"));
     SCI_CHECK(csv.contains("first_launch_scenes,176\nfirst_launch_ms,1824.500\n"));
@@ -45,7 +47,7 @@ SCI_TEST(the_csv_holds_every_value_and_the_rooms_in_order) {
     SCI_CHECK(csv.contains("compose_ms_median,1.500\ncompose_ms_p99,12.000\ncompose_ms_worst,12.000\n"));
     SCI_CHECK(csv.contains("room_entries,2\nroom_entry_ms_median,90.000\nroom_entry_ms_worst,150.250\n"));
     SCI_CHECK(csv.contains("peak_memory_kib,210924\n"));
-    SCI_CHECK(csv.ends_with("room,1,150.250\nroom,7,90.000\n"));
+    SCI_CHECK(csv.ends_with("room,1,150.250\nroom,7,90.000\nslow,1234,7,20.000,12.000,64000\n"));
     SCI_CHECK(!log.csv("1.0.0", 1, std::nullopt).contains("peak_memory_kib"));
 }
 
