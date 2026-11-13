@@ -217,8 +217,10 @@ SCI_TEST(write_the_fuzz_seeds_when_asked) {
     open.insert(open.end(), file.begin(), file.end() - static_cast<std::ptrdiff_t>(checksum_size));
     for (const auto& [name, bytes] : {std::pair{"synthetic-file", whole}, std::pair{"synthetic-unsealed", open}}) {
         std::ofstream out(std::string(folder) + "/" + name, std::ios::binary);
-        out.write(reinterpret_cast<const char*>(bytes.data()), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                  static_cast<std::streamsize>(bytes.size()));
+        out.write(
+            reinterpret_cast<const char*>(
+                bytes.data()), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): bytes for std::ostream::write.
+            static_cast<std::streamsize>(bytes.size()));
         SCI_CHECK(static_cast<bool>(out));
     }
 }

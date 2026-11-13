@@ -111,7 +111,9 @@ void print_assertion(std::string_view expression, const std::source_location& lo
 
 fs::path base_path() {
     const char* base = SDL_GetBasePath();
-    return base != nullptr ? fs::path(std::u8string(reinterpret_cast<const char8_t*>(base))) // NOLINT
+    return base != nullptr ? fs::path(std::u8string(reinterpret_cast<const char8_t*>(
+                                 base))) // NOLINT(*-reinterpret-cast): SDL gives UTF-8 as char; char8_t makes fs::path
+                                         // read it as UTF-8.
                            : fs::current_path();
 }
 
@@ -140,7 +142,9 @@ std::optional<fs::path> choose_folder(SDL_Window* window) {
         [](void* userdata, const char* const* list, int /*filter*/) {
             auto* result = static_cast<Choice*>(userdata);
             if (list != nullptr && *list != nullptr) {
-                result->folder = fs::path(std::u8string(reinterpret_cast<const char8_t*>(*list))); // NOLINT
+                result->folder = fs::path(std::u8string(
+                    reinterpret_cast<const char8_t*>(*list))); // NOLINT(*-reinterpret-cast): SDL gives UTF-8 as char;
+                                                               // char8_t makes fs::path read it as UTF-8.
             }
             result->done = true;
         },
@@ -906,9 +910,11 @@ private:
         }
         const sci::app::CursorImage image = sci::app::scale_cursor(*decoded, scale);
         if (sci::app::cursor_mode(where.pixel_density, image.size) == sci::app::CursorMode::System) {
-            SDL_Surface* surface = SDL_CreateSurfaceFrom(image.size, image.size, SDL_PIXELFORMAT_RGBA32,
-                                                         const_cast<std::uint8_t*>(image.pixels.data()), // NOLINT
-                                                         image.size * 4);
+            SDL_Surface* surface = SDL_CreateSurfaceFrom(
+                image.size, image.size, SDL_PIXELFORMAT_RGBA32,
+                const_cast<std::uint8_t*>(image.pixels.data()), // NOLINT(*-const-cast): SDL takes non-const pixels; the
+                                                                // surface only reads them.
+                image.size * 4);
             if (surface != nullptr) {
                 cursor_.reset(SDL_CreateColorCursor(surface, image.hotspot_x, image.hotspot_y));
                 SDL_DestroySurface(surface);
@@ -1190,7 +1196,7 @@ int main(int argc, char** argv) {
     sci::core::set_log_sink(&print_log);
     // mt32emu's pitch jitter is the only user of rand() (the program's own
     // code never calls it); a fixed seed makes it the same in every run.
-    // NOLINTBEGIN(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp)
+    // NOLINTBEGIN(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp): see above.
     std::srand(1);
     // NOLINTEND(bugprone-unsafe-functions,bugprone-random-generator-seed,cert-msc32-c,cert-msc51-cpp)
     // Spec section 5.3: the floating-point profile, on the main thread too.

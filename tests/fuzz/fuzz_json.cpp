@@ -11,7 +11,8 @@
 
 // NOLINTNEXTLINE(readability-identifier-naming): name fixed by libFuzzer.
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t* data, std::size_t size) {
-    const std::string_view text(reinterpret_cast<const char*>(data), size); // NOLINT
+    const std::string_view text(reinterpret_cast<const char*>(data),
+                                size); // NOLINT(*-reinterpret-cast): libFuzzer bytes as text.
     [[maybe_unused]] const auto parsed = sci::core::parse_json(text);
     return 0;
 }

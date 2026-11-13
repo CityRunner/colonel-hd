@@ -9,6 +9,8 @@
 2. No float or long double in project code (spec section 5.3: double only).
 3. Every project source file and script (.cpp, .hpp, .py, .sh) starts with
    an SPDX licence identifier (in its first three lines, so after a shebang).
+4. Every NOLINT in project code names its checks and states a reason after
+   a colon (spec section 5.1; B-27): `// NOLINT(check): why`.
 
 Run from anywhere; exits non-zero and lists every violation. With
 --self-test it checks the name rules of point 1 against lists of names to
@@ -37,6 +39,8 @@ ALLOWED_IMAGE_DIRS: tuple[str, ...] = ()
 CPP_SOURCE = re.compile(r"\.(cpp|hpp)$")
 SOURCE = re.compile(r"\.(cpp|hpp|py|sh)$")
 FLOAT_TYPES = re.compile(r"\b(float|long\s+double)\b")
+# A NOLINT marker with its optional check list; a reason follows a colon.
+NOLINT = re.compile(r"NOLINT(?:NEXTLINE|BEGIN|END)?(\([^)]*\))?(:\s*\S)?")
 SPDX = "SPDX-License-Identifier:"
 
 
@@ -108,10 +112,39 @@ SELF_TEST_ACCEPTED = (
 )
 
 
+def nolint_problem(line: str) -> str | None:
+    """Why a line's NOLINT marker breaks rule 4, or None."""
+    if "//" not in line:
+        return None
+    comment = line[line.index("//") :]
+    for match in NOLINT.finditer(comment):
+        if match.group(1) is None:
+            return "NOLINT names no check (B-27): use NOLINT(check): reason"
+        if match.group(2) is None and not match.group(0).startswith("NOLINTEND"):
+            return "NOLINT states no reason (B-27): add ': reason' after the checks"
+    return None
+
+
+SELF_TEST_NOLINT_REJECTED = (
+    "x(); // NOLINT",
+    "x(); // NOLINT(*-reinterpret-cast)",
+    "// NOLINTNEXTLINE(misc-no-recursion)",
+    "// NOLINTNEXTLINE: a reason but no check",
+)
+SELF_TEST_NOLINT_ACCEPTED = (
+    "x(); // NOLINT(*-reinterpret-cast): bytes as text.",
+    "// NOLINTNEXTLINE(misc-no-recursion,readability-function-cognitive-complexity): kept close to ScummVM.",
+    "// NOLINTEND(misc-no-recursion)",
+    "x(); // no marker here",
+)
+
+
 def self_test() -> int:
-    """Checks the name rules against the two lists."""
+    """Checks the name rules and the NOLINT rule against their lists."""
     failures = [f"{name}: accepted, must be refused" for name in SELF_TEST_REJECTED if not name_problem(name)]
     failures += [f"{name}: refused, must be accepted" for name in SELF_TEST_ACCEPTED if name_problem(name)]
+    failures += [f"{line}: accepted, must be refused" for line in SELF_TEST_NOLINT_REJECTED if not nolint_problem(line)]
+    failures += [f"{line}: refused, must be accepted" for line in SELF_TEST_NOLINT_ACCEPTED if nolint_problem(line)]
     for failure in failures:
         print(failure)
     print(f"self-test: {len(SELF_TEST_REJECTED)} names refused, {len(SELF_TEST_ACCEPTED)} accepted, {len(failures)} failures")
@@ -139,6 +172,10 @@ def main() -> int:
             for number, line in enumerate(strip_comments_and_strings(text).splitlines(), 1):
                 if FLOAT_TYPES.search(line):
                     problems.append(f"{path}:{number}: float and long double are not used (spec 5.3)")
+            for number, line in enumerate(text.splitlines(), 1):
+                problem = nolint_problem(line)
+                if problem:
+                    problems.append(f"{path}:{number}: {problem}")
 
     for problem in problems:
         print(problem)

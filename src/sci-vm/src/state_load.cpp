@@ -400,7 +400,8 @@ void SegManager::load_state(StateReader& in) {
         const int number = in.i32();
         const SegmentId id = in.u16();
         const auto* script = id < heap.size() && heap[id] && heap[id]->type() == SegmentType::Script
-                                 ? static_cast<const Script*>(heap[id].get()) // NOLINT(*-static-cast-downcast)
+                                 ? static_cast<const Script*>(
+                                       heap[id].get()) // NOLINT(*-static-cast-downcast): the type tells the class.
                                  : nullptr;
         if (!in.failed() && (script == nullptr || script->number() != number)) {
             in.fail(std::format("script {} is not in segment {}", number, id));
@@ -440,7 +441,8 @@ void SegManager::load_state(StateReader& in) {
             in.fail(std::format("script {} has no locals in segment {}", script.number(), locals));
             continue;
         }
-        script.set_locals_block(static_cast<LocalVariables*>(heap[locals].get())); // NOLINT(*-static-cast-downcast)
+        script.set_locals_block(static_cast<LocalVariables*>(
+            heap[locals].get())); // NOLINT(*-static-cast-downcast): the type tells the class.
     }
     if (in.failed()) {
         return;
@@ -563,7 +565,8 @@ void Machine::load_state(StateReader& in, Execution execution) {
         in.fail("the state has no stack or no script 0 with its globals");
         return;
     }
-    stack_ = static_cast<DataStack*>(segments_.segment(stack_segment)); // NOLINT(*-static-cast-downcast)
+    stack_ = static_cast<DataStack*>(
+        segments_.segment(stack_segment)); // NOLINT(*-static-cast-downcast): the type tells the class.
     variables_[var_global] = Variables{
         .store = &script0->locals_block()->locals,
         .start = 0,
@@ -597,7 +600,8 @@ void Machine::load_state(StateReader& in, Execution execution) {
                 if (saved.segment == stack_segment && stack_ != nullptr) {
                     store = &stack_->entries;
                 } else if (Segment* locals = segments_.segment(saved.segment, SegmentType::Locals)) {
-                    store = &static_cast<LocalVariables*>(locals)->locals; // NOLINT(*-static-cast-downcast)
+                    store = &static_cast<LocalVariables*>(locals)
+                                 ->locals; // NOLINT(*-static-cast-downcast): the type tells the class.
                 } else {
                     in.fail("a variable store is neither the stack nor locals");
                     return;
