@@ -45,7 +45,7 @@ inline std::vector<std::string> selector_names() {
         "xLast",     "yLast",       "moveSpeed", "canBeHere", "heading",  "mover",      "doit",     "isBlocked",
         "looper",    "priority",    "modifiers", "replay",    "wordFail", "syntaxFail", "claimed",  "delete",
         "z",         "setPri",      "size",      "min",       "sec",      "frame",      "vol",      "pri",
-        "moveDone",
+        "moveDone",  "dataInc",
     };
 }
 

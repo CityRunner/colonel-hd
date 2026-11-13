@@ -9,9 +9,11 @@
 #include "bytecode_world.hpp"
 #include "kernel.hpp"
 #include "pic_builder.hpp"
+#include "sample_vocabulary.hpp"
 #include "sci/vm/interpreter.hpp"
 #include "sci_test.hpp"
 
+#include <array>
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -61,7 +63,7 @@ struct Trace {
 };
 
 Trace run_traced(const std::map<int, sci::test::Bytes>& scripts, const std::vector<int>& classes,
-                 const std::vector<sci::test::ExtraResource>& extra = {}) {
+                 const std::vector<sci::test::ExtraResource>& extra = {}, std::vector<sci::vm::InputEvent> input = {}) {
     Trace trace;
     auto resources = sci::test::assembled_game(scripts, classes, extra);
     SCI_CHECK(resources.has_value());
@@ -69,6 +71,7 @@ Trace run_traced(const std::map<int, sci::test::Bytes>& scripts, const std::vect
         return trace;
     }
     sci::vm::RunOptions options;
+    options.input = std::move(input);
     options.trace = [&trace](std::string_view line) { trace.lines.emplace_back(line); };
     const sci::vm::RunResult result = sci::vm::run_deterministic(*resources, options);
     trace.fault = result.fault;
@@ -599,4 +602,224 @@ SCI_TEST(home_game_controls_menus_movement) {
     SCI_CHECK(!trace.fault.has_value());
     SCI_CHECK(trace.result("DoBresen", 3) != "<no call>");
     SCI_CHECK(trace.result("SetJump", 0) != "<no call>");
+}
+
+// The parser, sound, the cursor, events and the rest of kmisc (kparse.cpp,
+// ksound.cpp, kgraphics.cpp kSetCursor, kevent.cpp, kmisc.cpp, kfile.cpp
+// kDeviceInfo and friends): sentences parsed (one that parses, one with an
+// unknown word, one that does not parse) and a Said spec matched; the
+// synonyms set from an empty list of scripts; a sound initialised, played,
+// paused, faded, stopped and disposed while time passes; the cursor shown,
+// hidden, shaped and moved; a key and a mouse press read as events and
+// mapped; the device and path queries.
+SCI_TEST(home_game_parser_sound_events) {
+    namespace vocab = sci::test::vocab;
+    using sci::test::ObjectSpec;
+    using sci::test::selector_id;
+    ScriptBuilder script;
+    CodeAssembler& code = script.code();
+    const auto play = code.label();
+    const auto word_fail = code.label();
+    const auto syntax_fail = code.label();
+    const std::size_t look_door = script.add_string("look door");
+    const std::size_t unknown = script.add_string("xyzzy door");
+    const std::size_t no_parse = script.add_string("look door key");
+    const std::size_t take_it = script.add_string("take it");
+    const std::array<char, 6> spec_bytes{
+        0, vocab::group_look, static_cast<char>(0xF2), 0, vocab::group_door, static_cast<char>(0xFF),
+    };
+    const std::size_t said_spec = script.add_string(std::string(spec_bytes.begin(), spec_bytes.end()));
+    const std::size_t path = script.add_string("C:\\GAMES");
+    const auto buffer = [&code](int global) {
+        code.raw({sci::test::opcode_byte(op::lea, true), 0, static_cast<std::uint8_t>(global)}).op(op::push);
+    };
+    const auto keep = [&code](int index) { code.var(VarOp::Store, Var::Global, index); };
+    const auto global = [&code](int index) { code.var(VarOp::Load, Var::Global, index, true); };
+    // Classes: 0 the game's (with the parser's failure methods), 1 events,
+    // 2 sounds, 3 regions (scripts with synonyms: a number and a list).
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 0,
+        .super_class = -1,
+        .extra_properties = {},
+        .methods = {{selector_id("wordFail"), word_fail}, {selector_id("syntaxFail"), syntax_fail}},
+    });
+    const auto event_properties =
+        properties_of({{"type", 0}, {"message", 0}, {"modifiers", 0}, {"y", 0}, {"x", 0}, {"claimed", 0}});
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 1,
+        .super_class = 0,
+        .extra_properties = event_properties,
+        .methods = {},
+    });
+    const auto sound_properties = properties_of({
+        {"number", 1},
+        {"loop", 1},
+        {"priority", 0},
+        {"state", 0},
+        {"signal", 0},
+        {"vol", 127},
+        {"handle", 0},
+        {"dataInc", 0},
+        {"nodePtr", 0},
+    });
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 2,
+        .super_class = 0,
+        .extra_properties = sound_properties,
+        .methods = {},
+    });
+    const auto region_properties = properties_of({{"number", 0}, {"elements", 0}});
+    script.add(ObjectSpec{
+        .is_class = true,
+        .species = 3,
+        .super_class = 0,
+        .extra_properties = region_properties,
+        .methods = {},
+    });
+    const std::size_t game = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 0,
+        .super_class = 0,
+        .extra_properties = {},
+        .methods = {{sci::test::sel::play, play}},
+    });
+    const std::size_t event = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 1,
+        .super_class = 1,
+        .extra_properties = event_properties,
+        .methods = {},
+    });
+    const std::size_t sound = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 2,
+        .super_class = 2,
+        .extra_properties = sound_properties,
+        .methods = {},
+    });
+    const std::size_t region = script.add(ObjectSpec{
+        .is_class = false,
+        .species = 3,
+        .super_class = 3,
+        .extra_properties = region_properties,
+        .methods = {},
+    });
+    script.export_object(game);
+    script.set_locals(std::vector<std::uint16_t>(64, 0));
+    const auto object = [&code](std::size_t index) { code.object_address(op::lofss, index); };
+    const auto string = [&code](std::size_t index) { code.string_address(op::lofss, index); };
+    const auto sound_call = [&](int subfunction, int argc, const auto& push_args) {
+        kcall(code, "DoSound", argc + 1, [&] {
+            push(code, subfunction);
+            push_args();
+        });
+    };
+    code.bind(play);
+
+    // The parser.
+    kcall(code, "Parse", 2, [&] { string(look_door), object(event); });
+    kcall(code, "Said", 1, [&] { string(said_spec); });
+    kcall(code, "Parse", 2, [&] { string(take_it), object(event); });
+    kcall(code, "Parse", 2, [&] { string(unknown), object(event); });
+    kcall(code, "Parse", 2, [&] { string(no_parse), object(event); });
+    kcall(code, "Said", 1, [&] { string(said_spec); });
+    kcall(code, "NewList", 0, [] {});
+    keep(0);
+    kcall(code, "NewNode", 2, [&] { object(region), object(region); });
+    keep(1);
+    kcall(code, "AddToEnd", 2, [&] { global(0), global(1); });
+    code.op_w(op::pushi, selector_id("elements")).op(op::push1);
+    global(0);
+    code.object_address(op::lofsa, region).send(3);
+    kcall(code, "SetSynonyms", 1, [&] { object(region); });
+
+    // Sound.
+    sound_call(0, 1, [&] { object(sound); }); // Init.
+    sound_call(1, 1, [&] { object(sound); }); // Play.
+    kcall(code, "Wait", 1, [&] { push(code, 20); });
+    sound_call(9, 1, [&] { object(sound); });  // Update.
+    sound_call(6, 1, [&] { push(code, 1); });  // Pause.
+    sound_call(6, 1, [&] { push(code, 0); });  // Resume.
+    sound_call(4, 0, [] {});                   // Mute (query).
+    sound_call(4, 1, [&] { push(code, 0); });  // Mute off.
+    sound_call(8, 0, [] {});                   // Master volume (query).
+    sound_call(8, 1, [&] { push(code, 10); }); // Master volume.
+    sound_call(11, 0, [] {});                  // Polyphony.
+    kcall(code, "Wait", 1, [&] { push(code, 40); });
+    kcall(code, "GetEvent", 2, [&] { push(code, sci::vm::event_any), object(event); });
+    sound_call(10, 1, [&] { object(sound); }); // Fade.
+    sound_call(5, 1, [&] { object(sound); });  // Stop.
+    sound_call(2, 1, [&] { object(sound); });  // Restore.
+    sound_call(7, 0, [] {});                   // Resume after restore.
+    sound_call(3, 1, [&] { object(sound); });  // Dispose.
+    sound_call(12, 0, [] {});                  // Stop all.
+
+    // The cursor.
+    kcall(code, "SetCursor", 2, [&] { push(code, 0), push(code, 1); });
+    kcall(code, "SetCursor", 2, [&] { push(code, 0), push(code, 0); });
+    kcall(code, "SetCursor", 4, [&] { push(code, 0), push(code, 1), push(code, 100), push(code, 80); });
+
+    // Events: the key, then the mouse press, then nothing.
+    for (int i = 0; i < 3; ++i) {
+        kcall(code, "GetEvent", 2, [&] { push(code, sci::vm::event_any), object(event); });
+        kcall(code, "MapKeyToDir", 1, [&] { object(event); });
+        kcall(code, "GlobalToLocal", 1, [&] { object(event); });
+        kcall(code, "LocalToGlobal", 1, [&] { object(event); });
+    }
+    kcall(code, "Joystick", 1, [&] { push(code, 12); });
+
+    // Devices and paths.
+    kcall(code, "DeviceInfo", 3, [&] { push(code, 0), string(path), buffer(40); });
+    kcall(code, "DeviceInfo", 2, [&] { push(code, 1), buffer(40); });
+    kcall(code, "DeviceInfo", 3, [&] { push(code, 2), string(path), string(path); });
+    kcall(code, "DeviceInfo", 1, [&] { push(code, 3); });
+    kcall(code, "DeviceInfo", 2, [&] { push(code, 5), buffer(40); });
+    kcall(code, "DeviceInfo", 4, [&] { push(code, 6), buffer(40), buffer(50), push(code, 100); });
+    kcall(code, "GetCWD", 1, [&] { buffer(40); });
+    kcall(code, "CheckFreeSpace", 1, [&] { string(path); });
+    kcall(code, "ValidPath", 1, [&] { string(path); });
+    kcall(code, "SetDebug", 0, [] {});
+    kcall(code, "GetSaveDir", 0, [] {});
+    kcall(code, "GameIsRestarting", 0, [] {});
+    kcall(code, "GameIsRestarting", 1, [&] { push(code, 0); });
+    code.op(op::ret);
+    // The game's wordFail and syntaxFail: nothing to say.
+    code.bind(word_fail);
+    code.op(op::ret);
+    code.bind(syntax_fail);
+    code.op(op::ret);
+
+    const std::vector<std::uint8_t> song{0x00, 0x90, 0x3C, 0x40, 0x1E, 0xCF, 0x05, 0x1E, 0xBF, 0x60, 0x02, 0x00, 0xFC};
+    sci::test::Bytes sound_resource(0x21, 0);
+    sound_resource[2] = 0x04; // Channel 0 plays on AdLib.
+    sound_resource.insert(sound_resource.end(), song.begin(), song.end());
+    sci::test::Bytes cursor(68, 0);
+    cursor[3] = 1; // The hotspot in the centre.
+    sci::vm::SciEvent key;
+    key.type = sci::vm::event_key_down;
+    key.character = sci::vm::key_up;
+    sci::vm::SciEvent press;
+    press.type = sci::vm::event_mouse_press;
+    press.mouse = sci::vm::Point{.x = 50, .y = 60};
+    using sci::resource::ResourceType;
+    const Trace trace = run_traced({{0, script.build()}}, {0, 0, 0, 0},
+                                   {
+                                       {.type = ResourceType::Vocab, .number = 0, .data = vocab::sample_words()},
+                                       {.type = ResourceType::Vocab, .number = 900, .data = vocab::sample_branches()},
+                                       {.type = ResourceType::Vocab, .number = 901, .data = vocab::sample_suffixes()},
+                                       {.type = ResourceType::Sound, .number = 1, .data = sound_resource},
+                                       {.type = ResourceType::Cursor, .number = 0, .data = cursor},
+                                   },
+                                   {
+                                       {.tick = 0, .event = key, .move_only = false},
+                                       {.tick = 0, .event = press, .move_only = false},
+                                   });
+    SCI_CHECK(!trace.fault.has_value());
+    SCI_CHECK(trace.result("Said", 0) == "1");
+    SCI_CHECK(trace.result("Parse", 0) == "1");
+    SCI_CHECK(trace.result("MapKeyToDir", 0) == "1");
+    SCI_CHECK(trace.result("GameIsRestarting", 1) != "<no call>");
 }
