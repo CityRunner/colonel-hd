@@ -142,6 +142,8 @@ describes them.
 | `--seed <n>` | The random seed (default 0), so that a replay plays the same each time. |
 | `--fast` | Runs the game as fast as it can instead of in real time; most of the music is dropped. |
 | `--end-state <file>` | Writes the game's tick, global variables and state hash to the file when it ends. |
+| `--timing <file>` | With `--replay`: plays it as fast as it can, presents every frame, and writes the frame times, room entries, first launch and peak memory to the file (`docs/timing.md` in the source). |
+| `--scale <n>` | With `--timing`: the scale N to measure at, 1 to 16, also when the window is smaller. |
 
 ## Licence
 
