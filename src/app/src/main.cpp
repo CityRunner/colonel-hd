@@ -1123,6 +1123,77 @@ std::optional<sci::platform::DataFolder> open_data_folder(const sci::platform::O
     return data;
 }
 
+// What play_game needs from run().
+struct RunContext {
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    Game* game;
+    sci::platform::Config* config;
+    sci::platform::AnalysisCache* analysis;
+    sci::platform::ThreadExecutor* executor;
+    sci::platform::TimingLog* timing;
+    const sci::platform::DataFolder* data;
+    const std::vector<sci::vm::InputEvent>* replay;
+};
+
+// Plays the game in the window (milestone 4b); the exit status.
+int play_game(const sci::platform::Options& options, const RunContext& context) {
+    SDL_Window* const window = context.window;
+    SDL_Renderer* const renderer = context.renderer;
+    const Game* const game = context.game;
+    sci::platform::Config* const config = context.config;
+    sci::platform::AnalysisCache& analysis = *context.analysis;
+    sci::platform::ThreadExecutor& executor = *context.executor;
+    sci::platform::TimingLog& timing = *context.timing;
+    const sci::platform::DataFolder& data = *context.data;
+    const std::vector<sci::vm::InputEvent>& replay = *context.replay;
+    int result = 0;
+    sci::platform::HdPictures pictures(analysis, executor);
+    sci::platform::DirectoryFileStore files(data.folder / "files", game->files);
+    GameHost host(window, renderer, game->manager, pictures, *config);
+    // Before the game, which sends it note-offs when it goes.
+    const auto audio = open_audio(game->manager, *config);
+    // A different seed every time, as ScummVM seeds its random source;
+    // a replay's run starts from a known one.
+    const std::uint32_t seed = options.replay
+                                   ? options.seed.value_or(0)
+                                   : options.seed.value_or(static_cast<std::uint32_t>(SDL_GetPerformanceCounter()));
+    sci::vm::Game running(game->manager, host, &files, seed);
+    // The saves next to the configuration, or in the configured folder
+    // (docs/formats/save-format.md).
+    sci::platform::SaveFolder saves(sci::platform::saves_folder(*config, data.folder));
+    running.set_saves(&saves, std::format("colonel-hd {}", SCI_VERSION));
+    running.set_music_device(audio.get());
+    host.set_audio(audio.get());
+    // --timing plays as fast as it can too (B-10).
+    const bool fast = options.fast || options.timing.has_value();
+    host.set_fast(fast);
+    if (options.timing) {
+        host.set_timing(&timing, options.scale);
+    }
+    if (audio != nullptr) {
+        audio->set_fast(fast);
+    }
+    running.schedule(replay);
+    // A replay plays as in sci-vm-trace: the time of day too.
+    if (options.replay) {
+        running.use_deterministic_time();
+    }
+    if (const auto fault = running.run()) {
+        show_error(window, std::format("The interpreter stopped: {}", *fault));
+        result = 1;
+    }
+    if (options.timing && !write_timing(*options.timing, timing, host.frame_scale())) {
+        std::println(stderr, "Cannot write {}", options.timing->string());
+        result = 1;
+    }
+    if (options.end_state && !write_end_state(*options.end_state, running)) {
+        std::println(stderr, "Cannot write {}", options.end_state->string());
+        result = 1;
+    }
+    return result;
+}
+
 int run(const sci::platform::Options& options) {
     // The hints are next to the executable; everything else is in the data
     // folder (B-03): --data, the executable's folder (portable) or the
@@ -1187,49 +1258,17 @@ int run(const sci::platform::Options& options) {
         config->mode = viewer.mode();
         config->scale = viewer.chosen_scale();
     } else {
-        sci::platform::HdPictures pictures(analysis, executor);
-        sci::platform::DirectoryFileStore files(data.folder / "files", game->files);
-        GameHost host(window.get(), renderer.get(), game->manager, pictures, *config);
-        // Before the game, which sends it note-offs when it goes.
-        const auto audio = open_audio(game->manager, *config);
-        // A different seed every time, as ScummVM seeds its random source;
-        // a replay's run starts from a known one.
-        const std::uint32_t seed = options.replay
-                                       ? options.seed.value_or(0)
-                                       : options.seed.value_or(static_cast<std::uint32_t>(SDL_GetPerformanceCounter()));
-        sci::vm::Game running(game->manager, host, &files, seed);
-        // The saves next to the configuration, or in the configured folder
-        // (docs/formats/save-format.md).
-        sci::platform::SaveFolder saves(sci::platform::saves_folder(*config, data.folder));
-        running.set_saves(&saves, std::format("colonel-hd {}", SCI_VERSION));
-        running.set_music_device(audio.get());
-        host.set_audio(audio.get());
-        // --timing plays as fast as it can too (B-10).
-        const bool fast = options.fast || options.timing.has_value();
-        host.set_fast(fast);
-        if (options.timing) {
-            host.set_timing(&timing, options.scale);
-        }
-        if (audio != nullptr) {
-            audio->set_fast(fast);
-        }
-        running.schedule(replay);
-        // A replay plays as in sci-vm-trace: the time of day too.
-        if (options.replay) {
-            running.use_deterministic_time();
-        }
-        if (const auto fault = running.run()) {
-            show_error(window.get(), std::format("The interpreter stopped: {}", *fault));
-            result = 1;
-        }
-        if (options.timing && !write_timing(*options.timing, timing, host.frame_scale())) {
-            std::println(stderr, "Cannot write {}", options.timing->string());
-            result = 1;
-        }
-        if (options.end_state && !write_end_state(*options.end_state, running)) {
-            std::println(stderr, "Cannot write {}", options.end_state->string());
-            result = 1;
-        }
+        result = play_game(options, RunContext{
+                                        .window = window.get(),
+                                        .renderer = renderer.get(),
+                                        .game = &*game,
+                                        .config = &*config,
+                                        .analysis = &analysis,
+                                        .executor = &executor,
+                                        .timing = &timing,
+                                        .data = &data,
+                                        .replay = &replay,
+                                    });
     }
     save_config(config_path, *loaded, *config, chosen_folder);
     return result;
