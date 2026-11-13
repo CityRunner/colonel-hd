@@ -94,12 +94,12 @@ found it.
 | B-41 | LGPL static linking note | maintainability | Low | — | — | struck (customer, 2026-11-06) | V-09 |
 | B-42 | `uint32_t` sums instead of `uint64_t` | tech debt | Low | — | — | struck (customer, 2026-11-06) | G-73, R-46 |
 | B-43 | Rename the project `sierra-hd` → `colonel-hd` | requirement | Medium | M (8 h) | stage 5 step 13 | Decided (customer, 2026-11-06) | customer's request 2026-11-06 |
-| B-44 | `fuzz-save` missing from the fuzz target list | defect | Low | S (0.5 h) | iteration 2 | open (found in stage 5 step 0.5) | MAP 6.2, B-05 |
-| B-45 | Script loader reads past an object's properties on a malformed script | defect | Low | S (2 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-script) | B-05 |
-| B-46 | The music player can loop forever on a malformed song | defect | Low | S (3 h) | iteration 2 | open (found in stage 5 step 0.5 by fuzz-sound) | B-05 |
-| B-47 | The program embeds the repository's `git describe` as SDL's revision | defect | Low | S (1 h) | iteration 2 | open (found in stage 5 step 0.7) | B-20, step 0.1 |
-| B-48 | SDL3 has no per-file SHA-256 record | maintainability | Low | S (2 h) | iteration 2 | open (found in stage 5 step 2) | B-25, MAP 5 |
-| B-49 | `sci-audio-output-tests` fails now and then on a loaded machine | defect (test) | Low | S (2 h) | iteration 2 | open (found in stage 5 step 9) | R-92, MAP 6 |
+| B-44 | `fuzz-save` missing from the fuzz target list | defect | Low | S (0.5 h) | iteration 2 | fixed 2026-11-13 (`ef2836e`, iteration 2 P1) | MAP 6.2, B-05 |
+| B-45 | Script loader reads past an object's properties on a malformed script | defect | Low | S (2 h) | iteration 2 | fixed 2026-11-13 (`bdb1c8f`, iteration 2 P1) | B-05 |
+| B-46 | The music player can loop forever on a malformed song | defect | Low | S (3 h) | iteration 2 | fixed 2026-11-13 (`bdb1c8f`, iteration 2 P1) | B-05 |
+| B-47 | The program embeds the repository's `git describe` as SDL's revision | defect | Low | S (1 h) | iteration 2 | fixed 2026-11-13 (`22d798f`, iteration 2 P1) | B-20, step 0.1 |
+| B-48 | SDL3 has no per-file SHA-256 record | maintainability | Low | S (2 h) | iteration 2 | fixed 2026-11-13 (`9b46cac`, iteration 2 P1) | B-25, MAP 5 |
+| B-49 | `sci-audio-output-tests` fails now and then on a loaded machine | defect (test) | Low | S (2 h) | iteration 2 | fixed 2026-11-13 (`41afc1d`, iteration 2 P1) | R-92, MAP 6 |
 
 B-43: the project rename (added by the customer, 2026-11-06). B-44 onward: reserved for bugs found in stage 5 (the range started at B-43 before the rename item took that number).
 
@@ -1067,7 +1067,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
 - **Kind:** defect (test tooling). **Severity:** Low (one target never
   fuzzed; its corpus still replays in the non-fuzz presets). **Found in:**
   stage 5 step 0.5 (2026-11-06), while adding the B-05 targets. **State:**
-  open, not fixed (brief 5.3).
+  fixed 2026-11-13 (`ef2836e`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** `tests/fuzz/CMakeLists.txt` reads the global property
   `SCI_FUZZ_TARGETS` into `fuzz-targets.txt` (the list
   `scripts/run-fuzzers.sh` and the CI `fuzz` job run) *before*
@@ -1090,7 +1090,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   hostile script resource triggers it; the game's own scripts load in
   every scenario and the playthrough). **Found in:** stage 5 step 0.5
   (2026-11-06), by the new `fuzz-script` target after 106 inputs.
-  **State:** open, not fixed (brief 5.3).
+  **State:** fixed 2026-11-13 (`bdb1c8f`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** `SegManager::script_segment(0, Lock)` →
   `instantiate_script` → `Script::initialize_objects`
   (`script.cpp:306`) → `Object::init_species` (`object.cpp:138`) →
@@ -1123,7 +1123,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   hostile sound resource; the game's 119 sounds render, and every
   scenario and the playthrough play their music). **Found in:** stage 5
   step 0.5 (2026-11-06), by the new `fuzz-sound` target (a timeout after
-  447 inputs). **State:** open, not fixed (brief 5.3).
+  447 inputs). **State:** fixed 2026-11-13 (`bdb1c8f`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** a 47-byte synthetic sound (header, then a loop point `BF 60
   7F` and events with zero deltas; kept in
   `build/stage5/fuzz-artifacts/fuzz-sound-timeout-44b3c1579acaa5c96ad0aea55dfb37dd070f4c73`,
@@ -1153,7 +1153,7 @@ behaviour. They stay useful after stage 5 as the local gate (B-08).
   commits and misreports SDL's version). **Found in:** stage 5 step 0.7
   (2026-11-06), when the gate's release build of commit `8dcfb7c` gave a
   `sierra-hd` that differs from the one built at `3c3791d`/`5b1c01f`
-  although `src/` is the same. **State:** open, not fixed (brief 5.3).
+  although `src/` is the same. **State:** fixed 2026-11-13 (`22d798f`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** the vendored SDL3's CMake (`third_party/SDL3/CMakeLists.txt`
   `:3730-3742`) has no `REVISION.txt`, so it sets `SDL_REVISION` from
   `git describe` of the enclosing repository, i.e. this project's
@@ -1257,7 +1257,7 @@ of which the VM net (B-06, B-07) is 72. Judgement, not measured.
 ### B-48 SDL3 has no per-file SHA-256 record
 
 - **Kind:** maintainability. **Severity:** Low. **Found in:** stage 5
-  step 2 (2026-11-11). **State:** open, not fixed (brief 5.3).
+  step 2 (2026-11-11). **State:** fixed 2026-11-13 (`9b46cac`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** `THIRD_PARTY.md:15` says "The SHA-256 of each vendored file is
   in the component's `VENDORED.md`". `third_party/nuked-opl3/VENDORED.md`
   (3 files) and `third_party/mt32emu/VENDORED.md` (49 files) record one per
@@ -1279,7 +1279,7 @@ of which the VM net (B-06, B-07) is 72. Judgement, not measured.
   (`queued_frames() >= target_frames() * 3 / 4` after `recover()`), while
   other containers were building. The same test then passed 5 of 5 times
   alone. It had failed once the same way during milestone 10. **State:**
-  open, not fixed (brief 5.3).
+  fixed 2026-11-13 (`41afc1d`, iteration 2 P1); see the item's "Fix" for what was done and `review/ITERATION2_PLAN.md`.
 - **What:** `audio_output_tops_the_queue_up_after_an_underrun` sleeps in
   real time, lets SDL's dummy audio thread drain the queue, and then
   expects the queue to be three quarters full right after `recover()`;
