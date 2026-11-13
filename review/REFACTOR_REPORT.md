@@ -783,6 +783,143 @@ the final measurements run on the final code.
 | ScummVM comparison with the rebuilt reference | **match**: 39 scenarios ok, 0 FAIL (420 s); playthrough matches to tick 338000 (931 s) |
 | B-43 criterion 4: release packaging | `scripts/package-release.sh build/release linux-x64`: `colonel-hd-0.9.0-linux-x64.tar.gz` with `colonel-hd`, 86 hint files, README and licences; the unpacked program prints `colonel-hd 0.9.0` |
 
+## Stage 5 result: before and after (step 12e)
+
+"Before" is the original code `a0422d6` (section "Baselines" below);
+"after" is the end of stage 5 (`1fccc37`, all steps 1-13), measured with
+the same commands (`build/stage5/after-all.sh`: `preset-run.sh`,
+`warn-builds.sh` and `timings.sh` pointed at `build/after-*`), container,
+4 x86-64 cores, nothing else running. Between the two the container was
+restarted on another host (kernel 6.18.44-fc-v378 before, -fc-v445 after);
+see "Reading the timings".
+
+### Tests, warnings, sanitizers
+
+| | Before | After |
+|---|---|---|
+| CTest, `release` | 26 / 26 passed | **31 / 31 passed** (+1 `sci-golden-layers-tests`, step 0.3; +4 fuzz corpus replays `fuzz-script`, `fuzz-sound`, `fuzz-patch`, `fuzz-config`, step 0.5) |
+| CTest, `asan` (ASan + UBSan, no recover) | 26 / 26, no report | **31 / 31, no report** |
+| CTest, `tsan` | 26 / 26, no report | **31 / 31, no report** |
+| ARM64 (`cross-aarch64`, qemu-user) | 26 / 26 | **pass** (pre-push step 6 on every step) |
+| Warnings, project code (release, asan, tsan, debug, fuzz, cross-aarch64) | 0 | **0** |
+| Warnings, vendored SDL3 | 9 per preset with SDL3 | 9 (the same lines) |
+| clang-tidy (S1) | clean | **clean** |
+| Unit tests in `sci-platform-tests` | 31 (before step 13c) | 33 (step 13c) |
+| Repository checks | policy, hints, format | + `check-vendored.py` (52 files), the policy self-test (16 refused / 17 accepted), `test-run-fuzzers.sh` |
+| Goldens (S4: resources, pictures, sounds, 14,731 screens) and VM hashes (S5) | committed in step 0 | **all unchanged** after every step that changed build inputs and at the end |
+| ScummVM comparison: 39 scenarios and the playthrough | match | **match** (end of step 11 and again after step 13 with the rebuilt reference) |
+| Fuzzing, 10 min per target | 4 targets found 2 bugs in step 0.5 (B-45, B-46) | **no new failure** in 15 targets (12b) |
+
+### Clean build times (configure / build / CTest)
+
+| Preset | Before | After |
+|---|---|---|
+| `release` | 16.5 s / 81.2-84.8 s / 8 s serial | 14 s / 75 s / 2 s (`-j4`) |
+| `asan` | 17 s / 139 s / 8 s | 14 s / 129 s / 7 s |
+| `tsan` | 17 s / 99 s / 30 s | 14 s / 92 s / 30 s |
+| `debug` | 17 s / 62 s | 14 s / 53 s |
+| `fuzz` | 17 s / 158 s | 14 s / 136 s |
+| `cross-aarch64` | 2 s / 75 s | 0 s / 64 s |
+
+### Binary size (release)
+
+| Binary | Before | After |
+|---|---|---|
+| program (`sierra-hd` → `colonel-hd`) | 7,950,792 bytes; stripped 6,607,536 | 7,950,608 bytes; stripped 6,607,376 |
+| `sci-vm-trace` | 1,501,728 | 1,501,760 |
+| `sci-golden-hashes` | 852,480 | 852,480 |
+
+The program is 184 bytes smaller and `sci-vm-trace` 32 bytes larger; the
+cause was not investigated (candidates: the dead `component_name()`
+functions removed in step 6, strings of a different length after step
+13).
+
+### Room entry per picture (`sci-hd-report`, 5 runs, 88 pictures)
+
+| N | Slowest picture, before → after | Median picture | Mean | Slowest per run, min / max |
+|---|---|---|---|---|
+| 1 | 157 ms (28) → 153 ms (28) | 56 → 51 ms | 68 → 65 ms | 150 / 169 → 145 / 162 ms |
+| 2 | 181 ms (28) → 162 ms (25) | 67 → 60 ms | 80 → 75 ms | 185 / 208 → 162 / 169 ms |
+| 5 | 237 ms (28) → 226 ms (2) | 109 → 104 ms | 120 → 119 ms | 229 / 253 → 230 / 246 ms |
+| 10 | 397 ms (2) → 396 ms (2) | 224 → 229 ms | 239 → 238 ms | 382 / 439 → 388 / 423 ms |
+
+Tool run wall (median of 5): N = 1 24.5 → 23.8 s; N = 2 25.7 → 24.5 s;
+N = 5 28.8 → 28.7 s; N = 10 39.7 → 39.0 s. Peak RSS 76-105 MiB → 77-108
+MiB.
+
+### Frame composition over the playthrough (`sci-hd-frames`, 37,987 frames)
+
+| N | Runs | All frames, mean / median / 99th pct / worst (before → after) | Incremental frames, mean / median / 99th pct / worst (before → after) | Peak RSS |
+|---|---|---|---|---|
+| 1 | 1 | 0.408 / 0.346 / 0.833 / 29.97 → 0.467 / 0.345 / 0.669 / 162.41 ms | 0.371 / 0.346 / 0.752 / 8.14 → 0.361 / 0.345 / 0.636 / 2.24 ms | 52 → 54 MiB |
+| 2 | 1 | 0.489 / 0.401 / 0.923 / 40.82 → 0.464 / 0.378 / 0.790 / 40.78 ms | 0.426 / 0.401 / 0.842 / 5.43 → 0.401 / 0.378 / 0.733 / 6.07 ms | 58 → 57 MiB |
+| 5 | 1 | 0.800 / 0.575 / 1.364 / 115.18 → 0.724 / 0.499 / 1.230 / 118.84 ms | 0.616 / 0.575 / 1.298 / 5.57 → 0.540 / 0.498 / 1.096 / 4.71 ms | 152 → 151 MiB |
+| 10 | 5, median | 1.480 / 0.855 / 2.813 / 310.17 → 1.348 / 0.736 / 2.657 / 295.57 ms | 0.979 / 0.854 / 2.631 / 7.26 → 0.836 / 0.734 / 2.159 / 4.78 ms | 449-460 → 434-451 MiB |
+
+No incremental frame over 16.7 ms in any of the 8 runs after (before: one
+57.3 ms outlier in 1 of 5 runs at N = 10). Every room's first frame is
+still over 16.7 ms at N >= 2 (B-09, iteration 2). The worst first frame at
+N = 1 (162 ms) is a single frame in one run.
+
+### The program: first launch and peak memory (`program-run.sh --scale 4 --cache cold`, 5 runs)
+
+| | Before (median) | After (runs) | After (median) |
+|---|---|---|---|
+| First-launch analysis | 1824 ms | 1906, 1823, 1714, 1761, 1752 ms | **1761 ms** |
+| Wall time, boot to QUIT | 19.97 s | 19.91, 18.77, 18.59, 18.51, 18.46 s | **18.59 s** |
+| Peak RSS | 210,924 KiB (206 MiB) | 216,944, 212,928, 214,664, 210,472, 207,884 KiB | **212,928 KiB (208 MiB)** |
+| Result | status 0, end tick 337613, end state as `sci-vm-trace` | the same in all 5 runs | |
+
+### Reading the timings
+
+Stage 5 changed no algorithm and no compiler flag; the only code changes
+are deletions (step 6), build-graph edges (step 7), a moved folder (step
+9) and names (step 13), and the goldens and the ScummVM comparison show
+the output is the same. So the timing differences above are not
+improvements from the refactoring: most are 0-15 % faster after, which
+fits the change of host between the two series, and some are slower
+(median entry at N = 10, worst first frame at N = 1). Read them as
+"no regression beyond the noise of the machine", not as a speed-up. The
+build times are faster for the same reason; the CTest time of `release`
+is 2 s after against 8 s before because the baseline ran it serially and
+`preset-run.sh` runs `-j4`.
+
+### Bugs found in stage 5 (all logged, none fixed, as the brief requires)
+
+| Item | What | Found by |
+|---|---|---|
+| B-44 | `fuzz-save` is built and its corpus replayed, but it is not in the list of targets that are fuzzed | step 0.5 |
+| B-45 | script loader reads out of range on a malformed script (crash in `Object::species()`) | `fuzz-script`, step 0.5 |
+| B-46 | MIDI parser hangs on some malformed sounds (`MidiParser::on_timer()`) | `fuzz-sound`, step 0.5 |
+| B-47 | SDL embeds the `git describe` of the repository, so binaries change with every commit unless `SDL_REVISION` is fixed | S6, step 0 |
+| B-48 | `third_party/SDL3/VENDORED.md` records no per-file hashes | `check-vendored.py`, step 2 |
+| B-49 | `sci-audio-output-tests` failed once under ASan beside other runs (timing); passed 5 of 5 alone | step 9 |
+
+Also fixed on the way, because it blocked the checks themselves:
+`scripts/check-screen-hashes.sh` returned grep's "no match" status under
+`pipefail` and so failed a clean check (steps 10-11).
+
+### What stage 5 did not do (remaining work)
+
+- **Windows** was not built locally (no Windows toolchain in the
+  container). The last Windows CI runs were after step 5 (runs
+  43161682914 and 43161685610, both passed); steps 6-9 and 13 changed
+  CMake and names since. One Windows CI run is recommended before the next
+  release (about 16 minutes); not started without the customer's go.
+- **The CI image** gets a new tag with step 13 (Dockerfile comment), so the
+  first CI run builds the toolchain image once.
+- **ARM64 goldens** (12c): see below; the screens and VM goldens are not
+  run on ARM64 (the program and `sci-hd-frames` screens need the app,
+  which `cross-aarch64` does not build).
+- **Iteration 2** (the backlog, `review/BACKLOG_V2.md`): B-45 and B-46
+  first (they also limit fuzzing to seconds for those two targets), B-44,
+  B-47, B-48, B-49, then the planned items.
+- **Customer actions:** delete the remote branch `milestone-10`; push the
+  release tags when publishing; rename local copies of
+  `sierra-hd.ini` and saves by hand if any exist (clean rename).
+
+ARM64GOLDENS
+
 ## Run times of the game-dependent checks (for the per-commit suite)
 
 On the reference build, container, 4 cores (some beside other runs, so
