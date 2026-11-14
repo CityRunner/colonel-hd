@@ -323,4 +323,4 @@ three folders.
 |---|---|
 | Unit tests (sci-platform 58), all CTest tests | pass |
 | Pre-push and local gate on `5c38b1a` | PREPUSH_RESULT |
-| Windows CI on `5c38b1a` ([run 43642432022](https://github.com/CityRunner/colonel-hd/actions/runs/43642432022)) | WINDOWS_RESULT |
+| Windows CI on `5c38b1a` ([run 43642432022](https://github.com/CityRunner/colonel-hd/actions/runs/43642432022)) | **success** (windows-x64 release and ASan, windows-arm64 release) |
