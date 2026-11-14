@@ -55,9 +55,11 @@ struct CommandLine {
 // The text --help and invalid usage print.
 [[nodiscard]] std::string_view help_text();
 
-// The game folder of the command line, else game/ in the data folder when
-// the configuration's game_folder is empty and it holds the game; rom/ in
-// the data folder when mt32_rom is empty. For this run only: neither is
+// The folders of the run: the game folder of the command line, else the
+// configuration's game_folder, and mt32_rom, a relative path (game/ and
+// rom/ by default, the same when empty) taken from the data folder. The
+// default game/ counts only when it holds the game (else the game folder
+// is empty and the program asks for it). For this run only: nothing is
 // written to the ini.
 void use_data_folder_defaults(Config& config, const Options& options, const std::filesystem::path& data_folder);
 

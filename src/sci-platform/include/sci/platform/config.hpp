@@ -6,15 +6,19 @@
 //
 //   [colonel-hd]
 //   format = 1
-//   game_folder = C:\Games\Colonel's Bequest
+//   game_folder = game ; or C:\Games\Colonel's Bequest
 //   mode = hd          ; hd or original
 //   scale = auto       ; auto, or N from 1 to 16
 //   priority_snap = off ; on: sprites are hidden behind the picture in
 //                       ; whole 1x pixels, as in the original
-//   mt32_rom =
+//   mt32_rom = rom
 //   music = adlib      ; adlib, mt32 or off
 //   volume = 100       ; 0 to 100 (per cent)
-//   saves =            ; the folder of the saved games
+//   saves = saves      ; the folder of the saved games
+//
+// The three folders default to game/, rom/ and saves/ next to the file (in
+// the data folder); a relative path is taken from the data folder, and an
+// empty one means the default.
 //
 // Lines starting with ';' or '#' are comments, and so is the rest of a
 // line after ';' or '#', except in the paths (game_folder, mt32_rom, the
@@ -49,18 +53,20 @@ enum class GraphicsMode : std::int8_t { Hd, Original };
 enum class MusicDevice : std::int8_t { Adlib, Mt32, Off };
 
 struct Config {
-    std::filesystem::path game_folder;
+    // The game; relative: in the data folder (use_data_folder_defaults).
+    std::filesystem::path game_folder{"game"};
     GraphicsMode mode = GraphicsMode::Hd;
     int scale = 0; // 0: the largest N that fits.
     // HD occlusion edges snapped to the sprite grid (spec section 6.6).
     bool priority_snap = false;
-    std::filesystem::path mt32_rom;
+    // The MT-32 ROMs; relative: in the data folder.
+    std::filesystem::path mt32_rom{"rom"};
     MusicDevice music = MusicDevice::Adlib;
     // The output volume in per cent.
     int volume = max_volume;
-    // The folder of the saved games; empty: `saves` next to the
-    // configuration (saves_folder).
-    std::filesystem::path saves;
+    // The folder of the saved games; relative or empty: in the data
+    // folder (saves_folder).
+    std::filesystem::path saves{"saves"};
     // Log categories shown besides General (B-28); none by default.
     std::vector<core::LogCategory> log;
 };

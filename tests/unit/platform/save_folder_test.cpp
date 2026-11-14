@@ -158,7 +158,7 @@ SCI_TEST(config_names_the_save_folder) {
     SCI_CHECK(parsed.has_value() && parsed->config.saves.u8string() == u8"/games/laura;saves#1" &&
               parsed->warnings.empty());
     const auto defaults = sci::platform::parse_config("[colonel-hd]\nformat = 1\n");
-    SCI_CHECK(defaults.has_value() && defaults->config.saves.empty());
+    SCI_CHECK(defaults.has_value() && defaults->config.saves == fs::path("saves"));
     const auto round_trip = sci::platform::parse_config(sci::platform::format_config(parsed->config));
     SCI_CHECK(round_trip.has_value() && round_trip->config.saves == parsed->config.saves);
 }
