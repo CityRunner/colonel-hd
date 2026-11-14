@@ -30,6 +30,13 @@ constexpr int tile_rows = (height + tile - 1) / tile;
 
 } // namespace
 
+void GameFrame::prepare(int scale) {
+    if (scale != scale_) {
+        scale_ = scale;
+        frame_.assign(pixel_count * static_cast<std::size_t>(scale) * static_cast<std::size_t>(scale) * 4, 0);
+    }
+}
+
 // NOLINTNEXTLINE(readability-function-cognitive-complexity): change detection and tiling in one pass.
 void GameFrame::update(const vm::ShownScreen& shown, GraphicsMode mode, int scale, bool snap, bool hold) {
     if (shown.visual.size() != pixel_count || shown.owner.size() != pixel_count ||

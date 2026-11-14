@@ -35,6 +35,12 @@ public:
     // until they come, and then again in HD.
     void update(const vm::ShownScreen& shown, GraphicsMode mode, int scale, bool snap, bool hold = false);
 
+    // Makes the frame buffer for N ahead of the first update, so that its
+    // allocation (25 MB at N = 10) is not part of the first frame shown
+    // (B-09). The frame stays black until an update; the first update still
+    // composes everything.
+    void prepare(int scale);
+
     // The last update kept the frame, waiting for HD images.
     [[nodiscard]] bool waiting() const { return waiting_; }
 

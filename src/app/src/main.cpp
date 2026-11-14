@@ -630,15 +630,7 @@ public:
           screen_([&pictures](std::span<const sci::vm::ShownPicture> stack, std::span<const sci::vm::ShownLine> lines,
                               int scale) { return pictures.request(stack, lines, scale); }),
           start_(SDL_GetTicks()) {
-        // A black frame: the first presentation sets the renderer up (tens
-        // of milliseconds, over 100 in a debug build), here before the
-        // music starts rather than as a stall in it.
-        const int scale = scale_for_window();
-        const std::vector<std::uint8_t> black(static_cast<std::size_t>(sci::app::screen_width) *
-                                                  sci::app::screen_height * static_cast<std::size_t>(scale) *
-                                                  static_cast<std::size_t>(scale) * 4,
-                                              0);
-        presenter_.present(black, scale, {});
+        present_black(scale_for_window());
     }
 
     [[nodiscard]] sci::vm::LocalTime local_time() override {
@@ -710,6 +702,9 @@ public:
     void set_timing(sci::platform::TimingLog* log, std::optional<int> scale) {
         timing_ = log;
         fixed_scale_ = scale;
+        if (scale) {
+            present_black(*scale);
+        }
     }
 
 private:
@@ -915,6 +910,19 @@ private:
         if (presenter_.draws_cursor() && std::exchange(pointer_moved_, false)) {
             presenter_.redraw();
         }
+    }
+
+    // A black frame at N: the first presentation sets the renderer and its
+    // texture up (tens of milliseconds, over 100 in a debug build), here
+    // before the music starts rather than as a stall in it; and the frame
+    // buffer is made, so the first frame shown does not allocate it (B-09).
+    void present_black(int scale) {
+        const std::vector<std::uint8_t> black(static_cast<std::size_t>(sci::app::screen_width) *
+                                                  sci::app::screen_height * static_cast<std::size_t>(scale) *
+                                                  static_cast<std::size_t>(scale) * 4,
+                                              0);
+        presenter_.present(black, scale, {});
+        screen_.prepare(scale);
     }
 
     // Real milliseconds since a performance counter value.
