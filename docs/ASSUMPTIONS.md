@@ -3058,3 +3058,18 @@ the old numbers to the new ones, so older references stay unambiguous:
   without it; the release notes state the limit as measured in the
   container. The laptop run (B-10 criterion 3) and B-09 by its result come
   after the release, in 1.0.x. **Decided (customer).**
+
+## Version 1.0.1 (2026-11-14)
+
+- The customer tagged v1.0.0 on `dcc2eba` (released 2026-11-14 09:19 UTC
+  as a GitHub pre-release with the four archives). The first-frame fix
+  (B-09, `c0463e3`) and the ini's default folders (`5c38b1a`) came after,
+  so they are 1.0.1: version 1.0.1, `docs/release-notes/v1.0.1.md`;
+  `v1.0.0.md` keeps the text that was released.
+- The release workflow attached the run's Docker build records to 1.0.0
+  (two `*.dockerbuild` files) and published every tag as a pre-release
+  (from v0.1). From 1.0.1 it attaches only the `colonel-hd-*` archives and
+  `SHA256SUMS`, and a tag is a pre-release only with a suffix
+  (`v1.1.0-rc.1`). Removing the two files from the 1.0.0 release and
+  marking it a full release are the customer's choice (GitHub, Releases,
+  edit). **Proposed.**

@@ -5,7 +5,7 @@ on its own SCI0 interpreter written in C++23. The vector backgrounds are
 re-rendered at high resolution; sprites stay original and are scaled by an
 integer factor. Game logic behaves exactly as in the original.
 
-**Status: version 1.0.0 (milestone 9 and iteration 2 packages P1 to P4); iteration 2 continues (`review/ITERATION2_PLAN.md`).**
+**Status: version 1.0.1 (iteration 2 complete; 1.0.0 released 2026-11-14).**
 - The whole game plays from the start to the ending. A scripted
   playthrough gives the same kernel calls, screens, actors, parser results
   and music as ScummVM from the boot to the last screen.
