@@ -97,14 +97,14 @@ the defaults. Its keys:
 
 | Key | Values |
 |---|---|
-| `game_folder` | the game folder (empty: `game/` in the data folder) |
+| `game_folder` | the game folder; `game` by default: `game/` in the data folder (a relative path is taken from the data folder) |
 | `mode` | `hd` or `original` |
 | `scale` | `auto` (the largest that fits) or 1 to 16 |
 | `priority_snap` | `on`: characters pass behind the foreground in whole original pixels, as in the original game; `off` (default): along its smooth edges |
 | `music` | `adlib`, `mt32` or `off` |
-| `mt32_rom` | the folder of the MT-32 ROMs (empty: `rom/` in the data folder) |
+| `mt32_rom` | the folder of the MT-32 ROMs; `rom` by default: `rom/` in the data folder |
 | `volume` | 0 to 100 |
-| `saves` | the folder of the saves (empty: `saves/` in the data folder) |
+| `saves` | the folder of the saves; `saves` by default: `saves/` in the data folder |
 | `log` | more messages on the console: `vm` (script problems the program works around), `resources` (resource loading), both comma-separated, or empty (default); `--log` on the command line overrides it for one run |
 
 The `hints` folder holds the scene-analysis hints for the HD mode. Keep it

@@ -147,15 +147,24 @@ std::string_view help_text() {
 }
 
 void use_data_folder_defaults(Config& config, const Options& options, const fs::path& data_folder) {
+    const Config defaults;
     if (options.game_folder) {
         config.game_folder = *options.game_folder;
-    } else if (config.game_folder.empty()) {
-        if (auto game_folder = data_game_folder(data_folder)) {
-            config.game_folder = std::move(*game_folder);
+    } else {
+        if (config.game_folder.empty()) {
+            config.game_folder = defaults.game_folder;
+        }
+        if (config.game_folder.lexically_normal() == defaults.game_folder) {
+            config.game_folder = data_game_folder(data_folder).value_or(fs::path());
+        } else if (config.game_folder.is_relative()) {
+            config.game_folder = data_folder / config.game_folder;
         }
     }
     if (config.mt32_rom.empty()) {
-        config.mt32_rom = data_folder / "rom";
+        config.mt32_rom = defaults.mt32_rom;
+    }
+    if (config.mt32_rom.is_relative()) {
+        config.mt32_rom = data_folder / config.mt32_rom;
     }
 }
 

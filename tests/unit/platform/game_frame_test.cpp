@@ -10,6 +10,7 @@
 #include "sci/vm/game.hpp"
 #include "sci_test.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -93,6 +94,19 @@ SCI_TEST(the_frame_is_the_composition_of_the_shown_screen) {
         SCI_CHECK(!dirty.empty());
         SCI_CHECK(frame.last_composed() == CompositionFixture::pixels);
     }
+}
+
+SCI_TEST(a_prepared_frame_is_black_and_its_first_update_composes_everything) {
+    const CompositionFixture fixture(scale);
+    const Shown shown(fixture);
+    GameFrame frame = frame_of(fixture);
+    frame.prepare(scale);
+    SCI_CHECK(frame.scale() == scale);
+    SCI_CHECK(frame.frame().size() == static_cast<std::size_t>(CompositionFixture::pixels) * scale * scale * 4);
+    SCI_CHECK(std::ranges::all_of(frame.frame(), [](std::uint8_t byte) { return byte == 0; }));
+    frame.update(shown.screen(fixture, 1), GraphicsMode::Hd, scale, false);
+    SCI_CHECK(frame.frame() == fixture.compose(false));
+    SCI_CHECK(frame.last_composed() == CompositionFixture::pixels);
 }
 
 SCI_TEST(an_update_composes_only_the_changed_tiles) {

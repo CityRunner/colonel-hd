@@ -3007,10 +3007,13 @@ the old numbers to the new ones, so older references stay unambiguous:
   stay next to the executable. Spec section 10.2's "next to the
   executable" for the cache and the configuration is replaced by this
   (G-122 closed). **Decided (Q-06 default, accepted by the customer).**
-- **Defaults inside it:** an empty `game_folder` means `game/` when it
-  holds a resource map; an empty `mt32_rom` means `rom/`; empty `saves`
-  means `saves/`. Neither the game folder found in `game/` nor the ROM
-  folder is written to the ini. The release archives hold empty `game/`,
+- **Defaults inside it:** `game_folder = game`, `mt32_rom = rom` and
+  `saves = saves`, written so in a new `colonel-hd.ini` (customer,
+  2026-11-14: "set project's folders game, rom and saves as defaults in
+  colonel-hd.ini"); a relative path is taken from the data folder, and an
+  empty value means the default, as before. `game/` is used when it holds
+  a resource map (else the program asks for the game folder). The
+  resolved, absolute folders are not written to the ini. The release archives hold empty `game/`,
   `rom/` and `saves/`, each with a `README.txt`
   (`scripts/test-package-release.sh` checks the layout).
 - **Existing users:** an installation with `colonel-hd.ini` next to the

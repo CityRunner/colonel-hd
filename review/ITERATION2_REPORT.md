@@ -281,3 +281,46 @@ milliseconds) is what the customer's laptop run (B-10 criterion 3) shows.
 
 The customer's laptop run (`docs/timing.md`), then B-09 by its result;
 then the v1.0.0 tag (the customer's).
+
+## After P7 (2026-11-14): the laptop run, B-09, the ini defaults
+
+**The customer's run (B-10 criterion 3)**, `colonel-hd 1.0.0 --timing`
+on a laptop: AMD Ryzen 5 5600U (6 cores, 12 threads; 2021), Radeon Vega
+integrated graphics, 14 GiB, Fedora 45 Workstation, Wayland. One run per
+N, the first with a cold cache. B-10 named Windows; this run is Linux, and
+the laptop is a little stronger than the 4-core reference.
+
+| N | Frame ms: median / p99 / worst | Over 16.7 ms | Composing worst | Room entry ms: median / worst | Peak memory |
+|---|---|---|---|---|---|
+| 1 | 0.47 / 0.75 / 11.2 | 0 | 2.7 ms | 10 / 87 | 313,328 KiB (with the first launch) |
+| 2 | 0.54 / 0.90 / 10.6 | 0 | 3.5 ms | 16 / 28 | 243,852 KiB |
+| 5 | 0.60 / 1.44 / 13.1 | 0 | 6.4 ms | 43 / 67 | 323,436 KiB |
+| 10 | 0.87 / 4.13 / 26.1 | 1 | 21.1 ms | 130 / 186 | 637,060 KiB |
+
+First launch: 176 scenes in 1,336 ms (target 15 s). Every room entry well
+within 1 s. The container's misses (software presentation) do not occur
+on the GPU. The one frame over 16.7 ms is the game's first frame at N = 10
+(tick 7, room 414: 26.1 ms, 21.1 ms of it composing a full frame that
+first allocated its 25 MB buffer). Peak memory on the laptop is higher
+than in the container (637 MB against 379 MB at N = 10), presumably the
+graphics driver's mappings counted in the process; B-11's baseline stays
+the container's.
+
+**B-09 fix** (`c0463e3`): the frame buffer and the window's texture are
+made with the black frame before the game starts (`GameFrame::prepare`,
+also at the timing mode's fixed N). In the container the first frame's
+composing went from 18.9 ms to 7.2 ms; the program's playthrough ends in
+the state of `sci-vm-trace`. Not re-run on the laptop.
+
+**The ini defaults** (`5c38b1a`, customer request): a new `colonel-hd.ini`
+says `game_folder = game`, `mt32_rom = rom` and `saves = saves`; a
+relative path is taken from the data folder, and an empty value still
+means the default. Checked end to end: a fresh data folder with the game
+in `game/` and no ini, the whole playthrough, the ini written with the
+three folders.
+
+| Check | Result |
+|---|---|
+| Unit tests (sci-platform 58), all CTest tests | pass |
+| Pre-push and local gate on `5c38b1a` | all pass: pre-push (style, release, asan, tsan, fuzz, ARM64) and the local gate (resources, pictures, sounds, screens, VM hashes and the program's end state) |
+| Windows CI on `5c38b1a` ([run 43642432022](https://github.com/CityRunner/colonel-hd/actions/runs/43642432022)) | **success** (windows-x64 release and ASan, windows-arm64 release) |

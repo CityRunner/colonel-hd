@@ -2,6 +2,7 @@
 //
 // The data folder's resolution order (B-03), on temporary folders.
 
+#include "sci/platform/command_line.hpp"
 #include "sci/platform/config.hpp"
 #include "sci/platform/data_folder.hpp"
 #include "sci_test.hpp"
@@ -96,4 +97,15 @@ SCI_TEST(data_folder_finds_the_game_in_game) {
     const auto game = sci::platform::data_game_folder(data.path());
     SCI_CHECK(game.has_value() && *game == data.path() / "game");
     SCI_CHECK(sci::platform::folder_is_writable(data.path()));
+}
+
+SCI_TEST(the_default_game_folder_is_game_in_the_data_folder_when_it_holds_the_game) {
+    const TempFolder data("colonel-hd-data-default-game");
+    fs::create_directories(data.path() / "game");
+    touch(data.path() / "game" / "RESOURCE.MAP");
+    sci::platform::Config config; // game_folder = game, as a new colonel-hd.ini.
+    const sci::platform::Options options;
+    sci::platform::use_data_folder_defaults(config, options, data.path());
+    SCI_CHECK(config.game_folder == data.path() / "game");
+    SCI_CHECK(sci::platform::saves_folder(config, data.path()) == data.path() / "saves");
 }

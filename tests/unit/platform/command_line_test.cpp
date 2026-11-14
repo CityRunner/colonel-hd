@@ -121,8 +121,8 @@ SCI_TEST(the_data_folder_gives_game_and_rom_defaults) {
     SCI_CHECK(config.game_folder == std::filesystem::path("/games/colonel"));
     SCI_CHECK(config.mt32_rom == data / "rom");
 
-    // A configured folder stays when the command line names none; a
-    // configured ROM folder stays.
+    // An absolute configured folder stays when the command line names
+    // none; so does an absolute ROM folder.
     sci::platform::Config configured;
     configured.game_folder = "/configured";
     configured.mt32_rom = "/roms";
@@ -130,4 +130,24 @@ SCI_TEST(the_data_folder_gives_game_and_rom_defaults) {
     sci::platform::use_data_folder_defaults(configured, no_folder, data);
     SCI_CHECK(configured.game_folder == std::filesystem::path("/configured"));
     SCI_CHECK(configured.mt32_rom == std::filesystem::path("/roms"));
+
+    // Relative folders are in the data folder; the default game/ without
+    // the game leaves the folder to be chosen; empty is the default.
+    sci::platform::Config relative;
+    relative.game_folder = "mygame";
+    relative.mt32_rom = "roland";
+    sci::platform::use_data_folder_defaults(relative, no_folder, data);
+    SCI_CHECK(relative.game_folder == data / "mygame");
+    SCI_CHECK(relative.mt32_rom == data / "roland");
+    sci::platform::Config defaults;
+    SCI_CHECK(defaults.game_folder == std::filesystem::path("game") &&
+              defaults.mt32_rom == std::filesystem::path("rom") && defaults.saves == std::filesystem::path("saves"));
+    sci::platform::use_data_folder_defaults(defaults, no_folder, data);
+    SCI_CHECK(defaults.game_folder.empty());
+    SCI_CHECK(defaults.mt32_rom == data / "rom");
+    sci::platform::Config empty;
+    empty.game_folder.clear();
+    empty.mt32_rom.clear();
+    sci::platform::use_data_folder_defaults(empty, no_folder, data);
+    SCI_CHECK(empty.game_folder.empty() && empty.mt32_rom == data / "rom");
 }
