@@ -35,6 +35,8 @@ while playing.
 | Playing: the garden at night | Inside: the chapel |
 | ![The Colonel at dinner, original and HD](docs/media/closeup-colonel.gif) | ![The bathroom, original and HD](docs/media/interior-bathroom.gif) |
 | Close-up: the Colonel at dinner | Inside: the bathroom |
+| ![The kitchen, original and HD](docs/media/interior-kitchen.gif) | ![Looking down the well, original and HD](docs/media/closeup-well.gif) |
+| Inside: the kitchen | Close-up: the well |
 
 ## Building
 
