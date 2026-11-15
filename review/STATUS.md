@@ -5,7 +5,7 @@ every stage so the work can resume in a new session.
 
 ## Current stage
 
-**Iteration 2: P1 to P5 done and merged into `main` (P5 merged 2026-11-13, customer: "Merge P5, proceed with P6"); P6 merged (`1bc8ce8`); P7 done and merged (`9d216be`): B-10 mode and doc, B-11 done, B-09 measured. Iteration 2 is complete.** Version 1.0.0 is set and ready to tag; the customer deferred the laptop run until after the release (2026-11-13), so B-10 criterion 3 and B-09 come in 1.0.x. Stage 5
+**Iteration 2: P1 to P5 done and merged into `main` (P5 merged 2026-11-13, customer: "Merge P5, proceed with P6"); P6 merged (`1bc8ce8`); P7 done and merged (`9d216be`): B-10 mode and doc, B-11 done, B-09 measured. Iteration 2 is complete.** Released: v1.0.0 (2026-11-14, `dcc2eba`) and v1.0.1 (2026-11-15, `16d279f`: the first-frame fix after the customer's laptop run, the ini's default folders, the release workflow fixed). B-09 and B-10 done; open: Windows hardware unmeasured, B-28's one check, B-17. Stage 5
 is merged into `main` (`b531169`). Iteration 2 runs on branch
 `iteration-2`: order in `review/ITERATION2_PLAN.md`, results in
 `review/ITERATION2_REPORT.md`. P7 merged (`9d216be`). The customer deferred the laptop run (2026-11-13); next: the v1.0.0 tag (the customer's), then the laptop run and B-09 in 1.0.x. Stage 5
