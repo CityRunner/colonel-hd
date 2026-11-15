@@ -25,7 +25,9 @@ release works). No game files are included, and none are ever committed.
 The same moment in the original look (EGA, 320 x 200, scaled 3 times) and
 in HD at N = 3: the backgrounds are re-rendered as vector art, while
 sprites and text stay the original pixels. F12 switches between the two
-while playing.
+while playing. The EGA's 16 colours are often mixed in a checkerboard of
+two (dithering); HD draws those areas in the colour they stand for, as the
+last row shows on two of the most dithered pictures of the game.
 
 | | |
 |:---:|:---:|
@@ -37,6 +39,8 @@ while playing.
 | Close-up: the Colonel at dinner | Inside: the bathroom |
 | ![The kitchen, original and HD](docs/media/interior-kitchen.gif) | ![Looking down the well, original and HD](docs/media/closeup-well.gif) |
 | Inside: the kitchen | Close-up: the well |
+| ![Outside the Colonel's study, original and HD](docs/media/dither-house-corner.gif) | ![The rose garden, original and HD](docs/media/dither-flower-garden.gif) |
+| Dithering: outside the Colonel's study | Dithering: the rose garden |
 
 ## Building
 
