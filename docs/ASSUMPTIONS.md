@@ -2890,12 +2890,13 @@ the old numbers to the new ones, so older references stay unambiguous:
 
 ## Comparison images in the README (2026-11-15)
 
-- Five small GIFs in `docs/media/` (960 x 600, about 200-300 KB each)
+- Six small GIFs in `docs/media/` (960 x 600, about 200-300 KB each)
   show one moment of the game in the original look and in HD at N = 3:
   the will at the title, the arrival at the mansion, the garden at night,
-  the chapel and the Colonel at dinner. They are made with
-  `sci-hd-frames` from the playthrough replay on an owned copy of the
-  game.
+  the chapel, the Colonel at dinner and the bathroom. They are made with
+  `sci-hd-frames` from the playthrough replay (for the bathroom, which
+  the playthrough never enters, its first 32,400 ticks and then a walk
+  into room 73) on an owned copy of the game.
 - This is an exception to the rule that no game-derived image is
   committed: `scripts/check-repo-policy.py` allows images only in
   `docs/media/`, and `CONTRIBUTING.md` says so. They are illustrations of

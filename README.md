@@ -33,8 +33,8 @@ while playing.
 | Title: the will | Cut-scene: arrival at the mansion |
 | ![The garden at night, original and HD](docs/media/gameplay-garden.gif) | ![The chapel, original and HD](docs/media/interior-chapel.gif) |
 | Playing: the garden at night | Inside: the chapel |
-| ![The Colonel at dinner, original and HD](docs/media/closeup-colonel.gif) | |
-| Close-up: the Colonel at dinner | |
+| ![The Colonel at dinner, original and HD](docs/media/closeup-colonel.gif) | ![The bathroom, original and HD](docs/media/interior-bathroom.gif) |
+| Close-up: the Colonel at dinner | Inside: the bathroom |
 
 ## Building
 
