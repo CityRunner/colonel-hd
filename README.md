@@ -5,7 +5,7 @@ on its own SCI0 interpreter written in C++23. The vector backgrounds are
 re-rendered at high resolution; sprites stay original and are scaled by an
 integer factor. Game logic behaves exactly as in the original.
 
-**Status: version 1.0.1 (iteration 2 complete; 1.0.0 released 2026-11-14).**
+**Status: version 1.0.1.**
 - The whole game plays from the start to the ending. A scripted
   playthrough gives the same kernel calls, screens, actors, parser results
   and music as ScummVM from the boot to the last screen.
@@ -106,7 +106,8 @@ The development room viewer writes the same images to PNG files
 The project is built milestone by milestone against a written
 specification, with ScummVM as the behavioural reference. The changes to
 that specification are in `docs/SPEC_ADDENDA.md`, every decision is in
-`docs/ASSUMPTIONS.md`, and each milestone ends with a report in `docs/reports/`.
+`docs/ASSUMPTIONS.md`, each milestone ends with a report in `docs/reports/`,
+and the work items since 1.0 are in `docs/backlog.md`.
 Most of the code is written by Claude, Anthropic's AI model, through Claude
 Code. See `CONTRIBUTING.md` before opening an issue or a pull request.
 
