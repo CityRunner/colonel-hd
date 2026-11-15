@@ -37,9 +37,9 @@ Status markers: **decided** (final unless the customer objects),
 - **Game folder.** The customer's copy is the GOG release, uploaded to the
   session on 2026-10-20. Only the game files were extracted (the GOG
   installer's `tmp/` folder was left out), to a read-only directory outside
-  the repository: `/home/user/game/colonels-bequest-gog` in the agent's
+  the repository: `/path/to/game` in the agent's
   container. It is mounted read-only into the toolchain container, for
-  example `COLONEL_HD_MOUNTS=/home/user/game/colonels-bequest-gog:/game`.
+  example `COLONEL_HD_MOUNTS=/path/to/game:/game`.
   **Decided.**
 - **Environment.** The agent works in a Linux x86-64 cloud container, not on a
   local machine (spec section 3.1). Docker is available (its daemon is started
@@ -1645,7 +1645,7 @@ scripts' bytecode (after the script patches), not from runs:
 ## MT-32 ROMs (2026-10-28)
 
 - The customer supplied Roland ROMs. They are kept on the local machine
-  only, outside the repository (`/home/user/roms/roland`), and are never
+  only, outside the repository (`/path/to/roms/roland`), and are never
   committed or uploaded; CI runs without them. SHA-256:
   - `MT32_CONTROL.1987-10-07.v1.07.ROM`
     `a73a06c23ed38370e58a11fb1b86f7ea4c547061a60d7aa62bae446235fd2dff`
@@ -2092,7 +2092,7 @@ scripts' bytecode (after the script patches), not from runs:
   again while its note still sounds keeps that note's level.
 - **ROMs in the tests:** `COLONEL_HD_MT32_ROMS` names the folder; without it
   the ROM tests pass with a "skipped" note (CI). Locally the folder is
-  mounted read-only (`COLONEL_HD_MOUNTS=/home/user/roms/roland:/roms`); no
+  mounted read-only (`COLONEL_HD_MOUNTS=/path/to/roms/roland:/roms`); no
   file from it is in the worktree. **Decided.**
 - **Since done:** the SCI0 MT-32 driver, the ROM folder in the
   configuration and the fallback to the AdLib ("Milestone 7: the MT-32
@@ -2223,9 +2223,9 @@ scripts' bytecode (after the script patches), not from runs:
 - **ScummVM's ROMs:** ScummVM opens `CM32L_CONTROL.ROM`/`CM32L_PCM.ROM`,
   then `MT32_CONTROL.ROM`/`MT32_PCM.ROM`, from its search path. The
   reference gets `--extrapath` on a folder outside the repository
-  (`/home/user/roms/mt32-scummvm`) with relative symbolic links under those
+  (`/path/to/roms/mt32-scummvm`) with relative symbolic links under those
   names to the MT-32 1.07 control ROM and the MT-32 PCM ROM of
-  `/home/user/roms/roland`, mounted as `/roms` (its log: "Falling back to
+  `/path/to/roms/roland`, mounted as `/roms` (its log: "Falling back to
   MT32"). No CM-32L names there, so the MT-32 1.07 plays, as on our side.
   **Decided.**
 - **`run-scenario.sh` with `COLONEL_HD_MUSIC=mt32`** runs both engines on
