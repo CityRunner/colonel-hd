@@ -12,7 +12,7 @@ Once, on a 4-core x86-64 laptop of about 2020 with integrated graphics,
 under Windows (spec section 10.3, `docs/ASSUMPTIONS.md`):
 
 1. **The build.** In GitHub, Actions, workflow "Release", "Run workflow"
-   on the branch named in the iteration 2 report (P7); when it is green,
+   on `main` (or use a published release); when it is green,
    download the artifact `colonel-hd-windows-x64` and unpack it (the zip
    inside it too) into an empty folder.
 2. **The two files of the run.** From the repository, at the same commit,

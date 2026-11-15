@@ -1,9 +1,8 @@
 # Architecture
 
 How the program is organised, how data flows through it, and the trade-offs
-behind it. Updated at every milestone (spec section 5.1). State: milestone 9
-(the playthrough) and iteration 2 packages P1 to P3, 2026-11-13; every
-statement checked against the code on that date (B-13).
+behind it. State: version 1.0.1; every statement checked against the code
+(B-13).
 
 ## Modules
 
@@ -48,7 +47,7 @@ program:
 - `golden-hashes`: writes or checks the golden hashes of every picture and
   picture stack.
 - `golden-resources`: the golden hashes of every picture layer, cel, glyph
-  and cursor (the stage 5 safety net).
+  and cursor (a safety net for changes).
 - `hint-tool`: proposes hint candidates for review, checks hint files
   against the game, and turns review decisions into hint files.
 - `vm-trace`: runs the game in sci-vm's deterministic mode, writes the

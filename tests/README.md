@@ -3,7 +3,7 @@
 - `support/`: the minimal test harness (`SCI_TEST`, `SCI_CHECK`).
 - `unit/`: unit tests, one executable per library (`sci-platform` included:
   configuration and release identification).
-- `unit/vm/`: the VM's net in CI, without game data (iteration 2, B-06 and
+- `unit/vm/`: the VM's net in CI, without game data (B-06 and
   B-07). `script_assembler.hpp` builds SCI0 scripts (objects, classes,
   code with labels, strings, exports) and the resources a game needs;
   `bytecode_test.cpp` runs every opcode the interpreter accepts and checks
@@ -65,7 +65,7 @@ Tests that need the game files run locally, never in CI:
 
 ## The local gate
 
-CI has no game files. Since iteration 2 the VM has a CI net of its own
+CI has no game files. The VM has a CI net of its own
 (`docs/backlog.md` B-06, B-07): its unit tests cover 73 % of sci-vm's
 lines, and the coverage job of the pull request gate fails below 70 %
 (B-08, `scripts/coverage.sh --min-vm 70`; it was 38 % before). The
@@ -80,7 +80,7 @@ releases:
   `src/sci-render`, `src/app`, `hints/`): CI cannot see the real game. It
   runs locally on the owner's game copy (and the MT-32 ROMs), and the
   pull request or release notes name the log.
-- **What:** `scripts/check-local.sh` (S4 and S5 of the stage 5 plan):
+- **What:** `scripts/check-local.sh` :
 
       COLONEL_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh \
           scripts/check-local.sh build/release

@@ -21,7 +21,7 @@
 // original | HD, and with --snap a third panel, HD with priority_snap.
 // With --hashes <file> nothing is written per tick; instead one line per
 // tick goes to <file>: "<tick> original<N> <sha-256> hd<N> <sha-256>", the
-// hashes of the two whole frames (the golden screens of stage 5 step 0.3,
+// hashes of the two whole frames (the golden screens,
 // docs/backlog.md B-18).
 // --timing composes the HD frame whenever the shown screen changes between
 // the two ticks, as the program presents it, and prints the time taken.

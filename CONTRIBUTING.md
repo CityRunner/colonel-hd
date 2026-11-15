@@ -2,9 +2,9 @@
 
 Issues are welcome: bug reports (with the release you use, your operating
 system and the steps that lead to the problem), differences from the
-original game or from ScummVM, and ideas. The project follows a written
-specification milestone by milestone, so larger changes are discussed in an
-issue first.
+original game or from ScummVM, and ideas. The project is complete for now
+(version 1.0.1, open items in `docs/backlog.md`); larger changes are
+discussed in an issue first.
 
 Pull requests:
 
@@ -20,7 +20,7 @@ Pull requests:
   qemu-user.
 - Code ported from ScummVM keeps ScummVM's licence notice and names the
   functions and files it comes from (`THIRD_PARTY.md`).
-- CI runs on pull requests (`docs/ASSUMPTIONS.md`, "CI cost policy"): a
+- CI runs on pull requests (`docs/ASSUMPTIONS.md`, "CI"): a
   short Linux run for drafts, the full matrix when the pull request is
   ready for review.
 

@@ -59,28 +59,27 @@ sci_add_fuzz_target(NAME fuzz-parser
     DEPENDS sci-text
     CORPUS ${CMAKE_CURRENT_SOURCE_DIR}/corpus/parser)
 
-# The music driver's patch resources, AdLib bank and MT-32 patch (stage 5
-# step 0.5, docs/backlog.md B-05).
+# The music driver's patch resources, AdLib bank and MT-32 patch (docs/backlog.md B-05).
 sci_add_fuzz_target(NAME fuzz-patch
     SOURCE fuzz_patch.cpp
     DEPENDS sci-audio
     CORPUS ${CMAKE_CURRENT_SOURCE_DIR}/corpus/patch)
 
-# The configuration file (stage 5 step 0.5, B-05).
+# The configuration file (B-05).
 sci_add_fuzz_target(NAME fuzz-config
     SOURCE fuzz_config.cpp
     DEPENDS sci-platform
     CORPUS ${CMAKE_CURRENT_SOURCE_DIR}/corpus/config)
 
 # Sound resources through the music player, MIDI parser and AdLib driver
-# (stage 5 step 0.5, B-05).
+# (B-05).
 sci_add_fuzz_target(NAME fuzz-sound
     SOURCE fuzz_sound.cpp
     DEPENDS sci-vm sci-audio
     CORPUS ${CMAKE_CURRENT_SOURCE_DIR}/corpus/sound)
 
 # Script resources through sci-vm's script loader, on a synthetic game
-# folder (stage 5 step 0.5, B-05); private sci-vm headers as for fuzz-save.
+# folder (B-05); private sci-vm headers as for fuzz-save.
 sci_add_fuzz_target(NAME fuzz-script
     SOURCE fuzz_script.cpp
     DEPENDS sci-vm

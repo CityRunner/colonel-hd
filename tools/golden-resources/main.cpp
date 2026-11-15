@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Golden outputs of all resources (docs/backlog.md B-18, stage 5 step
-// 0.3): one SHA-256 per image, local only (needs the game).
+// Golden outputs of all resources (docs/backlog.md B-18): one SHA-256 per image, local only (needs the game).
 //
 //   sci-golden-resources <game> <file> [--hints <directory>] [--check] [--only pictures|sprites]
 //

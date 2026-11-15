@@ -9,7 +9,7 @@ sci_add_unit_test(NAME sci-golden-tests
     DEPENDS sci-pic sci-vector sci-render)
 target_include_directories(sci-golden-tests PRIVATE unit/pic unit/render)
 
-# The layers of tools/golden-resources (stage 5 step 0.3): a one-pixel
+# The layers of tools/golden-resources: a one-pixel
 # change changes every layer's hash. Only with the tools, which hold them.
 if(SCI_BUILD_TOOLS)
     sci_add_unit_test(NAME sci-golden-layers-tests

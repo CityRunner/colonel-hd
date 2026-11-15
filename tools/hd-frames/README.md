@@ -22,7 +22,7 @@ run is deterministic: a replay file, a seed and virtual time.
 - `--hashes <file>` writes no images: one line per `--at` tick goes to
   the file instead, `<tick> original<N> <sha-256> hd<N> <sha-256>`, the
   SHA-256 of each mode's whole frame (RGBA, 320N x 200N). The golden
-  screens of stage 5 (`scripts/check-screen-hashes.sh`) use it.
+  golden screens (`scripts/check-screen-hashes.sh`) use it.
 - Saves made in the game during the run (kSaveGame) are kept in memory:
   every run starts with none, as `sci-vm-trace`'s do, so a replay that
   saves and restores through the game's dialogs renders the same frames.

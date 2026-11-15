@@ -13,7 +13,7 @@
 #   Lets a test, fuzz target or test tool include the private headers of a
 #   component: src/<component>/src, for a library (sci-vm) or the program
 #   (app). Every use is a test that reaches behind a public interface; the
-#   calls are the list of them. Since iteration 2 (B-23) the allowed
+#   calls are the list of them. Since 1.0 (B-23) the allowed
 #   exceptions are: sci-vm, whose internals (interpreter, segments, kernel
 #   functions, saves) are what its unit and fuzz tests check (B-06, B-07);
 #   and app, a program with no public interface. Every other library is

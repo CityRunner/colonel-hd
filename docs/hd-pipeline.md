@@ -121,7 +121,7 @@ order:
 Every change is recorded with its evidence (`SceneStats::integrity_changes`)
 and listed by `tools/hd-report`. (Milestone 3b measured its baseline with a
 development option that built scenes without the pass; it was removed in
-iteration 2, B-35.)
+B-35.)
 
 ## 6. Curves
 

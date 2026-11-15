@@ -358,11 +358,6 @@ CI confirms, it does not discover. **Decided.**
    - A milestone is never approved without a green full matrix at its gate.
    - No check from the spec is dropped or weakened to save minutes. If the
      budget looks insufficient, the checks stay and the budget is raised.
-7. **Budget and reporting.**
-   - `scripts/ci-minutes.py --branch <branch>` measures the minutes a
-     branch's runs used, by platform.
-   - The script sums each job's time rounded up to whole minutes, as
-     GitHub counts it.
 
 ### A CI defect found while applying the policy
 
@@ -2741,8 +2736,7 @@ the old numbers to the new ones, so older references stay unambiguous:
   Earlier sections that speak of macOS describe the state of their time.
   **Decided (owner).**
 - **What stays:** the Apple back-ends inside the vendored SDL3, which is
-  kept unchanged; the macOS rate in `scripts/ci-minutes.py`, for the runs
-  of earlier milestones; and one `NOLINT` in
+  kept unchanged; and one `NOLINT` in
   `src/sci-vector/src/build_scene.cpp` whose reason names Apple's libc++
   (the reason is out of date; changing the code is left to the backlog,
   B-27). **Decided.**

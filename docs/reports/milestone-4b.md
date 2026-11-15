@@ -170,11 +170,6 @@ All points of this report were accepted:
   the picture is accepted until milestone 5. The same goes for `files/`
   next to the configuration, what the first launch analyses, the cache's
   83 MB, and the test mode's time of day from noon on 1990-01-01.
-- **Spending limit:** no amount was needed in the end. The repository was
-  made public on 2026-10-22, and its standard GitHub-hosted runners cost
-  nothing.
-- **Self-hosted runners:** accepted, but not set up. They need a machine of
-  yours, and they are not recommended for a public repository.
 - **Platforms:** macOS is optional again; Linux is the first priority and
   Windows the second. The gate is the Linux and Windows matrix. macOS runs
   only when asked for, and the fix it prompted (`std::ranges::iota`) is
