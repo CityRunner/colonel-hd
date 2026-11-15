@@ -3072,4 +3072,6 @@ the old numbers to the new ones, so older references stay unambiguous:
   `SHA256SUMS`, and a tag is a pre-release only with a suffix
   (`v1.1.0-rc.1`). Removing the two files from the 1.0.0 release and
   marking it a full release are the customer's choice (GitHub, Releases,
-  edit). **Proposed.**
+  edit). **Done:** the customer tagged v1.0.1 on `16d279f`; it was
+  published on 2026-11-15 as a full release (GitHub's latest) with the
+  four archives and `SHA256SUMS` only.
