@@ -78,7 +78,7 @@ sci-vector) applies the same rules and rejects unknown members.
 | `from`, `end`, `to` | A gap from the `start` or `end` point of line `from` to line `to`. |
 | `at` | A pixel of the region, in picture coordinates as stored (x 0-319, y 0-189). |
 | `label`, `note` | Printable ASCII, at most 200 characters. Labels describe what is drawn, in a few words. |
-| `uncertain` | The analyser was not sure; the customer spot-checks these. Default false. |
+| `uncertain` | The analyser was not sure; the owner spot-checks these. Default false. |
 
 The files hold labels and line references only, never image data, so they
 contain nothing derived from the game art beyond a description.

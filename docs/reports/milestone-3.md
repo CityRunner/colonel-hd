@@ -1,7 +1,7 @@
 # Milestone 3: HD picture pipeline
 
-Status: **ready for review**. All exit criteria are met. The manual
-acceptance (side-by-side images of rooms chosen by the customer) is part
+Status: **approved**. All exit criteria are met. The manual
+acceptance (side-by-side images of rooms chosen by the owner) is part
 of this gate; see "Open questions".
 
 Exit criteria (spec section 12):
@@ -154,22 +154,3 @@ fixed; outputs and golden hashes did not change.
   At that tolerance the line check holds (every line pixel stays touched by
   its stroke). A wider tolerance gives rounder curves but breaks it for some
   pixels.
-
-## Open questions
-
-1. **Manual acceptance (spec section 6.4).** Which rooms would you like to
-   see side by side, original and HD? Side-by-side images of all 88
-   pictures are generated (git-ignored, never committed), and samples are
-   attached to the chat summary.
-2. **Fitting tolerance (spec section 15).** Keep 0.5 pixels, or allow up to
-   1 pixel for rounder curves? The cost is that a few line pixels would no
-   longer be touched by their stroke.
-3. **Edge blend space (spec section 15).** HD edges and dither pairs are
-   blended in sRGB, as assumed. Please confirm once you have seen the
-   images.
-4. **Reference machine and budgets (spec section 10.3).** The proposal, in
-   `docs/ASSUMPTIONS.md`:
-   - a laptop with a 4-core x86-64 CPU of about 2020, 8 GB of memory and
-     integrated graphics;
-   - room entry under 1 s at N = 10;
-   - first-launch analysis under 15 s.

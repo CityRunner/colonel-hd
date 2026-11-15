@@ -1,6 +1,6 @@
 # Milestone 1: resources
 
-Status: **ready for review**. All exit criteria are met.
+Status: **approved**. All exit criteria are met.
 
 Exit criterion (spec section 12): every resource decodes byte-identically to
 ScummVM's resource loader. The check goes through the reference tooling, and
@@ -100,9 +100,3 @@ below).
   synthetic data, not game data, and are removed.
 - The check scripts now also cover new files and skip deleted ones.
 - The fuzz runner reports any input that runs longer than 10 s.
-
-## Open questions
-
-None. Milestone 2 (path 1 rasteriser, views and fonts at 1x, room viewer)
-needs a second reference patch for buffer dumps; it will follow the same
-pattern.

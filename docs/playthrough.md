@@ -20,7 +20,7 @@ match (traces, screens, maps, actors, parser, layout, OPL).
 `colonel-hd --replay` with `--fast` plays the replay to QUIT and exits with
 0 in HD and original mode, N = 4 and 2, AdLib and MT-32, without errors or
 warnings, in about 30 s each, and ends in sci-vm-trace's state (tick,
-globals and state hash). Open: a run in real time and the customer's
+globals and state hash). Open: a run in real time and the owner's
 manual playthrough.
 
 ## How the clock moves
@@ -695,7 +695,7 @@ New risks found:
 
 ## Images
 
-Two images per act for the customer, at ticks of the replay (one during a
+Two images per act for the owner, at ticks of the replay (one during a
 key scene, one in another room with characters), rendered with
 `sci-hd-frames <game> <folder> --at <ticks> --replay
 tests/playthrough/playthrough.txt` (original | HD side by side):
@@ -748,7 +748,7 @@ QUIT:**
 | HD | 4 | AdLib | cold (176 scenes analysed in 2.4 s) | 0 | 29 s | 0 / 0 | tick 337613, state equal |
 | HD | 4 | AdLib | warm | 0 | 26 s | 0 / 0 | tick 337613, state equal |
 | original | 4 | AdLib | warm | 0 | 30 s | 0 / 0 | tick 337613, state equal |
-| HD | 4 | MT-32 (the customer's v1.07 control and PCM ROMs) | warm | 0 | 26 s | 0 / 0 | tick 337613, state equal |
+| HD | 4 | MT-32 (the owner's v1.07 control and PCM ROMs) | warm | 0 | 26 s | 0 / 0 | tick 337613, state equal |
 | HD | 2 | AdLib | warm | 0 | 25 s | 0 / 0 | tick 337613, state equal |
 | HD | 4 | AdLib, `SDL_AUDIODRIVER=disk` | warm | 0 | 28 s | 0 / 0 | tick 337613, state equal |
 | original | 4 | off | warm | 0 | 22 s | 0 / 0 | tick 337613, state equal |
@@ -784,7 +784,7 @@ What it took:
   3 in a window that was not resized.
 
 Not done: a run in real time (`--real`, about 94 minutes per run), and
-the customer's manual playthrough (HD mode) and spot checks (original
+the owner's manual playthrough (HD mode) and spot checks (original
 mode).
 
 ## How the game ends (found in the scripts)

@@ -1,7 +1,6 @@
 # Milestone 3a: scene-analysis hints and the room viewer
 
-Status: **ready for review**. The hints are committed and wait for your
-spot check.
+Status: **approved**. The hints are committed.
 
 Exit criteria (spec section 12, amended by addendum A1 in
 `docs/SPEC_ADDENDA.md`):
@@ -222,30 +221,3 @@ measure that first.
   for CI.
 - **Linux binaries need glibc 2.38 or newer** (Ubuntu 24.04, Debian 13,
   Fedora 39). The C++ runtime is linked in.
-
-## Open questions
-
-1. **Hint spot check (spec section 6.7).**
-   - Which pictures would you like to check? I can send, per picture, the
-     image with every hint drawn and labelled, and the HD result with and
-     without hints.
-   - 788 hints are marked uncertain, too many to check one by one. The
-     largest groups:
-     - outdoor ground, lawn and shore edges (pictures 24 to 30);
-     - curves in window panes, which may be curtains or reflections
-       (pictures 10, 12, 15 to 17 and 20);
-     - lines on the crypt wall, marble veins or cracks (picture 57);
-     - the dark shapes in pictures 39, 40, 46 and 48.
-
-     Rejecting a doubtful group costs little: those lines keep the
-     automatic result.
-   - One known inconsistency: pictures 182 and 382 draw the same collar
-     line. It is a spline in 182 and a straight line in 382, the only kind
-     the tool accepted there.
-2. **The analysis cache** (see Deviations): deferring it to milestone 4 is
-   fine?
-3. **Release**: after the 3b gate I tag `v0.1.0`, and the release
-   workflow publishes the pre-release. Is a pre-release on GitHub what you
-   want?
-4. **A1 measurements** (see "Addendum A1"): do you agree with the three
-   proposals for connectivity, doubled boundaries and covering?

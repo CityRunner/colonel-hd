@@ -1,6 +1,6 @@
 # Milestone 3b: drawing order, occlusion and stroke integrity
 
-Status: **approved** (2026-10-21). The customer chose option 1 of the
+Status: **approved** (2026-10-21). The owner chose option 1 of the
 trade-off below: the remaining cases are accepted as listed. The hints are
 frozen, and release v0.1 follows. The text below is the report as
 reviewed.
@@ -8,7 +8,7 @@ reviewed.
 Exit criteria (addendum A1, `docs/SPEC_ADDENDA.md`):
 
 - the A1 acceptance checks pass, except cases listed in the report;
-- the customer approves the side-by-side review;
+- the owner approves the side-by-side review;
 - at the gate, the hints are frozen and the golden hashes regenerated;
 - release v0.1 is tagged after the gate.
 
@@ -174,7 +174,6 @@ Options:
    whose end pixel lies past the contour, and joints whose end meets
    another line it touches. Then 19,143 cases remain listed instead of
    27,039.
-   This changes how A1 is read, so it is your call.
 3. **Local 1x fallback**: draw the 1x pixels around each remaining case as
    blocks. The checks would then pass, but the rooms would get thousands of
    small pixelated spots. I advise against it.
@@ -194,29 +193,18 @@ not committed:
 - 18: arches;
 - 5: round objects.
 
-I can send any other room, or close-ups of listed cases.
-
 ## Golden hashes, tests and style
 
 - `tests/golden/pictures.txt` is regenerated, and the same hashes hold on
   ARM64 under qemu-user. The synthetic golden hashes in CI are updated.
 - 120 tests pass; clang-format and clang-tidy report no findings.
-- The hints are unchanged since 3a. They are frozen when you approve this
+- The hints are unchanged since 3a. They are frozen with this
   gate (`hints/README.md`).
 
 ## Deviations from the spec
 
 None from section 2. Two A1 items are not done, both explained above and
-pending your decision:
+decided at the gate:
 
 - the fallback of fitted chains to their segments;
 - the rerun of the AI step for relations (none were needed).
-
-## Open questions
-
-1. **The trade-off**: which option, 1 to 4? I recommend 1.
-2. **The side-by-side review**: do the rooms look right to you?
-3. **The hint spot check**, still open from 3a: the hints are frozen when
-   you approve this gate. Do you want to check any pictures first?
-4. **Release v0.1**: on approval, I tag it as a GitHub pre-release, as
-   agreed at the 3a gate.

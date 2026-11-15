@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Checks the known-failure logic of scripts/run-fuzzers.sh (customer's
-# decision 2a, 2026-11-06) with fake fuzz targets, without a fuzz build:
+# Checks the known-failure logic of scripts/run-fuzzers.sh (decided
+# 2026-11-06) with fake fuzz targets, without a fuzz build:
 # a listed crash and a listed timeout pass; an unlisted crash in a listed
 # target, a listed target's other kind of failure, and a crash of an
 # unlisted target fail. Run from anywhere; exits with 1 on a wrong result.

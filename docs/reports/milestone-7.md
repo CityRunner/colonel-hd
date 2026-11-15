@@ -15,13 +15,10 @@ comparison, gaps in the music) and "MT-32 ROMs (2026-10-28)".
 ## Changes of plan during this milestone
 
 - **Milestone SU (sprite undithering, addendum A2) is dropped.** The
-  customer first put it on hold (2026-10-23), then dropped it completely
+  owner first put it on hold (2026-10-23), then dropped it completely
   (2026-10-28). A2 is marked withdrawn in `docs/SPEC_ADDENDA.md`. Sprites
   stay the original cels scaled N x N. The milestone 9 playthrough is done
   without undithering. The unmerged SU work was deleted.
-- **Small agent tasks** (`docs/ASSUMPTIONS.md`, 2026-10-23). The milestone
-  was built as ten tasks of about an hour each. Long checks run in
-  resumable pieces. This kept the stops at usage limits short.
 
 ## What was implemented
 
@@ -193,10 +190,9 @@ they are derived from the game's music):
   - the order of SysEx and notes inside one timer call on the MT-32, where
     ScummVM leaves a few old notes sounding at four song changes of the
     intro (documented in ASSUMPTIONS).
-- **Listening.** This machine has no sound card, so the listening was the
-  customer's (the spec: "otherwise the customer does the listening check
-  at milestone 7"). **Result (2026-10-28):** the customer listened to the
-  four captures: "Sounds fine to me."
+- **Listening.** The development machine has no sound card, so the
+  listening check was done by the owner (spec section 12). **Result
+  (2026-10-28):** the four captures sound right.
 
 ## Tests and style
 
@@ -225,35 +221,6 @@ they are derived from the game's music):
     - the SysEx sent at open and close, routing, part assignment, reverb.
   - **ROM choice and fallback to AdLib.**
 
-## CI minutes
-
-**The gate is green** (run 40753022510, commit `ef49fe9`). It ran:
-- style and static analysis;
-- Linux x86-64 and ARM64 in release, ASan+UBSan and TSan, which includes
-  the new threaded audio tests;
-- the fuzzers;
-- Windows x64 and ARM64, the first Windows builds of Nuked OPL3 and
-  mt32emu.
-
-macOS is optional and was not run.
-
-Measured with `scripts/ci-minutes.py --branch milestone-7`:
-
-| Platform | Jobs | Minutes | Included minutes | List price |
-|---|---|---|---|---|
-| Linux x86-64 | 6 | 64 | 64 | $0.38 |
-| Linux ARM64 | 3 | 22 | 22 | $0.11 |
-| Windows x64 | 1 | 10 | 20 | $0.10 |
-| Windows ARM64 | 1 | 4 | 8 | $0.04 |
-| **Total** (1 run) | | **100** | **114** | **$0.63** |
-
-- **Cost:** none. The repository is public, so standard runners are free.
-- **Runs:** one, the gate run of this pull request.
-  - Every push of `milestone-7` before the pull request was checked
-    locally first, and pushes start no run.
-  - The report's later commits change only documentation and start no
-    run.
-
 ## Deviations from the spec
 
 None from section 2.
@@ -265,15 +232,3 @@ None from section 2.
   driver sends, as a real MT-32 receives it. ScummVM reorders SysEx ahead
   of the notes sent before it in the same timer call. The logs at the
   driver match either way.
-
-## Open questions
-
-None. The questions of this milestone were answered on 2026-10-28:
-1. **The by-ear comparison:** the customer's answer was "Sounds fine to
-   me." It is recorded above.
-2. **Showing a room while its HD picture is made:** the previous frame
-   stays up to 1 s, then the room shows at 1x until the HD image is
-   ready. The customer accepts this.
-3. **The MT-32 ROMs:** the program uses MT-32 1.07, or the CM-32L set, and
-   skips the patched control ROM that mt32emu does not know. The customer
-   confirmed this.

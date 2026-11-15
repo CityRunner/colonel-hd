@@ -1,9 +1,9 @@
 # Spec addenda
 
-Changes to the task spec that the customer made after its version 15. Each
+Changes to the task spec that the owner made after its version 15. Each
 addendum is recorded as given, with its date. None changes a fixed decision
-in spec section 2 unless it says so (A2 does, with the customer's approval).
-There is no A3: the customer numbered the third addendum A4.
+in spec section 2 unless it says so (A2 does, with the owner's approval).
+There is no A3: the owner numbered the third addendum A4.
 
 **Milestone numbers.** Since A4 (2026-10-29) the remaining milestones are
 renumbered: old 12 (exact area coverage) became part of the new mandatory
@@ -30,7 +30,7 @@ not change any fixed decision in section 2.
   - The AI step may be rerun during 3b only to add or correct depth and
     containment relations.
   - Exit criteria: the A1 acceptance checks pass except for the cases
-    listed in the report, and the customer approves the side-by-side
+    listed in the report, and the owner approves the side-by-side
     review.
   - At the 3b gate the hint files are frozen and golden hashes are
     regenerated.
@@ -38,7 +38,7 @@ not change any fixed decision in section 2.
 - Milestones 4 to 9 and the optional milestones after milestone 9 are
   unchanged. (When A1 was given these were 10 to 12; since A4 they are 11
   and 12, and old 12 became part of milestone 10.)
-- If the agent is already past milestone 3a when it reads this, milestone 3b
+- If the developer is already past milestone 3a when it reads this, milestone 3b
   becomes the next gate: finish the current milestone, report, and propose
   3b before continuing. Do not reopen approved milestones.
 - If something in the current design makes A1 impractical or forces a
@@ -129,19 +129,19 @@ none of the following, except the cases listed in the report:
 - a break in HD between line pixels that are connected at 1x (the connected
   components of every stroke match between 1x and HD).
 
-The customer's side-by-side review includes rooms with dense overlapping
+The owner's side-by-side review includes rooms with dense overlapping
 detail and many curves, such as walls with windows, furniture in front of
 patterned walls, roofs, arches and round objects.
 
 ## A2: Sprite undithering (2026-10-21)
 
-**Withdrawn (2026-10-28).** The customer dropped A2 and milestone SU
+**Withdrawn (2026-10-28).** The owner dropped A2 and milestone SU
 completely: sections 1.1, 2, 6.5 and 12 apply as before A2, sprites stay
 as in the original scaled N x N, and the milestone 9 playthrough is done
 without undithering. The text below is kept as a record only.
 
 A2 adds milestone SU and section 6.11. It amends section 1.1 and the output
-decision in section 2 (a fixed decision: **changed with the customer's
+decision in section 2 (a fixed decision: **changed with the owner's
 approval**, given with this addendum), and sections 6.5 (shared colour
 blending) and 12 (milestones).
 
@@ -153,7 +153,7 @@ blending) and 12 (milestones).
     and waits for approval before milestone 7 starts.
   - The numbering of milestones 7 to 12 does not change.
   - Approved milestones are not reopened.
-  - If something in the design makes A2 impractical, the agent stops and
+  - If something in the design makes A2 impractical, the developer stops and
     explains it in a report instead of improvising.
 - **Milestone 9**: the playthrough in HD mode is done with sprite
   undithering on.
@@ -200,7 +200,7 @@ in the raster.
 - **Ambiguous cases:** an override file per view resource (in
   `hints/views/`, with a schema validated in CI) may exclude a region or
   force one, anchored to view, loop, cel and 1x coordinates and to a hash of
-  the view resource. The agent may use AI at development time to review the
+  the view resource. The developer may use AI at development time to review the
   detections; the overrides are frozen at the SU gate, like the picture
   hints. A mismatch with another release's resource skips the override and
   logs it.
@@ -218,7 +218,7 @@ in the raster.
 - A report listing, for every view, the undithered regions and the
   overrides used, with side-by-side images (original and HD) of all
   characters, captured both as isolated cels and in game scenes, and of the
-  views the customer chooses; images stay in the git-ignored
+  views the owner chooses; images stay in the git-ignored
   `reports/images/` directory.
 - The game logic is unaffected: the 1x priority and control maps and the
   cel transparency masks are bit-identical with and without undithering,
@@ -231,7 +231,7 @@ in the raster.
 A4 adds the mandatory milestone 10 "HD background quality", which replaces
 and extends the former optional milestone 12, renumbers the remaining
 milestones, and introduces a visual review format for the operator (the
-customer). It amends spec sections 6.3, 6.4, 6.6, 6.7, 6.9, 9 and 12. It
+owner). It amends spec sections 6.3, 6.4, 6.6, 6.7, 6.9, 9 and 12. It
 does not change any fixed decision in spec section 2. Milestone 9 is
 finished as planned; its scope and exit criteria do not change.
 
@@ -239,7 +239,7 @@ finished as planned; its scope and exit criteria do not change.
 
 | Old | New | Content | Status |
 |---|---|---|---|
-| 12 (optional: exact area coverage) | 10 | HD background quality: object-level reconstruction (part A below), mandatory; exact area coverage (spec section 6.6) as an optional part, which the customer approves or declines at the start of milestone 10 | mandatory, next after 9 |
+| 12 (optional: exact area coverage) | 10 | HD background quality: object-level reconstruction (part A below), mandatory; exact area coverage (spec section 6.6) as an optional part, which the owner approves or declines at the start of milestone 10 | mandatory, next after 9 |
 | 10 | 11 | ScummVM-compatible saves (spec section 9) | optional: approved or declined after milestone 10 |
 | 11 | 12 | Vectorised font glyphs (spec section 6.9) | optional: approved or declined after milestone 11 |
 | — | — | Audit and iteration 2 | last, unchanged |
@@ -255,7 +255,7 @@ finished as planned; its scope and exit criteria do not change.
 - The review format of part B is used for every visual review from now on
   (the milestone 9 report if it includes picture reviews, milestone 10, the
   audit and iteration 2, and any re-review).
-- If something in the design makes A4 impractical, the agent stops and
+- If something in the design makes A4 impractical, the developer stops and
   explains it in a report instead of improvising.
 
 ### Part A: object-level reconstruction of HD backgrounds (PIC only)
@@ -301,13 +301,13 @@ balusters, steps) are reconstructed identically.
 - Never invent: no detail that is not present in the original pixels, even
   if the object type suggests it.
 
-**A.7 Uncertain cases are decided by the operator (the customer).**
+**A.7 Uncertain cases are decided by the operator (the owner).**
 - Uncertain recognitions and close hypotheses are collected in batches by
   group of rooms, as review sheets in the format of part B, with the
-  alternatives shown side by side; the customer chooses.
-- While the customer answers, the agent continues with other rooms. Until a
+  alternatives shown side by side; the owner chooses.
+- While the owner answers, the developer continues with other rooms. Until a
   decision, the current reconstruction (milestone 3b) stays in that place.
-- The customer's decisions are written into the hint files as manual edits,
+- The owner's decisions are written into the hint files as manual edits,
   with the cell reference, and are never asked again.
 
 **A.8 Compatibility.** The result obeys addendum A1 (drawing order,
@@ -322,7 +322,7 @@ offline and only during development.
 - A report per room: recognised objects, parts, primitives, relations,
   confidence, deviation from the original pixels.
 - The round-trip check passes for every accepted reconstruction.
-- All uncertain cases are decided by the customer.
+- All uncertain cases are decided by the owner.
 - A side-by-side review of the rooms in the format of part B.
 - The metric of section 6.4 and the checks of addendum A1 pass.
 - The scenario recordings of milestones 4 to 9 still give matching traces
@@ -357,11 +357,11 @@ offline and only during development.
 "Case 7: B3.2, window frame, alternatives a / b", with enlarged crops of the
 alternatives next to it.
 
-**B.3** The customer's answers name a room and a cell, a quarter, several
+**B.3** The owner's answers name a room and a cell, a quarter, several
 cells or a range, for example "room 12, B3: ...", "B3.2: ...",
 "A2-A4: ...".
 
-**B.4** For every cell or quarter the customer names, the agent prepares an
+**B.4** For every cell or quarter the owner names, the developer prepares an
 enlarged crop (the area plus half a cell around it, at a larger N, HD and
 original, with the grid) and, where relevant, alternatives for the
 correction. Decisions go into the hint files with the cell reference.

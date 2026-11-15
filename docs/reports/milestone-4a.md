@@ -95,7 +95,7 @@ What the comparison found on the way, now fixed:
 
 ## Deviations from the spec
 
-None from section 2. For your confirmation (both in `docs/ASSUMPTIONS.md`):
+None from section 2. Two decisions (both in `docs/ASSUMPTIONS.md`):
 
 - **The music player is in sci-vm**, where spec section 4.1 lists the
   silent driver under sci-audio. Like ScummVM's, it keys songs by VM
@@ -103,12 +103,4 @@ None from section 2. For your confirmation (both in `docs/ASSUMPTIONS.md`):
   The audible devices go into sci-audio at milestone 7, under this player.
 - **The program does not run the game yet**, and the analysis cache
   (deferred to milestone 4 at the 3a gate) is not done. Gate 4a needs only
-  the deterministic runs. I propose both for 4b.
-
-## Open questions
-
-1. **The music player in sci-vm**: is this placement acceptable?
-2. **4b scope**: the remaining kernel functions and scenario recordings
-   (spec), plus running the game in the program with the analysis cache.
-   Do you agree to add the latter to 4b, or should it wait for a later
-   milestone?
+  the deterministic runs; both are planned for 4b.

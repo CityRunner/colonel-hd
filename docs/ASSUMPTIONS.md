@@ -3,50 +3,43 @@
 Every assumption and decision made while implementing the task spec
 (version 15), with the date and the milestone it belongs to. Decisions that
 change section 2 of the spec ("Fixed decisions") are only made with the
-customer's approval and say so.
+owner's approval and say so.
 
-Changes the customer made to the spec itself are recorded in
+Changes the owner made to the spec itself are recorded in
 `docs/SPEC_ADDENDA.md`. **A1** (2026-10-21) adds milestone 3b and section
 6.10 (drawing order, occlusion and stroke integrity), amends sections 6.4,
 6.7 and 12, and moves release v0.1 to after milestone 3b; see "Addendum A1"
 below. **A2** (2026-10-21) adds section 6.11 (sprite undithering) and
 milestone SU, a separate gate between milestones 6 and 7, and amends
-sections 1.1, 2 (the output decision, approved by the customer), 6.5 and
+sections 1.1, 2 (the output decision, approved by the owner), 6.5 and
 12; it is implemented at milestone SU, not before.
 
-Status markers: **decided** (final unless the customer objects),
+Status markers: **decided** (final unless the owner objects),
 **assumed** (to be confirmed), **pending** (waiting for input).
 
 ## Inputs and hosting (milestone 0, 2026-10-20)
 
-- **Spec source.** The spec was read from the Claude Docs document
-  "Task Spec: HD Colonel's Bequest (SCI0)", version 15. The attached file
-  `colonels-bequest-hd-task-spec.md` was not present in the session. The
-  document's tab title still says "Custom Rust SCI0 Interpreter"; the
-  customer confirmed this is legacy naming and that C++23 (spec section 2)
-  applies. **Decided.**
-- **Repository.** `github.com/CityRunner/colonel-hd`, private. **Decided** by
-  the customer.
+- **Spec source.** The task spec "HD Colonel's Bequest (SCI0)", version 15.
+  Its title once said "Custom Rust SCI0 Interpreter"; that is legacy
+  naming, and C++23 (spec section 2) applies. **Decided.**
+- **Repository.** `github.com/CityRunner/colonel-hd` (public since
+  2026-11-13). **Decided.**
 - **ScummVM source.** Cloned from `https://github.com/scummvm/scummvm`, as
-  agreed with the customer. Kept outside the repository. **Decided.**
+  agreed with the owner. Kept outside the repository. **Decided.**
 - **Pinned ScummVM revision.** `ed949213a23440447ea402e263daa871394b6bf9`
   (master, committed 2026-10-20, version string `2026.4.1git`). This was the
   head of master when milestone 0 started. The same value is in
   `tools/reference-scummvm/REVISION`, which the build script checks.
   **Decided.** A later change of the pin is recorded here, with the reason.
-- **Game folder.** The customer's copy is the GOG release, uploaded to the
-  session on 2026-10-20. Only the game files were extracted (the GOG
-  installer's `tmp/` folder was left out), to a read-only directory outside
-  the repository: `/path/to/game` in the agent's
-  container. It is mounted read-only into the toolchain container, for
-  example `COLONEL_HD_MOUNTS=/path/to/game:/game`.
+- **Game folder.** The tested copy is the GOG release. Only the game
+  files are used (not the GOG installer's `tmp/` folder), in a read-only
+  directory outside the repository, mounted read-only into the toolchain
+  container, for example `COLONEL_HD_MOUNTS=/path/to/game:/game`.
   **Decided.**
-- **Environment.** The agent works in a Linux x86-64 cloud container, not on a
-  local machine (spec section 3.1). Docker is available (its daemon is started
-  by hand in the session), so podman is not used; the customer allowed
-  installing podman if needed, and it was not. Outbound HTTPS goes through a
-  TLS-intercepting proxy; `docker/build-image.sh` supports that through
-  `COLONEL_HD_EXTRA_CA` without affecting the image (see "Toolchain").
+- **Environment.** Development runs in a Linux x86-64 container with
+  Docker (podman is not needed). Behind a TLS-intercepting proxy,
+  `docker/build-image.sh` takes the proxy's certificate through
+  `COLONEL_HD_EXTRA_CA` without changing the image (see "Toolchain").
 
 ## Accepted game releases (milestone 0)
 
@@ -62,7 +55,7 @@ releases are (spec section 10.2):
 - The English DOS non-interactive demo, the Amiga and Atari ST releases, the
   Hebrew release and the fan translations are not accepted. **Decided** (spec
   sections 1.2 and 1.3).
-- **Tested release** (the customer's GOG copy, 2026-10-20): the English DOS
+- **Tested release** (the owner's GOG copy, 2026-10-20): the English DOS
   3.5" floppy release, game version 1.000.046. All five ScummVM detection
   MD5s and sizes match, and the reference ScummVM identifies it as
   `sci:laurabow`, "Laura Bow I: The Colonel's Bequest (DOS/English)".
@@ -99,7 +92,7 @@ releases are (spec section 10.2):
 - **Copy protection.** The game opens with the fingerprint identification
   screen; the reference ScummVM shows it unscaled at 1x after start-up. Both
   engines run it as game logic. Scenario recordings and the playthrough
-  answer it like a player would. **Decided** (approved by the customer on
+  answer it like a player would. **Decided** (approved by the owner on
   2026-10-20).
 
 ## Toolchain (milestone 0)
@@ -225,51 +218,19 @@ Details: docs/ARCHITECTURE.md, "Error handling".
 
 ## CI (milestone 0)
 
-- **Plan.** The repository belongs to a GitHub Free personal account
-  (confirmed by the customer, 2026-10-20). For private repositories, that
-  means 2,000 included minutes a month. Once they are used up, jobs stop
-  unless a payment method and budget are set.
-- **Availability.** GitHub has offered standard arm64 runners
-  (`ubuntu-24.04-arm`, `windows-11-arm`) in private repositories since
-  2026-01-29. All of them ran on this repository: Linux x86-64 and ARM64,
-  macOS 15 on Apple silicon, and Windows x86-64 and ARM64.
-- **Prices.** Per-minute list prices for private repositories after GitHub's
-  price cut of 2026-01-01, from public pricing summaries (the account's
-  billing page is not reachable from the session): Linux x64 2-core $0.006,
-  Linux arm64 2-core $0.005, Windows 2-core $0.010, macOS (M1, 3-core)
-  $0.062. Included minutes have historically been consumed at multipliers:
-  Windows 2x, macOS 10x.
-- **Measured use** (milestone 0; it grows with the code). Job time is rounded
-  up to whole minutes.
-  - A push runs 8 Linux jobs of 1 to 2.5 minutes each, with the image cached:
-    about 16 included minutes.
-  - A full run (gate) adds 3 macOS jobs and 3 Windows jobs of about 2
-    minutes each: about 16 + 60 + 12 = 90 included minutes, or about $0.50
-    at list prices.
-  - The first run on each architecture builds the toolchain image (4 to 9
-    minutes per job).
-  - At this size the 2,000 minutes cover roughly 100 pushes plus a few
-    gates a month. The numbers in each milestone report show how this
-    develops.
+- **Runners.** GitHub-hosted standard runners: Linux x86-64 and ARM64,
+  Windows x86-64 and ARM64 (and macOS 15 on Apple silicon while macOS was
+  supported).
 - **Decision.** Linux x86-64 and ARM64 run on every push. Windows runs on
   pull requests to `main` (the milestone gates) and on manual runs.
   **Superseded** on 2026-10-21 by the CI cost policy below.
-- **macOS is optional** (customer decision, 2026-10-20, at the milestone 0
-  approval: "make macOS optional and concentrate on Windows and Linux for
-  now"). The macOS jobs run only when a manual run selects `macos`. They are
-  no longer part of the milestone gates. This saves about 60 of the roughly
-  90 included minutes a gate costs, and avoids the macOS runner queues seen
-  on 2026-10-20. macOS stays a supported platform (spec section 1.2). The
-  customer can ask for a macOS run at any gate. On 2026-10-21 the CI cost
-  policy below put macOS back into every gate and release; on 2026-10-22
-  the customer made it optional again (see "Platform priorities" under the
-  CI cost policy).
+- **macOS is optional** (2026-10-20): the macOS jobs ran only when a manual
+  run selected `macos`, not at the milestone gates; macOS was dropped on
+  2026-11-11 (see "macOS dropped").
 - Push, pull request and manual runs are in separate concurrency groups, so
   they do not cancel each other.
 - The tail of a failed step's log is published as an error annotation. It is
-  readable in the run summary and through the checks API. The session cannot
-  download full job logs, because they are served from a host the session
-  proxy blocks.
+  readable in the run summary and through the checks API.
 - clang-cl ASan builds link the ASan runtime explicitly
   (`cmake/SciCompilerFlags.cmake`). CMake runs lld-link itself, so the
   libraries that clang-cl would add were missing; this was found by the
@@ -283,10 +244,10 @@ Details: docs/ARCHITECTURE.md, "Error handling".
 
 ## CI cost policy (2026-10-21)
 
-The customer's policy, verbatim in intent: minimise CI minutes without
+The policy: minimise CI minutes without
 weakening any check the spec requires. CI is for what cannot be checked
 on the local machine. Everything that can run locally runs locally first;
-CI confirms, it does not discover. **Decided** (customer instruction).
+CI confirms, it does not discover. **Decided.**
 
 ### The rules
 
@@ -323,7 +284,7 @@ CI confirms, it does not discover. **Decided** (customer instruction).
      - The sci-vm coverage gate (B-08, iteration 2): Linux x86-64 only,
        `scripts/coverage.sh --min-vm 70`, failing below 70 % of sci-vm's
        lines. Measured on 2026-11-13 (run 43427816386, manual, no compiler
-       cache yet): 3 min 44 s, so 4 included minutes per gate; also
+       cache yet): 3 min 44 s; also
        available alone as the manual scope `coverage`.
      - Windows x64 in release and ASan, and Windows ARM64 in release.
      - macOS is optional and not part of the gate (2026-10-22, below).
@@ -396,14 +357,12 @@ CI confirms, it does not discover. **Decided** (customer instruction).
 6. **Never at the cost of the project.**
    - A milestone is never approved without a green full matrix at its gate.
    - No check from the spec is dropped or weakened to save minutes. If the
-     budget looks insufficient, I stop and ask instead of cutting checks.
+     budget looks insufficient, the checks stay and the budget is raised.
 7. **Budget and reporting.**
-   - Every milestone report has a section "CI minutes": the minutes used,
-     by platform, measured with `scripts/ci-minutes.py --branch <branch>`,
-     and what could reduce them further.
+   - `scripts/ci-minutes.py --branch <branch>` measures the minutes a
+     branch's runs used, by platform.
    - The script sums each job's time rounded up to whole minutes, as
-     GitHub bills it. The account's billing page is the authority; the
-     session cannot reach it.
+     GitHub counts it.
 
 ### A CI defect found while applying the policy
 
@@ -426,78 +385,14 @@ CI confirms, it does not discover. **Decided** (customer instruction).
   locally only on the files changed. The first gate under the fixed
   workflows confirms the whole tree.
 
-### Rates
+### Platform priorities (2026-10-22)
 
-GitHub-hosted standard runners for private repositories, per minute, since
-2026-01-01. These come from public pricing summaries, because GitHub's
-documentation is not reachable from the session; to be confirmed on the
-account's billing page.
-
-| Runner | List price per minute | Included minutes used per minute |
-|---|---|---|
-| Linux x64, 2-core | $0.006 | 1 |
-| Linux arm64, 2-core | $0.005 | 1 |
-| Windows x64 and arm64, 2-core | $0.010 | 2 |
-| macOS (M1, 3-core) | $0.062 | 10 |
-
-The account (GitHub Free) includes 2,000 minutes a month for private
-repositories. The included-minute multipliers are the historical ones,
-also to be confirmed on the billing page. No platform fee for self-hosted
-runners applies as of October 2026; GitHub announced one and then
-postponed it.
-
-### Measured before the policy
-
-`scripts/ci-minutes.py`, all 103 runs of 2026-10-20 and 21, from milestone
-0 to the 4b gate:
-- 3,024 runner minutes, or 3,859 included minutes, at about $22 at list
-  prices;
-- Linux 2,693 minutes; Windows 268 minutes (536 included); macOS 63 minutes
-  (630 included, at milestone 0 only).
-
-Most of it was push runs: every push ran 8 Linux jobs, often cancelled
-part-way by the next push. That exhausted the month's 2,000 included
-minutes within two days.
-
-### Estimates under the policy
-
-Estimated from the measured job durations, before ccache's savings:
-
-| Run | Linux min | Windows min | macOS min | Included min | List price |
-|---|---|---|---|---|---|
-| Push | 0 | 0 | 0 | 0 | $0 |
-| Draft run (plan, lint, ASan, TSan threads) | about 21 | 0 | 0 | about 21 | about $0.13 |
-| Gate (full matrix) | about 52 | about 17 | about 15 | about 236 | about $1.40 |
-| Release tag | about 11 | about 10 | about 5 | about 81 | about $0.48 |
-
-- **Gate breakdown:** plan 1, lint 10, six Linux preset jobs 25, fuzz 16;
-  Windows x64 12 and ARM64 5; macOS three presets in one job.
-- **macOS dominates:** about 150 of the 236 included minutes of a gate.
-- **Per month:**
-  - The 2,000 included minutes cover about 8 gate runs, or about 5 gate
-    runs and 30 draft runs.
-  - A milestone has needed one to three gate runs: the first, and runs
-    after review fixes.
-  - At the pace of the first two days (several milestones a day), the
-    included minutes run out within days.
-  - At list prices, the overage is small: about $1.40 a gate run.
-  - So a spending limit is the deciding control, not the included minutes.
-    **Pending:** the amount of the spending limit (the customer accepted
-    the estimates at the 4b gate). Once the repository is public, its
-    standard GitHub-hosted runners cost nothing, so the limit then only
-    guards the private-repository case. The customer sets it (Settings, Billing and
-    licensing, Budgets and alerts: an Actions budget that stops usage at
-    the limit). The session cannot reach the billing settings.
-
-### Platform priorities (customer decision, 2026-10-22)
-
-"As macOS is optional, concentrate on Linux as first and Windows as second
-priority." **Decided**, replacing macOS at every gate:
+Linux first, Windows second. **Decided**, replacing macOS at every gate:
 - Linux comes first, then Windows. A gate is green when its Linux and
   Windows jobs are, and work on a platform problem goes to Linux first.
 - macOS returns to the milestone 0 decision: optional, run only on a
   manual run (CI scope `macos`, or the release workflow with `macos`). It
-  stays a supported platform (spec section 1.2), and the customer can ask
+  stays a supported platform (spec section 1.2), and the owner can ask
   for a macOS run at any gate.
 - A problem found on macOS is still fixed when it is cheap and cannot hurt
   Linux or Windows. For example, `std::ranges::iota` was replaced because
@@ -510,70 +405,6 @@ priority." **Decided**, replacing macOS at every gate:
     `main.cpp`.
   Both can be replaced with `std::thread` and `localtime_r` when macOS is
   taken up.
-- The estimates above drop the macOS share: a gate is about 52 Linux and
-  17 Windows minutes, about 86 included minutes or about $0.50 at list
-  prices for a private repository. Since 2026-10-22 the repository is
-  public, so its standard GitHub-hosted runners cost nothing.
-
-### Proposals (accepted by the customer at the 4b gate; not set up)
- The self-hosted runners below need
-a machine of the customer's and are set up only when the customer provides
-one; for a public repository they are not recommended (anyone can open a
-pull request whose code would run on them).
-
-- **A self-hosted Linux runner** would make the Linux jobs free (no
-  platform fee as of October 2026).
-  - This session's machine is not suitable. It is an ephemeral cloud
-    container that is reclaimed after inactivity, and its Docker daemon
-    stopped once during this milestone.
-  - A machine of the customer's that is always on (a Linux PC, a VM or a
-    small server with Docker) would do. The jobs run unchanged in the
-    toolchain image.
-  - It would serve the Linux jobs only; Windows and the native ARM64
-    gate jobs stay GitHub-hosted.
-  - A private repository with a single owner keeps the usual risk of
-    self-hosted runners, code from strangers' pull requests, out of
-    reach.
-- **A self-hosted macOS runner** on the customer's Mac, if there is one,
-  would remove the largest share of every gate: about 150 of 236 included
-  minutes.
-
-## Small agent tasks (2026-10-23)
-
-The customer's rule, after two milestone 6b runs stopped at a usage limit
-for about three hours each: work is split into tasks small enough to
-finish between limits, so that each limit costs at most one small task.
-
-- **One task, one result.** An agent gets one part of a milestone (for
-  example the recording in sci-vm, one comparison, one set of scenarios,
-  one check), not the whole milestone. It ends with commits and a short
-  report; the next part is a new task that starts from those commits.
-- **Size.** A task should take well under an hour, checks included. A part
-  that would take longer is split again.
-- **Long checks are split too.** Scenario runs, the every-N check and the
-  pre-push checks run in pieces (a few scenarios, one N or one step of
-  `scripts/pre-push.sh` at a time), each writing its result to a file, so
-  an interruption loses one piece and a rerun skips the pieces done.
-- **Commit before checks.** Work is committed before a long check starts,
-  so a stop or a restart of the session never leaves it only in the
-  working tree.
-- **Save work before a limit can stop it** (the customer's rule,
-  2026-10-29, after the first Act III attempt lost an hour of findings):
-  usage limits come without warning, so every task commits from the
-  start, not only at the end.
-  - The first commit comes within 15 minutes, then at least every 20.
-  - Findings count as work: notes on what was found and tried (script
-    offsets, conditions, routes that failed) go into the docs and are
-    committed even when nothing else is finished.
-  - A task's worktree with no commits is removed when the task stops, so
-    an uncommitted finding is a lost finding.
-  - The main session commits merged work at once and pushes it after the
-    local checks, so nothing waits only in its working tree either.
-- **Unchanged:** the milestone gates, the checks they need and the CI cost
-  policy. Splitting changes how the work is scheduled, not what is checked.
-
-## Third-party components (milestone 0)
-
 - SDL3, Nuked OPL3 and mt32emu are vendored when they are first needed:
   SDL3 at the end of milestone 3a (the window layer), Nuked OPL3 and mt32emu
   at milestone 7. Their pins are recorded here and in THIRD_PARTY.md at that
@@ -584,7 +415,7 @@ finish between limits, so that each limit costs at most one small task.
   **Assumed:** this does not change the fixed decision itself (spec section 2).
 - `LICENSE` is the GPL v3 text from ScummVM's `COPYING` at the pinned
   revision. Its SHA-256 `3972dc97…986` is that of the canonical
-  `gpl-3.0.txt`. gnu.org is not reachable from the session. **Decided.**
+  `gpl-3.0.txt`. **Decided.**
 
 ## Reference ScummVM (milestone 0)
 
@@ -625,7 +456,7 @@ optional (both above).
   streams, archive search and configuration layers. And it would test less:
   the patched engine runs the real start-up path, including source discovery,
   format detection, the patch-file scan and the game-specific hooks.
-  **Decided** (spec section 12, milestone 1, leaves the choice to the agent).
+  **Decided** (spec section 12, milestone 1, leaves the choice open).
 - **Result.** All 1068 resources of the tested release match ScummVM byte for
   byte: data, size, source file and loaded id. That is 1066 from the volumes
   and 2 from the patch files `SCRIPT.052` and `TEXT.052`. The comparison was
@@ -754,7 +585,7 @@ Milestone 2 was approved and merged
 The milestone 2 report and docs had called the vector path "milestone 3a";
 it is milestone 3 (the HD picture pipeline), and 3a is the separate gate
 after it (hints, release v0.1 with the window). The labels are corrected.
-The customer confirmed the order: milestone 3 first, then 3a. **Decided.**
+The owner confirmed the order: milestone 3 first, then 3a. **Decided.**
 
 ## Milestone 3: HD picture pipeline (2026-10-20)
 
@@ -849,7 +680,7 @@ decisions.
 
 Milestone 3 was approved and merged
 ([CityRunner/colonel-hd#4](https://github.com/CityRunner/colonel-hd/pull/4)).
-The customer decided:
+The owner decided:
 
 - **Fitting tolerance: 0.5 original pixels** (spec section 15, open question
   1). A trial at 1 pixel on picture 44 changed little and left 840 line
@@ -906,7 +737,7 @@ The customer decided:
     that turn, by at most 75 degrees at a joint, and are not all fitted
     already. It tries each candidate as an arc, a spline and a line under
     the hint rules.
-  - The agent (Claude, reading the images) judged each candidate with an
+  - Claude (reading the images) judged each candidate with an
     accepted kind on the picture: a curve of the drawn object, or a shape
     meant to be angular. It chose the kind, a label, region labels and
     symmetry, and marked doubtful decisions uncertain.
@@ -916,7 +747,7 @@ The customer decided:
   - No model runs in the program or in CI. The hint files are frozen at
     the milestone 3b gate, not at 3a (addendum A1).
 
-  **Assumed until the customer's spot check.**
+  **Assumed until the owner's spot check.**
 - **Gap hints only at mixed faces.** The automatic gap closing already
   closes every gap where the 1x line pixels touch. The other gaps are
   leaks the player saw, and closing one changes nothing visible unless the
@@ -929,7 +760,7 @@ The customer decided:
     are marked uncertain.
   - They leave one mixed face (picture 47, 8 pixels; 648 pixels before).
 
-  **Assumed until the customer's spot check.**
+  **Assumed until the owner's spot check.**
 - **Priority plane.** The same hints apply to the priority plane. Where a
   chain's priority pixels differ from its visual pixels, the line check
   can fail there; then that plane keeps the automatic result. **Decided.**
@@ -978,14 +809,14 @@ The customer decided:
   N = 10, within the room-entry budget) and keeps the last four. The
   cache on disk, with the first-launch analysis of all rooms, comes with
   the VM at milestone 4, where rooms are entered by the game. **Assumed;
-  a deviation for the customer to confirm.**
+  a deviation for the owner to confirm.**
 - **`--version`** prints only the version. The milestone 0 component list
   is gone, since every library linked by the program now has content
   except sci-audio and sci-vm. **Decided.**
 
 ## Addendum A1 (2026-10-21)
 
-The customer added milestone 3b (`docs/SPEC_ADDENDA.md`, A1). It does not
+The owner added milestone 3b (`docs/SPEC_ADDENDA.md`, A1). It does not
 change spec section 2. Its effect on the plan:
 
 - **Milestone 3a** stays as built, with two changes:
@@ -1001,7 +832,7 @@ change spec section 2. Its effect on the plan:
   - The hints are frozen and the golden hashes regenerated at its gate.
 - **Release v0.1** is tagged after the 3b gate.
 
-**Decided** (the customer's addendum).
+**Decided** (the owner's addendum).
 
 ## Milestone 3b: drawing order, occlusion and stroke integrity (2026-10-21)
 
@@ -1065,7 +896,7 @@ change spec section 2. Its effect on the plan:
 
 Milestone 3b was approved and merged
 ([CityRunner/colonel-hd#6](https://github.com/CityRunner/colonel-hd/pull/6)).
-The customer decided:
+The owner decided:
 
 - **Option 1 of the trade-off**: the remaining A1 cases are accepted as
   listed in `reports/milestone-3b-pictures.md`, by class and size. The
@@ -1193,7 +1024,7 @@ Scope:
 
 ## Milestone 4b: kernel coverage (2026-10-21)
 
-- **Saves are listed, not written, until milestone 8** (the customer's
+- **Saves are listed, not written, until milestone 8** (the owner's
   choice at the start of 4b). GetSaveFiles and CheckSaveGame work as in
   ScummVM with an empty save folder; SaveGame and RestoreGame report
   failure to the game, as ScummVM does when it cannot save, and log why.
@@ -1212,7 +1043,7 @@ Scope:
   --scan-kernel`: every callk in the scripts' code blocks, after the script
   patches. The tested release references 97; DoAvoider is not among them.
   **Decided.**
-- **The game runs in the program by default** (the customer's request at
+- **The game runs in the program by default** (the owner's request at
   the 4a gate); `--viewer` keeps the room viewer of v0.1. The interpreter
   runs on the main thread (spec section 4.3): wherever virtual time would
   pass (kWait, the speed throttle, event polling, busy waits), sci-vm calls
@@ -1328,8 +1159,8 @@ Scope:
 ## Milestone 4b approval (2026-10-22)
 
 - The gate matrix is green (Linux and Windows; macOS optional). The
-  customer accepted every point of the report and said to go ahead with
-  the next step: milestone 5. The pull request is merged by the customer,
+  owner accepted every point of the report and said to go ahead with
+  the next step: milestone 5. The pull request is merged by the owner,
   as before.
 - Addendum A2 is scheduled as milestone SU, after milestone 6.
 
@@ -1382,7 +1213,7 @@ made in the implementation" lists what changed while implementing it.
 - **Stopped and always-update views** (drawn by kAnimate before
   `draw_cels`) are part of the background layer, drawn as 1x blocks with
   1x occlusion, as the design says. **Decided**, and confirmed by the
-  customer on 2026-10-22 ("keep as is"), after the side-by-side images of
+  owner on 2026-10-22, after the side-by-side images of
   seated actors (rooms 44 and 45).
 - **Measured** (release build, 4 cores, `sci-hd-frames --timing`, room 37
   of `grounds.txt` with Laura walking down the stairs behind the banister,
@@ -1633,10 +1464,10 @@ scripts' bytecode (after the script patches), not from runs:
 
 ## Milestone SU dropped (2026-10-28)
 
-- The customer dropped sprite undithering (addendum A2, milestone SU)
+- The owner dropped sprite undithering (addendum A2, milestone SU)
   completely. Sprites in HD mode stay the original cels scaled N x N
   (milestone 6b), and the milestone 9 playthrough is done without
-  undithering. **Decided** by the customer.
+  undithering. **Decided** by the owner.
 - The SU work was never merged or pushed: the local branch `milestone-su`
   (detection and threshold tuning) and its git-ignored images are
   deleted. Milestone 7 started from main without it (2026-10-23, when SU
@@ -1644,7 +1475,7 @@ scripts' bytecode (after the script patches), not from runs:
 
 ## MT-32 ROMs (2026-10-28)
 
-- The customer supplied Roland ROMs. They are kept on the local machine
+- The owner supplied Roland ROMs. They are kept on the local machine
   only, outside the repository (`/path/to/roms/roland`), and are never
   committed or uploaded; CI runs without them. SHA-256:
   - `MT32_CONTROL.1987-10-07.v1.07.ROM`
@@ -1907,7 +1738,7 @@ scripts' bytecode (after the script patches), not from runs:
   that change with the notes). One gap: 57 ms of silence at 2.89 s cut into
   a waveform that continues unchanged after it, an underrun (the main
   thread stalled longer than the queue early in the title, in the debug
-  build); no other run of exact zeros. The customer listens to it on real
+  build); no other run of exact zeros. The owner listens to it on real
   hardware later. **Assumed** (no sound card here).
 - **Game behaviour unchanged:** boot (3600 ticks, seed 0) and intro
   (30000 ticks) match the reference in all seven comparisons, the OPL
@@ -2064,7 +1895,7 @@ scripts' bytecode (after the script patches), not from runs:
   (1 ms for 3 bytes) for short messages. mt32emu's report handler, which
   prints to stdout, is replaced by one that keeps the display text only.
   **Decided.**
-- **ROMs identified** (customer's set, "MT-32 ROMs" above): MT-32 control
+- **ROMs identified** (owner's set, "MT-32 ROMs" above): MT-32 control
   1.07 as `ctrl_mt32_1_07` "MT-32 Control v1.07" with `pcm_mt32` "MT-32
   PCM ROM"; CM-32L control 1.02 as `ctrl_cm32l_1_02` "CM-32L/LAPC-I Control
   v1.02" with `pcm_cm32l` "CM-32L/CM-64/LAPC-I PCM ROM". The MT-32 control
@@ -2173,7 +2004,7 @@ scripts' bytecode (after the script patches), not from runs:
   size and SHA-1 list); the MT-32 1.07 control ROM is preferred, then
   other MT-32 versions, then the CM-32L (and CM-32LN), in file-name order
   among equals, each with a PCM ROM of its model (`sci::platform::
-  open_mt32_roms`, `choose_music_device`). With the customer's folder the
+  open_mt32_roms`, `choose_music_device`). With the owner's folder the
   1.07 is chosen; the patched MT-32 control ROM is not known to mt32emu
   and is passed over. No folder, no known control ROM, no matching PCM ROM
   or a pair mt32emu refuses: a warning in the log and the AdLib. A
@@ -2274,11 +2105,11 @@ scripts' bytecode (after the script patches), not from runs:
   RMS about 1000 to 1370, peak 4510, gaps of 14 and 11 ms at 7.07 s. The
   captures are `reports/images/audio/m7-title-music-mt32-capture.wav` and
   `m7-title-music-adlib-capture-2.wav` (ignored by the repository) for
-  the customer's listening. **Assumed** (no sound card here).
+  the owner's listening. **Assumed** (no sound card here).
 
-## Milestone 7: the customer's answers (2026-10-28)
+## Milestone 7: the owner's answers (2026-10-28)
 
-- **By-ear comparison:** the customer listened to our captures and
+- **By-ear comparison:** the owner listened to our captures and
   ScummVM's of the title music, on AdLib and on the MT-32, and found that
   they sound fine.
 - **Room entry while the HD picture is made:** holding the previous frame
@@ -2512,7 +2343,7 @@ kRestoreGame on the project's format; their behaviour in detail is in
   fixups. **Decided.**
 - **The clock on a restore** follows ScummVM, where virtual time is the
   host's `getMillis` and the game's time is the engine's play time
-  (decided by the main session after the first save-restore run).
+  (decided after the first save-restore run).
   - *Host time, not restored:* virtual time, the wait under way (its start
     and end) and the music timer (its due time and period). They are in
     the `clock` component, so `read_save` reads the saved values and the
@@ -2794,10 +2625,10 @@ the old numbers to the new ones, so older references stay unambiguous:
 
 | Old | New | Content | Status |
 |---|---|---|---|
-| 12 (optional: exact area coverage) | 10 | HD background quality: object-level reconstruction (A4 part A), mandatory; exact area coverage (spec section 6.6) as an optional part, approved or declined by the customer at the start of milestone 10 | mandatory, next after 9 |
+| 12 (optional: exact area coverage) | 10 | HD background quality: object-level reconstruction (A4 part A), mandatory; exact area coverage (spec section 6.6) as an optional part, approved or declined by the owner at the start of milestone 10 | mandatory, next after 9 |
 | 10 | 11 | ScummVM-compatible saves (spec section 9) | optional: approved or declined after milestone 10 |
 | 11 | 12 | Vectorised font glyphs (spec section 6.9) | optional: approved or declined after milestone 11 |
-| — | — | Audit and iteration 2 (`review/TASK.md`) | last, unchanged |
+| — | — | Audit and iteration 2 | last, unchanged |
 
 - **Completed milestones** keep their numbers, and their reports are not
   changed. A report or an entry dated before 2026-10-29 that names
@@ -2878,46 +2709,37 @@ the old numbers to the new ones, so older references stay unambiguous:
 
 ## Milestone 9 approved; milestones 10, 11 and 12 declined (2026-11-05)
 
-- **The customer's instruction:** "Merge 9, decline 10, 11 and 12. Start
-  refactoring and optimising."
-- **Milestone 9 is approved and merged.** The customer's manual
+- **Milestone 9 is approved and merged.** The owner's manual
   playthrough in HD mode and the spot checks in original mode, part of its
-  exit criterion (spec section 12), were deferred by the customer and are
+  exit criterion (spec section 12), were deferred by the owner and are
   waived for the merge. The release candidate tag `v0.9.0-rc.1` was never
-  pushed. **Decided (customer).**
+  pushed. **Decided (owner).**
 - **Milestone 10 (HD background quality, addendum A4) is declined,** at a
   point where much of it was built. Its work stays on the pushed branch
   `milestone-10` and is not merged into `main`; two unmerged task branches
   remain local (`m10-b3-group-b`, `m10-b3-group-d2`). Golden hashes and
   frozen hint files on `main` stay those of milestone 9. **Decided
-  (customer).**
+  (owner).**
 - **Milestones 11 (ScummVM-compatible saves) and 12 (vectorised font
-  glyphs) are declined.** **Decided (customer).**
-- **Next:** the audit and iteration 2 (`review/TASK.md`), which the
-  customer calls "refactoring and optimising". Its own rules apply: work in
-  stages with a stop after each; stages 1 to 4 are read-only; refactoring
-  starts only at stage 5, after the customer approves the plan. It audits
-  `main`, the code as merged. **Decided (customer).**
+  glyphs) are declined.** **Decided (owner).**
+- **Next:** an audit of `main` and a refactoring in stages (stage 5),
+  then iteration 2 (`docs/backlog.md`). **Decided.**
 
 ## Hint files: licensing (2026-11-11)
 
 - The licensing review of the hint files (spec section 15) is recorded in
   `hints/README.md`, "Licensing": labels and geometry only, no image data;
-  made with Claude under the customer's personal subscription; published
-  under GPL-3.0-or-later at the customer's risk, the subscription's terms
-  not checked; the customer's own game pictures shown to the model with
-  the customer's permission. **Decided (customer, 2026-11-06, audit
-  question Q-03).**
+  made with Claude from renders of a legally owned copy of the game;
+  published under GPL-3.0-or-later. **Decided (owner, 2026-11-06).**
 
 ## macOS dropped (2026-11-11)
 
-- **The customer's decision** (2026-11-05, audit stage 2): "drop macOS
-  completely". macOS is no longer a platform of the project: its CI and
+- **Decision** (2026-11-05): macOS is no longer a platform of the project: its CI and
   release jobs, the toolchain setup for it, the `APPLE` case of the linker
   flag, the preset names and the README's build steps are removed (audit
   stage 5, step 5). The platforms are Linux and Windows, x64 and ARM64.
   Earlier sections that speak of macOS describe the state of their time.
-  **Decided (customer).**
+  **Decided (owner).**
 - **What stays:** the Apple back-ends inside the vendored SDL3, which is
   kept unchanged; the macOS rate in `scripts/ci-minutes.py`, for the runs
   of earlier milestones; and one `NOLINT` in
@@ -2927,23 +2749,21 @@ the old numbers to the new ones, so older references stay unambiguous:
 
 ## Project renamed to colonel-hd (2026-11-12)
 
-- **The name:** the customer asked to "rename repo and all files/mentions:
-  sierra -> colonel" and agreed to the proposals (docs/backlog.md,
-  B-43). The project, the program, its configuration file `colonel-hd.ini`
+- **The name** (B-43): The project, the program, its configuration file `colonel-hd.ini`
   (section `[colonel-hd]`), the saves `colonel-hd-NNN.sav`, the hint format
   id `colonel-hd-hints`, the replay header `colonel-hd replay 1`, the
   `COLONEL_HD_*` environment variables and the toolchain image are named
   `colonel-hd` (audit stage 5, step 13). Sierra the company, its
   interpreter (SCI) and the game's files keep their names; `third_party/`
-  and `review/` are unchanged. **Decided (customer).**
+  and the audit papers are unchanged. **Decided (owner).**
 - **Clean rename:** the program reads only the new names; an old
   `sierra-hd.ini`, old saves and hint or replay files with the old ids are
   not read. Users rename their own files once by hand. No migration code.
-  **Decided (customer).**
-- **Repository:** the customer renamed the GitHub repository to
+  **Decided (owner).**
+- **Repository:** the owner renamed the GitHub repository to
   `CityRunner/colonel-hd`; links to earlier pull requests in this file are
   rewritten to the new name (GitHub redirects the old one). **Decided
-  (customer).**
+  (owner).**
 
 ## `-fwrapv` stays in Release only (2026-11-13, B-33)
 
@@ -2952,17 +2772,17 @@ the old numbers to the new ones, so older references stay unambiguous:
   (`cmake/SciCompilerFlags.cmake`). The goldens and the VM hashes run on
   Release, so code that relied on signed wrap-around could pass there and
   never show in a UBSan build.
-- **Evidence:** the stage 5 baseline (`review/REFACTOR_REPORT.md`, B-20)
+- **Evidence:** the stage 5 baseline (B-20)
   ran `sci-vm-trace` of the `asan` build (ASan + UBSan,
   `-fno-sanitize-recover=all`) over the 39 scenarios with AdLib and with
   the MT-32 (78 runs) and over the whole playthrough: every run exited 0
   with no UBSan report, so no signed overflow happens in them. The CTest
   suites under `asan` pass on every change.
-- **Decision:** keep the flags as they are (the customer's default for
+- **Decision:** keep the flags as they are (the owner's default for
   B-33): `-fwrapv` in Release is a safety margin, not something the code
   relies on, as far as these runs reach. A UBSan report of a signed
   overflow in any later run is a defect to fix at its site. **Decided
-  (default accepted by the customer, 2026-11-06).**
+  (default accepted by the owner, 2026-11-06).**
 
 ## Angles outside -360 to 360 never reach the trigonometry (2026-11-13, B-39)
 
@@ -2977,8 +2797,8 @@ the old numbers to the new ones, so older references stay unambiguous:
   4 or 5 arguments, so never with its optional angle (the 6th). No angle
   reaches the table in the tested release.
 - **Decision:** no code change; the comment in `trigonometry.cpp` says
-  so (B-39 closed with the customer's default). **Decided (default
-  accepted by the customer, 2026-11-06).**
+  so (B-39 closed with the owner's default). **Decided (default
+  accepted by the owner, 2026-11-06).**
 
 ## The range of N: 1 to 16, targets up to 10 (2026-11-13, B-29)
 
@@ -2992,7 +2812,7 @@ the old numbers to the new ones, so older references stay unambiguous:
 - **Flattening:** curves are flattened into chords of at most 0.25 original
   pixels; against a curve of radius 2 or more the error is 0.039 screen
   pixels at N = 10 and 0.063 at N = 16 (`src/sci-vector/src/fitting.cpp`).
-- **Decided (default accepted by the customer, 2026-11-06).**
+- **Decided (default accepted by the owner, 2026-11-06).**
 
 ## One data folder (2026-11-13, B-03; replaces "next to the executable")
 
@@ -3006,11 +2826,9 @@ the old numbers to the new ones, so older references stay unambiguous:
   `~/.local/share/colonel-hd` on Linux, created on first use. The hints
   stay next to the executable. Spec section 10.2's "next to the
   executable" for the cache and the configuration is replaced by this
-  (G-122 closed). **Decided (Q-06 default, accepted by the customer).**
+  (G-122 closed). **Decided (Q-06 default, accepted by the owner).**
 - **Defaults inside it:** `game_folder = game`, `mt32_rom = rom` and
-  `saves = saves`, written so in a new `colonel-hd.ini` (customer,
-  2026-11-14: "set project's folders game, rom and saves as defaults in
-  colonel-hd.ini"); a relative path is taken from the data folder, and an
+  `saves = saves`, written so in a new `colonel-hd.ini` (2026-11-14); a relative path is taken from the data folder, and an
   empty value means the default, as before. `game/` is used when it holds
   a resource map (else the program asks for the game folder). The
   resolved, absolute folders are not written to the ini. The release archives hold empty `game/`,
@@ -3023,7 +2841,7 @@ the old numbers to the new ones, so older references stay unambiguous:
   folder name included; a read-only program folder, run as an unprivileged
   user); the whole playthrough in the program with `--data`. Not checked
   here: the Windows per-user folder on a real Windows account (part of the
-  customer's laptop run, B-10).
+  owner's laptop run, B-10).
 
 ## The ini updated in place (2026-11-13, B-04)
 
@@ -3039,7 +2857,7 @@ the old numbers to the new ones, so older references stay unambiguous:
 
 - `github.com/CityRunner/colonel-hd` is public (GitHub reports
   `visibility: public` on 2026-11-13); the entry "Repository" above, from
-  the project's start, says private and describes that time. The customer
+  the project's start, says private and describes that time. The owner
   made the change. Nothing changes in the rules: no game data, ROMs, saves
   or game-derived images are ever committed (`scripts/check-repo-policy.py`
   checks the names); the hint files' licensing is in `hints/README.md`
@@ -3049,19 +2867,19 @@ the old numbers to the new ones, so older references stay unambiguous:
 
 - The project's version is 1.0.0 and `docs/release-notes/v1.0.0.md` is
   written, but the tag `v1.0.0` is pushed only after iteration 2's
-  packages P5 to P7, including the customer's run on a real Windows laptop
-  (B-10). The customer chose this over releasing now or a release
-  candidate. Pushing the tag is the customer's step. **Decided
-  (customer).**
-- Changed on 2026-11-13 after P7: the customer deferred the laptop run
-  ("Skip this step for now, proceed for the next one"). v1.0.0 is tagged
+  packages P5 to P7, including the owner's run on a real Windows laptop
+  (B-10). The owner chose this over releasing now or a release
+  candidate. Pushing the tag is the owner's step. **Decided
+  (owner).**
+- Changed on 2026-11-13 after P7: the owner deferred the laptop run
+ . v1.0.0 is tagged
   without it; the release notes state the limit as measured in the
   container. The laptop run (B-10 criterion 3) and B-09 by its result come
-  after the release, in 1.0.x. **Decided (customer).**
+  after the release, in 1.0.x. **Decided (owner).**
 
 ## Version 1.0.1 (2026-11-14)
 
-- The customer tagged v1.0.0 on `dcc2eba` (released 2026-11-14 09:19 UTC
+- The owner tagged v1.0.0 on `dcc2eba` (released 2026-11-14 09:19 UTC
   as a GitHub pre-release with the four archives). The first-frame fix
   (B-09, `c0463e3`) and the ini's default folders (`5c38b1a`) came after,
   so they are 1.0.1: version 1.0.1, `docs/release-notes/v1.0.1.md`;
@@ -3071,7 +2889,7 @@ the old numbers to the new ones, so older references stay unambiguous:
   (from v0.1). From 1.0.1 it attaches only the `colonel-hd-*` archives and
   `SHA256SUMS`, and a tag is a pre-release only with a suffix
   (`v1.1.0-rc.1`). Removing the two files from the 1.0.0 release and
-  marking it a full release are the customer's choice (GitHub, Releases,
-  edit). **Done:** the customer tagged v1.0.1 on `16d279f`; it was
+  marking it a full release are the owner's choice (GitHub, Releases,
+  edit). **Done:** the owner tagged v1.0.1 on `16d279f`; it was
   published on 2026-11-15 as a full release (GitHub's latest) with the
   four archives and `SHA256SUMS` only.

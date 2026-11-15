@@ -78,7 +78,7 @@ releases:
   `src/sci-resource`, `src/sci-text` or `src/sci-audio`, or the golden
   outputs (`src/sci-pic`, `src/sci-view`, `src/sci-vector`,
   `src/sci-render`, `src/app`, `hints/`): CI cannot see the real game. It
-  runs locally on the customer's game copy (and the MT-32 ROMs), and the
+  runs locally on the owner's game copy (and the MT-32 ROMs), and the
   pull request or release notes name the log.
 - **What:** `scripts/check-local.sh` (S4 and S5 of the stage 5 plan):
 

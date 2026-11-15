@@ -170,30 +170,6 @@ Release build, 4 cores, `sci-hd-frames --timing`:
   - a golden hash of a synthetic composed frame, the same on x86-64 and
     ARM64.
 
-## CI minutes
-
-**The gate is green** (run 39811487129, commit `447279f`). It ran style
-and static analysis; Linux x86-64 and ARM64 in release, ASan+UBSan and
-TSan; the fuzzers; and Windows x64 (release and ASan) and ARM64 (release).
-macOS is optional and was not run.
-
-Measured with `scripts/ci-minutes.py --branch milestone-5`:
-
-| Platform | Jobs | Minutes | Included minutes | List price |
-|---|---|---|---|---|
-| Linux x86-64 | 12 | 111 | 111 | $0.67 |
-| Linux ARM64 | 6 | 27 | 27 | $0.14 |
-| Windows x64 | 2 | 17 | 34 | $0.17 |
-| Windows ARM64 | 2 | 7 | 14 | $0.07 |
-| **Total** (2 runs) | | **162** | **186** | **$1.04** |
-
-- **Cost:** none. The repository is public, so standard runners are free.
-- **Runs:** only two ran, both gate runs on this pull request. Pushes to
-  the branch start nothing. The first run's lint job was cancelled when a
-  newer commit arrived; the rest of that run passed.
-- **Platforms:** no macOS, Windows or native ARM64 run happened outside
-  the gate.
-
 ## Deviations from the spec
 
 None from section 2.
@@ -206,14 +182,3 @@ None from section 2.
 - Sprites write their priority into the HD priority buffer as they are
   drawn, as `GfxView::draw` does at 1x.
 - Saved bits carry the priority-source plane too.
-
-## Open questions
-
-1. **Stopped and always-update views** are part of the background layer,
-   so they are hidden with 1x occlusion, as the design says. **Answered**
-   (2026-10-22): keep as is.
-2. **Answered** (2026-10-22): left to the playthrough of milestone 9.
-   **Rooms 290 and 353** draw picture overlays too, but no scenario
-   reaches them yet. Their stacks are covered by golden hashes. Should I
-   add scenarios that reach them, or leave that to the playthrough of
-   milestone 9?
