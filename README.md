@@ -19,6 +19,23 @@ integer factor. Game logic behaves exactly as in the original.
 You need your own copy of the game (English DOS EGA release; the GOG
 release works). No game files are included, and none are ever committed.
 
+
+## Original and HD
+
+The same moment in the original look (EGA, 320 x 200, scaled 3 times) and
+in HD at N = 3: the backgrounds are re-rendered as vector art, while
+sprites and text stay the original pixels. F12 switches between the two
+while playing.
+
+| | |
+|:---:|:---:|
+| ![The will under the title, original and HD](docs/media/title-letter.gif) | ![Arrival at the mansion, original and HD](docs/media/cutscene-arrival.gif) |
+| Title: the will | Cut-scene: arrival at the mansion |
+| ![The garden at night, original and HD](docs/media/gameplay-garden.gif) | ![The chapel, original and HD](docs/media/interior-chapel.gif) |
+| Playing: the garden at night | Inside: the chapel |
+| ![The Colonel at dinner, original and HD](docs/media/closeup-colonel.gif) | |
+| Close-up: the Colonel at dinner | |
+
 ## Building
 
 The supported compiler is upstream LLVM Clang 23.1.4 (clang-cl on Windows)

@@ -9,7 +9,9 @@ discussed in an issue first.
 Pull requests:
 
 - Never add game data: resources, ROMs, screenshots or dumps of the game,
-  or anything derived from them that could recreate them.
+  or anything derived from them that could recreate them. The one
+  exception is `docs/media/`: a few small comparison images for the
+  README, made with the project's tools from an owned copy of the game.
   `scripts/check-repo-policy.py` and `.gitignore` guard against the common
   cases.
 - Follow the style of the surrounding code (`.clang-format`,

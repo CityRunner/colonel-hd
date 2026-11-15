@@ -5,7 +5,8 @@
 1. No game resources (SCI0 patch files such as SCRIPT.052 included), ROM
    files, saved games, program configuration or images derived from the
    game art are tracked (spec sections 2 and 3.4). Images are allowed only
-   where listed in ALLOWED_IMAGE_DIRS (none so far).
+   where listed in ALLOWED_IMAGE_DIRS: docs/media/, the README's
+   comparison images (an exception decided on 2026-11-15).
 2. No float or long double in project code (spec section 5.3: double only).
 3. Every project source file and script (.cpp, .hpp, .py, .sh) starts with
    an SPDX licence identifier (in its first three lines, so after a shebang).
@@ -35,7 +36,7 @@ USER_DATA = re.compile(r"(^|/)([^/]+\.sav|colonel-hd\.ini)$", re.IGNORECASE)
 # local/ holds the user's own files; only its README and placeholders are tracked.
 LOCAL_ALLOWED = re.compile(r"^local/(README\.md|(game|rom|saves)/\.gitkeep)$")
 IMAGE = re.compile(r"\.(png|ppm|pgm|bmp|gif|jpe?g|tga|webp)$", re.IGNORECASE)
-ALLOWED_IMAGE_DIRS: tuple[str, ...] = ()
+ALLOWED_IMAGE_DIRS: tuple[str, ...] = ("docs/media/",)
 CPP_SOURCE = re.compile(r"\.(cpp|hpp)$")
 SOURCE = re.compile(r"\.(cpp|hpp|py|sh)$")
 FLOAT_TYPES = re.compile(r"\b(float|long\s+double)\b")
