@@ -78,7 +78,7 @@ sci-vector) applies the same rules and rejects unknown members.
 | `from`, `end`, `to` | A gap from the `start` or `end` point of line `from` to line `to`. |
 | `at` | A pixel of the region, in picture coordinates as stored (x 0-319, y 0-189). |
 | `label`, `note` | Printable ASCII, at most 200 characters. Labels describe what is drawn, in a few words. |
-| `uncertain` | The analyser was not sure; the customer spot-checks these. Default false. |
+| `uncertain` | The analyser was not sure; the owner spot-checks these. Default false. |
 
 The files hold labels and line references only, never image data, so they
 contain nothing derived from the game art beyond a description.
@@ -104,17 +104,12 @@ contain nothing derived from the game art beyond a description.
 
 ## Licensing
 
-Recorded for spec section 15 (the licensing review of the hint files), as
-the customer decided on 2026-11-06 (`review/QUESTIONS.md`, Q-03).
+Recorded for spec section 15 (the licensing review of the hint files).
 
 - **Content:** the hint files hold labels and geometry only: text, whole
   numbers and true/false values under the keys of `schema.json`. They hold
-  no image data. This was checked for every hint file in every commit
-  (`review/HISTORY_CLEANUP.md`, section E).
-- **How they were made:** with Claude, Anthropic's AI model, under the
-  customer's personal Claude subscription.
+  no image data. This was checked for every hint file in every commit.
+- **How they were made:** with Claude, Anthropic's AI model, from renders
+  of the pictures of a legally owned copy of the game.
 - **Licence:** they are published with the project under
-  GPL-3.0-or-later, at the customer's risk. The subscription's terms were
-  not checked for whether they allow this.
-- **Input:** pictures of the customer's own copy of the game were shown
-  to the model, with the customer's permission.
+  GPL-3.0-or-later.

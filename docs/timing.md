@@ -6,7 +6,7 @@ fixed scale N, and writes what it measured to a CSV file. The run itself
 is the same game as always (the same end state as `sci-vm-trace`); only
 the pacing differs, as with `--fast`.
 
-## For the customer: the run on the reference laptop
+## For the owner: the run on the reference laptop
 
 Once, on a 4-core x86-64 laptop of about 2020 with integrated graphics,
 under Windows (spec section 10.3, `docs/ASSUMPTIONS.md`):

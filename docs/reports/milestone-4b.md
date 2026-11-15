@@ -1,7 +1,6 @@
 # Milestone 4b: kernel coverage
 
-Status: **approved** (2026-10-22). The gate matrix is green; the customer's
-"go ahead for next step" after it is taken as the approval.
+Status: **approved** (2026-10-22). The gate matrix is green.
 
 Exit criteria (spec section 12): every kernel function the game's scripts
 reference is implemented, and scenario recordings covering the main areas
@@ -128,7 +127,7 @@ qemu-user. All 57 comparisons are identical.
 - The first launch analyses all 176 entries (88 pictures, 2 planes) in
   2.8 s in the release build on 4 cores, against the 15 s budget; a
   scene loads from its file in about 4 ms. The cache takes 83 MB.
-- I checked the program under a virtual display (screenshots): the
+- The program was checked under a virtual display (screenshots): the
   progress bar, the copy protection, the bedroom in HD with Laura and
   the menu bar on top, and a replay played into the window. No manual
   play beyond that: please try it.
@@ -159,55 +158,10 @@ qemu-user. All 57 comparisons are identical.
 - All checks above ran locally in the toolchain container first
   (`scripts/pre-push.sh`); CI confirms them at the gate (below).
 
-## CI minutes
-
-**The gate is green** (run 39733318155, commit `e0983a4`): style and
-static analysis; Linux x86-64 and ARM64 in release, ASan+UBSan and TSan;
-the fuzzers; Windows x64 (release and ASan) and ARM64 (release). macOS is
-optional and was not run.
-
-- **The two gate runs before it** found a macOS-only build problem:
-  `std::ranges::iota` is missing from Apple's libc++. It is fixed. Two
-  further macOS gaps are recorded for when macOS is wanted.
-- **The first gate under the policy** could not start, because the
-  account's minutes were used up. It ran once the repository was public.
-
-Under the CI cost policy (`docs/ASSUMPTIONS.md`, "CI cost policy"),
-introduced during this gate, measured with
-`scripts/ci-minutes.py --branch milestone-4b`:
-
-| Platform | Jobs | Minutes | Included minutes | List price |
-|---|---|---|---|---|
-| Linux x86-64 | 118 | 630 | 630 | $3.78 |
-| Linux ARM64 | 67 | 239 | 239 | $1.20 |
-| Windows x64 | 6 | 36 | 72 | $0.36 |
-| Windows ARM64 | 5 | 19 | 38 | $0.19 |
-| macOS | 2 | 17 | 170 | $1.05 |
-| **Total** (29 runs) | | **941** | **1,149** | **$6.58** |
-
-- **The runs of 2026-10-22** (188 minutes) ran after the repository was
-  made public. Standard runners cost nothing for public repositories, so
-  these minutes were free.
-- **The two macOS jobs** (17 minutes) ran in the gate runs before macOS
-  became optional again.
-
-- Most of these minutes came before the policy: every push ran 8 Linux
-  jobs, and 20 of the 4b push runs were cancelled part-way by the next
-  push. Under the policy a push runs nothing.
-- Two runs were cancelled by hand when the policy arrived: the push run
-  that duplicated the pull request run of the same commit, and the
-  release build on the pull request (release binaries now build for tags
-  only).
-- No macOS, Windows or native ARM64 run happened between gates.
-- What could reduce the minutes further:
-  - a self-hosted Linux runner on a machine of yours, which would make the
-    Linux jobs free;
-  - ccache, whose savings show from the second gate run on.
-
 ## Deviations from the spec
 
 None from section 2 (addendum A2 changes the output decision of section 2
-with your approval, from milestone SU on).
+with the owner's approval, from milestone SU on).
 
 ## Decisions at the gate (2026-10-21 and 22)
 

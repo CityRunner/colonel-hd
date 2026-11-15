@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The layers the golden outputs of all resources hash (review/BACKLOG_V2.md
+// The layers the golden outputs of all resources hash (docs/backlog.md
 // B-18, stage 5 step 0.3): each function returns the SHA-256 (hex) of one
 // image as the program would show it. Kept apart from main.cpp so that a
 // CI test on synthetic resources can check that a one-pixel change changes

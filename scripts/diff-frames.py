@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Pixel difference of two PNG images of the same size (stage 5 safety net,
-review/BACKLOG_V2.md B-18): writes an image where every differing pixel is
+docs/backlog.md B-18): writes an image where every differing pixel is
 red and every equal pixel a dimmed grey copy of the first image, and prints
 the number of differing pixels and their bounding box.
 

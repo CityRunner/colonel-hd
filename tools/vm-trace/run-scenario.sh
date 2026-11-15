@@ -14,7 +14,7 @@
 # a ROM folder as the program reads it in COLONEL_HD_MT32_ROMS (default
 # /roms/roland; empty: the messages are only logged):
 #
-#   COLONEL_HD_MOUNTS=/path/to/game:/game,/home/user/roms:/roms docker/run.sh \
+#   COLONEL_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh \
 #       env COLONEL_HD_MUSIC=mt32 tools/vm-trace/run-scenario.sh tests/scenarios/boot.txt 3600 build/scenarios/boot-mt32
 #
 #   tools/vm-trace/run-scenario.sh <replay> <stop tick> <output folder> [seed]

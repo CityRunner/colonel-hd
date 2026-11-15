@@ -148,11 +148,11 @@ under the names ScummVM opens, `MT32_CONTROL.ROM` and `MT32_PCM.ROM` (it
 tries `CM32L_CONTROL.ROM` and `CM32L_PCM.ROM` first). Keep that folder
 outside the repository, for example symbolic links next to the ROM folder:
 
-    mkdir -p /home/user/roms/mt32-scummvm && cd /home/user/roms/mt32-scummvm
+    mkdir -p /path/to/roms/mt32-scummvm && cd /path/to/roms/mt32-scummvm
     ln -s ../roland/MT32_CONTROL.1987-10-07.v1.07.ROM MT32_CONTROL.ROM
     ln -s ../roland/MT32_PCM.ROM MT32_PCM.ROM
 
-and mount the parent (`COLONEL_HD_MOUNTS=...,/home/user/roms:/roms`), so
+and mount the parent (`COLONEL_HD_MOUNTS=...,/path/to/roms:/roms`), so
 that the relative links resolve in the container.
 
 Then:

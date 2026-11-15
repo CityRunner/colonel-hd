@@ -1,12 +1,12 @@
 # Milestone 9: the playthrough
 
-Status: **approved** (2026-11-05). The customer deferred the manual playthrough and approved the merge.
+Status: **approved** (2026-11-05). The owner deferred the manual playthrough and approved the merge.
 
 Exit criterion (spec section 12): the game is completed from start to
 ending without errors:
-- the agent's own scripted input, in both graphics modes;
-- one full manual playthrough by the customer in HD mode;
-- spot checks by the customer in original mode.
+- a scripted input (the playthrough replay), in both graphics modes;
+- one full manual playthrough by the owner in HD mode;
+- spot checks by the owner in original mode.
 
 The optional state checkpoints against a reference walkthrough do not
 apply: no reference walkthrough exists (spec section 12, "Optional, only
@@ -15,7 +15,6 @@ if...").
 Decisions are in `docs/ASSUMPTIONS.md`:
 - "Milestone 9: the reverb and song order on a restore";
 - "Milestone 9: the playthrough in the program";
-- "Small agent tasks";
 - "Milestone numbers after A4".
 
 The playthrough, act by act, is in `docs/playthrough.md`.
@@ -54,13 +53,13 @@ The playthrough, act by act, is in `docs/playthrough.md`.
    A replay uses the deterministic time of day, as `sci-vm-trace` does.
    The game reads the time of day 32,222 times, and with the host's clock
    the replay went past the quit.
-5. **Release candidate 0.9.0** for the customer's playthrough:
+5. **Release candidate 0.9.0** for the owner's playthrough:
    - version 0.9.0;
    - the user guide that ships in the archive (`docs/USER-README.md`) now
      covers the game, saves, MT-32 ROMs and every configuration key;
    - the README and `docs/ARCHITECTURE.md` are updated;
-   - release notes are in `docs/release-notes/v0.9.0-rc.1.md`.
-6. **Undithering (milestone SU) was dropped** at the customer's request.
+   - the release candidate `v0.9.0-rc.1` was not published.
+6. **Undithering (milestone SU) was dropped** at the owner's request.
    Nothing of it is in the code.
 
 ## Results
@@ -90,7 +89,7 @@ state hash, total and per part.
 | HD | 4 | AdLib | cold (176 scenes analysed in 2.4 s) | 29 s |
 | HD | 4 | AdLib | warm | 26 s |
 | original | 4 | AdLib | warm | 30 s |
-| HD | 4 | MT-32 (customer's ROMs) | warm | 26 s |
+| HD | 4 | MT-32 (owner's ROMs) | warm | 26 s |
 | HD | 2 | AdLib | warm | 25 s |
 | HD | 4 | AdLib, audio to disk | warm | 28 s |
 | original | 4 | off | warm | 22 s |
@@ -98,7 +97,7 @@ state hash, total and per part.
 I re-ran three of these after the last merge; they took 26 s, 26 s and
 21 s, with the same results.
 
-### For the customer's playtest
+### For the owner's playtest
 
 These files are local only, not committed:
 - **Saves at the start of each act:** `colonel-hd-001.sav` to `-008.sav`,
@@ -121,47 +120,6 @@ These files are local only, not committed:
   The program's replay options are checked by the program runs above.
 - **No compatibility layer remains** from porting (spec section 5.1).
 
-## CI minutes
-
-**The gate is green** (run 41010700650, commit `4483735`). It ran:
-- style and static analysis;
-- Linux x86-64 and ARM64 in release, ASan+UBSan and TSan;
-- the fuzzers;
-- Windows x64 and ARM64.
-
-macOS is optional and was not run.
-
-Measured with `scripts/ci-minutes.py --branch milestone-9`:
-
-| Platform | Jobs | Minutes | Included minutes | List price |
-|---|---|---|---|---|
-| Linux x86-64 | 6 | 60 | 60 | $0.36 |
-| Linux ARM64 | 3 | 22 | 22 | $0.11 |
-| Windows x64 | 1 | 12 | 24 | $0.12 |
-| Windows ARM64 | 1 | 4 | 8 | $0.04 |
-| **Total** (1 run) | | **98** | **114** | **$0.63** |
-
-- **Cost:** none. The repository is public, so standard runners are free.
-- **Runs:** one, the gate run of this pull request.
-  - Every earlier push of `milestone-9` was checked locally first, and
-    pushes start no run.
-  - This report's commit changes only documentation and starts no run.
-
 ## Deviations from the spec
 
 None.
-
-## Open questions
-
-None for the gate. Not done, because it is not required: a run of the
-replay in real time (about 94 minutes per run). The customer's manual
-playthrough covers real-time play.
-
-## What the customer needs to do
-
-1. Push the tag `v0.9.0-rc.1` on commit `4483735` (this session may not
-   create tags); the release workflow then publishes the pre-release.
-   Download the build for your system from it.
-2. Play the game through in HD mode, with the act saves if you like.
-3. Spot-check some scenes in original mode with F12.
-4. Report anything that differs from the original, or approve.

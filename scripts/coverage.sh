@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Line coverage of the CI test suite (B-08; the method of review/MAP.md,
-# section 6.4): a Debug build with clang's source-based coverage, without
+# Line coverage of the CI test suite (B-08): a Debug build with clang's source-based coverage, without
 # the tools and the program, all CTest tests, then llvm-cov per module and
 # for src/sci-vm/src/machine.cpp. With --min-vm <percent>, exits with 1 when
 # sci-vm's line coverage is below it.

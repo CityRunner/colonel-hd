@@ -66,10 +66,10 @@ Tests that need the game files run locally, never in CI:
 ## The local gate
 
 CI has no game files. Since iteration 2 the VM has a CI net of its own
-(`review/BACKLOG_V2.md` B-06, B-07): its unit tests cover 73 % of sci-vm's
+(`docs/backlog.md` B-06, B-07): its unit tests cover 73 % of sci-vm's
 lines, and the coverage job of the pull request gate fails below 70 %
-(B-08, `scripts/coverage.sh --min-vm 70`; it was 38 % before,
-`review/MAP.md` 6.4). The game-dependent checks below stay the gate for
+(B-08, `scripts/coverage.sh --min-vm 70`; it was 38 % before). The
+game-dependent checks below stay the gate for
 releases:
 
 - **Who runs it:** whoever prepares a release, on the release commit
@@ -78,7 +78,7 @@ releases:
   `src/sci-resource`, `src/sci-text` or `src/sci-audio`, or the golden
   outputs (`src/sci-pic`, `src/sci-view`, `src/sci-vector`,
   `src/sci-render`, `src/app`, `hints/`): CI cannot see the real game. It
-  runs locally on the customer's game copy (and the MT-32 ROMs), and the
+  runs locally on the owner's game copy (and the MT-32 ROMs), and the
   pull request or release notes name the log.
 - **What:** `scripts/check-local.sh` (S4 and S5 of the stage 5 plan):
 

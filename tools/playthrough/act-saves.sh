@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Makes a save at the start of each act the playthrough reaches, for the
-# customer's play test (milestone 9, docs/playthrough.md). For each line
+# owner's play test (milestone 9, docs/playthrough.md). For each line
 # "<act number> <tick>" of tests/playthrough/act-saves.txt, the replay runs
 # up to that tick, then the game's own save dialog is used as a player would:
 # F5, the description ("Act I", "Act II", ...) and Enter. The save is

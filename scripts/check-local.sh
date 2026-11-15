@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 # The local gate with the game files (tests/README.md, "The local gate";
-# review/BACKLOG_V2.md B-08, B-18, B-19): every golden output and VM hash,
+# docs/backlog.md B-08, B-18, B-19): every golden output and VM hash,
 # checked against the committed files. CI cannot run it (no game files).
 #
 #   S4  tests/golden/resources.txt   every picture layer (N = 1 ... 16), cel, glyph, cursor
@@ -19,7 +19,7 @@
 #   COLONEL_HD_MOUNTS=/path/to/game:/game,/path/to/roms:/roms docker/run.sh scripts/check-local.sh build/release
 #
 # Runs every check, prints one line per check with its time, and exits with
-# 1 if any failed. About 25-45 minutes on 4 cores (review/REFACTOR_REPORT.md).
+# 1 if any failed. About 25-45 minutes on 4 cores.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 

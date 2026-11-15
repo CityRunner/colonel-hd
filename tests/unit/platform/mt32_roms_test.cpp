@@ -105,7 +105,7 @@ SCI_TEST(music_choice_opens_the_users_mt32) {
         std::println("  skipped: COLONEL_HD_MT32_ROMS is not set");
         return;
     }
-    // The customer's folder holds the MT-32 1.07, a patched MT-32 control
+    // The owner's folder holds the MT-32 1.07, a patched MT-32 control
     // ROM mt32emu does not know and the CM-32L set: the 1.07 is chosen.
     auto choice = sci::platform::choose_music_device(mt32_config(roms));
     SCI_CHECK(choice.device == MusicDevice::Mt32 && choice.mt32 != nullptr && !choice.warning);

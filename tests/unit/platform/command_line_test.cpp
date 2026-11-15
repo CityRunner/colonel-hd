@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The command line (R-110, B-32): each rule of the options, the help and
+// The command line (B-32): each rule of the options, the help and
 // the exit codes.
 
 #include "sci/platform/command_line.hpp"

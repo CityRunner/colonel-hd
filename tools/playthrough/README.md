@@ -12,6 +12,6 @@ describes the playthrough, its checkpoints and its results.
   under Xvfb, with a data folder of its own (`--data`), and checks its exit
   status, its log and its end state against sci-vm-trace's.
 - `act-saves.sh`: makes a save at the start of each act through the game's
-  own save dialog, for the customer's play test.
+  own save dialog, for the owner's play test.
 
 Each script's header gives its options and an example command.

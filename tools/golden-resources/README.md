@@ -1,7 +1,7 @@
 # golden-resources
 
 Golden outputs of all resources, the stage 5 safety net
-(`review/BACKLOG_V2.md` B-18, scope of Q-02): one SHA-256 per image, so
+(`docs/backlog.md` B-18): one SHA-256 per image, so
 that a refactoring that changes any pixel of any resource is caught. Local
 only (it needs the game); the committed list is
 `tests/golden/resources.txt`, made with the repository's hints.

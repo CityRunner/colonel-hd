@@ -1,6 +1,6 @@
 # Milestone 2: path 1, views, fonts and the room viewer
 
-Status: **ready for review**. All exit criteria are met.
+Status: **approved**. All exit criteria are met.
 
 Exit criterion (spec section 12): path 1, views and fonts at 1x, plus the
 room viewer (a development tool). Every room matches ScummVM bit for bit,
@@ -119,8 +119,3 @@ cels are now rejected before the allocation.
 
   Embedded views in pictures (unused by this game) are rejected as
   unsupported. The full list is in `docs/ASSUMPTIONS.md`, "Milestone 2".
-
-## Open questions
-
-None. Milestone 3 (the vector path) builds on the
-command stream and the pair map from this milestone.

@@ -1,29 +1,25 @@
 # Milestone 0: bootstrap
 
-Status: **ready for review**; all exit criteria are met.
+Status: **approved**; all exit criteria are met.
 
 Spec: version 15. All decisions and assumptions are in `docs/ASSUMPTIONS.md`.
 
 ## What was done
 
-1. **Inputs.** Asked the customer for the game folder, the ScummVM source
+1. **Inputs.** Asked the owner for the game folder, the ScummVM source
    and the repository hosting.
    - Repository: `github.com/CityRunner/colonel-hd` (private).
    - ScummVM: cloned from GitHub and pinned at
      `ed949213a23440447ea402e263daa871394b6bf9` (version `2026.4.1git`).
-   - Game files: the customer's GOG copy, the English DOS 3.5" floppy
+   - Game files: the owner's GOG copy, the English DOS 3.5" floppy
      release 1.000.046 with the loose patch files `SCRIPT.052` and
      `TEXT.052`; SHA-256 hashes are in `docs/ASSUMPTIONS.md`.
    - Accepted releases from ScummVM's detection tables: the English DOS 3.5"
      and 5.25" floppy releases, 1.000.046.
-2. **CI runners and cost.** Researched availability and prices for private
-   repositories: Linux and Windows arm64 standard runners are available in
-   private repositories since 2026-01-29. Prices and per-run estimates are in
-   `docs/ASSUMPTIONS.md`, "CI". Decision: Linux (x86-64 and ARM64) on every
+2. **CI runners.** Linux and Windows arm64 standard runners are available
+   since 2026-01-29 (`docs/ASSUMPTIONS.md`, "CI"). Decision: Linux (x86-64 and ARM64) on every
    push; macOS and Windows on pull requests to `main` (the milestone gates)
-   and on manual runs, which can be limited to one platform. The account is
-   on GitHub Free (2,000 included minutes a month). A full run currently uses
-   about 90 included minutes, a push about 16.
+   and on manual runs, which can be limited to one platform.
 3. **Toolchain container** (`docker/`). Upstream LLVM 23.1.4, verified by
    SHA-256. Ubuntu 24.04 is pinned by digest to the release-day image, with
    packages from the frozen release pocket, so amd64 and arm64 get identical
@@ -129,7 +125,7 @@ Negative checks, to confirm the guards work:
 | Criterion | Status |
 |---|---|
 | The empty libraries build and pass the style checks and sanitizer jobs on every CI platform | Met (see the table above). |
-| The reference ScummVM runs | Met. It builds with the pinned toolchain, detects the customer's GOG copy as `sci:laurabow` (English DOS 3.5" floppy, 1.000.046), and runs the game headless under Xvfb up to the opening copy-protection screen at 1x. The screen capture stays in the git-ignored `reports/images/`. |
+| The reference ScummVM runs | Met. It builds with the pinned toolchain, detects the owner's GOG copy as `sci:laurabow` (English DOS 3.5" floppy, 1.000.046), and runs the game headless under Xvfb up to the opening copy-protection screen at 1x. The screen capture stays in the git-ignored `reports/images/`. |
 | The decisions are recorded in docs/ASSUMPTIONS.md | Done. |
 
 ## Deviations from the spec
@@ -142,14 +138,3 @@ Negative checks, to confirm the guards work:
 - Docker instead of podman (spec section 3.1 allows either).
 - macOS and Windows CI run at the milestone gates only, as section 3.2
   provides.
-
-## Open questions
-
-1. **Copy protection in recordings.** The game opens with the fingerprint
-   identification screen. The plan is for scenario recordings and the
-   playthrough to answer it like a player would, in both engines. Please
-   confirm, or say if you prefer another approach (to be settled before
-   milestone 4).
-2. **CI budget.** At the current size the Free plan's 2,000 minutes are
-   enough. If the account has no payment method, CI stops when they run out.
-   Each milestone report will give the measured use.

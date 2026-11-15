@@ -281,8 +281,8 @@ jobs:
         with:
           log: build.log
 
-  # B-08: the line coverage of the CI tests (review/MAP.md section 6.4,
-  # scripts/coverage.sh), per module; fails when sci-vm is below 70 %.
+  # B-08: the line coverage of the CI tests (scripts/coverage.sh), per
+  # module; fails when sci-vm is below 70 %.
   coverage:
     name: linux-x64 coverage
     needs: plan

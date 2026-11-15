@@ -22,7 +22,7 @@
 // With --hashes <file> nothing is written per tick; instead one line per
 // tick goes to <file>: "<tick> original<N> <sha-256> hd<N> <sha-256>", the
 // hashes of the two whole frames (the golden screens of stage 5 step 0.3,
-// review/BACKLOG_V2.md B-18).
+// docs/backlog.md B-18).
 // --timing composes the HD frame whenever the shown screen changes between
 // the two ticks, as the program presents it, and prints the time taken.
 // --check-interface (milestone 6b) checks every frame whose interface
