@@ -39,7 +39,7 @@ and compares the traces; the reference side is the patch
   should the game never poll, stops a minute of virtual time later).
 - **Input.** In the reference and in sci-vm-trace, only replayed events
   reach the game; host input is ignored except for quitting. The program's
-  `--replay` keeps the host's keyboard and mouse working as well (V-07). The mouse position is virtual: it starts at the
+  `--replay` keeps the host's keyboard and mouse working as well. The mouse position is virtual: it starts at the
   centre of the screen (160, 100), follows replayed mouse events and is
   moved by `kSetCursor`.
 

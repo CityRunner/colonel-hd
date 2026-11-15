@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The scale N of the program's window (R-112, B-32): always an integer;
+// The scale N of the program's window (B-32): always an integer;
 // "auto" (0) is the largest N that fits, capped at max_scale; a configured
 // N is reduced to what fits. Apart from SDL so CTest can check them.
 #pragma once

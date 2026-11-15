@@ -2753,7 +2753,7 @@ the old numbers to the new ones, so older references stay unambiguous:
   (section `[colonel-hd]`), the saves `colonel-hd-NNN.sav`, the hint format
   id `colonel-hd-hints`, the replay header `colonel-hd replay 1`, the
   `COLONEL_HD_*` environment variables and the toolchain image are named
-  `colonel-hd` (audit stage 5, step 13). Sierra the company, its
+  `colonel-hd` (refactoring step 13). Sierra the company, its
   interpreter (SCI) and the game's files keep their names; `third_party/`
   and the audit papers are unchanged. **Decided (owner).**
 - **Clean rename:** the program reads only the new names; an old
@@ -2826,7 +2826,7 @@ the old numbers to the new ones, so older references stay unambiguous:
   `~/.local/share/colonel-hd` on Linux, created on first use. The hints
   stay next to the executable. Spec section 10.2's "next to the
   executable" for the cache and the configuration is replaced by this
-  (G-122 closed). **Decided (Q-06 default, accepted by the owner).**
+ . **Decided (owner).**
 - **Defaults inside it:** `game_folder = game`, `mt32_rom = rom` and
   `saves = saves`, written so in a new `colonel-hd.ini` (2026-11-14); a relative path is taken from the data folder, and an
   empty value means the default, as before. `game/` is used when it holds

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The program's command line (R-110, B-32): the options, their rules, the
+// The program's command line (B-32): the options, their rules, the
 // help text and the exit codes, apart from SDL so CTest can check them.
 #pragma once
 

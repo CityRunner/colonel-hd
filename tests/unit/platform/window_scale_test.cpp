@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The window's scale (R-112, B-32).
+// The window's scale (B-32).
 
 #include "sci/platform/config.hpp"
 #include "sci/platform/window_scale.hpp"

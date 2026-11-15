@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Golden screens (docs/backlog.md B-18, stage 5 step 0.3, scope of
-# Q-02): every screen of the scenarios of tests/scenarios/scenarios.txt and
+# Golden screens (docs/backlog.md B-18): every screen of the scenarios of tests/scenarios/scenarios.txt and
 # of the playthrough, as the program composes it in original and in HD mode
 # at N = 1, 2, 5 and 10. The screens are those sci-vm-trace --screens dumps
 # (every 60 ticks; scripts/check-vm-hashes.sh hashes them at 1x); here
