@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Hashes of every VM output (review/BACKLOG_V2.md B-19, stage 5 step 0.4):
+# Hashes of every VM output (docs/backlog.md B-19, stage 5 step 0.4):
 # runs sci-vm-trace in its deterministic mode over the scenarios of
 # tests/scenarios/scenarios.txt (AdLib, and the MT-32 driver), the
 # playthrough to its last checkpoint and the save round trips, and records

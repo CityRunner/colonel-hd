@@ -2928,7 +2928,7 @@ the old numbers to the new ones, so older references stay unambiguous:
 ## Project renamed to colonel-hd (2026-11-12)
 
 - **The name:** the customer asked to "rename repo and all files/mentions:
-  sierra -> colonel" and agreed to the proposals (review/BACKLOG_V2.md,
+  sierra -> colonel" and agreed to the proposals (docs/backlog.md,
   B-43). The project, the program, its configuration file `colonel-hd.ini`
   (section `[colonel-hd]`), the saves `colonel-hd-NNN.sav`, the hint format
   id `colonel-hd-hints`, the replay header `colonel-hd replay 1`, the

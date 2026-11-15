@@ -60,7 +60,7 @@ sci_add_fuzz_target(NAME fuzz-parser
     CORPUS ${CMAKE_CURRENT_SOURCE_DIR}/corpus/parser)
 
 # The music driver's patch resources, AdLib bank and MT-32 patch (stage 5
-# step 0.5, review/BACKLOG_V2.md B-05).
+# step 0.5, docs/backlog.md B-05).
 sci_add_fuzz_target(NAME fuzz-patch
     SOURCE fuzz_patch.cpp
     DEPENDS sci-audio

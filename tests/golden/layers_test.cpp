@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // The layers of the golden outputs of all resources (tools/golden-resources,
-// review/BACKLOG_V2.md B-18): on synthetic resources, a change of one pixel
+// docs/backlog.md B-18): on synthetic resources, a change of one pixel
 // changes the hash of every layer kind at 1x and at every N the goldens use,
 // so a tool that hashed the wrong buffer would fail here.
 

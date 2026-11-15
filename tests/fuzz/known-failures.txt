@@ -1,5 +1,5 @@
 # Known fuzz failures (customer's decision 2a, 2026-11-06): bugs found by
-# the fuzz targets and logged in review/BACKLOG_V2.md, not yet fixed.
+# the fuzz targets and logged in docs/backlog.md, not yet fixed.
 # scripts/run-fuzzers.sh still runs these targets; a failure of the listed
 # kind whose report has a stack frame matching the pattern is reported as
 # known and does not fail the run. Any other failure still fails it.
