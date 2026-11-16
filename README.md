@@ -1,4 +1,4 @@
-# colonel-hd
+# The Colonel's Bequest HD
 
 An HD version of Sierra's *The Colonel's Bequest* (DOS, EGA, SCI0), running
 on its own SCI0 interpreter written in C++23. The vector backgrounds are
